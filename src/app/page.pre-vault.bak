@@ -16,7 +16,7 @@ const workflow = [
   {
     step: "02",
     title: "Underwrite",
-    body: "Each lead is enriched, pressure-tested, scored, and converted into a structured auction opportunity brief built for decision speed.",
+    body: "Each lead is enriched, pressure-tested, scored, and converted into a structured acquisition dossier built for decision speed.",
   },
   {
     step: "03",
@@ -35,18 +35,20 @@ const partnerTypes = [
 const liveMetrics = [
   { label: "Signals Monitored", value: "Foreclosure + Tax + Distress" },
   { label: "Counties Active", value: "3 Core Tennessee Counties" },
-  { label: "Output Layer", value: "Auction Opportunity Briefs" },
-  { label: "Distribution", value: "Restricted Partner Routing" },
+  { label: "Output Layer", value: "Acquisition Dossiers" },
+  { label: "Execution Path", value: "Auction + Brokerage Routing" },
 ]
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="relative isolate overflow-hidden">
+        {/* Background */}
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
 
+        {/* Header */}
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
             <div className="flex items-center gap-4">
@@ -81,13 +83,14 @@ export default function HomePage() {
               <Link href="#partners" className="transition hover:text-white">
                 Partners
               </Link>
-              <Link href="/request-access" className="transition hover:text-white">
+              <Link href="#request-access" className="transition hover:text-white">
                 Request Access
               </Link>
             </nav>
           </div>
         </header>
 
+        {/* Hero */}
         <section className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28">
           <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
@@ -110,12 +113,6 @@ export default function HomePage() {
                 discipline, and leverage.
               </p>
 
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-                Approved partners receive access to FALCO&apos;s restricted vault,
-                listing materials, and controlled routing paths after acceptance
-                of confidentiality and non-circumvention terms.
-              </p>
-
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/request-access"
@@ -126,10 +123,17 @@ export default function HomePage() {
 
                 <Link
                   href="/submit-opportunity"
-                  className="inline-flex items-center justify-center rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:text-white"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/8"
                 >
                   Submit Opportunity
                 </Link>
+
+                <a
+                  href="mailto:access@falco.llc?subject=Falco%20Partner%20Inquiry"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:text-white"
+                >
+                  Partner With FALCO
+                </a>
               </div>
             </div>
 
@@ -154,8 +158,8 @@ export default function HomePage() {
                   {[
                     "Upstream distress detection",
                     "Scoring and underwriting layer",
-                    "Auction opportunity brief generation",
-                    "Restricted partner distribution",
+                    "Acquisition dossier generation",
+                    "Auction and partner routing",
                   ].map((item, index) => (
                     <div
                       key={item}
@@ -183,18 +187,16 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Live Intelligence Strip */}
         <section className="mx-auto max-w-7xl px-6 pb-10 md:px-10">
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5">
-            <div className="grid gap-4 md:grid-cols-4">
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] px-8 py-6 shadow-[0_20px_70px_rgba(0,0,0,0.45)]">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
               {liveMetrics.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4"
-                >
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                <div key={metric.label} className="flex flex-col gap-1.5">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
                   </div>
-                  <div className="mt-2 text-sm font-medium text-white/88">
+                  <div className="text-sm font-semibold text-white">
                     {metric.value}
                   </div>
                 </div>
@@ -203,6 +205,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Stats */}
         <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10" id="what-it-is">
           <div className="grid gap-6 md:grid-cols-3">
             {stats.map((stat) => (
@@ -219,6 +222,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* What It Is */}
         <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
           <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
@@ -244,6 +248,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* How It Works */}
         <section
           id="how-it-works"
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
@@ -277,6 +282,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Partners */}
         <section
           id="partners"
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
@@ -309,6 +315,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* CTA */}
         <section
           id="request-access"
           className="mx-auto max-w-7xl px-6 pb-32 md:px-10"
