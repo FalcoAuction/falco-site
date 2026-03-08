@@ -45,20 +45,71 @@ type PartnerApprovalRow = {
   notes: string | null
 }
 
+type AccessRequestNotesPayload = {
+  version: 1
+  notes: string
+  role: string
+  marketFocus: string
+  accessType: string
+  executionCapacity: string
+  ipAddress: string
+  userAgent: string
+}
+
+function parseAccessRequestNotes(notes: string | null): AccessRequestNotesPayload | null {
+  if (!notes) return null
+
+  try {
+    const parsed = JSON.parse(notes) as Partial<AccessRequestNotesPayload>
+    if (parsed.version !== 1) return null
+
+    return {
+      version: 1,
+      notes: typeof parsed.notes === "string" ? parsed.notes : "",
+      role: typeof parsed.role === "string" ? parsed.role : "",
+      marketFocus: typeof parsed.marketFocus === "string" ? parsed.marketFocus : "",
+      accessType: typeof parsed.accessType === "string" ? parsed.accessType : "",
+      executionCapacity:
+        typeof parsed.executionCapacity === "string" ? parsed.executionCapacity : "",
+      ipAddress: typeof parsed.ipAddress === "string" ? parsed.ipAddress : "",
+      userAgent: typeof parsed.userAgent === "string" ? parsed.userAgent : "",
+    }
+  } catch {
+    return null
+  }
+}
+
+function buildAccessRequestNotes(
+  input: Omit<AccessRequestRecord, "requestId" | "submittedAt" | "status">
+) {
+  return JSON.stringify({
+    version: 1,
+    notes: input.notes,
+    role: input.role,
+    marketFocus: input.marketFocus,
+    accessType: input.accessType,
+    executionCapacity: input.executionCapacity,
+    ipAddress: input.ipAddress,
+    userAgent: input.userAgent,
+  } satisfies AccessRequestNotesPayload)
+}
+
 function mapRequestRow(row: PartnerAccessRequestRow): AccessRequestRecord {
+  const parsedNotes = parseAccessRequestNotes(row.notes)
+
   return {
     requestId: row.id,
     fullName: row.full_name ?? "",
     email: row.email,
     company: row.company ?? "",
-    role: "",
-    marketFocus: "",
-    accessType: "",
-    executionCapacity: "",
-    notes: row.notes ?? "",
+    role: parsedNotes?.role ?? "",
+    marketFocus: parsedNotes?.marketFocus ?? "",
+    accessType: parsedNotes?.accessType ?? "",
+    executionCapacity: parsedNotes?.executionCapacity ?? "",
+    notes: parsedNotes?.notes ?? row.notes ?? "",
     submittedAt: row.created_at,
-    ipAddress: "",
-    userAgent: "",
+    ipAddress: parsedNotes?.ipAddress ?? "",
+    userAgent: parsedNotes?.userAgent ?? "",
     status:
       row.status === "approved" || row.status === "rejected"
         ? row.status
@@ -92,7 +143,7 @@ export async function createAccessRequest(
     email: input.email.toLowerCase(),
     full_name: input.fullName,
     company: input.company,
-    notes: input.notes,
+    notes: buildAccessRequestNotes(input),
     status: "pending",
   }
 
