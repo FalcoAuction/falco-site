@@ -1,5 +1,6 @@
 'use client'
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 
 type ReportRow = {
@@ -250,6 +251,25 @@ export default function OperatorPage() {
                           <div className="mt-2 break-all text-sm text-white/82">{row.vaultSlug || "—"}</div>
                         </div>
                       </div>
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        {row.vaultSlug ? (
+                          <>
+                            <Link
+                              href={`/vault/${row.vaultSlug}`}
+                              className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                            >
+                              Open Listing
+                            </Link>
+                            <Link
+                              href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                            >
+                              Open Packet
+                            </Link>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -270,6 +290,7 @@ export default function OperatorPage() {
                         <th className="pb-3">Run</th>
                         <th className="pb-3">Created</th>
                         <th className="pb-3">Vault</th>
+                        <th className="pb-3">Links</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -282,6 +303,26 @@ export default function OperatorPage() {
                           <td className="py-3">{row.run_id || "—"}</td>
                           <td className="py-3">{row.created_at || "—"}</td>
                           <td className="py-3">{row.vaultLive ? "LIVE" : "NOT LIVE"}</td>
+                          <td className="py-3">
+                            {row.vaultSlug ? (
+                              <div className="flex flex-wrap gap-2">
+                                <Link
+                                  href={`/vault/${row.vaultSlug}`}
+                                  className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-white/90"
+                                >
+                                  Listing
+                                </Link>
+                                <Link
+                                  href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                                >
+                                  Packet
+                                </Link>
+                              </div>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -304,6 +345,7 @@ export default function OperatorPage() {
                         <th className="pb-3">Readiness</th>
                         <th className="pb-3">DTS</th>
                         <th className="pb-3">Vault</th>
+                        <th className="pb-3">Links</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -316,6 +358,26 @@ export default function OperatorPage() {
                           <td className="py-3">{row.auction_readiness || "—"}</td>
                           <td className="py-3">{row.dts_days ?? "—"}</td>
                           <td className="py-3">{row.vaultLive ? "LIVE" : "NOT LIVE"}</td>
+                          <td className="py-3">
+                            {row.vaultSlug ? (
+                              <div className="flex flex-wrap gap-2">
+                                <Link
+                                  href={`/vault/${row.vaultSlug}`}
+                                  className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-white/90"
+                                >
+                                  Listing
+                                </Link>
+                                <Link
+                                  href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                                >
+                                  Packet
+                                </Link>
+                              </div>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
