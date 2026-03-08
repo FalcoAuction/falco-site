@@ -43,16 +43,22 @@ const mapped = rows
     falco_score:
       typeof row.falco_score === "number"
         ? row.falco_score
+        : typeof row.falcoScore === "number"
+        ? row.falcoScore
         : typeof row.falco_score_internal === "number"
         ? row.falco_score_internal
         : null,
-    auction_readiness: row.auction_readiness ?? null,
-    equity_band: row.equity_band ?? null,
+    auction_readiness: row.auction_readiness ?? row.auctionReadiness ?? null,
+    equity_band: row.equity_band ?? row.equityBand ?? null,
     dts_days:
       typeof row.dts_days === "number"
         ? row.dts_days
+        : typeof row.dtsDays === "number"
+        ? row.dtsDays
         : row.dts_days
         ? Number(row.dts_days)
+        : row.dtsDays
+        ? Number(row.dtsDays)
         : null,
     packet_path:
       row.packet_path ??
