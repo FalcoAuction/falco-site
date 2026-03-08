@@ -53,6 +53,10 @@ export async function appendVaultAcceptance(record: VaultAcceptanceRecord) {
     .single()
 
   if (error) {
+    if (error.code === "23505") {
+      const existing = await findVaultAcceptance(record.listingSlug, record.email)
+      if (existing) return existing
+    }
     throw new Error(`appendVaultAcceptance failed: ${error.message}`)
   }
 
