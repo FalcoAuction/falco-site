@@ -6,6 +6,15 @@ export const metadata: Metadata = {
   description:
     "FALCO — Fast Acquisition Lead Conversion Overlay. Distress asset intelligence, underwriting, and execution routing.",
 
+  icons: {
+    icon: [
+      { url: "/icon.jpg", type: "image/jpeg" },
+      { url: "/falco-logo.jpg", type: "image/jpeg" },
+    ],
+    shortcut: "/icon.jpg",
+    apple: "/icon.jpg",
+  },
+
   metadataBase: new URL("https://falco.llc"),
 
   openGraph: {
