@@ -23,6 +23,8 @@ type ReportRow = {
 type OperatorReport = {
   generatedAt: string
   dbPath: string
+  sourceMode: "full" | "site_fallback"
+  sourceNote: string
   overview: {
     totalLeads: number
     greenReady: number
@@ -128,6 +130,8 @@ export default function OperatorPage() {
                   Generated: {report.generatedAt}
                   <br />
                   Source DB: {report.dbPath}
+                  <br />
+                  Mode: {report.sourceMode === "full" ? "Full upstream + vault" : "Site fallback"}
                 </div>
               ) : null}
             </div>
@@ -187,6 +191,10 @@ export default function OperatorPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm leading-7 text-white/68">
+              {report.sourceNote}
             </div>
 
             <div className="mt-8 grid gap-8">
