@@ -1,5 +1,4 @@
-import fs from "fs"
-import path from "path"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export const NDA_VERSION = "v1.0"
 export const NON_CIRC_VERSION = "v1.0"
@@ -15,43 +14,71 @@ export type VaultAcceptanceRecord = {
   userAgent: string
 }
 
-const DATA_DIR = path.join(process.cwd(), "data")
-const ACCEPTANCE_LOG = path.join(DATA_DIR, "vault_acceptances.ndjson")
+type ListingAcceptanceRow = {
+  listing_slug: string
+  full_name: string | null
+  email: string
+  nda_version: string | null
+  non_circ_version: string | null
+  accepted_at: string
+  ip_address: string | null
+  user_agent: string | null
+}
 
-export function ensureVaultDataStore() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
-  }
-
-  if (!fs.existsSync(ACCEPTANCE_LOG)) {
-    fs.writeFileSync(ACCEPTANCE_LOG, "", "utf8")
+function mapAcceptanceRow(row: ListingAcceptanceRow): VaultAcceptanceRecord {
+  return {
+    listingSlug: row.listing_slug,
+    fullName: row.full_name ?? "",
+    email: row.email,
+    ndaVersion: row.nda_version ?? NDA_VERSION,
+    nonCircVersion: row.non_circ_version ?? NON_CIRC_VERSION,
+    acceptedAt: row.accepted_at,
+    ipAddress: row.ip_address ?? "unknown",
+    userAgent: row.user_agent ?? "unknown",
   }
 }
 
-export function appendVaultAcceptance(record: VaultAcceptanceRecord) {
-  ensureVaultDataStore()
-  fs.appendFileSync(ACCEPTANCE_LOG, JSON.stringify(record) + "\n", "utf8")
-}
-
-export function findVaultAcceptance(listingSlug: string, email: string) {
-  ensureVaultDataStore()
-
-  const raw = fs.readFileSync(ACCEPTANCE_LOG, "utf8")
-  const lines = raw.split("\n").filter(Boolean)
-
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    try {
-      const row = JSON.parse(lines[i]) as VaultAcceptanceRecord
-      if (
-        row.listingSlug.toLowerCase() === listingSlug.toLowerCase() &&
-        row.email.toLowerCase() === email.toLowerCase()
-      ) {
-        return row
-      }
-    } catch {
-      continue
-    }
+export async function appendVaultAcceptance(record: VaultAcceptanceRecord) {
+  const payload = {
+    listing_slug: record.listingSlug,
+    full_name: record.fullName,
+    email: record.email.toLowerCase(),
+    nda_version: record.ndaVersion,
+    non_circ_version: record.nonCircVersion,
+    accepted_at: record.acceptedAt,
+    ip_address: record.ipAddress,
+    user_agent: record.userAgent,
   }
 
-  return null
+  const { data, error } = await supabaseAdmin
+    .from("listing_acceptances")
+    .insert(payload)
+    .select("*")
+    .single()
+
+  if (error) {
+    throw new Error(`appendVaultAcceptance failed: ${error.message}`)
+  }
+
+  return mapAcceptanceRow(data as ListingAcceptanceRow)
+}
+
+export async function findVaultAcceptance(listingSlug: string, email: string) {
+  const { data, error } = await supabaseAdmin
+    .from("listing_acceptances")
+    .select("*")
+    .eq("listing_slug", listingSlug)
+    .eq("email", email.toLowerCase())
+    .order("accepted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    console.error("findVaultAcceptance error:", error.message)
+    return null
+  }
+
+  if (!data) return null
+
+  return mapAcceptanceRow(data as ListingAcceptanceRow)
 }

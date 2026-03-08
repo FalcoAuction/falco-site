@@ -6,8 +6,8 @@ import {
 
 export async function GET() {
   try {
-    seedVaultListingsIfEmpty()
-    const listings = listVaultListings()
+    await seedVaultListingsIfEmpty()
+    const listings = await listVaultListings()
 
     return NextResponse.json({
       ok: true,

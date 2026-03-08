@@ -3,7 +3,7 @@ import { listAccessRequests } from "@/lib/access-workflow"
 
 export async function GET() {
   try {
-    const requests = listAccessRequests()
+    const requests = await listAccessRequests()
     return NextResponse.json({ ok: true, requests })
   } catch {
     return NextResponse.json(

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
     const userAgent = req.headers.get("user-agent") ?? "unknown"
 
-    const record = createAccessRequest({
+    const record = await createAccessRequest({
       fullName,
       email,
       company,

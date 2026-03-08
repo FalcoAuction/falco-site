@@ -1,5 +1,4 @@
-import fs from "fs"
-import path from "path"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export type VaultListingStatus = "active" | "claimed" | "expired"
 
@@ -31,127 +30,152 @@ export type VaultListing = {
   contactReady?: boolean
 }
 
-const DATA_DIR = path.join(process.cwd(), "data")
-const LISTINGS_FILE = path.join(DATA_DIR, "vault_listings.ndjson")
+type VaultListingRow = {
+  slug: string
+  title: string | null
+  county: string | null
+  state: string | null
+  falco_score: number | null
+  auction_readiness: string | null
+  equity_band: string | null
+  dts_days: number | null
+  packet_path: string | null
+  is_active: boolean | null
+  created_at: string
+}
 
-function ensureStore() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
+function mapRowToVaultListing(row: VaultListingRow): VaultListing {
+  const countyBase = row.county ?? "Unknown County"
+  const stateBase = row.state ?? "TN"
+  const titleBase = row.title ?? row.slug
+
+  return {
+    slug: row.slug,
+    title: titleBase,
+    market: `${countyBase}, ${stateBase}`,
+    county: countyBase,
+    status: row.is_active === false ? "expired" : "active",
+    distressType: "Foreclosure",
+    auctionWindow: "21–60 Days",
+    summary:
+      "Auction-timed opportunity currently inside the FALCO pipeline with packet-level underwriting and restricted routing.",
+    publicTeaser:
+      "Address-level details, packet, and contact path are restricted to approved users.",
+    packetUrl: `/api/vault/packet?slug=${row.slug}`,
+    packetLabel: "Auction Opportunity Brief",
+    packetFileName: row.packet_path ?? undefined,
+    sourceLeadKey: row.slug,
+    createdAt: row.created_at,
+    falcoScore: row.falco_score,
+    auctionReadiness: row.auction_readiness ?? undefined,
+    equityBand: row.equity_band ?? undefined,
+    dtsDays: row.dts_days,
+    contactReady:
+      typeof row.auction_readiness === "string"
+        ? row.auction_readiness.toUpperCase() === "GREEN"
+        : false,
+  }
+}
+
+export async function listVaultListings() {
+  const { data, error } = await supabaseAdmin
+    .from("vault_listings")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("listVaultListings error:", error.message)
+    return []
   }
 
-  if (!fs.existsSync(LISTINGS_FILE)) {
-    fs.writeFileSync(LISTINGS_FILE, "", "utf8")
-  }
+  return (data ?? []).map(mapRowToVaultListing)
 }
 
-function readNdjson<T>(filePath: string): T[] {
-  ensureStore()
-  const raw = fs.readFileSync(filePath, "utf8")
-
-  return raw
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => {
-      try {
-        return JSON.parse(line) as T
-      } catch {
-        return null
-      }
-    })
-    .filter(Boolean) as T[]
-}
-
-function writeNdjson<T>(filePath: string, rows: T[]) {
-  ensureStore()
-  const payload = rows.map((row) => JSON.stringify(row)).join("\n")
-  fs.writeFileSync(filePath, payload ? payload + "\n" : "", "utf8")
-}
-
-export function listVaultListings() {
-  return readNdjson<VaultListing>(LISTINGS_FILE).sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt)
-  )
-}
-
-export function listActiveVaultListings() {
+export async function listActiveVaultListings() {
+  const rows = await listVaultListings()
   const now = new Date().toISOString()
 
-  return listVaultListings().filter((listing) => {
+  return rows.filter((listing) => {
     if (listing.status !== "active") return false
     if (listing.expiresAt && listing.expiresAt < now) return false
     return true
   })
 }
 
-export function findVaultListing(slug: string) {
-  return listVaultListings().find((listing) => listing.slug === slug) ?? null
-}
+export async function findVaultListing(slug: string) {
+  const { data, error } = await supabaseAdmin
+    .from("vault_listings")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle()
 
-export function upsertVaultListing(listing: VaultListing) {
-  const rows = listVaultListings()
-  const idx = rows.findIndex((r) => r.slug === listing.slug)
-
-  if (idx >= 0) {
-    rows[idx] = listing
-  } else {
-    rows.push(listing)
+  if (error) {
+    console.error("findVaultListing error:", error.message)
+    return null
   }
 
-  writeNdjson(LISTINGS_FILE, rows)
+  if (!data) return null
+
+  return mapRowToVaultListing(data as VaultListingRow)
+}
+
+export async function upsertVaultListing(listing: VaultListing) {
+  const payload = {
+    slug: listing.slug,
+    title: listing.title,
+    county: listing.county,
+    state: "TN",
+    falco_score: listing.falcoScore ?? null,
+    auction_readiness: listing.auctionReadiness ?? null,
+    equity_band: listing.equityBand ?? null,
+    dts_days: listing.dtsDays ?? null,
+    packet_path: listing.packetFileName ?? null,
+    is_active: listing.status === "active",
+  }
+
+  const { error } = await supabaseAdmin
+    .from("vault_listings")
+    .upsert(payload, { onConflict: "slug" })
+
+  if (error) {
+    console.error("upsertVaultListing error:", error.message)
+    return null
+  }
+
   return listing
 }
 
-export function updateVaultListingStatus(
+export async function updateVaultListingStatus(
   slug: string,
   status: VaultListingStatus,
   claimedBy?: string
 ) {
-  const rows = listVaultListings()
-  const idx = rows.findIndex((r) => r.slug === slug)
+  const { data, error } = await supabaseAdmin
+    .from("vault_listings")
+    .update({
+      is_active: status === "active",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("slug", slug)
+    .select("*")
+    .maybeSingle()
 
-  if (idx === -1) return null
-
-  rows[idx] = {
-    ...rows[idx],
-    status,
-    claimedAt: status === "claimed" ? new Date().toISOString() : rows[idx].claimedAt,
-    claimedBy: status === "claimed" ? claimedBy || "unknown" : rows[idx].claimedBy,
+  if (error) {
+    console.error("updateVaultListingStatus error:", error.message)
+    return null
   }
 
-  writeNdjson(LISTINGS_FILE, rows)
-  return rows[idx]
+  if (!data) return null
+
+  return {
+    ...mapRowToVaultListing(data as VaultListingRow),
+    status,
+    claimedAt: status === "claimed" ? new Date().toISOString() : undefined,
+    claimedBy: status === "claimed" ? claimedBy || "unknown" : undefined,
+  }
 }
 
-export function seedVaultListingsIfEmpty() {
-  const rows = listVaultListings()
-  if (rows.length > 0) return rows
-
-  const seed: VaultListing[] = [
-    {
-      slug: "davidson-county-foreclosure-seeded",
-      title: "Davidson County Foreclosure",
-      market: "Davidson County, TN",
-      county: "Davidson County",
-      status: "active",
-      distressType: "Foreclosure",
-      auctionWindow: "21–60 Days",
-      summary:
-        "Auction-timed opportunity currently inside the FALCO pipeline with packet-level underwriting and restricted routing.",
-      publicTeaser:
-        "Address-level details, packet, and contact path are restricted to approved users.",
-      packetUrl: "/api/vault/packet?slug=davidson-county-foreclosure-seeded",
-      packetLabel: "Auction Opportunity Brief",
-      packetFileName: "",
-      sourceLeadKey: "seeded",
-      createdAt: new Date().toISOString(),
-      falcoScore: 90,
-      auctionReadiness: "GREEN",
-      equityBand: "MED",
-      dtsDays: 42,
-      contactReady: false,
-    },
-  ]
-
-  writeNdjson(LISTINGS_FILE, seed)
-  return seed
+export async function seedVaultListingsIfEmpty() {
+  const rows = await listVaultListings()
+  return rows
 }

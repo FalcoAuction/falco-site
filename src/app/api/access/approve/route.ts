@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "reject") {
-      const rejected = rejectAccessRequest(requestId)
+      const rejected = await rejectAccessRequest(requestId)
 
       if (!rejected) {
         return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const approval = approveAccessRequest(requestId, approvedBy)
+    const approval = await approveAccessRequest(requestId, approvedBy)
 
     if (!approval) {
       return NextResponse.json(

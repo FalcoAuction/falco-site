@@ -1,5 +1,5 @@
-import Image from "next/image"
 import Link from "next/link"
+import { getHomeMetrics } from "@/lib/home-metrics"
 
 const stats = [
   { label: "Primary Focus", value: "Distress Asset Origination" },
@@ -32,42 +32,60 @@ const partnerTypes = [
   "Distress operators",
 ]
 
-const liveMetrics = [
-  { label: "Signals Monitored", value: "Foreclosure + Tax + Distress" },
-  { label: "Counties Active", value: "3 Core Tennessee Counties" },
-  { label: "Output Layer", value: "Auction Opportunity Briefs" },
-  { label: "Distribution", value: "Restricted Partner Routing" },
-]
+export default async function HomePage() {
+  const metrics = await getHomeMetrics()
 
-export default function HomePage() {
+  const liveMetrics = [
+    { label: "Active Counties", value: String(metrics.activeCounties) },
+    { label: "Tracked Leads", value: String(metrics.trackedLeads) },
+    { label: "Packets in Vault", value: String(metrics.packetsInVault) },
+    { label: "Approved Partners", value: String(metrics.approvedPartners) },
+  ]
+
   return (
     <main className="min-h-screen bg-black text-white">
+      <style>{`
+        @keyframes falcoFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+
+        @keyframes falcoPulse {
+          0%, 100% { opacity: 0.55; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        @keyframes falcoShimmer {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+
+        @keyframes falcoGlow {
+          0%, 100% { opacity: 0.16; }
+          50% { opacity: 0.3; }
+        }
+
+        @keyframes falcoDrift {
+          0%, 100% { transform: translateY(0px); opacity: 0.72; }
+          50% { transform: translateY(-3px); opacity: 1; }
+        }
+      `}</style>
+
       <div className="relative isolate overflow-hidden">
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
 
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]"
+          style={{ animation: "falcoGlow 6s ease-in-out infinite" }}
+        />
+
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(255,255,255,0.08)]">
-                <Image
-                  src="/falco-logo.jpg"
-                  alt="Falco logo"
-                  width={34}
-                  height={34}
-                  className="h-8 w-8 object-contain"
-                  priority
-                />
-              </div>
-
-              <div>
-                <div className="text-sm font-semibold tracking-[0.28em] text-white">
-                  FALCO
-                </div>
-                <div className="text-xs text-white/45">
-                  Fast Acquisition Lead Conversion Overlay
-                </div>
+              <div className="text-lg font-semibold tracking-[0.38em] text-white md:text-xl">
+                FALCO
               </div>
             </div>
 
@@ -91,7 +109,10 @@ export default function HomePage() {
         <section className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28">
           <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
-              <div className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/60 shadow-[0_12px_40px_rgba(255,255,255,0.05)]">
+              <div
+                className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
+                style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
+              >
                 Distress Asset Intelligence Engine
               </div>
 
@@ -133,7 +154,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+            <div
+              className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+              style={{ animation: "falcoFloat 7s ease-in-out infinite" }}
+            >
               <div className="rounded-[24px] border border-white/10 bg-black/70 p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
@@ -145,7 +169,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">
+                  <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
                     Live System
                   </div>
                 </div>
@@ -159,9 +183,12 @@ export default function HomePage() {
                   ].map((item, index) => (
                     <div
                       key={item}
-                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4"
+                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition duration-300 hover:border-emerald-400/25 hover:bg-white/[0.055]"
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-white/60">
+                      <div
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300"
+                        style={{ animation: `falcoPulse ${2 + index * 0.35}s ease-in-out infinite` }}
+                      >
                         0{index + 1}
                       </div>
                       <div className="text-sm text-white/78">{item}</div>
@@ -183,18 +210,39 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section className="mx-auto max-w-7xl px-6 pb-6 md:px-10">
+          <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.9)]"
+              style={{ animation: "falcoPulse 1.5s ease-in-out infinite" }}
+            />
+            Live System Snapshot
+          </div>
+        </section>
+
         <section className="mx-auto max-w-7xl px-6 pb-10 md:px-10">
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5">
             <div className="grid gap-4 md:grid-cols-4">
-              {liveMetrics.map((metric) => (
+              {liveMetrics.map((metric, index) => (
                 <div
                   key={metric.label}
-                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4"
+                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
+                  style={{ animation: `falcoFloat ${5 + index * 0.4}s ease-in-out infinite` }}
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
                   </div>
-                  <div className="mt-2 text-sm font-medium text-white/88">
+                  <div
+                    className="mt-2 text-lg font-semibold text-white"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(52,211,153,0.95) 50%, rgba(255,255,255,1) 100%)",
+                      backgroundSize: "200% 100%",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                      animation: "falcoShimmer 6s linear infinite",
+                    }}
+                  >
                     {metric.value}
                   </div>
                 </div>
@@ -205,10 +253,11 @@ export default function HomePage() {
 
         <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10" id="what-it-is">
           <div className="grid gap-6 md:grid-cols-3">
-            {stats.map((stat) => (
+            {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                className="rounded-[24px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_25px_90px_rgba(0,0,0,0.45)]"
+                className="rounded-[24px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_25px_90px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/20"
+                style={{ animation: `falcoFloat ${6 + index * 0.5}s ease-in-out infinite` }}
               >
                 <div className="text-2xl font-semibold tracking-[-0.03em] text-white">
                   {stat.value}
@@ -258,10 +307,11 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {workflow.map((item) => (
+            {workflow.map((item, index) => (
               <div
                 key={item.step}
-                className="rounded-[26px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)]"
+                className="rounded-[26px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
+                style={{ animation: `falcoFloat ${6.5 + index * 0.45}s ease-in-out infinite` }}
               >
                 <div className="text-xs uppercase tracking-[0.22em] text-white/35">
                   {item.step}
@@ -297,10 +347,11 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {partnerTypes.map((partner) => (
+              {partnerTypes.map((partner, index) => (
                 <div
                   key={partner}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78"
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78 transition duration-300 hover:-translate-y-1 hover:border-white/20"
+                  style={{ animation: `falcoFloat ${7 + index * 0.35}s ease-in-out infinite` }}
                 >
                   {partner}
                 </div>
@@ -314,7 +365,7 @@ export default function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-32 md:px-10"
         >
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-emerald-400/20">
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">
                 Request Access
               </div>
@@ -335,7 +386,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-white/20">
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">
                 Direct Paths
               </div>
