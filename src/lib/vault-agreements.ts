@@ -16,25 +16,21 @@ export type VaultAcceptanceRecord = {
 
 type ListingAcceptanceRow = {
   listing_slug: string
-  full_name: string | null
   email: string
-  nda_version: string | null
-  non_circ_version: string | null
-  accepted_at: string
+  accepted_at: string | null
   ip_address: string | null
-  user_agent: string | null
 }
 
 function mapAcceptanceRow(row: ListingAcceptanceRow): VaultAcceptanceRecord {
   return {
     listingSlug: row.listing_slug,
-    fullName: row.full_name ?? "",
+    fullName: "",
     email: row.email,
-    ndaVersion: row.nda_version ?? NDA_VERSION,
-    nonCircVersion: row.non_circ_version ?? NON_CIRC_VERSION,
-    acceptedAt: row.accepted_at,
+    ndaVersion: NDA_VERSION,
+    nonCircVersion: NON_CIRC_VERSION,
+    acceptedAt: row.accepted_at ?? new Date(0).toISOString(),
     ipAddress: row.ip_address ?? "unknown",
-    userAgent: row.user_agent ?? "unknown",
+    userAgent: "unknown",
   }
 }
 
@@ -45,13 +41,9 @@ export async function appendVaultAcceptance(record: VaultAcceptanceRecord) {
 
   const payload = {
     listing_slug: record.listingSlug,
-    full_name: record.fullName,
     email: record.email.toLowerCase(),
-    nda_version: record.ndaVersion,
-    non_circ_version: record.nonCircVersion,
     accepted_at: record.acceptedAt,
     ip_address: record.ipAddress,
-    user_agent: record.userAgent,
   }
 
   const { data, error } = await supabaseAdmin
