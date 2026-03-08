@@ -1,5 +1,5 @@
 import crypto from "crypto"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 
 export type AccessRequestStatus = "pending" | "approved" | "rejected"
 
@@ -72,13 +72,22 @@ function mapApprovalRow(row: PartnerApprovalRow): AccessApprovalRecord {
     email: row.email,
     approvedAt: row.approved_at,
     approvedBy: row.notes ?? "FALCO Admin",
-    approvalToken: row.id,
+  approvalToken: row.id,
   }
+}
+
+function requireSupabaseAdmin() {
+  if (!supabaseAdmin) {
+    throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
+  }
+
+  return supabaseAdmin
 }
 
 export async function createAccessRequest(
   input: Omit<AccessRequestRecord, "requestId" | "submittedAt" | "status">
 ) {
+  const client = requireSupabaseAdmin()
   const payload = {
     email: input.email.toLowerCase(),
     full_name: input.fullName,
@@ -87,7 +96,7 @@ export async function createAccessRequest(
     status: "pending",
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await client
     .from("partner_access_requests")
     .insert(payload)
     .select("*")
@@ -101,6 +110,11 @@ export async function createAccessRequest(
 }
 
 export async function listAccessRequests() {
+  if (!supabaseAdmin) {
+    console.error("listAccessRequests error:", supabaseAdminConfigError)
+    return []
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .select("*")
@@ -120,6 +134,11 @@ export async function listPendingAccessRequests() {
 }
 
 export async function findAccessRequest(requestId: string) {
+  if (!supabaseAdmin) {
+    console.error("findAccessRequest error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .select("*")
@@ -139,6 +158,11 @@ export async function updateAccessRequestStatus(
   requestId: string,
   status: AccessRequestStatus
 ) {
+  if (!supabaseAdmin) {
+    console.error("updateAccessRequestStatus error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .update({ status })
@@ -171,6 +195,7 @@ export async function approveAccessRequest(requestId: string, approvedBy: string
     return existing
   }
 
+  const client = requireSupabaseAdmin()
   const payload = {
     email: req.email.toLowerCase(),
     approved: true,
@@ -178,7 +203,7 @@ export async function approveAccessRequest(requestId: string, approvedBy: string
     notes: approvedBy,
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await client
     .from("partner_approvals")
     .upsert(payload, { onConflict: "email" })
     .select("*")
@@ -193,6 +218,11 @@ export async function approveAccessRequest(requestId: string, approvedBy: string
 }
 
 export async function findApprovalByEmail(email: string) {
+  if (!supabaseAdmin) {
+    console.error("findApprovalByEmail error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_approvals")
     .select("*")
@@ -210,6 +240,11 @@ export async function findApprovalByEmail(email: string) {
 }
 
 export async function findApprovalByToken(token: string) {
+  if (!supabaseAdmin) {
+    console.error("findApprovalByToken error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_approvals")
     .select("*")

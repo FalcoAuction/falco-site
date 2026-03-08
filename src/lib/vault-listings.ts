@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 
 export type VaultListingStatus = "active" | "claimed" | "expired"
 
@@ -78,6 +78,11 @@ function mapRowToVaultListing(row: VaultListingRow): VaultListing {
 }
 
 export async function listVaultListings() {
+  if (!supabaseAdmin) {
+    console.error("listVaultListings error:", supabaseAdminConfigError)
+    return []
+  }
+
   const { data, error } = await supabaseAdmin
     .from("vault_listings")
     .select("*")
@@ -103,6 +108,11 @@ export async function listActiveVaultListings() {
 }
 
 export async function findVaultListing(slug: string) {
+  if (!supabaseAdmin) {
+    console.error("findVaultListing error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("vault_listings")
     .select("*")
@@ -120,6 +130,11 @@ export async function findVaultListing(slug: string) {
 }
 
 export async function upsertVaultListing(listing: VaultListing) {
+  if (!supabaseAdmin) {
+    console.error("upsertVaultListing error:", supabaseAdminConfigError)
+    return null
+  }
+
   const payload = {
     slug: listing.slug,
     title: listing.title,
@@ -150,6 +165,11 @@ export async function updateVaultListingStatus(
   status: VaultListingStatus,
   claimedBy?: string
 ) {
+  if (!supabaseAdmin) {
+    console.error("updateVaultListingStatus error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("vault_listings")
     .update({

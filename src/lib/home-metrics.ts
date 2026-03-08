@@ -1,5 +1,5 @@
 import { listAccessRequests } from "@/lib/access-workflow"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 import { listVaultListings } from "@/lib/vault-listings"
 
 function uniqueCount(values: (string | null | undefined)[]) {
@@ -15,6 +15,17 @@ export type HomeMetrics = {
 }
 
 export async function getHomeMetrics(): Promise<HomeMetrics> {
+  if (!supabaseAdmin) {
+    console.error("getHomeMetrics error:", supabaseAdminConfigError)
+    return {
+      activeCounties: 0,
+      trackedLeads: 0,
+      uwReady: 0,
+      packetsInVault: 0,
+      approvedPartners: 0,
+    }
+  }
+
   const [vaultListings, accessRequests, approvalsResult] = await Promise.all([
     listVaultListings(),
     listAccessRequests(),

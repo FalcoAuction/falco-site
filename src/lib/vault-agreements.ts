@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 
 export const NDA_VERSION = "v1.0"
 export const NON_CIRC_VERSION = "v1.0"
@@ -39,6 +39,10 @@ function mapAcceptanceRow(row: ListingAcceptanceRow): VaultAcceptanceRecord {
 }
 
 export async function appendVaultAcceptance(record: VaultAcceptanceRecord) {
+  if (!supabaseAdmin) {
+    throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
+  }
+
   const payload = {
     listing_slug: record.listingSlug,
     full_name: record.fullName,
@@ -64,6 +68,11 @@ export async function appendVaultAcceptance(record: VaultAcceptanceRecord) {
 }
 
 export async function findVaultAcceptance(listingSlug: string, email: string) {
+  if (!supabaseAdmin) {
+    console.error("findVaultAcceptance error:", supabaseAdminConfigError)
+    return null
+  }
+
   const { data, error } = await supabaseAdmin
     .from("listing_acceptances")
     .select("*")
