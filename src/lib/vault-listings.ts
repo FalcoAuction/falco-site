@@ -35,6 +35,15 @@ export type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  propertyIdentifier?: string
+  ownerName?: string
+  ownerMail?: string
+  lastSaleDate?: string
+  mortgageLender?: string
+  yearBuilt?: number | null
+  buildingAreaSqft?: number | null
+  beds?: number | null
+  baths?: number | null
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
@@ -129,6 +138,15 @@ function mapRowToVaultListing(
     equityBand: overlay?.equityBand ?? row.equity_band ?? undefined,
     dtsDays,
     contactReady,
+    propertyIdentifier: overlay?.propertyIdentifier,
+    ownerName: overlay?.ownerName,
+    ownerMail: overlay?.ownerMail,
+    lastSaleDate: overlay?.lastSaleDate,
+    mortgageLender: overlay?.mortgageLender,
+    yearBuilt: overlay?.yearBuilt,
+    buildingAreaSqft: overlay?.buildingAreaSqft,
+    beds: overlay?.beds,
+    baths: overlay?.baths,
     topTierReady: overlay?.topTierReady,
     vaultPublishReady: overlay?.vaultPublishReady,
     dataNotes: overlay?.dataNotes,

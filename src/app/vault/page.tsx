@@ -30,6 +30,15 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  propertyIdentifier?: string
+  ownerName?: string
+  ownerMail?: string
+  lastSaleDate?: string
+  mortgageLender?: string
+  yearBuilt?: number | null
+  buildingAreaSqft?: number | null
+  beds?: number | null
+  baths?: number | null
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
@@ -169,6 +178,15 @@ function ListingCard({ listing }: { listing: VaultListing }) {
           </div>
           <div className="mt-2 text-sm font-medium text-white/82">
             {listing.contactReady ? "YES" : "NO"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Mortgage Lender
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.mortgageLender || "Unavailable"}
           </div>
         </div>
 

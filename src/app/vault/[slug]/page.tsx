@@ -28,6 +28,15 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  propertyIdentifier?: string
+  ownerName?: string
+  ownerMail?: string
+  lastSaleDate?: string
+  mortgageLender?: string
+  yearBuilt?: number | null
+  buildingAreaSqft?: number | null
+  beds?: number | null
+  baths?: number | null
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
@@ -458,6 +467,11 @@ export default function VaultListingPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Mortgage Lender</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{listing.mortgageLender || "Unavailable"}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Routing</div>
                 <div className="mt-2 text-sm font-medium text-white/82">{routingStateCopy(pursuitState.routingState)}</div>
               </div>
@@ -622,6 +636,12 @@ export default function VaultListingPage() {
                   Data note: {criticalDataIssues.join(" + ")}.
                 </div>
               ) : null}
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
+                <div>Last Transfer: <span className="text-white/82">{listing.lastSaleDate || "Unavailable"}</span></div>
+                <div className="mt-2">Parcel / APN: <span className="text-white/82">{listing.propertyIdentifier || "Unavailable"}</span></div>
+                <div className="mt-2">Owner Mailing: <span className="text-white/82">{listing.ownerMail || "Unavailable"}</span></div>
+              </div>
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
                 {pursuitState.routingState === "open"
