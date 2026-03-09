@@ -41,6 +41,18 @@ type PursuitState = {
   hasRequestedByCurrentUser: boolean
 }
 
+const criticalDataIssuesBySlug: Record<string, string[]> = {
+  "davidson-county-foreclosure-7543a33d": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-408587fa": ["Ownership unavailable", "Mortgage unavailable"],
+  "rutherford-county-foreclosure-26f721d9": ["Mortgage unavailable"],
+  "williamson-county-foreclosure-c3ddeeab": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-b664bdae": ["Mortgage unavailable"],
+  "rutherford-county-foreclosure-5b9d9f7c": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-96f145db": ["Ownership unavailable", "Mortgage unavailable"],
+  "rutherford-county-foreclosure-e1acd26d": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-f6560628": ["Ownership unavailable", "Mortgage unavailable"],
+}
+
 function hasAgreementCookie(slug: string) {
   return document.cookie
     .split("; ")
@@ -67,6 +79,16 @@ function routingStateCopy(state: VaultRoutingState) {
   if (state === "in_discussion") return "In Discussion"
   if (state === "closed") return "Closed"
   return "Open"
+}
+
+function isTopLead(listing: VaultListing) {
+  const readiness = listing.auctionReadiness?.toUpperCase()
+  const score = listing.falcoScore ?? 0
+  const dtsDays = listing.dtsDays ?? null
+  const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
+  const missingCriticalData = criticalDataIssuesBySlug[listing.slug]?.length ?? 0
+
+  return readiness === "GREEN" && score >= 90 && insidePrimaryWindow && missingCriticalData === 0
 }
 
 export default function VaultListingPage() {
@@ -333,6 +355,7 @@ export default function VaultListingPage() {
   const packetBlockedByRouting =
     pursuitState.routingState === "closed" ||
     (pursuitState.routingState === "reserved" && !pursuitState.reservedByCurrentUser)
+  const commercialShare = isTopLead(listing) ? "30%" : "20%"
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -485,7 +508,7 @@ export default function VaultListingPage() {
                 opportunity introduced or routed through Peregrine Realty Group remains protected.
                 If you pursue, close, or otherwise monetize a protected opportunity through the
                 FALCO / Peregrine channel, the applicable success fee / revenue share remains
-                <span className="text-white"> 30% of partner-side net revenue</span>, payable
+                <span className="text-white"> {commercialShare} of partner-side net revenue</span>, payable
                 only upon successful execution, subject to the governing agreement and applicable law.
               </p>
             </div>
@@ -535,7 +558,7 @@ export default function VaultListingPage() {
                   <span>
                     I agree not to bypass, circumvent, or cut out FALCO, Peregrine Realty Group,
                     or their partners in connection with this opportunity, and I acknowledge the
-                    protected 30% success-only commercial structure described above.
+                    protected {commercialShare} success-only commercial structure described above.
                   </span>
                 </label>
               </div>
