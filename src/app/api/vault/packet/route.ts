@@ -54,6 +54,30 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    if (listing.routingState === "closed") {
+      console.warn("vault_packet denied_closed_listing", { slug, approvedEmail })
+      return NextResponse.json(
+        { ok: false, error: "This listing is no longer available for packet access." },
+        { status: 403 }
+      )
+    }
+
+    if (
+      listing.routingState === "reserved" &&
+      listing.routingReservedByEmail &&
+      listing.routingReservedByEmail !== approvedEmail
+    ) {
+      console.warn("vault_packet denied_reserved_listing", {
+        slug,
+        approvedEmail,
+        reservedByEmail: listing.routingReservedByEmail,
+      })
+      return NextResponse.json(
+        { ok: false, error: "This listing is currently reserved through another active routing path." },
+        { status: 403 }
+      )
+    }
+
     const packetFileName = listing.packetFileName
     if (!packetFileName) {
       console.error("vault_packet missing_packet_filename", { slug })

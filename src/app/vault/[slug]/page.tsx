@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 type VaultListingStatus = "active" | "claimed" | "expired"
+type VaultRoutingState = "open" | "in_discussion" | "reserved" | "closed"
 
 type VaultListing = {
   slug: string
@@ -27,6 +28,17 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  routingState?: VaultRoutingState
+  routingReservedByEmail?: string
+  routingReservedByName?: string
+  pursuitRequestCount?: number
+}
+
+type PursuitState = {
+  routingState: VaultRoutingState
+  requestCount: number
+  reservedByCurrentUser: boolean
+  hasRequestedByCurrentUser: boolean
 }
 
 function hasAgreementCookie(slug: string) {
@@ -50,6 +62,13 @@ function readinessClasses(readiness?: string) {
   return "text-white/70"
 }
 
+function routingStateCopy(state: VaultRoutingState) {
+  if (state === "reserved") return "Reserved"
+  if (state === "in_discussion") return "In Discussion"
+  if (state === "closed") return "Closed"
+  return "Open"
+}
+
 export default function VaultListingPage() {
   const [slug, setSlug] = useState("")
   const [listing, setListing] = useState<VaultListing | null>(null)
@@ -71,6 +90,41 @@ export default function VaultListingPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
+  const [pursuitMessage, setPursuitMessage] = useState("")
+  const [pursuitLoading, setPursuitLoading] = useState(false)
+  const [pursuitSubmitting, setPursuitSubmitting] = useState(false)
+  const [pursuitError, setPursuitError] = useState("")
+  const [pursuitSuccess, setPursuitSuccess] = useState("")
+  const [pursuitState, setPursuitState] = useState<PursuitState>({
+    routingState: "open",
+    requestCount: 0,
+    reservedByCurrentUser: false,
+    hasRequestedByCurrentUser: false,
+  })
+
+  const loadPursuitState = async (listingSlug: string) => {
+    if (!listingSlug) return
+
+    try {
+      setPursuitLoading(true)
+      const res = await fetch(`/api/vault/pursuit?slug=${encodeURIComponent(listingSlug)}`, {
+        cache: "no-store",
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) return
+
+      setPursuitState({
+        routingState: data.routingState || "open",
+        requestCount: Number(data.requestCount || 0),
+        reservedByCurrentUser: Boolean(data.reservedByCurrentUser),
+        hasRequestedByCurrentUser: Boolean(data.hasRequestedByCurrentUser),
+      })
+    } finally {
+      setPursuitLoading(false)
+    }
+  }
+
   useEffect(() => {
     const pathParts = window.location.pathname.split("/").filter(Boolean)
     const currentSlug = pathParts[pathParts.length - 1] || ""
@@ -86,6 +140,7 @@ export default function VaultListingPage() {
 
     if (currentSlug) {
       setAccepted(hasAgreementCookie(currentSlug))
+      void loadPursuitState(currentSlug)
     }
 
     const loadListing = async () => {
@@ -118,7 +173,7 @@ export default function VaultListingPage() {
       }
     }
 
-    loadListing()
+    void loadListing()
   }, [])
 
   const handleApprovalCheck = async () => {
@@ -153,6 +208,7 @@ export default function VaultListingPage() {
       setApprovedEmail(data.email || emailCheck)
       setEmail(data.email || emailCheck)
       setSuccess("")
+      await loadPursuitState(slug)
     } catch {
       setApprovalError("Unable to verify approval.")
     } finally {
@@ -200,10 +256,46 @@ export default function VaultListingPage() {
 
       setSuccess("Acceptance recorded.")
       setAccepted(true)
+      await loadPursuitState(slug)
     } catch {
       setError("Unable to record acceptance.")
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handlePursuitRequest = async () => {
+    setPursuitError("")
+    setPursuitSuccess("")
+
+    try {
+      setPursuitSubmitting(true)
+
+      const res = await fetch("/api/vault/pursuit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          listingSlug: slug,
+          fullName: fullName || approvedEmail,
+          message: pursuitMessage,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) {
+        setPursuitError(data?.error || "Unable to submit pursuit request.")
+        return
+      }
+
+      setPursuitSuccess("Pursuit request submitted. FALCO will control routing from here.")
+      await loadPursuitState(slug)
+    } catch {
+      setPursuitError("Unable to submit pursuit request.")
+    } finally {
+      setPursuitSubmitting(false)
     }
   }
 
@@ -238,6 +330,10 @@ export default function VaultListingPage() {
     )
   }
 
+  const packetBlockedByRouting =
+    pursuitState.routingState === "closed" ||
+    (pursuitState.routingState === "reserved" && !pursuitState.reservedByCurrentUser)
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="absolute inset-0 -z-20 bg-black" />
@@ -251,7 +347,7 @@ export default function VaultListingPage() {
 
           <div className="flex items-center gap-6">
             <Link href="/vault" className="text-sm text-white/65 transition hover:text-white">
-              ← Back to Vault
+              Back to Vault
             </Link>
           </div>
         </div>
@@ -332,58 +428,50 @@ export default function VaultListingPage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">FALCO Score</div>
-                <div className="mt-2 text-sm font-medium text-white/82">{listing.falcoScore ?? "—"}</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{listing.falcoScore ?? "-"}</div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Auction Readiness</div>
                 <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-                  {listing.auctionReadiness || "—"}
+                  {listing.auctionReadiness || "-"}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity Band</div>
-                <div className="mt-2 text-sm font-medium text-white/82">{listing.equityBand || "—"}</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{listing.equityBand || "-"}</div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days to Sale</div>
-                <div className="mt-2 text-sm font-medium text-white/82">
-                  {listing.dtsDays ?? "—"}
-                </div>
+                <div className="mt-2 text-sm font-medium text-white/82">{listing.dtsDays ?? "-"}</div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Ready</div>
-                <div className="mt-2 text-sm font-medium text-white/82">
-                  {listing.contactReady ? "YES" : "NO"}
-                </div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Routing</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{routingStateCopy(pursuitState.routingState)}</div>
               </div>
             </div>
 
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               <div className="rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
-                <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                  NDA
-                </div>
+                <div className="text-xs uppercase tracking-[0.24em] text-white/45">NDA</div>
                 <ul className="mt-4 space-y-3 text-sm leading-7 text-white/68">
-                  <li>• Listing details are confidential.</li>
-                  <li>• Packet contents may not be shared without permission.</li>
-                  <li>• Information is for evaluation only.</li>
-                  <li>• Unauthorized disclosure is prohibited.</li>
+                  <li>Listing details are confidential.</li>
+                  <li>Packet contents may not be shared without permission.</li>
+                  <li>Information is for evaluation only.</li>
+                  <li>Unauthorized disclosure is prohibited.</li>
                 </ul>
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
-                <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                  Non-Circumvention
-                </div>
+                <div className="text-xs uppercase tracking-[0.24em] text-white/45">Non-Circumvention</div>
                 <ul className="mt-4 space-y-3 text-sm leading-7 text-white/68">
-                  <li>• You may not bypass FALCO or its partners.</li>
-                  <li>• You may not contact deal parties to cut out FALCO.</li>
-                  <li>• You may not replicate or redistribute the opportunity.</li>
-                  <li>• All access is subject to FALCO-controlled routing.</li>
+                  <li>You may not bypass FALCO or its partners.</li>
+                  <li>You may not contact deal parties to cut out FALCO.</li>
+                  <li>You may not replicate or redistribute the opportunity.</li>
+                  <li>All access is subject to FALCO-controlled routing.</li>
                 </ul>
               </div>
             </div>
@@ -434,9 +522,7 @@ export default function VaultListingPage() {
                     onChange={(e) => setNdaAccepted(e.target.checked)}
                     className="mt-1"
                   />
-                  <span>
-                    I have read and agree to the confidentiality and non-disclosure restrictions.
-                  </span>
+                  <span>I have read and agree to the confidentiality and non-disclosure restrictions.</span>
                 </label>
 
                 <label className="flex items-start gap-3">
@@ -502,95 +588,107 @@ export default function VaultListingPage() {
               </p>
 
               <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Market</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.market}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Distress Type</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.distressType}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Window</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.auctionWindow}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">FALCO Score</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.falcoScore ?? "—"}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Readiness</div>
-                  <div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>
-                    {listing.auctionReadiness || "—"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "—"}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Days to Sale</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "—"}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Contact Ready</div>
-                  <div className="mt-3 text-lg font-semibold text-white">
-                    {listing.contactReady ? "YES" : "NO"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Status</div>
-                  <div className="mt-3 text-lg font-semibold text-white">{listing.status}</div>
-                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Market</div><div className="mt-3 text-lg font-semibold text-white">{listing.market}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Distress Type</div><div className="mt-3 text-lg font-semibold text-white">{listing.distressType}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Window</div><div className="mt-3 text-lg font-semibold text-white">{listing.auctionWindow}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">FALCO Score</div><div className="mt-3 text-lg font-semibold text-white">{listing.falcoScore ?? "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Readiness</div><div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>{listing.auctionReadiness || "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div><div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days to Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Contact Ready</div><div className="mt-3 text-lg font-semibold text-white">{listing.contactReady ? "YES" : "NO"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Routing</div><div className="mt-3 text-lg font-semibold text-white">{routingStateCopy(pursuitState.routingState)}</div></div>
               </div>
             </div>
 
             <div className="rounded-[30px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">
-              <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                Listing Summary
-              </div>
+              <div className="text-xs uppercase tracking-[0.24em] text-white/45">Listing Summary</div>
 
               <div className="mt-6 space-y-5 text-sm leading-7 text-white/68">
                 <p>{listing.publicTeaser}</p>
-                <p>
-                  Distribution of this opportunity outside the approved FALCO path is
-                  prohibited by the accepted NDA and non-circumvention terms.
-                </p>
+                <p>Distribution of this opportunity outside the approved FALCO path is prohibited by the accepted NDA and non-circumvention terms.</p>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
+                {pursuitState.routingState === "open"
+                  ? "Routing is open. Approved partners may review the packet and request controlled pursuit."
+                  : pursuitState.routingState === "in_discussion"
+                  ? `Routing is already in discussion with ${pursuitState.requestCount} active request${pursuitState.requestCount === 1 ? "" : "s"}. FALCO still controls next-step routing.`
+                  : pursuitState.routingState === "reserved" && pursuitState.reservedByCurrentUser
+                  ? "This listing is currently reserved to your approved vault email."
+                  : pursuitState.routingState === "reserved"
+                  ? "This listing is currently reserved through another active FALCO routing path."
+                  : "This listing is closed for further routing."}
               </div>
 
               <div className="mt-8 space-y-4">
-                <a
-                  href={listing.packetUrl}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
-                >
-                  <span>{listing.packetLabel}</span>
-                  <span className="text-white/40">→</span>
-                </a>
+                {packetBlockedByRouting ? (
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 text-sm text-white/45">
+                    <span>{listing.packetLabel}</span>
+                    <span>Unavailable</span>
+                  </div>
+                ) : (
+                  <a
+                    href={listing.packetUrl}
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
+                  >
+                    <span>{listing.packetLabel}</span>
+                    <span className="text-white/40">&gt;</span>
+                  </a>
+                )}
 
                 <a
                   href="mailto:access@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
                 >
                   <span>Request Deal Discussion</span>
-                  <span className="text-white/40">→</span>
+                  <span className="text-white/40">&gt;</span>
                 </a>
               </div>
 
               <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Source Lead
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Controlled Pursuit</div>
+                <p className="mt-3 text-sm leading-7 text-white/68">
+                  Viewing a packet does not claim the opportunity. If you want FALCO to route this listing toward your channel, submit a pursuit request below.
+                </p>
+
+                <textarea
+                  value={pursuitMessage}
+                  onChange={(e) => setPursuitMessage(e.target.value)}
+                  className="mt-4 min-h-[110px] w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                  placeholder="Optional: note channel fit, buyer profile, or intended execution path."
+                  disabled={pursuitSubmitting || packetBlockedByRouting || pursuitState.hasRequestedByCurrentUser}
+                />
+
+                {pursuitError ? (
+                  <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    {pursuitError}
+                  </div>
+                ) : null}
+
+                {pursuitSuccess ? (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                    {pursuitSuccess}
+                  </div>
+                ) : null}
+
+                <div className="mt-4">
+                  <button
+                    onClick={handlePursuitRequest}
+                    disabled={pursuitLoading || pursuitSubmitting || packetBlockedByRouting || pursuitState.hasRequestedByCurrentUser}
+                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/40"
+                  >
+                    {pursuitState.hasRequestedByCurrentUser
+                      ? "Pursuit Requested"
+                      : pursuitSubmitting
+                      ? "Submitting..."
+                      : "Request Pursuit"}
+                  </button>
                 </div>
-                <div className="mt-3 break-all text-sm text-white/68">
-                  {listing.sourceLeadKey}
-                </div>
+              </div>
+
+              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Source Lead</div>
+                <div className="mt-3 break-all text-sm text-white/68">{listing.sourceLeadKey}</div>
               </div>
             </div>
           </div>

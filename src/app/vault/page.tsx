@@ -30,6 +30,10 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  routingState?: "open" | "in_discussion" | "reserved" | "closed"
+  routingReservedByEmail?: string
+  routingReservedByName?: string
+  pursuitRequestCount?: number
 }
 
 const criticalDataIssuesBySlug: Record<string, string[]> = {
@@ -60,6 +64,13 @@ function readinessClasses(readiness?: string) {
   if (readiness === "GREEN") return "text-emerald-200"
   if (readiness === "YELLOW" || readiness === "PARTIAL") return "text-amber-200"
   return "text-white/70"
+}
+
+function routingStateCopy(state?: VaultListing["routingState"]) {
+  if (state === "reserved") return "Reserved"
+  if (state === "in_discussion") return "In Discussion"
+  if (state === "closed") return "Closed"
+  return "Open"
 }
 
 function getVaultSegment(listing: VaultListing): VaultSegment {
@@ -170,11 +181,32 @@ function ListingCard({ listing }: { listing: VaultListing }) {
             {listing.contactReady ? "YES" : "NO"}
           </div>
         </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Routing
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {routingStateCopy(listing.routingState)}
+          </div>
+        </div>
       </div>
 
       <p className="mt-5 text-sm leading-7 text-white/68">
         {listing.publicTeaser}
       </p>
+
+      {listing.routingState === "in_discussion" && (listing.pursuitRequestCount ?? 0) > 0 ? (
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
+          Routing note: {listing.pursuitRequestCount} active pursuit request{listing.pursuitRequestCount === 1 ? "" : "s"} in review.
+        </div>
+      ) : null}
+
+      {listing.routingState === "reserved" ? (
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
+          Routing note: currently reserved through an active FALCO routing path.
+        </div>
+      ) : null}
 
       {criticalDataIssues.length > 0 ? (
         <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">

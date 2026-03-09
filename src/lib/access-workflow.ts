@@ -169,6 +169,7 @@ export async function listAccessRequests() {
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .select("*")
+    .in("status", ["pending", "approved", "rejected"])
     .order("created_at", { ascending: false })
 
   if (error) {

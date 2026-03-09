@@ -1,4 +1,5 @@
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
+import { getVaultRoutingSnapshot, getVaultRoutingSnapshotsForListings, type VaultRoutingState } from "@/lib/vault-pursuit"
 
 export type VaultListingStatus = "active" | "claimed" | "expired"
 
@@ -28,6 +29,10 @@ export type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  routingState?: VaultRoutingState
+  routingReservedByEmail?: string
+  routingReservedByName?: string
+  pursuitRequestCount?: number
 }
 
 type VaultListingRow = {
@@ -93,7 +98,25 @@ export async function listVaultListings() {
     return []
   }
 
-  return (data ?? []).map(mapRowToVaultListing)
+  const mappedRows = (data ?? []).map(mapRowToVaultListing)
+  const routingSnapshots = await getVaultRoutingSnapshotsForListings(
+    mappedRows.map((listing) => ({
+      slug: listing.slug,
+      status: listing.status,
+    }))
+  )
+
+  return mappedRows.map((listing) => {
+    const snapshot = routingSnapshots.get(listing.slug)
+
+    return {
+      ...listing,
+      routingState: snapshot?.routingState ?? (listing.status === "active" ? "open" : "closed"),
+      routingReservedByEmail: snapshot?.reservedByEmail,
+      routingReservedByName: snapshot?.reservedByName,
+      pursuitRequestCount: snapshot?.requestCount ?? 0,
+    }
+  })
 }
 
 export async function listActiveVaultListings() {
@@ -126,7 +149,16 @@ export async function findVaultListing(slug: string) {
 
   if (!data) return null
 
-  return mapRowToVaultListing(data as VaultListingRow)
+  const mapped = mapRowToVaultListing(data as VaultListingRow)
+  const snapshot = await getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active")
+
+  return {
+    ...mapped,
+    routingState: snapshot.routingState,
+    routingReservedByEmail: snapshot.reservedByEmail,
+    routingReservedByName: snapshot.reservedByName,
+    pursuitRequestCount: snapshot.requestCount,
+  }
 }
 
 export async function upsertVaultListing(listing: VaultListing) {
