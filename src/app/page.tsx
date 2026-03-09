@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { getHomeMetrics } from "@/lib/home-metrics"
 
+export const dynamic = "force-dynamic"
+
 const stats = [
   { label: "Primary Focus", value: "Distress Asset Origination" },
   { label: "System Role", value: "Lead Conversion Overlay" },

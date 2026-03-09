@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!approval) {
       console.warn("access_check denied_unapproved_email", { email })
       return NextResponse.json(
-        { ok: false, approved: false, error: "Email is not approved for vault access." },
+        { ok: false, error: "Unable to verify vault access." },
         { status: 403 }
       )
     }

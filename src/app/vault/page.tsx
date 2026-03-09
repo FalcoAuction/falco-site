@@ -30,22 +30,13 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  topTierReady?: boolean
+  vaultPublishReady?: boolean
+  dataNotes?: string[]
   routingState?: "open" | "in_discussion" | "reserved" | "closed"
   routingReservedByEmail?: string
   routingReservedByName?: string
   pursuitRequestCount?: number
-}
-
-const criticalDataIssuesBySlug: Record<string, string[]> = {
-  "davidson-county-foreclosure-7543a33d": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-408587fa": ["Ownership unavailable", "Mortgage unavailable"],
-  "rutherford-county-foreclosure-26f721d9": ["Mortgage unavailable"],
-  "williamson-county-foreclosure-c3ddeeab": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-b664bdae": ["Mortgage unavailable"],
-  "rutherford-county-foreclosure-5b9d9f7c": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-96f145db": ["Ownership unavailable", "Mortgage unavailable"],
-  "rutherford-county-foreclosure-e1acd26d": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-f6560628": ["Ownership unavailable", "Mortgage unavailable"],
 }
 
 function statusClasses(status: VaultListingStatus) {
@@ -74,11 +65,7 @@ function routingStateCopy(state?: VaultListing["routingState"]) {
 }
 
 function getVaultSegment(listing: VaultListing): VaultSegment {
-  const readiness = listing.auctionReadiness?.toUpperCase()
-  const dtsDays = listing.dtsDays ?? null
-  const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
-
-  if (readiness === "GREEN" && insidePrimaryWindow) {
+  if (listing.topTierReady) {
     return "top"
   }
 
@@ -91,7 +78,7 @@ function commercialShareForListing(listing: VaultListing) {
 
 function ListingCard({ listing }: { listing: VaultListing }) {
   const segment = getVaultSegment(listing)
-  const criticalDataIssues = criticalDataIssuesBySlug[listing.slug] ?? []
+  const criticalDataIssues = listing.dataNotes ?? []
   const commercialShare = commercialShareForListing(listing)
 
   return (

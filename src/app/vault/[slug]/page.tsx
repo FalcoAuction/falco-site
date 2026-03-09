@@ -28,6 +28,9 @@ type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  topTierReady?: boolean
+  vaultPublishReady?: boolean
+  dataNotes?: string[]
   routingState?: VaultRoutingState
   routingReservedByEmail?: string
   routingReservedByName?: string
@@ -39,18 +42,6 @@ type PursuitState = {
   requestCount: number
   reservedByCurrentUser: boolean
   hasRequestedByCurrentUser: boolean
-}
-
-const criticalDataIssuesBySlug: Record<string, string[]> = {
-  "davidson-county-foreclosure-7543a33d": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-408587fa": ["Ownership unavailable", "Mortgage unavailable"],
-  "rutherford-county-foreclosure-26f721d9": ["Mortgage unavailable"],
-  "williamson-county-foreclosure-c3ddeeab": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-b664bdae": ["Mortgage unavailable"],
-  "rutherford-county-foreclosure-5b9d9f7c": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-96f145db": ["Ownership unavailable", "Mortgage unavailable"],
-  "rutherford-county-foreclosure-e1acd26d": ["Ownership unavailable", "Mortgage unavailable"],
-  "davidson-county-foreclosure-f6560628": ["Ownership unavailable", "Mortgage unavailable"],
 }
 
 function hasAgreementCookie(slug: string) {
@@ -82,11 +73,7 @@ function routingStateCopy(state: VaultRoutingState) {
 }
 
 function isTopLead(listing: VaultListing) {
-  const readiness = listing.auctionReadiness?.toUpperCase()
-  const dtsDays = listing.dtsDays ?? null
-  const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
-
-  return readiness === "GREEN" && insidePrimaryWindow
+  return listing.topTierReady === true
 }
 
 export default function VaultListingPage() {
@@ -220,7 +207,7 @@ export default function VaultListingPage() {
       const data = await res.json()
 
       if (!res.ok || !data?.ok || !data?.approved) {
-        setApprovalError(data?.error || "Email is not approved for vault access.")
+        setApprovalError(data?.error || "Unable to verify vault access.")
         return
       }
 
@@ -354,6 +341,7 @@ export default function VaultListingPage() {
     pursuitState.routingState === "closed" ||
     (pursuitState.routingState === "reserved" && !pursuitState.reservedByCurrentUser)
   const commercialShare = isTopLead(listing) ? "30%" : "20%"
+  const criticalDataIssues = listing.dataNotes ?? []
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -628,6 +616,12 @@ export default function VaultListingPage() {
                 <p>{listing.publicTeaser}</p>
                 <p>Distribution of this opportunity outside the approved FALCO path is prohibited by the accepted NDA and non-circumvention terms.</p>
               </div>
+
+              {criticalDataIssues.length > 0 ? (
+                <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-sm text-amber-100">
+                  Data note: {criticalDataIssues.join(" + ")}.
+                </div>
+              ) : null}
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
                 {pursuitState.routingState === "open"

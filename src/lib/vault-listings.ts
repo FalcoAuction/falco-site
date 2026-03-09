@@ -1,5 +1,11 @@
+import fs from "fs"
+import path from "path"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
-import { getVaultRoutingSnapshot, getVaultRoutingSnapshotsForListings, type VaultRoutingState } from "@/lib/vault-pursuit"
+import {
+  getVaultRoutingSnapshot,
+  getVaultRoutingSnapshotsForListings,
+  type VaultRoutingState,
+} from "@/lib/vault-pursuit"
 
 export type VaultListingStatus = "active" | "claimed" | "expired"
 
@@ -29,6 +35,9 @@ export type VaultListing = {
   equityBand?: string
   dtsDays?: number | null
   contactReady?: boolean
+  topTierReady?: boolean
+  vaultPublishReady?: boolean
+  dataNotes?: string[]
   routingState?: VaultRoutingState
   routingReservedByEmail?: string
   routingReservedByName?: string
@@ -49,36 +58,80 @@ type VaultListingRow = {
   created_at: string
 }
 
-function mapRowToVaultListing(row: VaultListingRow): VaultListing {
+type LocalVaultListingOverlay = Partial<VaultListing> & {
+  slug: string
+}
+
+const LOCAL_VAULT_LISTINGS_FILE = path.join(process.cwd(), "data", "vault_listings.ndjson")
+
+function loadLocalVaultListingOverlay() {
+  const overlays = new Map<string, LocalVaultListingOverlay>()
+
+  if (!fs.existsSync(LOCAL_VAULT_LISTINGS_FILE)) {
+    return overlays
+  }
+
+  const raw = fs.readFileSync(LOCAL_VAULT_LISTINGS_FILE, "utf8").trim()
+  if (!raw) return overlays
+
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+
+    try {
+      const row = JSON.parse(trimmed) as LocalVaultListingOverlay
+      if (row?.slug) overlays.set(row.slug, row)
+    } catch {
+      continue
+    }
+  }
+
+  return overlays
+}
+
+function mapRowToVaultListing(
+  row: VaultListingRow,
+  overlay?: LocalVaultListingOverlay
+): VaultListing {
   const countyBase = row.county ?? "Unknown County"
   const stateBase = row.state ?? "TN"
-  const titleBase = row.title ?? row.slug
+  const titleBase = overlay?.title ?? row.title ?? row.slug
+  const auctionReadiness = overlay?.auctionReadiness ?? row.auction_readiness ?? undefined
+  const dtsDays = overlay?.dtsDays ?? row.dts_days
+  const contactReady =
+    typeof overlay?.contactReady === "boolean"
+      ? overlay.contactReady
+      : typeof auctionReadiness === "string"
+      ? auctionReadiness.toUpperCase() === "GREEN"
+      : false
 
   return {
     slug: row.slug,
     title: titleBase,
-    market: `${countyBase}, ${stateBase}`,
+    market: overlay?.market ?? `${countyBase}, ${stateBase}`,
     county: countyBase,
     status: row.is_active === false ? "expired" : "active",
-    distressType: "Foreclosure",
-    auctionWindow: "21–60 Days",
+    distressType: overlay?.distressType ?? "Distress Opportunity",
+    auctionWindow: overlay?.auctionWindow ?? "Confidential",
     summary:
+      overlay?.summary ??
       "Auction-timed opportunity currently inside the FALCO pipeline with packet-level underwriting and restricted routing.",
     publicTeaser:
+      overlay?.publicTeaser ??
       "Address-level details, packet, and contact path are restricted to approved users.",
     packetUrl: `/api/vault/packet?slug=${row.slug}`,
-    packetLabel: "Auction Opportunity Brief",
-    packetFileName: row.packet_path ?? undefined,
-    sourceLeadKey: row.slug,
-    createdAt: row.created_at,
-    falcoScore: row.falco_score,
-    auctionReadiness: row.auction_readiness ?? undefined,
-    equityBand: row.equity_band ?? undefined,
-    dtsDays: row.dts_days,
-    contactReady:
-      typeof row.auction_readiness === "string"
-        ? row.auction_readiness.toUpperCase() === "GREEN"
-        : false,
+    packetLabel: overlay?.packetLabel ?? "Auction Opportunity Brief",
+    packetFileName: overlay?.packetFileName ?? row.packet_path ?? undefined,
+    sourceLeadKey: overlay?.sourceLeadKey ?? row.slug,
+    createdAt: overlay?.createdAt ?? row.created_at,
+    falcoScore: overlay?.falcoScore ?? row.falco_score,
+    auctionReadiness,
+    equityBand: overlay?.equityBand ?? row.equity_band ?? undefined,
+    dtsDays,
+    contactReady,
+    topTierReady: overlay?.topTierReady,
+    vaultPublishReady: overlay?.vaultPublishReady,
+    dataNotes: overlay?.dataNotes,
   }
 }
 
@@ -98,7 +151,10 @@ export async function listVaultListings() {
     return []
   }
 
-  const mappedRows = (data ?? []).map(mapRowToVaultListing)
+  const overlayBySlug = loadLocalVaultListingOverlay()
+  const mappedRows = (data ?? []).map((row) =>
+    mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
+  )
   const routingSnapshots = await getVaultRoutingSnapshotsForListings(
     mappedRows.map((listing) => ({
       slug: listing.slug,
@@ -149,7 +205,11 @@ export async function findVaultListing(slug: string) {
 
   if (!data) return null
 
-  const mapped = mapRowToVaultListing(data as VaultListingRow)
+  const overlayBySlug = loadLocalVaultListingOverlay()
+  const mapped = mapRowToVaultListing(
+    data as VaultListingRow,
+    overlayBySlug.get((data as VaultListingRow).slug)
+  )
   const snapshot = await getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active")
 
   return {
@@ -220,7 +280,7 @@ export async function updateVaultListingStatus(
   if (!data) return null
 
   return {
-    ...mapRowToVaultListing(data as VaultListingRow),
+    ...mapRowToVaultListing(data as VaultListingRow, loadLocalVaultListingOverlay().get(slug)),
     status,
     claimedAt: status === "claimed" ? new Date().toISOString() : undefined,
     claimedBy: status === "claimed" ? claimedBy || "unknown" : undefined,

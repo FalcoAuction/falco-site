@@ -72,7 +72,7 @@ export default function SampleDealPage() {
       const data = await res.json()
 
       if (!res.ok || !data?.ok || !data?.approved) {
-        setApprovalError(data?.error || "Email is not approved for vault access.")
+        setApprovalError(data?.error || "Unable to verify vault access.")
         return
       }
 
