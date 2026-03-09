@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getVaultReadinessReport } from "@/lib/vault-readiness"
-
-const ADMIN_APPROVAL_SECRET = process.env.FALCO_APPROVAL_SECRET || "falco-admin-local"
+import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
 
 export async function POST(req: NextRequest) {
   try {
+    const adminApprovalSecret = getAdminApprovalSecret()
     const body = await req.json()
     const secret = String(body?.secret ?? "").trim()
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (secret !== ADMIN_APPROVAL_SECRET) {
+    if (secret !== adminApprovalSecret) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized readiness request." },
         { status: 401 }
@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
       ok: true,
       report,
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "Missing FALCO_APPROVAL_SECRET.") {
+      return NextResponse.json(
+        { ok: false, error: "Approval secret is not configured." },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { ok: false, error: "Unable to build vault readiness report." },
       { status: 500 }

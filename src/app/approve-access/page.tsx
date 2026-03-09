@@ -34,18 +34,33 @@ export default function ApproveAccessPage() {
   const [requests, setRequests] = useState<AccessRequestRecord[]>([])
   const [secret, setSecret] = useState("")
   const [approvedBy, setApprovedBy] = useState("Patrick Armour")
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [processingId, setProcessingId] = useState("")
   const [error, setError] = useState("")
   const [result, setResult] = useState("")
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending")
 
-  const loadQueue = async () => {
+  const loadQueue = async (queueSecret?: string) => {
+    const secretToUse = (queueSecret ?? secret).trim()
+
+    if (!secretToUse) {
+      setError("Approval secret is required.")
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError("")
 
-      const res = await fetch("/api/access/queue", { cache: "no-store" })
+      const res = await fetch("/api/access/queue", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify({ secret: secretToUse }),
+      })
       const data = await res.json()
 
       if (!res.ok || !data?.ok) {
@@ -62,7 +77,8 @@ export default function ApproveAccessPage() {
   }
 
   useEffect(() => {
-    loadQueue()
+    setRequests([])
+    setLoading(false)
   }, [])
 
   const handleAction = async (
@@ -106,7 +122,7 @@ export default function ApproveAccessPage() {
         setResult(`Rejected ${data.email}`)
       }
 
-      await loadQueue()
+      await loadQueue(secret)
     } catch {
       setError("Unable to process request.")
     } finally {
@@ -232,6 +248,16 @@ export default function ApproveAccessPage() {
                   {result}
                 </div>
               ) : null}
+
+              <div className="mt-6">
+                <button
+                  onClick={() => loadQueue(secret)}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? "Loading..." : "Load Queue"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -263,6 +289,10 @@ export default function ApproveAccessPage() {
           {loading ? (
             <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 text-sm text-white/60">
               Loading access queue...
+            </div>
+          ) : !secret.trim() ? (
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 text-sm text-white/60">
+              Enter the approval secret, then load the queue.
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 text-sm text-white/60">

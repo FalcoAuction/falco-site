@@ -3,11 +3,11 @@ import {
   approveAccessRequest,
   rejectAccessRequest,
 } from "@/lib/access-workflow"
-
-const ADMIN_APPROVAL_SECRET = process.env.FALCO_APPROVAL_SECRET || "falco-admin-local"
+import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
 
 export async function POST(req: NextRequest) {
   try {
+    const adminApprovalSecret = getAdminApprovalSecret()
     const body = await req.json()
 
     const requestId = String(body?.requestId ?? "").trim()
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (secret !== ADMIN_APPROVAL_SECRET) {
+    if (secret !== adminApprovalSecret) {
       return NextResponse.json(
         { ok: false, error: "Unauthorized approval request." },
         { status: 401 }
@@ -63,7 +63,14 @@ export async function POST(req: NextRequest) {
       email: approval.email,
       requestId: approval.requestId,
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "Missing FALCO_APPROVAL_SECRET.") {
+      return NextResponse.json(
+        { ok: false, error: "Approval secret is not configured." },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { ok: false, error: "Unable to process access request." },
       { status: 500 }
