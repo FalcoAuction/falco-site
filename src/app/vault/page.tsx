@@ -4,6 +4,9 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 type VaultListingStatus = "active" | "claimed" | "expired"
+type VaultSegment = "top" | "secondary"
+type VaultReadinessFilter = "all" | "GREEN" | "YELLOW" | "OTHER"
+type VaultContactFilter = "all" | "ready" | "not_ready"
 
 type VaultListing = {
   slug: string
@@ -47,11 +50,155 @@ function readinessClasses(readiness?: string) {
   return "text-white/70"
 }
 
+function getVaultSegment(listing: VaultListing): VaultSegment {
+  const readiness = listing.auctionReadiness?.toUpperCase()
+  const score = listing.falcoScore ?? 0
+  const dtsDays = listing.dtsDays ?? null
+  const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
+
+  if (readiness === "GREEN" && score >= 90 && insidePrimaryWindow) {
+    return "top"
+  }
+
+  return "secondary"
+}
+
+function ListingCard({ listing }: { listing: VaultListing }) {
+  const segment = getVaultSegment(listing)
+
+  return (
+    <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-xs uppercase tracking-[0.24em] text-white/45">
+            Vault Listing
+          </div>
+
+          <div
+            className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${
+              segment === "top"
+                ? "border-white/20 bg-white text-black"
+                : "border-white/10 bg-white/5 text-white/65"
+            }`}
+          >
+            {segment === "top" ? "Top Lead" : "Secondary Lead"}
+          </div>
+        </div>
+
+        <div
+          className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em] ${statusClasses(
+            listing.status
+          )}`}
+        >
+          {listing.status}
+        </div>
+      </div>
+
+      <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-white">
+        {listing.title}
+      </h2>
+
+      <div className="mt-3 text-sm text-white/50">
+        {listing.market}
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Distress Type
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.distressType}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Auction Window
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.auctionWindow}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            FALCO Score
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.falcoScore ?? "-"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Auction Readiness
+          </div>
+          <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
+            {listing.auctionReadiness || "-"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Equity Band
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.equityBand || "-"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Contact Ready
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {listing.contactReady ? "YES" : "NO"}
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-5 text-sm leading-7 text-white/68">
+        {listing.publicTeaser}
+      </p>
+
+      <div className="mt-5 text-sm text-white/50">
+        Packet: {listing.packetLabel}
+      </div>
+
+      {listing.status === "claimed" && listing.claimedBy ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
+          Claimed by: {listing.claimedBy}
+        </div>
+      ) : null}
+
+      {listing.status === "expired" && listing.expiresAt ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
+          Expired: {listing.expiresAt}
+        </div>
+      ) : null}
+
+      <div className="mt-8">
+        <Link
+          href={`/vault/${listing.slug}`}
+          className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+        >
+          View Listing
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 export default function VaultPage() {
   const [listings, setListings] = useState<VaultListing[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [filter, setFilter] = useState<"all" | "active" | "claimed" | "expired">("active")
+  const [segmentFilter, setSegmentFilter] = useState<"all" | VaultSegment>("all")
+  const [readinessFilter, setReadinessFilter] = useState<VaultReadinessFilter>("all")
+  const [countyFilter, setCountyFilter] = useState("all")
+  const [contactFilter, setContactFilter] = useState<VaultContactFilter>("all")
 
   useEffect(() => {
     const loadListings = async () => {
@@ -79,17 +226,51 @@ export default function VaultPage() {
   }, [])
 
   const filteredListings = useMemo(() => {
-    if (filter === "all") return listings
-    return listings.filter((listing) => listing.status === filter)
-  }, [filter, listings])
+    return listings.filter((listing) => {
+      if (filter !== "all" && listing.status !== filter) return false
+      if (segmentFilter !== "all" && getVaultSegment(listing) !== segmentFilter) return false
+
+      if (readinessFilter !== "all") {
+        const readiness = listing.auctionReadiness?.toUpperCase()
+
+        if (readinessFilter === "OTHER") {
+          if (readiness === "GREEN" || readiness === "YELLOW") return false
+        } else if (readiness !== readinessFilter) {
+          return false
+        }
+      }
+
+      if (countyFilter !== "all" && listing.county !== countyFilter) return false
+      if (contactFilter === "ready" && !listing.contactReady) return false
+      if (contactFilter === "not_ready" && listing.contactReady) return false
+
+      return true
+    })
+  }, [contactFilter, countyFilter, filter, listings, readinessFilter, segmentFilter])
+
+  const segmentedListings = useMemo(() => {
+    return {
+      top: filteredListings.filter((listing) => getVaultSegment(listing) === "top"),
+      secondary: filteredListings.filter((listing) => getVaultSegment(listing) === "secondary"),
+    }
+  }, [filteredListings])
 
   const counts = useMemo(() => {
+    const activeListings = listings.filter((listing) => listing.status === "active")
+    const topCount = activeListings.filter((listing) => getVaultSegment(listing) === "top").length
+
     return {
       all: listings.length,
-      active: listings.filter((l) => l.status === "active").length,
-      claimed: listings.filter((l) => l.status === "claimed").length,
-      expired: listings.filter((l) => l.status === "expired").length,
+      active: activeListings.length,
+      claimed: listings.filter((listing) => listing.status === "claimed").length,
+      expired: listings.filter((listing) => listing.status === "expired").length,
+      top: topCount,
+      secondary: activeListings.length - topCount,
     }
+  }, [listings])
+
+  const counties = useMemo(() => {
+    return [...new Set(listings.map((listing) => listing.county).filter(Boolean))].sort()
   }, [listings])
 
   return (
@@ -155,19 +336,19 @@ export default function VaultPage() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Claimed
+                  Top Leads
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
-                  {counts.claimed}
+                  {counts.top}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Expired
+                  Secondary
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
-                  {counts.expired}
+                  {counts.secondary}
                 </div>
               </div>
             </div>
@@ -195,6 +376,84 @@ export default function VaultPage() {
           ))}
         </div>
 
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+              Lead Tier
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ["all", "All Leads"],
+                ["top", `Top Leads (${counts.top})`],
+                ["secondary", `Secondary (${counts.secondary})`],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setSegmentFilter(value as "all" | VaultSegment)}
+                  className={`rounded-full border px-3 py-2 text-sm transition ${
+                    segmentFilter === value
+                      ? "border-white/20 bg-white text-black"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
+            <label className="text-[11px] uppercase tracking-[0.22em] text-white/40" htmlFor="vault-readiness-filter">
+              Readiness + Contact
+            </label>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <select
+                id="vault-readiness-filter"
+                value={readinessFilter}
+                onChange={(event) => setReadinessFilter(event.target.value as VaultReadinessFilter)}
+                className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+              >
+                <option value="all">All Readiness</option>
+                <option value="GREEN">GREEN</option>
+                <option value="YELLOW">YELLOW</option>
+                <option value="OTHER">Other</option>
+              </select>
+
+              <select
+                value={contactFilter}
+                onChange={(event) => setContactFilter(event.target.value as VaultContactFilter)}
+                className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+              >
+                <option value="all">All Contact States</option>
+                <option value="ready">Contact Ready</option>
+                <option value="not_ready">Not Contact Ready</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
+            <label className="text-[11px] uppercase tracking-[0.22em] text-white/40" htmlFor="vault-county-filter">
+              County
+            </label>
+
+            <select
+              id="vault-county-filter"
+              value={countyFilter}
+              onChange={(event) => setCountyFilter(event.target.value)}
+              className="mt-3 w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+            >
+              <option value="all">All Counties</option>
+              {counties.map((county) => (
+                <option key={county} value={county}>
+                  {county}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {error ? (
           <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
@@ -212,120 +471,56 @@ export default function VaultPage() {
             No listings in this queue.
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {filteredListings.map((listing) => (
-              <div
-                key={listing.slug}
-                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                    Vault Listing
+          <div className="space-y-12">
+            {segmentedListings.top.length > 0 ? (
+              <div>
+                <div className="mb-6 flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-white/45">
+                      Priority Shelf
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Top Leads
+                    </h2>
                   </div>
 
-                  <div
-                    className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em] ${statusClasses(
-                      listing.status
-                    )}`}
-                  >
-                    {listing.status}
+                  <div className="text-sm text-white/45">
+                    {segmentedListings.top.length} listing{segmentedListings.top.length === 1 ? "" : "s"}
                   </div>
                 </div>
 
-                <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-white">
-                  {listing.title}
-                </h2>
-
-                <div className="mt-3 text-sm text-white/50">
-                  {listing.market}
-                </div>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      Distress Type
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-white/82">
-                      {listing.distressType}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      Auction Window
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-white/82">
-                      {listing.auctionWindow}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      FALCO Score
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-white/82">
-                      {listing.falcoScore ?? "—"}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      Auction Readiness
-                    </div>
-                    <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-                      {listing.auctionReadiness || "—"}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      Equity Band
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-white/82">
-                      {listing.equityBand || "—"}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                      Contact Ready
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-white/82">
-                      {listing.contactReady ? "YES" : "NO"}
-                    </div>
-                  </div>
-                </div>
-
-                <p className="mt-5 text-sm leading-7 text-white/68">
-                  {listing.publicTeaser}
-                </p>
-
-                <div className="mt-5 text-sm text-white/50">
-                  Packet: {listing.packetLabel}
-                </div>
-
-                {listing.status === "claimed" && listing.claimedBy ? (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
-                    Claimed by: {listing.claimedBy}
-                  </div>
-                ) : null}
-
-                {listing.status === "expired" && listing.expiresAt ? (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
-                    Expired: {listing.expiresAt}
-                  </div>
-                ) : null}
-
-                <div className="mt-8">
-                  <Link
-                    href={`/vault/${listing.slug}`}
-                    className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
-                  >
-                    View Listing
-                  </Link>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {segmentedListings.top.map((listing) => (
+                    <ListingCard key={listing.slug} listing={listing} />
+                  ))}
                 </div>
               </div>
-            ))}
+            ) : null}
+
+            {segmentedListings.secondary.length > 0 ? (
+              <div>
+                <div className="mb-6 flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-white/45">
+                      Secondary Shelf
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Secondary Leads
+                    </h2>
+                  </div>
+
+                  <div className="text-sm text-white/45">
+                    {segmentedListings.secondary.length} listing{segmentedListings.secondary.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  {segmentedListings.secondary.map((listing) => (
+                    <ListingCard key={listing.slug} listing={listing} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </section>
