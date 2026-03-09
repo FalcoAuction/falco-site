@@ -75,12 +75,10 @@ function routingStateCopy(state?: VaultListing["routingState"]) {
 
 function getVaultSegment(listing: VaultListing): VaultSegment {
   const readiness = listing.auctionReadiness?.toUpperCase()
-  const score = listing.falcoScore ?? 0
   const dtsDays = listing.dtsDays ?? null
   const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
-  const missingCriticalData = criticalDataIssuesBySlug[listing.slug]?.length ?? 0
 
-  if (readiness === "GREEN" && score >= 90 && insidePrimaryWindow && missingCriticalData === 0) {
+  if (readiness === "GREEN" && insidePrimaryWindow) {
     return "top"
   }
 

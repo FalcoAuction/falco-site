@@ -83,4 +83,32 @@ if (error) {
   process.exit(1)
 }
 
+const mappedSlugs = mapped.map((row) => row.slug)
+
+const { data: existingRows, error: existingError } = await supabase
+  .from("vault_listings")
+  .select("slug")
+
+if (existingError) {
+  console.error("Import post-check failed:", existingError.message)
+  process.exit(1)
+}
+
+const staleSlugs = (existingRows ?? [])
+  .map((row) => row.slug)
+  .filter((slug) => slug && !mappedSlugs.includes(slug))
+
+if (staleSlugs.length > 0) {
+  const { error: deleteError } = await supabase
+    .from("vault_listings")
+    .delete()
+    .in("slug", staleSlugs)
+
+  if (deleteError) {
+    console.error("Stale row cleanup failed:", deleteError.message)
+    process.exit(1)
+  }
+}
+
 console.log(`Imported ${mapped.length} vault listings.`)
+console.log(`Removed ${staleSlugs.length} stale vault listings.`)
