@@ -74,8 +74,26 @@ async function readLatestTrackFile(
   }
 }
 
+async function readTrackFromSnapshot(
+  snapshotDir: string,
+  track: OutreachTrackReport["track"]
+): Promise<OutreachTrackReport> {
+  const fileName = `${track}.json`
+  const fullPath = path.join(snapshotDir, fileName)
+  const raw = await readFile(fullPath, "utf8")
+  const parsed = JSON.parse(raw) as OutreachCandidate[]
+
+  return {
+    track,
+    generatedAt: "snapshot",
+    fileName,
+    candidates: parsed,
+  }
+}
+
 export async function getOutreachReport(): Promise<OutreachReport> {
   const outreachDir = path.join(process.cwd(), "..", "falco-distress-bots", "out", "outreach")
+  const snapshotDir = path.join(process.cwd(), "data", "outreach")
 
   try {
     const tracks = await Promise.all(
@@ -91,13 +109,31 @@ export async function getOutreachReport(): Promise<OutreachReport> {
       tracks,
     }
   } catch (error) {
-    console.warn("getOutreachReport falling back to empty mode", error)
+    console.warn("getOutreachReport falling back to site snapshot mode", error)
+
+    try {
+      const tracks = await Promise.all(
+        TRACKS.map((track) => readTrackFromSnapshot(snapshotDir, track))
+      )
+
+      return {
+        generatedAt: new Date().toISOString(),
+        sourceMode: "fallback",
+        sourceNote:
+          "Using the latest committed outreach snapshot because the hosted site cannot see the local bots workspace directory.",
+        sourceDir: snapshotDir,
+        tracks,
+      }
+    } catch (snapshotError) {
+      console.warn("getOutreachReport snapshot fallback unavailable", snapshotError)
+    }
+
     return {
       generatedAt: new Date().toISOString(),
       sourceMode: "fallback",
       sourceNote:
-        "Outreach files are only available in the shared workspace/local environment. The hosted site cannot see the local bots outreach directory.",
-      sourceDir: outreachDir,
+        "Outreach files are only available in the shared workspace/local environment, and no committed outreach snapshot is present yet.",
+      sourceDir: snapshotDir,
       tracks: TRACKS.map((track) => ({
         track,
         generatedAt: null,
