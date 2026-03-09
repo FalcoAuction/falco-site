@@ -32,6 +32,18 @@ type VaultListing = {
   contactReady?: boolean
 }
 
+const criticalDataIssuesBySlug: Record<string, string[]> = {
+  "davidson-county-foreclosure-7543a33d": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-408587fa": ["Ownership unavailable", "Mortgage unavailable"],
+  "rutherford-county-foreclosure-26f721d9": ["Mortgage unavailable"],
+  "williamson-county-foreclosure-c3ddeeab": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-b664bdae": ["Mortgage unavailable"],
+  "rutherford-county-foreclosure-5b9d9f7c": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-96f145db": ["Ownership unavailable", "Mortgage unavailable"],
+  "rutherford-county-foreclosure-e1acd26d": ["Ownership unavailable", "Mortgage unavailable"],
+  "davidson-county-foreclosure-f6560628": ["Ownership unavailable", "Mortgage unavailable"],
+}
+
 function statusClasses(status: VaultListingStatus) {
   if (status === "claimed") {
     return "border-amber-500/20 bg-amber-500/10 text-amber-200"
@@ -55,8 +67,9 @@ function getVaultSegment(listing: VaultListing): VaultSegment {
   const score = listing.falcoScore ?? 0
   const dtsDays = listing.dtsDays ?? null
   const insidePrimaryWindow = typeof dtsDays === "number" && dtsDays >= 21 && dtsDays <= 45
+  const missingCriticalData = criticalDataIssuesBySlug[listing.slug]?.length ?? 0
 
-  if (readiness === "GREEN" && score >= 90 && insidePrimaryWindow) {
+  if (readiness === "GREEN" && score >= 90 && insidePrimaryWindow && missingCriticalData === 0) {
     return "top"
   }
 
@@ -65,6 +78,7 @@ function getVaultSegment(listing: VaultListing): VaultSegment {
 
 function ListingCard({ listing }: { listing: VaultListing }) {
   const segment = getVaultSegment(listing)
+  const criticalDataIssues = criticalDataIssuesBySlug[listing.slug] ?? []
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
@@ -162,6 +176,12 @@ function ListingCard({ listing }: { listing: VaultListing }) {
         {listing.publicTeaser}
       </p>
 
+      {criticalDataIssues.length > 0 ? (
+        <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
+          Data note: {criticalDataIssues.join(" + ")}.
+        </div>
+      ) : null}
+
       <div className="mt-5 text-sm text-white/50">
         Packet: {listing.packetLabel}
       </div>
@@ -195,7 +215,7 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [filter, setFilter] = useState<"all" | "active" | "claimed" | "expired">("active")
-  const [segmentFilter, setSegmentFilter] = useState<"all" | VaultSegment>("all")
+  const [segmentFilter, setSegmentFilter] = useState<"all" | VaultSegment>("top")
   const [readinessFilter, setReadinessFilter] = useState<VaultReadinessFilter>("all")
   const [countyFilter, setCountyFilter] = useState("all")
   const [contactFilter, setContactFilter] = useState<VaultContactFilter>("all")
@@ -468,7 +488,9 @@ export default function VaultPage() {
           </div>
         ) : filteredListings.length === 0 ? (
           <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 text-sm text-white/60">
-            No listings in this queue.
+            {segmentFilter === "top"
+              ? "No listings currently meet the top-lead full-data threshold. Switch to Secondary or All to review the broader vault."
+              : "No listings in this queue."}
           </div>
         ) : (
           <div className="space-y-12">
