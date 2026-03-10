@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -37,7 +38,7 @@ export type OperatorPacketRow = {
 export type OperatorReport = {
   generatedAt: string
   dbPath: string
-  sourceMode: "full" | "site_fallback"
+  sourceMode: "full" | "snapshot" | "site_fallback"
   sourceNote: string
   overview: {
     totalLeads: number
@@ -51,6 +52,18 @@ export type OperatorReport = {
   recentLeads: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   topCandidates: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   recentPackets: (OperatorPacketRow & { vaultLive: boolean; vaultSlug: string | null })[]
+}
+
+async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
+  const snapshotPath = path.join(process.cwd(), "data", "operator", "report.json")
+
+  try {
+    const raw = await readFile(snapshotPath, "utf8")
+    const parsed = JSON.parse(raw) as OperatorReport
+    return parsed
+  } catch {
+    return null
+  }
 }
 
 function leadKeyPrefix(leadKey: string) {
@@ -177,6 +190,11 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
 }
 
 export async function getOperatorReport(): Promise<OperatorReport> {
+  const snapshot = await readSnapshotOperatorReport()
+  if (snapshot) {
+    return snapshot
+  }
+
   try {
     const scriptPath = path.join(process.cwd(), "scripts", "operator_report.py")
     const defaultDbPath = path.join(

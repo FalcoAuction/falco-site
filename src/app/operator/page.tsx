@@ -24,7 +24,7 @@ type ReportRow = {
 type OperatorReport = {
   generatedAt: string
   dbPath: string
-  sourceMode: "full" | "site_fallback"
+  sourceMode: "full" | "snapshot" | "site_fallback"
   sourceNote: string
   overview: {
     totalLeads: number
@@ -132,7 +132,11 @@ export default function OperatorPage() {
                   <br />
                   Source DB: {report.dbPath}
                   <br />
-                  Mode: {report.sourceMode === "full" ? "Full upstream + vault" : "Site fallback"}
+                  Mode: {report.sourceMode === "full"
+                    ? "Full upstream + vault"
+                    : report.sourceMode === "snapshot"
+                      ? "Hosted snapshot"
+                      : "Site fallback"}
                 </div>
               ) : null}
             </div>
