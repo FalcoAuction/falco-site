@@ -19,6 +19,10 @@ type ReportRow = {
   bytes?: number
   vaultLive: boolean
   vaultSlug: string | null
+  vaultPublishReady?: boolean
+  topTierReady?: boolean
+  packetCompletenessPct?: number | null
+  executionBlockers?: string[]
 }
 
 type OperatorReport = {
@@ -33,11 +37,13 @@ type OperatorReport = {
     packeted: number
     contactReady: number
     vaultLive: number
+    vaultQueue: number
     pendingApprovals: number
   }
   recentLeads: ReportRow[]
   topCandidates: ReportRow[]
   recentPackets: ReportRow[]
+  vaultCandidates: ReportRow[]
 }
 
 function badgeClasses(value?: string | null) {
@@ -73,6 +79,7 @@ export default function OperatorPage() {
       ["Packeted", report.overview.packeted],
       ["Contact Ready", report.overview.contactReady],
       ["Vault Live", report.overview.vaultLive],
+      ["Vault Queue", report.overview.vaultQueue],
       ["Pending Approvals", report.overview.pendingApprovals],
     ]
   }, [report])
@@ -284,6 +291,77 @@ export default function OperatorPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                  Vault Queue
+                </div>
+                <div className="mt-3 text-sm text-white/58">
+                  Not-live leads that are ready for vault review or one step away.
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  {report.vaultCandidates.length ? report.vaultCandidates.map((row) => (
+                    <div
+                      key={`vault-candidate-${row.lead_key}`}
+                      className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <div className="text-xl font-semibold tracking-[-0.03em] text-white">
+                            {row.address || row.lead_key}
+                          </div>
+                          <div className="mt-2 text-sm text-white/55">
+                            {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
+                          <span className={`rounded-full border px-3 py-1 ${badgeClasses(row.auction_readiness)}`}>
+                            {row.auction_readiness || "Unknown"}
+                          </span>
+                          <span className={`rounded-full border px-3 py-1 ${row.vaultPublishReady ? "border-white/18 bg-white text-black" : "border-white/10 bg-white/[0.05] text-white/65"}`}>
+                            {row.vaultPublishReady ? "Ready" : "Near Miss"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid gap-4 md:grid-cols-5">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Score</div>
+                          <div className="mt-2 text-sm text-white/82">{row.falco_score_internal ?? "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity</div>
+                          <div className="mt-2 text-sm text-white/82">{row.equity_band || "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days to Sale</div>
+                          <div className="mt-2 text-sm text-white/82">{row.dts_days ?? "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Completeness</div>
+                          <div className="mt-2 text-sm text-white/82">{row.packetCompletenessPct ?? "—"}%</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Top Tier</div>
+                          <div className="mt-2 text-sm text-white/82">{row.topTierReady ? "YES" : "NO"}</div>
+                        </div>
+                      </div>
+
+                      {row.executionBlockers?.length ? (
+                        <div className="mt-4 text-sm text-white/62">
+                          Blockers: {row.executionBlockers.join(" • ")}
+                        </div>
+                      ) : null}
+                    </div>
+                  )) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/58">
+                      No not-live leads currently qualify for the vault queue.
+                    </div>
+                  )}
                 </div>
               </section>
 

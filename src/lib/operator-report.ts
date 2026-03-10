@@ -20,6 +20,10 @@ export type OperatorLeadRow = {
   last_seen_at?: string | null
   score_updated_at?: string | null
   latest_packet_at?: string | null
+  vaultPublishReady?: boolean
+  topTierReady?: boolean
+  packetCompletenessPct?: number | null
+  executionBlockers?: string[]
 }
 
 export type OperatorPacketRow = {
@@ -47,11 +51,13 @@ export type OperatorReport = {
     packeted: number
     contactReady: number
     vaultLive: number
+    vaultQueue: number
     pendingApprovals: number
   }
   recentLeads: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   topCandidates: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   recentPackets: (OperatorPacketRow & { vaultLive: boolean; vaultSlug: string | null })[]
+  vaultCandidates: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
 }
 
 async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
@@ -181,11 +187,13 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
       packeted: vaultRows.filter((row) => Boolean(row.packet_path)).length,
       contactReady: vaultRows.filter((row) => row.auction_readiness?.toUpperCase() === "GREEN").length,
       vaultLive: vaultRows.filter((row) => row.is_active !== false).length,
+      vaultQueue: 0,
       pendingApprovals,
     },
     recentLeads,
     topCandidates,
     recentPackets,
+    vaultCandidates: [],
   }
 }
 
@@ -220,10 +228,12 @@ export async function getOperatorReport(): Promise<OperatorReport> {
         uwReady: number
         packeted: number
         contactReady: number
+        vaultQueue?: number
       }
       recentLeads: OperatorLeadRow[]
       topCandidates: OperatorLeadRow[]
       recentPackets: OperatorPacketRow[]
+      vaultCandidates?: OperatorLeadRow[]
     }
 
     const [vaultResult, accessResult] = await Promise.all([
@@ -251,11 +261,13 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       overview: {
         ...parsed.overview,
         vaultLive: liveListings.length,
+        vaultQueue: parsed.overview.vaultQueue ?? 0,
         pendingApprovals,
       },
       recentLeads: attachVaultState(parsed.recentLeads, liveListings),
       topCandidates: attachVaultState(parsed.topCandidates, liveListings),
       recentPackets: attachVaultState(parsed.recentPackets, liveListings),
+      vaultCandidates: attachVaultState(parsed.vaultCandidates ?? [], liveListings),
     }
   } catch (error) {
     console.warn("getOperatorReport falling back to site-only mode", error)
