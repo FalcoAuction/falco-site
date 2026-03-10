@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T22:58:44.830542+00:00",
+  "generatedAt": "2026-03-10T23:13:30.600664+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -9,8 +9,8 @@
     "uwReady": 20,
     "packeted": 21,
     "contactReady": 37,
-    "vaultLive": 11,
-    "vaultQueue": 3,
+    "vaultLive": 14,
+    "vaultQueue": 0,
     "pendingApprovals": 0
   },
   "recentLeads": [
@@ -59,8 +59,8 @@
       "first_seen_at": "2026-03-10T22:49:12.525029Z",
       "last_seen_at": "2026-03-10T22:49:12.525029Z",
       "score_updated_at": "2026-03-10T22:49:49+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-377d852b"
     },
     {
       "lead_key": "adaf8ad8f06b692b9cf507ec5251b20104ed8a3a",
@@ -75,8 +75,8 @@
       "first_seen_at": "2026-03-10T22:49:12.538543Z",
       "last_seen_at": "2026-03-10T22:49:12.538543Z",
       "score_updated_at": "2026-03-10T22:49:49+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-adaf8ad8"
     },
     {
       "lead_key": "693ed509bebe699088b0db12b5fb3ff237ade28a",
@@ -91,8 +91,8 @@
       "first_seen_at": "2026-03-10T22:49:14.552216Z",
       "last_seen_at": "2026-03-10T22:49:14.552216Z",
       "score_updated_at": "2026-03-10T22:49:49+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "hamilton-county-foreclosure-693ed509"
     },
     {
       "lead_key": "cca6f0354ced4acbea403a9a79d77ebeb6adb7d1",
@@ -219,8 +219,8 @@
       "dts_days": 23,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-10T22:49:50+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-377d852b"
     },
     {
       "lead_key": "693ed509bebe699088b0db12b5fb3ff237ade28a",
@@ -233,8 +233,8 @@
       "dts_days": 23,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-10T22:49:50+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "hamilton-county-foreclosure-693ed509"
     },
     {
       "lead_key": "adaf8ad8f06b692b9cf507ec5251b20104ed8a3a",
@@ -247,8 +247,8 @@
       "dts_days": 23,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-10T22:49:50+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-adaf8ad8"
     },
     {
       "lead_key": "408587fa390f65481cd0b4d617185f6fc2432584",
@@ -361,8 +361,8 @@
       "falco_score_internal": 100,
       "auction_readiness": "GREEN",
       "dts_days": 23,
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-adaf8ad8"
     },
     {
       "lead_key": "377d852b08f808bffa96177c48929574392e8f17",
@@ -375,8 +375,8 @@
       "falco_score_internal": 100,
       "auction_readiness": "GREEN",
       "dts_days": 23,
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-377d852b"
     },
     {
       "lead_key": "693ed509bebe699088b0db12b5fb3ff237ade28a",
@@ -389,8 +389,8 @@
       "falco_score_internal": 100,
       "auction_readiness": "GREEN",
       "dts_days": 23,
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "hamilton-county-foreclosure-693ed509"
     },
     {
       "lead_key": "cca6f0354ced4acbea403a9a79d77ebeb6adb7d1",
@@ -491,57 +491,5 @@
       "vaultSlug": "rutherford-county-foreclosure-26f721d9"
     }
   ],
-  "vaultCandidates": [
-    {
-      "lead_key": "377d852b08f808bffa96177c48929574392e8f17",
-      "address": "1411 Dick Lonas Road, Knoxville, TN 37909",
-      "county": "Knox County",
-      "distress_type": "FORECLOSURE",
-      "falco_score_internal": 100,
-      "auction_readiness": "GREEN",
-      "equity_band": "MED",
-      "dts_days": 23,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
-    },
-    {
-      "lead_key": "adaf8ad8f06b692b9cf507ec5251b20104ed8a3a",
-      "address": "407 Overhill Road, Knoxville, TN 37914",
-      "county": "Knox County",
-      "distress_type": "FORECLOSURE",
-      "falco_score_internal": 100,
-      "auction_readiness": "GREEN",
-      "equity_band": "LOW",
-      "dts_days": 23,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
-    },
-    {
-      "lead_key": "693ed509bebe699088b0db12b5fb3ff237ade28a",
-      "address": "3922 Yorktown Road, Chattanooga, TN 37416",
-      "county": "Hamilton County",
-      "distress_type": "FORECLOSURE",
-      "falco_score_internal": 100,
-      "auction_readiness": "GREEN",
-      "equity_band": "LOW",
-      "dts_days": 23,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
-    }
-  ]
+  "vaultCandidates": []
 }
