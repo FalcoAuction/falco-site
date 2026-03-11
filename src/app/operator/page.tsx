@@ -104,6 +104,9 @@ type LiveVaultListing = {
   controlParty?: string
   executionPosture?: string
   workabilityBand?: string
+  suggestedExecutionLane?: VaultExecutionLane
+  suggestedLaneConfidence?: string
+  suggestedLaneReasons?: string[]
   topTierReady?: boolean
   vaultPublishReady?: boolean
   routingState?: "open" | "in_discussion" | "reserved" | "closed"
@@ -229,6 +232,14 @@ function executionLaneCopy(value?: VaultExecutionLane) {
   if (value === "auction_only") return "Auction Only"
   if (value === "mixed") return "Mixed"
   return "Unclear"
+}
+
+function laneConfidenceCopy(value?: string) {
+  if (!value) return "Low"
+  const normalized = value.toUpperCase()
+  if (normalized === "HIGH") return "High"
+  if (normalized === "MEDIUM") return "Medium"
+  return "Low"
 }
 
 function executionStageCopy(listing: LiveVaultListing) {
@@ -388,7 +399,8 @@ export default function OperatorPage() {
       const nextLanes: Record<string, VaultExecutionLane> = {}
       for (const listing of data.workspace.liveListings ?? []) {
         nextNotes[listing.slug] = listing.validationNote ?? ""
-        nextLanes[listing.slug] = listing.executionLane ?? "unclear"
+        nextLanes[listing.slug] =
+          listing.executionLane ?? listing.suggestedExecutionLane ?? "unclear"
       }
       setValidationNotes(nextNotes)
       setValidationLanes(nextLanes)
@@ -1121,7 +1133,29 @@ export default function OperatorPage() {
 
                               <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-white/68">
                                 <div>Validation status: <span className="text-white/82">{validationOutcomeCopy(listing.validationOutcome)}</span></div>
-                                <div className="mt-2">Suggested lane: <span className="text-white/82">{executionLaneCopy(listing.executionLane)}</span></div>
+                                <div className="mt-2">
+                                  Agent suggested lane:{" "}
+                                  <span className="text-white/82">
+                                    {executionLaneCopy(listing.suggestedExecutionLane)}
+                                  </span>
+                                  {listing.suggestedLaneConfidence ? (
+                                    <span className="text-white/45">
+                                      {" "}• {laneConfidenceCopy(listing.suggestedLaneConfidence)} confidence
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {listing.suggestedLaneReasons?.length ? (
+                                  <div className="mt-2">
+                                    Why:{" "}
+                                    <span className="text-white/82">
+                                      {listing.suggestedLaneReasons.join(" • ")}
+                                    </span>
+                                  </div>
+                                ) : null}
+                                <div className="mt-2">
+                                  Operator lane:{" "}
+                                  <span className="text-white/82">{executionLaneCopy(listing.executionLane)}</span>
+                                </div>
                                 {listing.validationNote ? (
                                   <div className="mt-2">Note: <span className="text-white/82">{listing.validationNote}</span></div>
                                 ) : null}

@@ -52,6 +52,9 @@ export type VaultListing = {
   controlParty?: string
   executionPosture?: string
   workabilityBand?: string
+  suggestedExecutionLane?: VaultExecutionLane
+  suggestedLaneConfidence?: string
+  suggestedLaneReasons?: string[]
   validationOutcome?: VaultValidationOutcome
   executionLane?: VaultExecutionLane
   validationNote?: string
@@ -164,6 +167,9 @@ function mapRowToVaultListing(
     controlParty: overlay?.controlParty,
     executionPosture: overlay?.executionPosture,
     workabilityBand: overlay?.workabilityBand,
+    suggestedExecutionLane: overlay?.suggestedExecutionLane,
+    suggestedLaneConfidence: overlay?.suggestedLaneConfidence,
+    suggestedLaneReasons: overlay?.suggestedLaneReasons,
     topTierReady: overlay?.topTierReady,
     vaultPublishReady: overlay?.vaultPublishReady,
     dataNotes: overlay?.dataNotes,
