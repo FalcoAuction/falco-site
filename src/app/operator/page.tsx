@@ -73,9 +73,45 @@ type VaultPursuitRecord = {
   actedBy: string
 }
 
+type VaultValidationOutcome =
+  | "validated_execution_path"
+  | "needs_more_info"
+  | "no_real_control_path"
+  | "low_leverage"
+  | "dead_lead"
+
+type VaultExecutionLane =
+  | "borrower_side"
+  | "lender_trustee"
+  | "auction_only"
+  | "mixed"
+  | "unclear"
+
 type VaultRoutingListing = {
   listingSlug: string
   requests: VaultPursuitRecord[]
+}
+
+type LiveVaultListing = {
+  slug: string
+  title: string
+  county: string
+  distressType: string
+  falcoScore?: number | null
+  auctionReadiness?: string
+  dtsDays?: number | null
+  contactPathQuality?: string
+  controlParty?: string
+  executionPosture?: string
+  workabilityBand?: string
+  topTierReady?: boolean
+  vaultPublishReady?: boolean
+  routingState?: "open" | "in_discussion" | "reserved" | "closed"
+  validationOutcome?: VaultValidationOutcome
+  executionLane?: VaultExecutionLane
+  validationNote?: string
+  validatedAt?: string
+  validatedBy?: string
 }
 
 type OutreachCandidate = {
@@ -117,6 +153,7 @@ type OperatorWorkspace = {
   accessRequests: AccessRequestRecord[]
   routingQueue: VaultRoutingListing[]
   outreach: OutreachReport
+  liveListings: LiveVaultListing[]
 }
 
 type TaskItem = {
@@ -178,6 +215,33 @@ function formatWorkspaceMode(mode: OperatorReport["sourceMode"]) {
   return "Site fallback"
 }
 
+function validationOutcomeCopy(value?: VaultValidationOutcome) {
+  if (value === "validated_execution_path") return "Validated Path"
+  if (value === "needs_more_info") return "Needs More Info"
+  if (value === "no_real_control_path") return "No Control Path"
+  if (value === "low_leverage") return "Low Leverage"
+  if (value === "dead_lead") return "Dead Lead"
+  return "Validation Required"
+}
+
+function executionLaneCopy(value?: VaultExecutionLane) {
+  if (value === "borrower_side") return "Borrower Side"
+  if (value === "lender_trustee") return "Lender / Trustee"
+  if (value === "auction_only") return "Auction Only"
+  if (value === "mixed") return "Mixed"
+  return "Unclear"
+}
+
+function executionStageCopy(listing: LiveVaultListing) {
+  if (listing.validationOutcome === "validated_execution_path") return "Validated Execution Path"
+  if (listing.validationOutcome === "needs_more_info") return "Needs More Info"
+  if (listing.validationOutcome === "no_real_control_path") return "No Real Control Path"
+  if (listing.validationOutcome === "low_leverage") return "Low Leverage"
+  if (listing.validationOutcome === "dead_lead") return "Dead Lead"
+  if (listing.topTierReady || listing.vaultPublishReady) return "Operator Review Candidate"
+  return "Screened Opportunity"
+}
+
 export default function OperatorPage() {
   const [secret, setSecret] = useState("")
   const [approvedBy, setApprovedBy] = useState("Patrick Armour")
@@ -187,6 +251,8 @@ export default function OperatorPage() {
   const [error, setError] = useState("")
   const [result, setResult] = useState("")
   const [processingId, setProcessingId] = useState("")
+  const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
+  const [validationLanes, setValidationLanes] = useState<Record<string, VaultExecutionLane>>({})
   const [doneTaskIds, setDoneTaskIds] = useState<string[]>([])
   const [history, setHistory] = useState<TaskHistoryItem[]>([])
 
@@ -239,10 +305,23 @@ export default function OperatorPage() {
     for (const row of workspace.report.vaultCandidates) {
       items.push({
         id: `vault:${row.lead_key}`,
-        title: `Review vault candidate: ${row.address || row.lead_key}`,
+        title: `Review screened candidate: ${row.address || row.lead_key}`,
         detail: `${row.county || "Unknown county"} • ${row.auction_readiness || "Unknown"} • ${row.packetCompletenessPct ?? "?"}% complete`,
         section: "vault",
         priority: row.topTierReady ? "high" : "medium",
+      })
+    }
+
+    for (const listing of workspace.liveListings) {
+      if (!(listing.topTierReady || listing.vaultPublishReady)) continue
+      if (listing.validationOutcome === "validated_execution_path") continue
+
+      items.push({
+        id: `validation:${listing.slug}`,
+        title: `Validate execution path: ${listing.title || listing.slug}`,
+        detail: `${listing.county || "Unknown county"} • ${executionStageCopy(listing)} • ${executionLaneCopy(listing.executionLane)}`,
+        section: "vault",
+        priority: listing.topTierReady ? "high" : "medium",
       })
     }
 
@@ -269,7 +348,13 @@ export default function OperatorPage() {
     if (!workspace) return []
     return [
       ["Tracked Leads", workspace.report.overview.totalLeads],
-      ["Green Ready", workspace.report.overview.greenReady],
+      ["Priority Review", workspace.liveListings.filter((listing) => listing.topTierReady).length],
+      [
+        "Validated Paths",
+        workspace.liveListings.filter(
+          (listing) => listing.validationOutcome === "validated_execution_path"
+        ).length,
+      ],
       ["Vault Live", workspace.report.overview.vaultLive],
       [
         "Pending Approvals",
@@ -316,6 +401,14 @@ export default function OperatorPage() {
       }
 
       setWorkspace(data.workspace)
+      const nextNotes: Record<string, string> = {}
+      const nextLanes: Record<string, VaultExecutionLane> = {}
+      for (const listing of data.workspace.liveListings ?? []) {
+        nextNotes[listing.slug] = listing.validationNote ?? ""
+        nextLanes[listing.slug] = listing.executionLane ?? "unclear"
+      }
+      setValidationNotes(nextNotes)
+      setValidationLanes(nextLanes)
     } catch {
       setError("Unable to load operator workspace.")
     } finally {
@@ -404,6 +497,51 @@ export default function OperatorPage() {
     }
   }
 
+  async function handleValidationAction(
+    listingSlug: string,
+    action: "clear" | VaultValidationOutcome
+  ) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(`validation:${listingSlug}:${action}`)
+    setError("")
+    setResult("")
+
+    try {
+      const res = await fetch("/api/operator/validation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          actedBy,
+          action: action === "clear" ? "clear" : "record",
+          listingSlug,
+          outcome: action === "clear" ? undefined : action,
+          executionLane: validationLanes[listingSlug] ?? "unclear",
+          note: validationNotes[listingSlug] ?? "",
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to record operator validation.")
+        return
+      }
+
+      setResult(action === "clear" ? "Validation cleared." : "Validation recorded.")
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to record operator validation.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
   function completeTask(task: TaskItem) {
     if (doneTaskIds.includes(task.id)) return
     setDoneTaskIds((current) => [task.id, ...current])
@@ -440,11 +578,11 @@ export default function OperatorPage() {
           <div className="mt-6 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
               <h1 className="text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-6xl">
-                Run approvals, routing, and review from one desk.
+                Run approvals, validation, routing, and review from one desk.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-white/68 md:text-lg">
                 This is the single internal workspace for FALCO operator tasks:
-                access approvals, vault routing, live candidate review, and outreach drafts.
+                access approvals, staged opportunity review, operator validation, routing, and outreach drafts.
               </p>
               {workspace ? (
                 <div className="mt-6 text-sm text-white/45">
@@ -818,7 +956,7 @@ export default function OperatorPage() {
                   <div>
                     <div className="text-xs uppercase tracking-[0.22em] text-white/45">Vault</div>
                     <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
-                      Candidate Queue And Live Shelf
+                      Review Queue And Validation Shelf
                     </div>
                   </div>
                   <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
@@ -896,28 +1034,150 @@ export default function OperatorPage() {
                 </div>
 
                 <div className="mt-8">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Live Top Candidates</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Live Review Shelf</div>
                   <div className="mt-4 grid gap-4">
-                    {workspace.report.topCandidates.slice(0, 6).map((row) => (
-                      <article key={`top-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
-                            <div className="mt-1 text-sm text-white/55">
-                              {row.county || "Unknown county"} • {row.dts_days ?? "—"} days
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
-                            <span className={`rounded-full border px-3 py-1 ${badgeClasses(row.auction_readiness)}`}>
-                              {row.auction_readiness || "Unknown"}
-                            </span>
-                            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-white/60">
-                              {row.vaultLive ? "Vault Live" : "Not Live"}
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
+                    {workspace.liveListings.filter((listing) => listing.topTierReady || listing.vaultPublishReady).length ? (
+                      workspace.liveListings
+                        .filter((listing) => listing.topTierReady || listing.vaultPublishReady)
+                        .map((listing) => {
+                          const processingKeyPrefix = `validation:${listing.slug}:`
+                          return (
+                            <article key={`live-${listing.slug}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                              <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                  <div className="text-base font-semibold text-white">{listing.title || listing.slug}</div>
+                                  <div className="mt-1 text-sm text-white/55">
+                                    {listing.county || "Unknown county"} • {listing.dtsDays ?? "—"} days • {listing.distressType || "Unknown type"}
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
+                                  <span className={`rounded-full border px-3 py-1 ${badgeClasses(listing.auctionReadiness)}`}>
+                                    {listing.auctionReadiness || "Unknown"}
+                                  </span>
+                                  <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-white/82">
+                                    {executionStageCopy(listing)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="mt-5 grid gap-4 md:grid-cols-4">
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Path</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.contactPathQuality || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Likely Control</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.controlParty || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Execution Posture</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.executionPosture || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Workability</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.workabilityBand || "—"}</div>
+                                </div>
+                              </div>
+
+                              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-white/68">
+                                <div>Validation status: <span className="text-white/82">{validationOutcomeCopy(listing.validationOutcome)}</span></div>
+                                <div className="mt-2">Suggested lane: <span className="text-white/82">{executionLaneCopy(listing.executionLane)}</span></div>
+                                {listing.validationNote ? (
+                                  <div className="mt-2">Note: <span className="text-white/82">{listing.validationNote}</span></div>
+                                ) : null}
+                              </div>
+
+                              <div className="mt-4 grid gap-3 lg:grid-cols-[220px_1fr]">
+                                <select
+                                  value={validationLanes[listing.slug] ?? "unclear"}
+                                  onChange={(event) =>
+                                    setValidationLanes((current) => ({
+                                      ...current,
+                                      [listing.slug]: event.target.value as VaultExecutionLane,
+                                    }))
+                                  }
+                                  className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+                                >
+                                  <option value="unclear">Lane: Unclear</option>
+                                  <option value="borrower_side">Borrower Side</option>
+                                  <option value="lender_trustee">Lender / Trustee</option>
+                                  <option value="auction_only">Auction Only</option>
+                                  <option value="mixed">Mixed</option>
+                                </select>
+
+                                <textarea
+                                  value={validationNotes[listing.slug] ?? ""}
+                                  onChange={(event) =>
+                                    setValidationNotes((current) => ({
+                                      ...current,
+                                      [listing.slug]: event.target.value,
+                                    }))
+                                  }
+                                  className="min-h-[84px] rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                                  placeholder="Optional operator note: control path, leverage, execution caveat."
+                                />
+                              </div>
+
+                              <div className="mt-4 flex flex-wrap gap-3">
+                                <button
+                                  onClick={() => handleValidationAction(listing.slug, "validated_execution_path")}
+                                  disabled={processingId === `${processingKeyPrefix}validated_execution_path`}
+                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `${processingKeyPrefix}validated_execution_path` ? "Processing..." : "Validated Path"}
+                                </button>
+                                <button
+                                  onClick={() => handleValidationAction(listing.slug, "needs_more_info")}
+                                  disabled={processingId === `${processingKeyPrefix}needs_more_info`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `${processingKeyPrefix}needs_more_info` ? "Processing..." : "Needs Info"}
+                                </button>
+                                <button
+                                  onClick={() => handleValidationAction(listing.slug, "no_real_control_path")}
+                                  disabled={processingId === `${processingKeyPrefix}no_real_control_path`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `${processingKeyPrefix}no_real_control_path` ? "Processing..." : "No Control Path"}
+                                </button>
+                                <button
+                                  onClick={() => handleValidationAction(listing.slug, "low_leverage")}
+                                  disabled={processingId === `${processingKeyPrefix}low_leverage`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `${processingKeyPrefix}low_leverage` ? "Processing..." : "Low Leverage"}
+                                </button>
+                                <button
+                                  onClick={() => handleValidationAction(listing.slug, "dead_lead")}
+                                  disabled={processingId === `${processingKeyPrefix}dead_lead`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `${processingKeyPrefix}dead_lead` ? "Processing..." : "Dead Lead"}
+                                </button>
+                                {listing.validationOutcome ? (
+                                  <button
+                                    onClick={() => handleValidationAction(listing.slug, "clear")}
+                                    disabled={processingId === `${processingKeyPrefix}clear`}
+                                    className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === `${processingKeyPrefix}clear` ? "Processing..." : "Clear"}
+                                  </button>
+                                ) : null}
+                                <Link
+                                  href={`/vault/${listing.slug}`}
+                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                >
+                                  Open Listing
+                                </Link>
+                              </div>
+                            </article>
+                          )
+                        })
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                        No live review candidates are waiting right now.
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>

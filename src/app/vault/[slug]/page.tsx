@@ -40,6 +40,14 @@ type VaultListing = {
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
+  validationOutcome?:
+    | "validated_execution_path"
+    | "needs_more_info"
+    | "no_real_control_path"
+    | "low_leverage"
+    | "dead_lead"
+  executionLane?: "borrower_side" | "lender_trustee" | "auction_only" | "mixed" | "unclear"
+  validationNote?: string
   routingState?: VaultRoutingState
   routingReservedByEmail?: string
   routingReservedByName?: string
@@ -79,6 +87,23 @@ function routingStateCopy(state: VaultRoutingState) {
   if (state === "in_discussion") return "In Discussion"
   if (state === "closed") return "Closed"
   return "Open"
+}
+
+function validationOutcomeCopy(value?: VaultListing["validationOutcome"]) {
+  if (value === "validated_execution_path") return "Partner Validated"
+  if (value === "needs_more_info") return "Needs More Info"
+  if (value === "no_real_control_path") return "No Control Path"
+  if (value === "low_leverage") return "Low Leverage"
+  if (value === "dead_lead") return "Dead Lead"
+  return "Pending Validation"
+}
+
+function executionLaneCopy(value?: VaultListing["executionLane"]) {
+  if (value === "borrower_side") return "Borrower Side"
+  if (value === "lender_trustee") return "Lender / Trustee"
+  if (value === "auction_only") return "Auction Only"
+  if (value === "mixed") return "Mixed"
+  return "Unclear"
 }
 
 function isTopLead(listing: VaultListing) {
@@ -438,9 +463,9 @@ export default function VaultListingPage() {
 
             <p className="mt-6 max-w-4xl text-base leading-7 text-white/68 md:text-lg">
               Approved access has been verified for <span className="text-white">{approvedEmail}</span>.
-              This opportunity is confidential. Access to the listing, packet, and routing path is restricted
+              This screened opportunity is confidential. Access to the listing, packet, and review path is restricted
               to users who agree not to disclose, distribute, bypass, or circumvent FALCO, its partners, or the
-              origin of the opportunity.
+              origin of the opportunity. Final execution viability remains subject to licensed/operator validation.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -450,9 +475,9 @@ export default function VaultListingPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Auction Readiness</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Screening Status</div>
                 <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-                  {listing.auctionReadiness || "-"}
+                  {listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}
                 </div>
               </div>
 
@@ -462,7 +487,7 @@ export default function VaultListingPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days to Sale</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days Until Scheduled Sale</div>
                 <div className="mt-2 text-sm font-medium text-white/82">{listing.dtsDays ?? "-"}</div>
               </div>
 
@@ -472,8 +497,10 @@ export default function VaultListingPage() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Routing</div>
-                <div className="mt-2 text-sm font-medium text-white/82">{routingStateCopy(pursuitState.routingState)}</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Review Stage</div>
+                <div className="mt-2 text-sm font-medium text-white/82">
+                  {listing.executionLane ? executionLaneCopy(listing.executionLane) : routingStateCopy(pursuitState.routingState)}
+                </div>
               </div>
             </div>
 
@@ -599,7 +626,7 @@ export default function VaultListingPage() {
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
             <div>
               <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
-                Confidential Listing
+                Confidential Operator Review
               </div>
 
               <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-6xl">
@@ -610,16 +637,22 @@ export default function VaultListingPage() {
                 {listing.summary}
               </p>
 
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
+                Validation status: <span className="text-white/82">{validationOutcomeCopy(listing.validationOutcome)}</span>.
+                {" "}Final execution viability, control path, and auction fit remain subject to licensed/operator review.
+                {listing.validationNote ? <span> Note: <span className="text-white/82">{listing.validationNote}</span>.</span> : null}
+              </div>
+
               <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Market</div><div className="mt-3 text-lg font-semibold text-white">{listing.market}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Distress Type</div><div className="mt-3 text-lg font-semibold text-white">{listing.distressType}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Window</div><div className="mt-3 text-lg font-semibold text-white">{listing.auctionWindow}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">FALCO Score</div><div className="mt-3 text-lg font-semibold text-white">{listing.falcoScore ?? "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Readiness</div><div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>{listing.auctionReadiness || "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Screening Status</div><div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>{listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div><div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days to Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Contact Ready</div><div className="mt-3 text-lg font-semibold text-white">{listing.contactReady ? "YES" : "NO"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Routing</div><div className="mt-3 text-lg font-semibold text-white">{routingStateCopy(pursuitState.routingState)}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days Until Scheduled Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Direct Contact Path</div><div className="mt-3 text-lg font-semibold text-white">{listing.contactReady ? "Available" : "Thin / Unclear"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Suggested Lane</div><div className="mt-3 text-lg font-semibold text-white">{executionLaneCopy(listing.executionLane)}</div></div>
               </div>
             </div>
 
@@ -628,6 +661,7 @@ export default function VaultListingPage() {
 
               <div className="mt-6 space-y-5 text-sm leading-7 text-white/68">
                 <p>{listing.publicTeaser}</p>
+                <p>This dossier is intended for operator review. Final execution viability, control path, and auction fit remain subject to licensed/operator validation.</p>
                 <p>Distribution of this opportunity outside the approved FALCO path is prohibited by the accepted NDA and non-circumvention terms.</p>
               </div>
 
@@ -645,14 +679,14 @@ export default function VaultListingPage() {
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
                 {pursuitState.routingState === "open"
-                  ? "Routing is open. Approved partners may review the packet and request controlled pursuit."
+                  ? "Partner review is open. Approved partners may review the packet and request a controlled execution path review."
                   : pursuitState.routingState === "in_discussion"
-                  ? `Routing is already in discussion with ${pursuitState.requestCount} active request${pursuitState.requestCount === 1 ? "" : "s"}. FALCO still controls next-step routing.`
+                  ? `Partner review is already in discussion with ${pursuitState.requestCount} active request${pursuitState.requestCount === 1 ? "" : "s"}. FALCO still controls next-step routing.`
                   : pursuitState.routingState === "reserved" && pursuitState.reservedByCurrentUser
                   ? "This listing is currently reserved to your approved vault email."
                   : pursuitState.routingState === "reserved"
                   ? "This listing is currently reserved through another active FALCO routing path."
-                  : "This listing is closed for further routing."}
+                  : "This listing is closed for further review routing."}
               </div>
 
               <div className="mt-8 space-y-4">
@@ -681,16 +715,16 @@ export default function VaultListingPage() {
               </div>
 
               <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Controlled Pursuit</div>
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Operator Review Request</div>
                 <p className="mt-3 text-sm leading-7 text-white/68">
-                  Viewing a packet does not claim the opportunity. If you want FALCO to route this listing toward your channel, submit a pursuit request below.
+                  Viewing a packet does not certify final readiness or claim the opportunity. If you want FALCO to route this listing toward your channel for execution review, submit a request below.
                 </p>
 
                 <textarea
                   value={pursuitMessage}
                   onChange={(e) => setPursuitMessage(e.target.value)}
                   className="mt-4 min-h-[110px] w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
-                  placeholder="Optional: note channel fit, buyer profile, or intended execution path."
+                  placeholder="Optional: note channel fit, buyer profile, control-path view, or intended execution lane."
                   disabled={pursuitSubmitting || packetBlockedByRouting || pursuitState.hasRequestedByCurrentUser}
                 />
 
@@ -716,7 +750,7 @@ export default function VaultListingPage() {
                       ? "Pursuit Requested"
                       : pursuitSubmitting
                       ? "Submitting..."
-                      : "Request Pursuit"}
+                      : "Request Review Path"}
                   </button>
                 </div>
               </div>

@@ -4,7 +4,11 @@ import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 import {
   getVaultRoutingSnapshot,
   getVaultRoutingSnapshotsForListings,
+  getVaultValidationRecordByListing,
+  getVaultValidationSnapshotsForListings,
+  type VaultExecutionLane,
   type VaultRoutingState,
+  type VaultValidationOutcome,
 } from "@/lib/vault-pursuit"
 
 export type VaultListingStatus = "active" | "claimed" | "expired"
@@ -48,6 +52,11 @@ export type VaultListing = {
   controlParty?: string
   executionPosture?: string
   workabilityBand?: string
+  validationOutcome?: VaultValidationOutcome
+  executionLane?: VaultExecutionLane
+  validationNote?: string
+  validatedAt?: string
+  validatedBy?: string
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
@@ -181,15 +190,19 @@ export async function listVaultListings() {
   const mappedRows = (data ?? []).map((row) =>
     mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
   )
-  const routingSnapshots = await getVaultRoutingSnapshotsForListings(
-    mappedRows.map((listing) => ({
-      slug: listing.slug,
-      status: listing.status,
-    }))
-  )
+  const [routingSnapshots, validationSnapshots] = await Promise.all([
+    getVaultRoutingSnapshotsForListings(
+      mappedRows.map((listing) => ({
+        slug: listing.slug,
+        status: listing.status,
+      }))
+    ),
+    getVaultValidationSnapshotsForListings(mappedRows.map((listing) => listing.slug)),
+  ])
 
   return mappedRows.map((listing) => {
     const snapshot = routingSnapshots.get(listing.slug)
+    const validation = validationSnapshots.get(listing.slug)
 
     return {
       ...listing,
@@ -197,6 +210,11 @@ export async function listVaultListings() {
       routingReservedByEmail: snapshot?.reservedByEmail,
       routingReservedByName: snapshot?.reservedByName,
       pursuitRequestCount: snapshot?.requestCount ?? 0,
+      validationOutcome: validation?.outcome,
+      executionLane: validation?.executionLane,
+      validationNote: validation?.note,
+      validatedAt: validation?.submittedAt,
+      validatedBy: validation?.actedBy,
     }
   })
 }
@@ -236,7 +254,10 @@ export async function findVaultListing(slug: string) {
     data as VaultListingRow,
     overlayBySlug.get((data as VaultListingRow).slug)
   )
-  const snapshot = await getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active")
+  const [snapshot, validation] = await Promise.all([
+    getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active"),
+    getVaultValidationRecordByListing(mapped.slug),
+  ])
 
   return {
     ...mapped,
@@ -244,6 +265,11 @@ export async function findVaultListing(slug: string) {
     routingReservedByEmail: snapshot.reservedByEmail,
     routingReservedByName: snapshot.reservedByName,
     pursuitRequestCount: snapshot.requestCount,
+    validationOutcome: validation?.outcome,
+    executionLane: validation?.executionLane,
+    validationNote: validation?.note,
+    validatedAt: validation?.submittedAt,
+    validatedBy: validation?.actedBy,
   }
 }
 

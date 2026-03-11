@@ -42,6 +42,14 @@ type VaultListing = {
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
+  validationOutcome?:
+    | "validated_execution_path"
+    | "needs_more_info"
+    | "no_real_control_path"
+    | "low_leverage"
+    | "dead_lead"
+  executionLane?: "borrower_side" | "lender_trustee" | "auction_only" | "mixed" | "unclear"
+  validationNote?: string
   routingState?: "open" | "in_discussion" | "reserved" | "closed"
   routingReservedByEmail?: string
   routingReservedByName?: string
@@ -71,6 +79,23 @@ function routingStateCopy(state?: VaultListing["routingState"]) {
   if (state === "in_discussion") return "In Discussion"
   if (state === "closed") return "Closed"
   return "Open"
+}
+
+function validationOutcomeCopy(value?: VaultListing["validationOutcome"]) {
+  if (value === "validated_execution_path") return "Partner Validated"
+  if (value === "needs_more_info") return "Needs More Info"
+  if (value === "no_real_control_path") return "No Control Path"
+  if (value === "low_leverage") return "Low Leverage"
+  if (value === "dead_lead") return "Dead Lead"
+  return "Pending Validation"
+}
+
+function executionLaneCopy(value?: VaultListing["executionLane"]) {
+  if (value === "borrower_side") return "Borrower Side"
+  if (value === "lender_trustee") return "Lender / Trustee"
+  if (value === "auction_only") return "Auction Only"
+  if (value === "mixed") return "Mixed"
+  return "Unclear"
 }
 
 function getVaultSegment(listing: VaultListing): VaultSegment {
@@ -105,7 +130,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
                 : "border-white/10 bg-white/5 text-white/65"
             }`}
           >
-            {segment === "top" ? "Top Lead" : "Secondary Lead"}
+            {segment === "top" ? "Priority Review" : "Screened Secondary"}
           </div>
         </div>
 
@@ -156,10 +181,12 @@ function ListingCard({ listing }: { listing: VaultListing }) {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Auction Readiness
+            Screening Status
           </div>
           <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-            {listing.auctionReadiness || "-"}
+            {listing.validationOutcome
+              ? validationOutcomeCopy(listing.validationOutcome)
+              : listing.auctionReadiness || "-"}
           </div>
         </div>
 
@@ -174,10 +201,10 @@ function ListingCard({ listing }: { listing: VaultListing }) {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Contact Ready
+            Direct Contact Path
           </div>
           <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.contactReady ? "YES" : "NO"}
+            {listing.contactReady ? "Available" : "Thin / Unclear"}
           </div>
         </div>
 
@@ -192,10 +219,10 @@ function ListingCard({ listing }: { listing: VaultListing }) {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Routing
+            Review Lane
           </div>
           <div className="mt-2 text-sm font-medium text-white/82">
-            {routingStateCopy(listing.routingState)}
+            {listing.executionLane ? executionLaneCopy(listing.executionLane) : routingStateCopy(listing.routingState)}
           </div>
         </div>
 
@@ -213,15 +240,20 @@ function ListingCard({ listing }: { listing: VaultListing }) {
         {listing.publicTeaser}
       </p>
 
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
+        Validation: {validationOutcomeCopy(listing.validationOutcome)}. Final execution viability and auction-path fit remain subject to licensed/operator review.
+        {listing.validationNote ? ` Note: ${listing.validationNote}` : ""}
+      </div>
+
       {listing.routingState === "in_discussion" && (listing.pursuitRequestCount ?? 0) > 0 ? (
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
-          Routing note: {listing.pursuitRequestCount} active pursuit request{listing.pursuitRequestCount === 1 ? "" : "s"} in review.
+          Review note: {listing.pursuitRequestCount} active pursuit request{listing.pursuitRequestCount === 1 ? "" : "s"} in review.
         </div>
       ) : null}
 
       {listing.routingState === "reserved" ? (
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
-          Routing note: currently reserved through an active FALCO routing path.
+          Review note: currently reserved through an active FALCO routing path.
         </div>
       ) : null}
 
@@ -369,13 +401,14 @@ export default function VaultPage() {
             </div>
 
             <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-6xl">
-              Restricted opportunity flow for approved FALCO partners.
+              Restricted screened opportunity flow for approved FALCO partners.
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-              The vault contains active opportunities, acquisition briefs, and controlled
-              distribution paths. Full listing access is available only to approved users
-              and remains gated by NDA and non-circumvention acceptance.
+              The vault contains heavily filtered opportunities, operator-facing briefs, and controlled
+              distribution paths. Full listing access is available only to approved users and remains
+              gated by NDA and non-circumvention acceptance. Final execution viability and auction-path
+              fit remain subject to licensed/operator validation.
             </p>
           </div>
 
@@ -405,7 +438,7 @@ export default function VaultPage() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Top Leads
+                  Priority Review
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
                   {counts.top}
@@ -414,7 +447,7 @@ export default function VaultPage() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Secondary
+                  Screened Secondary
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
                   {counts.secondary}
@@ -448,14 +481,14 @@ export default function VaultPage() {
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
             <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-              Lead Tier
+              Review Tier
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 ["all", "All Leads"],
-                ["top", `Top Leads (${counts.top})`],
-                ["secondary", `Secondary (${counts.secondary})`],
+                ["top", `Priority Review (${counts.top})`],
+                ["secondary", `Screened Secondary (${counts.secondary})`],
               ].map(([value, label]) => (
                 <button
                   key={value}
@@ -538,7 +571,7 @@ export default function VaultPage() {
         ) : filteredListings.length === 0 ? (
           <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 text-sm text-white/60">
             {segmentFilter === "top"
-              ? "No listings currently meet the top-lead full-data threshold. Switch to Secondary or All to review the broader vault."
+              ? "No listings currently meet the priority-review threshold. Switch to Screened Secondary or All to review the broader vault."
               : "No listings in this queue."}
           </div>
         ) : (
@@ -551,7 +584,7 @@ export default function VaultPage() {
                       Priority Shelf
                     </div>
                     <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
-                      Top Leads
+                      Priority Review
                     </h2>
                   </div>
 
@@ -576,7 +609,7 @@ export default function VaultPage() {
                       Secondary Shelf
                     </div>
                     <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
-                      Secondary Leads
+                      Screened Secondary
                     </h2>
                   </div>
 
