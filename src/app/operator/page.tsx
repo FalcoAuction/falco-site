@@ -107,6 +107,8 @@ type LiveVaultListing = {
   suggestedExecutionLane?: VaultExecutionLane
   suggestedLaneConfidence?: string
   suggestedLaneReasons?: string[]
+  suggestionSource?: "rules" | "operator_feedback"
+  suggestedLaneFeedbackCount?: number
   topTierReady?: boolean
   vaultPublishReady?: boolean
   routingState?: "open" | "in_discussion" | "reserved" | "closed"
@@ -368,6 +370,11 @@ export default function OperatorPage() {
     ]
   }, [workspace])
 
+  const liveListingBySlug = useMemo(
+    () => new Map((workspace?.liveListings ?? []).map((listing) => [listing.slug, listing] as const)),
+    [workspace]
+  )
+
   async function loadWorkspace(currentSecret?: string) {
     const secretToUse = (currentSecret ?? secret).trim()
     if (!secretToUse) {
@@ -506,6 +513,7 @@ export default function OperatorPage() {
     setResult("")
 
     try {
+      const listing = liveListingBySlug.get(listingSlug)
       const res = await fetch("/api/operator/validation", {
         method: "POST",
         headers: {
@@ -519,6 +527,17 @@ export default function OperatorPage() {
           outcome: action === "clear" ? undefined : action,
           executionLane: validationLanes[listingSlug] ?? "unclear",
           note: validationNotes[listingSlug] ?? "",
+          context:
+            action === "clear" || !listing
+              ? undefined
+              : {
+                  county: listing.county ?? "",
+                  distressType: listing.distressType ?? "",
+                  contactPathQuality: listing.contactPathQuality ?? "",
+                  controlParty: listing.controlParty ?? "",
+                  executionPosture: listing.executionPosture ?? "",
+                  workabilityBand: listing.workabilityBand ?? "",
+                },
         }),
       })
 
@@ -1134,7 +1153,10 @@ export default function OperatorPage() {
                               <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-white/68">
                                 <div>Validation status: <span className="text-white/82">{validationOutcomeCopy(listing.validationOutcome)}</span></div>
                                 <div className="mt-2">
-                                  Agent suggested lane:{" "}
+                                  {listing.suggestionSource === "operator_feedback"
+                                    ? "Operator-informed lane"
+                                    : "Agent suggested lane"}
+                                  :{" "}
                                   <span className="text-white/82">
                                     {executionLaneCopy(listing.suggestedExecutionLane)}
                                   </span>
@@ -1144,6 +1166,12 @@ export default function OperatorPage() {
                                     </span>
                                   ) : null}
                                 </div>
+                                {listing.suggestionSource === "operator_feedback" ? (
+                                  <div className="mt-2 text-white/48">
+                                    Based on {listing.suggestedLaneFeedbackCount ?? 0} similar validated file
+                                    {(listing.suggestedLaneFeedbackCount ?? 0) === 1 ? "" : "s"}
+                                  </div>
+                                ) : null}
                                 {listing.suggestedLaneReasons?.length ? (
                                   <div className="mt-2">
                                     Why:{" "}

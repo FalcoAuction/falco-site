@@ -5,6 +5,8 @@ import {
   getVaultRoutingSnapshot,
   getVaultRoutingSnapshotsForListings,
   getVaultValidationRecordByListing,
+  listVaultValidationRecords,
+  type VaultValidationContext,
   getVaultValidationSnapshotsForListings,
   type VaultExecutionLane,
   type VaultRoutingState,
@@ -55,6 +57,8 @@ export type VaultListing = {
   suggestedExecutionLane?: VaultExecutionLane
   suggestedLaneConfidence?: string
   suggestedLaneReasons?: string[]
+  suggestionSource?: "rules" | "operator_feedback"
+  suggestedLaneFeedbackCount?: number
   validationOutcome?: VaultValidationOutcome
   executionLane?: VaultExecutionLane
   validationNote?: string
@@ -85,6 +89,14 @@ type VaultListingRow = {
 
 type LocalVaultListingOverlay = Partial<VaultListing> & {
   slug: string
+}
+
+type ListingSuggestionSummary = {
+  suggestedExecutionLane?: VaultExecutionLane
+  suggestedLaneConfidence?: string
+  suggestedLaneReasons?: string[]
+  suggestionSource?: "rules" | "operator_feedback"
+  suggestedLaneFeedbackCount?: number
 }
 
 const LOCAL_VAULT_LISTINGS_FILE = path.join(process.cwd(), "data", "vault_listings.ndjson")
@@ -170,9 +182,223 @@ function mapRowToVaultListing(
     suggestedExecutionLane: overlay?.suggestedExecutionLane,
     suggestedLaneConfidence: overlay?.suggestedLaneConfidence,
     suggestedLaneReasons: overlay?.suggestedLaneReasons,
+    suggestionSource: overlay?.suggestionSource,
+    suggestedLaneFeedbackCount: overlay?.suggestedLaneFeedbackCount,
     topTierReady: overlay?.topTierReady,
     vaultPublishReady: overlay?.vaultPublishReady,
     dataNotes: overlay?.dataNotes,
+  }
+}
+
+function normalizeComparableValue(value?: string | null) {
+  return String(value ?? "")
+    .trim()
+    .toUpperCase()
+}
+
+function buildValidationContextFromListing(
+  listing: Partial<
+    Pick<
+    VaultListing,
+    "county" | "distressType" | "contactPathQuality" | "controlParty" | "executionPosture" | "workabilityBand"
+  >
+  >
+): VaultValidationContext | undefined {
+  const context = {
+    county: listing.county ?? "",
+    distressType: listing.distressType ?? "",
+    contactPathQuality: listing.contactPathQuality ?? "",
+    controlParty: listing.controlParty ?? "",
+    executionPosture: listing.executionPosture ?? "",
+    workabilityBand: listing.workabilityBand ?? "",
+  }
+
+  if (Object.values(context).every((value) => !String(value).trim())) {
+    return undefined
+  }
+
+  return context
+}
+
+function scoreValidationSimilarity(
+  current: VaultValidationContext,
+  historical: VaultValidationContext
+) {
+  let score = 0
+
+  if (
+    normalizeComparableValue(current.county) &&
+    normalizeComparableValue(current.county) === normalizeComparableValue(historical.county)
+  ) {
+    score += 1
+  }
+
+  if (
+    normalizeComparableValue(current.distressType) &&
+    normalizeComparableValue(current.distressType) === normalizeComparableValue(historical.distressType)
+  ) {
+    score += 1
+  }
+
+  if (
+    normalizeComparableValue(current.contactPathQuality) &&
+    normalizeComparableValue(current.contactPathQuality) ===
+      normalizeComparableValue(historical.contactPathQuality)
+  ) {
+    score += 2
+  }
+
+  if (
+    normalizeComparableValue(current.controlParty) &&
+    normalizeComparableValue(current.controlParty) === normalizeComparableValue(historical.controlParty)
+  ) {
+    score += 3
+  }
+
+  if (
+    normalizeComparableValue(current.executionPosture) &&
+    normalizeComparableValue(current.executionPosture) ===
+      normalizeComparableValue(historical.executionPosture)
+  ) {
+    score += 3
+  }
+
+  if (
+    normalizeComparableValue(current.workabilityBand) &&
+    normalizeComparableValue(current.workabilityBand) ===
+      normalizeComparableValue(historical.workabilityBand)
+  ) {
+    score += 2
+  }
+
+  return score
+}
+
+function laneDisplayCopy(lane: VaultExecutionLane) {
+  if (lane === "borrower_side") return "Borrower Side"
+  if (lane === "lender_trustee") return "Lender / Trustee"
+  if (lane === "auction_only") return "Auction Only"
+  if (lane === "mixed") return "Mixed"
+  return "Unclear"
+}
+
+function degradeConfidence(confidence?: string) {
+  const normalized = normalizeComparableValue(confidence)
+  if (normalized === "HIGH") return "MEDIUM"
+  if (normalized === "MEDIUM") return "LOW"
+  return "LOW"
+}
+
+function maxConfidence(a?: string, b?: string) {
+  const rank = (value?: string) => {
+    const normalized = normalizeComparableValue(value)
+    if (normalized === "HIGH") return 3
+    if (normalized === "MEDIUM") return 2
+    return 1
+  }
+
+  return rank(a) >= rank(b) ? (a ?? "LOW") : (b ?? "LOW")
+}
+
+function outcomeWeight(outcome?: VaultValidationOutcome) {
+  if (outcome === "validated_execution_path") return 1
+  if (outcome === "needs_more_info") return 0.35
+  if (outcome === "low_leverage") return -0.35
+  if (outcome === "no_real_control_path") return -0.6
+  if (outcome === "dead_lead") return -0.85
+  return 0
+}
+
+function confidenceFromFeedback(score: number, sampleCount: number) {
+  if (sampleCount >= 3 && score >= 12) return "HIGH"
+  if (sampleCount >= 2 && score >= 6) return "MEDIUM"
+  return "LOW"
+}
+
+function applyOperatorFeedbackToSuggestion(
+  listing: VaultListing,
+  validations: Awaited<ReturnType<typeof listVaultValidationRecords>>,
+  listingBySlug: Map<string, VaultListing>
+): ListingSuggestionSummary {
+  const baseLane = listing.suggestedExecutionLane ?? "unclear"
+  const baseConfidence = listing.suggestedLaneConfidence ?? "LOW"
+  const baseReasons = [...(listing.suggestedLaneReasons ?? [])]
+  const currentContext = buildValidationContextFromListing(listing)
+
+  if (!currentContext) {
+    return {
+      suggestedExecutionLane: baseLane,
+      suggestedLaneConfidence: baseConfidence,
+      suggestedLaneReasons: baseReasons,
+      suggestionSource: "rules",
+      suggestedLaneFeedbackCount: 0,
+    }
+  }
+
+  const laneScores = new Map<VaultExecutionLane, number>()
+  const laneSupport = new Map<VaultExecutionLane, number>()
+  let sampleCount = 0
+
+  for (const record of validations) {
+    if (record.listingSlug === listing.slug || record.executionLane === "unclear") continue
+
+    const historicalContext =
+      record.context ?? buildValidationContextFromListing(listingBySlug.get(record.listingSlug) ?? {})
+
+    if (!historicalContext) continue
+
+    const similarity = scoreValidationSimilarity(currentContext, historicalContext)
+    if (similarity < 5) continue
+
+    sampleCount += 1
+    const score = similarity * outcomeWeight(record.outcome)
+    laneScores.set(record.executionLane, (laneScores.get(record.executionLane) ?? 0) + score)
+    laneSupport.set(record.executionLane, (laneSupport.get(record.executionLane) ?? 0) + 1)
+  }
+
+  if (sampleCount === 0) {
+    return {
+      suggestedExecutionLane: baseLane,
+      suggestedLaneConfidence: baseConfidence,
+      suggestedLaneReasons: baseReasons,
+      suggestionSource: "rules",
+      suggestedLaneFeedbackCount: 0,
+    }
+  }
+
+  const scoredLanes = [...laneScores.entries()].sort((a, b) => b[1] - a[1])
+  const [bestLane, bestScore] = scoredLanes[0] ?? [baseLane, 0]
+  const baseScore = laneScores.get(baseLane) ?? 0
+  let nextLane = baseLane
+  let nextConfidence = baseConfidence
+  const nextReasons = [...baseReasons]
+
+  if (bestScore > 0 && (baseLane === "unclear" || bestScore >= baseScore + 2)) {
+    nextLane = bestLane
+    nextConfidence = maxConfidence(baseConfidence, confidenceFromFeedback(bestScore, sampleCount))
+  } else if (bestLane === baseLane && bestScore > 0) {
+    nextConfidence = maxConfidence(baseConfidence, confidenceFromFeedback(bestScore, sampleCount))
+  } else if (bestScore <= 0) {
+    nextConfidence = degradeConfidence(baseConfidence)
+  }
+
+  if (bestScore > 0) {
+    const supportCount = laneSupport.get(nextLane) ?? laneSupport.get(bestLane) ?? sampleCount
+    nextReasons.unshift(
+      `Operator feedback on ${supportCount} similar file${
+        supportCount === 1 ? "" : "s"
+      } has favored ${laneDisplayCopy(nextLane)}`
+    )
+  } else {
+    nextReasons.unshift("Similar validated files have not yet supported a confident execution lane")
+  }
+
+  return {
+    suggestedExecutionLane: nextLane,
+    suggestedLaneConfidence: nextConfidence,
+    suggestedLaneReasons: nextReasons.slice(0, 5),
+    suggestionSource: "operator_feedback",
+    suggestedLaneFeedbackCount: sampleCount,
   }
 }
 
@@ -196,7 +422,7 @@ export async function listVaultListings() {
   const mappedRows = (data ?? []).map((row) =>
     mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
   )
-  const [routingSnapshots, validationSnapshots] = await Promise.all([
+  const [routingSnapshots, validationSnapshots, validationHistory] = await Promise.all([
     getVaultRoutingSnapshotsForListings(
       mappedRows.map((listing) => ({
         slug: listing.slug,
@@ -204,14 +430,22 @@ export async function listVaultListings() {
       }))
     ),
     getVaultValidationSnapshotsForListings(mappedRows.map((listing) => listing.slug)),
+    listVaultValidationRecords(),
   ])
+  const listingBySlug = new Map(mappedRows.map((listing) => [listing.slug, listing]))
 
   return mappedRows.map((listing) => {
     const snapshot = routingSnapshots.get(listing.slug)
     const validation = validationSnapshots.get(listing.slug)
+    const suggestion = applyOperatorFeedbackToSuggestion(
+      listing,
+      validationHistory,
+      listingBySlug
+    )
 
     return {
       ...listing,
+      ...suggestion,
       routingState: snapshot?.routingState ?? (listing.status === "active" ? "open" : "closed"),
       routingReservedByEmail: snapshot?.reservedByEmail,
       routingReservedByName: snapshot?.reservedByName,
@@ -264,9 +498,11 @@ export async function findVaultListing(slug: string) {
     getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active"),
     getVaultValidationRecordByListing(mapped.slug),
   ])
+  const suggestion = applyOperatorFeedbackToSuggestion(mapped, await listVaultValidationRecords(), new Map([[mapped.slug, mapped]]))
 
   return {
     ...mapped,
+    ...suggestion,
     routingState: snapshot.routingState,
     routingReservedByEmail: snapshot.reservedByEmail,
     routingReservedByName: snapshot.reservedByName,

@@ -24,6 +24,15 @@ export type VaultExecutionLane =
   | "mixed"
   | "unclear"
 
+export type VaultValidationContext = {
+  county: string
+  distressType: string
+  contactPathQuality: string
+  controlParty: string
+  executionPosture: string
+  workabilityBand: string
+}
+
 export type VaultRoutingState = "open" | "in_discussion" | "reserved" | "closed"
 
 export type VaultPursuitRecord = {
@@ -53,6 +62,7 @@ export type VaultValidationRecord = {
   note: string
   submittedAt: string
   actedBy: string
+  context?: VaultValidationContext
 }
 
 type PartnerAccessRequestRow = {
@@ -81,6 +91,30 @@ type VaultValidationNotesPayload = {
   executionLane: VaultExecutionLane
   note: string
   actedBy: string
+  context?: VaultValidationContext
+}
+
+function normalizeValidationContext(raw: unknown): VaultValidationContext | undefined {
+  if (!raw || typeof raw !== "object") return undefined
+
+  const context = raw as Partial<VaultValidationContext>
+  const normalized = {
+    county: typeof context.county === "string" ? context.county.trim() : "",
+    distressType: typeof context.distressType === "string" ? context.distressType.trim() : "",
+    contactPathQuality:
+      typeof context.contactPathQuality === "string" ? context.contactPathQuality.trim() : "",
+    controlParty: typeof context.controlParty === "string" ? context.controlParty.trim() : "",
+    executionPosture:
+      typeof context.executionPosture === "string" ? context.executionPosture.trim() : "",
+    workabilityBand:
+      typeof context.workabilityBand === "string" ? context.workabilityBand.trim() : "",
+  }
+
+  if (Object.values(normalized).every((value) => !value)) {
+    return undefined
+  }
+
+  return normalized
 }
 
 function requireSupabaseAdmin() {
@@ -141,6 +175,7 @@ function parseValidationNotes(notes: string | null) {
           : "unclear",
       note: typeof parsed.note === "string" ? parsed.note : "",
       actedBy: typeof parsed.actedBy === "string" ? parsed.actedBy : "",
+      context: normalizeValidationContext(parsed.context),
     }
   } catch {
     return null
@@ -158,6 +193,7 @@ function buildValidationNotes(
     executionLane: payload.executionLane,
     note: payload.note,
     actedBy: payload.actedBy,
+    context: payload.context,
   } satisfies VaultValidationNotesPayload)
 }
 
@@ -204,6 +240,7 @@ function mapValidationRow(row: PartnerAccessRequestRow): VaultValidationRecord |
     note: notes.note,
     submittedAt: row.created_at,
     actedBy: notes.actedBy,
+    context: notes.context,
   }
 }
 
@@ -437,6 +474,7 @@ async function updateValidationRow(
     note: string
     actedBy: string
     status: VaultValidationStatus
+    context?: VaultValidationContext
   }
 ) {
   const client = requireSupabaseAdmin()
@@ -450,6 +488,7 @@ async function updateValidationRow(
         executionLane: input.executionLane,
         note: input.note,
         actedBy: input.actedBy,
+        context: input.context,
       }),
     })
     .eq("id", requestId)
@@ -469,6 +508,7 @@ export async function upsertVaultValidationRecord(input: {
   executionLane: VaultExecutionLane
   note: string
   actedBy: string
+  context?: VaultValidationContext
 }) {
   const client = requireSupabaseAdmin()
   const existing = await getVaultValidationRecordByListing(input.listingSlug)
@@ -510,6 +550,7 @@ export async function clearVaultValidationRecord(listingSlug: string, actedBy: s
     note: existing.note,
     actedBy,
     status: "validation_cleared",
+    context: existing.context,
   })
 }
 

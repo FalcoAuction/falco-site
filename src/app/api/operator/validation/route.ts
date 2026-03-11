@@ -4,6 +4,7 @@ import {
   clearVaultValidationRecord,
   upsertVaultValidationRecord,
   type VaultExecutionLane,
+  type VaultValidationContext,
   type VaultValidationOutcome,
 } from "@/lib/vault-pursuit"
 
@@ -19,6 +20,29 @@ function isValidationOutcome(value: string): value is VaultValidationOutcome {
 
 function isExecutionLane(value: string): value is VaultExecutionLane {
   return ["borrower_side", "lender_trustee", "auction_only", "mixed", "unclear"].includes(value)
+}
+
+function parseValidationContext(value: unknown): VaultValidationContext | undefined {
+  if (!value || typeof value !== "object") return undefined
+
+  const context = value as Partial<VaultValidationContext>
+  const normalized = {
+    county: typeof context.county === "string" ? context.county.trim() : "",
+    distressType: typeof context.distressType === "string" ? context.distressType.trim() : "",
+    contactPathQuality:
+      typeof context.contactPathQuality === "string" ? context.contactPathQuality.trim() : "",
+    controlParty: typeof context.controlParty === "string" ? context.controlParty.trim() : "",
+    executionPosture:
+      typeof context.executionPosture === "string" ? context.executionPosture.trim() : "",
+    workabilityBand:
+      typeof context.workabilityBand === "string" ? context.workabilityBand.trim() : "",
+  }
+
+  if (Object.values(normalized).every((entry) => !entry)) {
+    return undefined
+  }
+
+  return normalized
 }
 
 export async function POST(req: NextRequest) {
@@ -52,6 +76,7 @@ export async function POST(req: NextRequest) {
     const outcome = String(body?.outcome ?? "").trim()
     const executionLane = String(body?.executionLane ?? "unclear").trim()
     const note = String(body?.note ?? "").trim()
+    const context = parseValidationContext(body?.context)
 
     if (!isValidationOutcome(outcome)) {
       return NextResponse.json(
@@ -73,6 +98,7 @@ export async function POST(req: NextRequest) {
       executionLane,
       note,
       actedBy,
+      context,
     })
 
     return NextResponse.json({ ok: true, record })
