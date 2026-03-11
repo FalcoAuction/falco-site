@@ -44,6 +44,10 @@ export type VaultListing = {
   buildingAreaSqft?: number | null
   beds?: number | null
   baths?: number | null
+  contactPathQuality?: string
+  controlParty?: string
+  executionPosture?: string
+  workabilityBand?: string
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
@@ -147,6 +151,10 @@ function mapRowToVaultListing(
     buildingAreaSqft: overlay?.buildingAreaSqft,
     beds: overlay?.beds,
     baths: overlay?.baths,
+    contactPathQuality: overlay?.contactPathQuality,
+    controlParty: overlay?.controlParty,
+    executionPosture: overlay?.executionPosture,
+    workabilityBand: overlay?.workabilityBand,
     topTierReady: overlay?.topTierReady,
     vaultPublishReady: overlay?.vaultPublishReady,
     dataNotes: overlay?.dataNotes,
