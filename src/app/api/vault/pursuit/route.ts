@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { findApprovalByEmail } from "@/lib/access-workflow"
 import { findVaultAcceptance } from "@/lib/vault-agreements"
+import { getVaultApprovalSession } from "@/lib/vault-access-session"
 import { findVaultListing } from "@/lib/vault-listings"
 import {
   createVaultPursuitRequest,
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const approvedEmail =
-      req.cookies.get("falco_vault_approved_email")?.value?.trim().toLowerCase() || ""
+    const approval = await getVaultApprovalSession(req)
+    const approvedEmail = approval?.email?.trim().toLowerCase() || ""
     const snapshot = await getVaultRoutingSnapshot(listingSlug, listing.status !== "active")
     const requests = await listVaultPursuitRequestsByListing(listingSlug)
     const currentRequest = approvedEmail
@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
     const listingSlug = String(body?.listingSlug ?? "").trim()
     const fullName = String(body?.fullName ?? "").trim()
     const message = String(body?.message ?? "").trim()
-    const approvedEmail =
-      req.cookies.get("falco_vault_approved_email")?.value?.trim().toLowerCase() || ""
+    const approval = await getVaultApprovalSession(req)
+    const approvedEmail = approval?.email?.trim().toLowerCase() || ""
 
     if (!listingSlug) {
       return NextResponse.json(
@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const approval = await findApprovalByEmail(approvedEmail)
     if (!approval) {
       return NextResponse.json(
         { ok: false, error: "Email is not approved for vault access." },

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 type ReportRow = {
   lead_key: string
@@ -154,6 +154,7 @@ type OperatorWorkspace = {
   routingQueue: VaultRoutingListing[]
   outreach: OutreachReport
   liveListings: LiveVaultListing[]
+  taskHistory: TaskHistoryItem[]
 }
 
 type TaskItem = {
@@ -170,10 +171,8 @@ type TaskHistoryItem = {
   detail: string
   section: TaskItem["section"]
   completedAt: string
+  completedBy?: string
 }
-
-const HISTORY_KEY = "falco-operator-task-history-v1"
-const DONE_KEY = "falco-operator-task-done-v1"
 
 function badgeClasses(value?: string | null) {
   if ((value || "").toUpperCase() === "GREEN") {
@@ -253,27 +252,7 @@ export default function OperatorPage() {
   const [processingId, setProcessingId] = useState("")
   const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
   const [validationLanes, setValidationLanes] = useState<Record<string, VaultExecutionLane>>({})
-  const [doneTaskIds, setDoneTaskIds] = useState<string[]>([])
   const [history, setHistory] = useState<TaskHistoryItem[]>([])
-
-  useEffect(() => {
-    try {
-      const savedDone = window.localStorage.getItem(DONE_KEY)
-      const savedHistory = window.localStorage.getItem(HISTORY_KEY)
-      if (savedDone) setDoneTaskIds(JSON.parse(savedDone))
-      if (savedHistory) setHistory(JSON.parse(savedHistory))
-    } catch {
-      setDoneTaskIds([])
-      setHistory([])
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(DONE_KEY, JSON.stringify(doneTaskIds))
-      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
-    } catch {}
-  }, [doneTaskIds, history])
 
   const tasks = useMemo(() => {
     if (!workspace) return []
@@ -340,8 +319,11 @@ export default function OperatorPage() {
   }, [workspace])
 
   const activeTasks = useMemo(
-    () => tasks.filter((task) => !doneTaskIds.includes(task.id)),
-    [doneTaskIds, tasks]
+    () => {
+      const doneIds = new Set(history.map((item) => item.id))
+      return tasks.filter((task) => !doneIds.has(task.id))
+    },
+    [history, tasks]
   )
 
   const cards = useMemo(() => {
@@ -401,6 +383,7 @@ export default function OperatorPage() {
       }
 
       setWorkspace(data.workspace)
+      setHistory(data.workspace.taskHistory ?? [])
       const nextNotes: Record<string, string> = {}
       const nextLanes: Record<string, VaultExecutionLane> = {}
       for (const listing of data.workspace.liveListings ?? []) {
@@ -542,26 +525,82 @@ export default function OperatorPage() {
     }
   }
 
-  function completeTask(task: TaskItem) {
-    if (doneTaskIds.includes(task.id)) return
-    setDoneTaskIds((current) => [task.id, ...current])
-    setHistory((current) =>
-      [
-        {
-          id: task.id,
+  async function completeTask(task: TaskItem) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(`task:${task.id}:complete`)
+    setError("")
+
+    try {
+      const res = await fetch("/api/operator/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          action: "complete",
+          taskId: task.id,
           title: task.title,
           detail: task.detail,
           section: task.section,
-          completedAt: new Date().toISOString(),
-        },
-        ...current,
-      ].slice(0, 30)
-    )
+          completedBy: actedBy,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to update task state.")
+        return
+      }
+
+      setResult(`Task completed: ${task.title}`)
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to update task state.")
+    } finally {
+      setProcessingId("")
+    }
   }
 
-  function restoreTask(taskId: string) {
-    setDoneTaskIds((current) => current.filter((id) => id !== taskId))
-    setHistory((current) => current.filter((item) => item.id !== taskId))
+  async function restoreTask(taskId: string) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(`task:${taskId}:restore`)
+    setError("")
+
+    try {
+      const res = await fetch("/api/operator/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          action: "restore",
+          taskId,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to restore task.")
+        return
+      }
+
+      setResult("Task restored.")
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to restore task.")
+    } finally {
+      setProcessingId("")
+    }
   }
 
   return (
@@ -717,9 +756,10 @@ export default function OperatorPage() {
                         </a>
                         <button
                           onClick={() => completeTask(task)}
-                          className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                          disabled={processingId === `task:${task.id}:complete`}
+                          className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Mark Complete
+                          {processingId === `task:${task.id}:complete` ? "Saving..." : "Mark Complete"}
                         </button>
                       </div>
                     </article>
@@ -745,13 +785,17 @@ export default function OperatorPage() {
                       </div>
                       <div className="mt-2 text-base font-semibold text-white">{item.title}</div>
                       <div className="mt-2 text-sm text-white/60">{item.detail}</div>
-                      <div className="mt-3 text-xs text-white/40">Completed: {item.completedAt}</div>
+                      <div className="mt-3 text-xs text-white/40">
+                        Completed: {item.completedAt}
+                        {item.completedBy ? ` • ${item.completedBy}` : ""}
+                      </div>
                       <div className="mt-4">
                         <button
                           onClick={() => restoreTask(item.id)}
-                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                          disabled={processingId === `task:${item.id}:restore`}
+                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Restore
+                          {processingId === `task:${item.id}:restore` ? "Restoring..." : "Restore"}
                         </button>
                       </div>
                     </article>

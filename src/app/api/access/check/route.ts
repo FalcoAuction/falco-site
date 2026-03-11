@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { findApprovalByEmail } from "@/lib/access-workflow"
-
-const COOKIE_IS_SECURE = process.env.NODE_ENV === "production"
+import {
+  clearVaultApprovalSession,
+  setVaultApprovalSession,
+} from "@/lib/vault-access-session"
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,10 +21,12 @@ export async function POST(req: NextRequest) {
 
     if (!approval) {
       console.warn("access_check denied_unapproved_email", { email })
-      return NextResponse.json(
+      const res = NextResponse.json(
         { ok: false, error: "Unable to verify vault access." },
         { status: 403 }
       )
+      clearVaultApprovalSession(res)
+      return res
     }
 
     const res = NextResponse.json({
@@ -32,13 +36,7 @@ export async function POST(req: NextRequest) {
       approvedAt: approval.approvedAt,
     })
 
-    res.cookies.set("falco_vault_approved_email", approval.email, {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: COOKIE_IS_SECURE,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    })
+    setVaultApprovalSession(res, approval.approvalToken, approval.email)
 
     return res
   } catch (error) {

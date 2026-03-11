@@ -11,13 +11,17 @@ function hasAgreementCookie() {
     .some((cookie) => cookie.startsWith(`falco_vault_access_${LISTING_SLUG}=accepted`))
 }
 
-function getApprovedEmailCookie() {
-  const match = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("falco_vault_approved_email="))
+async function loadApprovalSession() {
+  const res = await fetch("/api/access/session", { cache: "no-store" })
+  const data = await res.json()
 
-  if (!match) return ""
-  return decodeURIComponent(match.split("=")[1] || "")
+  if (!res.ok || !data?.ok || !data?.approved) {
+    return null
+  }
+
+  return {
+    email: String(data.email || "").trim(),
+  }
 }
 
 export default function SampleDealPage() {
@@ -37,15 +41,14 @@ export default function SampleDealPage() {
   const [success, setSuccess] = useState("")
 
   useEffect(() => {
-    const storedApprovedEmail = getApprovedEmailCookie()
-    if (storedApprovedEmail) {
-      setApproved(true)
-      setApprovedEmail(storedApprovedEmail)
-      setEmail(storedApprovedEmail)
-      setEmailCheck(storedApprovedEmail)
-    }
-
     setAccepted(hasAgreementCookie())
+    void loadApprovalSession().then((session) => {
+      if (!session?.email) return
+      setApproved(true)
+      setApprovedEmail(session.email)
+      setEmail(session.email)
+      setEmailCheck(session.email)
+    })
   }, [])
 
   const handleApprovalCheck = async () => {

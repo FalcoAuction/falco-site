@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { findApprovalByEmail } from "@/lib/access-workflow"
 import {
   appendVaultAcceptance,
   NDA_VERSION,
   NON_CIRC_VERSION,
 } from "@/lib/vault-agreements"
+import { getVaultApprovalSession } from "@/lib/vault-access-session"
 
 const COOKIE_IS_SECURE = process.env.NODE_ENV === "production"
 
@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
     const email = String(body?.email ?? "").trim().toLowerCase()
     const ndaAccepted = Boolean(body?.ndaAccepted)
     const nonCircAccepted = Boolean(body?.nonCircAccepted)
-    const approvedEmail =
-      req.cookies.get("falco_vault_approved_email")?.value?.trim().toLowerCase() || ""
+    const approval = await getVaultApprovalSession(req)
+    const approvedEmail = approval?.email?.trim().toLowerCase() || ""
 
     if (!listingSlug || !fullName || !email) {
       return NextResponse.json(
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const approval = await findApprovalByEmail(approvedEmail)
     if (!approval) {
       console.warn("vault_accept denied_unapproved_email", { listingSlug, approvedEmail })
       return NextResponse.json(

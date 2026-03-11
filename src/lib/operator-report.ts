@@ -72,6 +72,54 @@ async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
   }
 }
 
+async function getLiveVaultAndApprovalState() {
+  const [vaultResult, accessResult] = await Promise.all([
+    supabaseAdmin
+      ? supabaseAdmin.from("vault_listings").select("slug").eq("is_active", true)
+      : Promise.resolve({ data: [], error: null }),
+    supabaseAdmin
+      ? supabaseAdmin
+          .from("partner_access_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+      : Promise.resolve({ count: 0, error: null }),
+  ])
+
+  const liveListings = vaultResult.error ? [] : (vaultResult.data ?? [])
+  const pendingApprovals =
+    "count" in accessResult && typeof accessResult.count === "number" ? accessResult.count : 0
+
+  return {
+    liveListings,
+    pendingApprovals,
+  }
+}
+
+async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<OperatorReport> {
+  const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
+  const recentLeads = attachVaultState(snapshot.recentLeads, liveListings)
+  const topCandidates = attachVaultState(snapshot.topCandidates, liveListings)
+  const recentPackets = attachVaultState(snapshot.recentPackets, liveListings)
+  const vaultCandidates = attachVaultState(snapshot.vaultCandidates ?? [], liveListings)
+
+  return {
+    ...snapshot,
+    sourceMode: "snapshot",
+    sourceNote:
+      "Hosted operator snapshot merged with live vault and approval state for production-safe review.",
+    overview: {
+      ...snapshot.overview,
+      vaultLive: liveListings.length,
+      vaultQueue: vaultCandidates.filter((row) => !row.vaultLive).length,
+      pendingApprovals,
+    },
+    recentLeads,
+    topCandidates,
+    recentPackets,
+    vaultCandidates,
+  }
+}
+
 function leadKeyPrefix(leadKey: string) {
   return (leadKey || "").slice(0, 8).toLowerCase()
 }
@@ -198,11 +246,6 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
 }
 
 export async function getOperatorReport(): Promise<OperatorReport> {
-  const snapshot = await readSnapshotOperatorReport()
-  if (snapshot) {
-    return snapshot
-  }
-
   try {
     const scriptPath = path.join(process.cwd(), "scripts", "operator_report.py")
     const defaultDbPath = path.join(
@@ -236,21 +279,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       vaultCandidates?: OperatorLeadRow[]
     }
 
-    const [vaultResult, accessResult] = await Promise.all([
-      supabaseAdmin
-        ? supabaseAdmin.from("vault_listings").select("slug").eq("is_active", true)
-        : Promise.resolve({ data: [], error: null }),
-      supabaseAdmin
-        ? supabaseAdmin
-            .from("partner_access_requests")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "pending")
-        : Promise.resolve({ count: 0, error: null }),
-    ])
-
-    const liveListings = vaultResult.error ? [] : (vaultResult.data ?? [])
-    const pendingApprovals =
-      "count" in accessResult && typeof accessResult.count === "number" ? accessResult.count : 0
+    const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
 
     return {
       generatedAt: parsed.generatedAt,
@@ -270,7 +299,13 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       vaultCandidates: attachVaultState(parsed.vaultCandidates ?? [], liveListings),
     }
   } catch (error) {
-    console.warn("getOperatorReport falling back to site-only mode", error)
-    return getFallbackOperatorReport()
+    console.warn("getOperatorReport full mode unavailable, trying snapshot", error)
   }
+
+  const snapshot = await readSnapshotOperatorReport()
+  if (snapshot) {
+    return mergeSnapshotOperatorReport(snapshot)
+  }
+
+  return getFallbackOperatorReport()
 }

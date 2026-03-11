@@ -3,6 +3,7 @@ import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
 import { listAccessRequests } from "@/lib/access-workflow"
 import { getOperatorReport } from "@/lib/operator-report"
 import { getOutreachReport } from "@/lib/outreach-report"
+import { listOperatorTaskHistory } from "@/lib/operator-tasks"
 import { listActiveVaultListings } from "@/lib/vault-listings"
 import { listVaultPursuitRequests } from "@/lib/vault-pursuit"
 
@@ -49,12 +50,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const [report, accessRequests, vaultPursuitRequests, outreach, liveListings] = await Promise.all([
+    const [report, accessRequests, vaultPursuitRequests, outreach, liveListings, taskHistory] = await Promise.all([
       getOperatorReport(),
       listAccessRequests(),
       listVaultPursuitRequests(),
       getOutreachReport(),
       listActiveVaultListings(),
+      listOperatorTaskHistory(),
     ])
 
     return NextResponse.json({
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
         routingQueue: buildRoutingQueue(vaultPursuitRequests),
         outreach,
         liveListings,
+        taskHistory,
       },
     })
   } catch (error) {

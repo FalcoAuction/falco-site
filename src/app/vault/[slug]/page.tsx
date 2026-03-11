@@ -67,13 +67,17 @@ function hasAgreementCookie(slug: string) {
     .some((cookie) => cookie.startsWith(`falco_vault_access_${slug}=accepted`))
 }
 
-function getApprovedEmailCookie() {
-  const match = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("falco_vault_approved_email="))
+async function loadApprovalSession() {
+  const res = await fetch("/api/access/session", { cache: "no-store" })
+  const data = await res.json()
 
-  if (!match) return ""
-  return decodeURIComponent(match.split("=")[1] || "")
+  if (!res.ok || !data?.ok || !data?.approved) {
+    return null
+  }
+
+  return {
+    email: String(data.email || "").trim(),
+  }
 }
 
 function readinessClasses(readiness?: string) {
@@ -167,14 +171,6 @@ export default function VaultListingPage() {
     const currentSlug = pathParts[pathParts.length - 1] || ""
     setSlug(currentSlug)
 
-    const storedApprovedEmail = getApprovedEmailCookie()
-    if (storedApprovedEmail) {
-      setApproved(true)
-      setApprovedEmail(storedApprovedEmail)
-      setEmail(storedApprovedEmail)
-      setEmailCheck(storedApprovedEmail)
-    }
-
     if (currentSlug) {
       setAccepted(hasAgreementCookie(currentSlug))
       void loadPursuitState(currentSlug)
@@ -211,6 +207,13 @@ export default function VaultListingPage() {
     }
 
     void loadListing()
+    void loadApprovalSession().then((session) => {
+      if (!session?.email) return
+      setApproved(true)
+      setApprovedEmail(session.email)
+      setEmail(session.email)
+      setEmailCheck(session.email)
+    })
   }, [])
 
   const handleApprovalCheck = async () => {

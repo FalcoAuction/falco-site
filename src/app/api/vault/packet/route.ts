@@ -1,8 +1,8 @@
 import fs from "fs"
 import path from "path"
 import { NextRequest, NextResponse } from "next/server"
-import { findApprovalByEmail } from "@/lib/access-workflow"
 import { findVaultAcceptance } from "@/lib/vault-agreements"
+import { getVaultApprovalSession } from "@/lib/vault-access-session"
 import { findVaultListing } from "@/lib/vault-listings"
 
 const PRIVATE_PACKET_DIR = path.join(process.cwd(), "private", "vault", "packets")
@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const approvedEmail = req.cookies.get("falco_vault_approved_email")?.value?.trim().toLowerCase() || ""
+    const approval = await getVaultApprovalSession(req)
+    const approvedEmail = approval?.email?.trim().toLowerCase() || ""
     if (!approvedEmail) {
       console.warn("vault_packet denied_missing_approval_cookie", { slug })
       return NextResponse.json(
@@ -36,7 +37,6 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const approval = await findApprovalByEmail(approvedEmail)
     if (!approval) {
       console.warn("vault_packet denied_unapproved_email", { slug, approvedEmail })
       return NextResponse.json(
