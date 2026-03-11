@@ -106,10 +106,6 @@ function executionLaneCopy(value?: VaultListing["executionLane"]) {
   return "Unclear"
 }
 
-function isTopLead(listing: VaultListing) {
-  return listing.topTierReady === true
-}
-
 export default function VaultListingPage() {
   const [slug, setSlug] = useState("")
   const [listing, setListing] = useState<VaultListing | null>(null)
@@ -374,7 +370,6 @@ export default function VaultListingPage() {
   const packetBlockedByRouting =
     pursuitState.routingState === "closed" ||
     (pursuitState.routingState === "reserved" && !pursuitState.reservedByCurrentUser)
-  const commercialShare = isTopLead(listing) ? "30%" : "20%"
   const criticalDataIssues = listing.dataNotes ?? []
 
   return (
@@ -528,15 +523,13 @@ export default function VaultListingPage() {
 
             <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                Peregrine Realty Group Commercial Term
+                Commercial Handling
               </div>
               <p className="mt-4 text-sm leading-7 text-white/68">
-                By entering this listing, you acknowledge that any executed FALCO-originated
-                opportunity introduced or routed through Peregrine Realty Group remains protected.
-                If you pursue, close, or otherwise monetize a protected opportunity through the
-                FALCO / Peregrine channel, the applicable success fee / revenue share remains
-                <span className="text-white"> {commercialShare} of partner-side net revenue</span>, payable
-                only upon successful execution, subject to the governing agreement and applicable law.
+                By entering this listing, you acknowledge that any FALCO-originated opportunity
+                introduced or routed through the FALCO / Peregrine channel remains protected.
+                Commercial participation, referral handling, and execution-side economics are governed
+                through the applicable licensed/operator agreement and the final execution structure.
               </p>
             </div>
 
@@ -585,7 +578,7 @@ export default function VaultListingPage() {
                   <span>
                     I agree not to bypass, circumvent, or cut out FALCO, Peregrine Realty Group,
                     or their partners in connection with this opportunity, and I acknowledge the
-                    protected {commercialShare} success-only commercial structure described above.
+                    protected commercial handling structure described above.
                   </span>
                 </label>
               </div>

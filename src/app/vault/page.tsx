@@ -106,14 +106,9 @@ function getVaultSegment(listing: VaultListing): VaultSegment {
   return "secondary"
 }
 
-function commercialShareForListing(listing: VaultListing) {
-  return getVaultSegment(listing) === "top" ? "30%" : "20%"
-}
-
 function ListingCard({ listing }: { listing: VaultListing }) {
   const segment = getVaultSegment(listing)
   const criticalDataIssues = listing.dataNotes ?? []
-  const commercialShare = commercialShareForListing(listing)
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
@@ -226,14 +221,6 @@ function ListingCard({ listing }: { listing: VaultListing }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Commercial Share
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {commercialShare}
-          </div>
-        </div>
       </div>
 
       <p className="mt-5 text-sm leading-7 text-white/68">
@@ -264,7 +251,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
       ) : null}
 
       <div className="mt-5 text-sm text-white/50">
-        Packet: {listing.packetLabel} | Share: {commercialShare}
+        Packet: {listing.packetLabel}
       </div>
 
       {listing.status === "claimed" && listing.claimedBy ? (

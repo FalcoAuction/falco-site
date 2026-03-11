@@ -1,4 +1,5 @@
 import { listAccessRequests } from "@/lib/access-workflow"
+import { getOperatorReport } from "@/lib/operator-report"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 import { listVaultListings } from "@/lib/vault-listings"
 
@@ -26,14 +27,15 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     }
   }
 
-  const [vaultListings, accessRequests, approvalsResult] = await Promise.all([
+  const [vaultListings, accessRequests, approvalsResult, operatorReport] = await Promise.all([
     listVaultListings(),
     listAccessRequests(),
     supabaseAdmin.from("partner_approvals").select("email").eq("approved", true),
+    getOperatorReport().catch(() => null),
   ])
 
   const activeCounties = uniqueCount(vaultListings.map((listing) => listing.county))
-  const trackedLeads = vaultListings.length
+  const trackedLeads = operatorReport?.overview.totalLeads ?? vaultListings.length
 
   const uwReady = vaultListings.filter((listing) => {
     const val = listing.contactReady ?? listing.auctionReadiness
@@ -56,7 +58,9 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     return false
   }).length
 
-  const packetsInVault = vaultListings.filter((listing) => Boolean(listing.slug)).length
+  const packetsInVault =
+    operatorReport?.overview.vaultLive ??
+    vaultListings.filter((listing) => Boolean(listing.slug)).length
 
   const approvedEmails = approvalsResult.error
     ? []
