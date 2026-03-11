@@ -35,6 +35,7 @@ type VaultListing = {
   ownerMail?: string
   lastSaleDate?: string
   mortgageLender?: string
+  mortgageAmount?: number | null
   yearBuilt?: number | null
   buildingAreaSqft?: number | null
   beds?: number | null
@@ -96,6 +97,15 @@ function executionLaneCopy(value?: VaultListing["executionLane"]) {
   if (value === "auction_only") return "Auction Only"
   if (value === "mixed") return "Mixed"
   return "Unclear"
+}
+
+function formatMoney(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 function getVaultSegment(listing: VaultListing): VaultSegment {
@@ -200,6 +210,15 @@ function ListingCard({ listing }: { listing: VaultListing }) {
           </div>
           <div className="mt-2 text-sm font-medium text-white/82">
             {listing.mortgageLender || "Unavailable"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+            Orig. Loan Amount
+          </div>
+          <div className="mt-2 text-sm font-medium text-white/82">
+            {formatMoney(listing.mortgageAmount)}
           </div>
         </div>
 

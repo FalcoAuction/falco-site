@@ -46,6 +46,7 @@ export type VaultListing = {
   ownerMail?: string
   lastSaleDate?: string
   mortgageLender?: string
+  mortgageAmount?: number | null
   yearBuilt?: number | null
   buildingAreaSqft?: number | null
   beds?: number | null
@@ -171,6 +172,7 @@ function mapRowToVaultListing(
     ownerMail: overlay?.ownerMail,
     lastSaleDate: overlay?.lastSaleDate,
     mortgageLender: overlay?.mortgageLender,
+    mortgageAmount: typeof overlay?.mortgageAmount === "number" ? overlay.mortgageAmount : null,
     yearBuilt: overlay?.yearBuilt,
     buildingAreaSqft: overlay?.buildingAreaSqft,
     beds: overlay?.beds,

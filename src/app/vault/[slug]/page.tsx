@@ -33,6 +33,7 @@ type VaultListing = {
   ownerMail?: string
   lastSaleDate?: string
   mortgageLender?: string
+  mortgageAmount?: number | null
   yearBuilt?: number | null
   buildingAreaSqft?: number | null
   beds?: number | null
@@ -108,6 +109,15 @@ function executionLaneCopy(value?: VaultListing["executionLane"]) {
   if (value === "auction_only") return "Auction Only"
   if (value === "mixed") return "Mixed"
   return "Unclear"
+}
+
+function formatMoney(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 export default function VaultListingPage() {
@@ -466,7 +476,7 @@ export default function VaultListingPage() {
               origin of the opportunity. Final execution viability remains subject to licensed/operator validation.
             </p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Screening Status</div>
                 <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
@@ -487,6 +497,11 @@ export default function VaultListingPage() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Mortgage Lender</div>
                 <div className="mt-2 text-sm font-medium text-white/82">{listing.mortgageLender || "Unavailable"}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Orig. Loan Amount</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{formatMoney(listing.mortgageAmount)}</div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -642,6 +657,8 @@ export default function VaultListingPage() {
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div><div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days Until Scheduled Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Direct Contact Path</div><div className="mt-3 text-lg font-semibold text-white">{listing.contactReady ? "Available" : "Thin / Unclear"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Mortgage Lender</div><div className="mt-3 text-lg font-semibold text-white">{listing.mortgageLender || "Unavailable"}</div></div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Orig. Loan Amount</div><div className="mt-3 text-lg font-semibold text-white">{formatMoney(listing.mortgageAmount)}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Suggested Lane</div><div className="mt-3 text-lg font-semibold text-white">{executionLaneCopy(listing.executionLane)}</div></div>
               </div>
             </div>
