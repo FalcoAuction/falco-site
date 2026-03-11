@@ -4,26 +4,26 @@ import { getHomeMetrics } from "@/lib/home-metrics"
 export const dynamic = "force-dynamic"
 
 const stats = [
-  { label: "Primary Focus", value: "Distress Asset Origination" },
-  { label: "System Role", value: "Lead Conversion Overlay" },
-  { label: "Current State", value: "Live Origination Infrastructure" },
+  { label: "Primary Focus", value: "Distress Origination" },
+  { label: "System Role", value: "Screening + Packaging Layer" },
+  { label: "Current State", value: "Restricted Vault Live" },
 ]
 
 const workflow = [
   {
     step: "01",
     title: "Detect",
-    body: "FALCO monitors upstream distress signals across targeted markets before most opportunities become widely visible.",
+    body: "FALCO monitors targeted distress sources and surfaces potential opportunities before they become widely visible.",
   },
   {
     step: "02",
     title: "Underwrite",
-    body: "Each lead is enriched, pressure-tested, scored, and converted into a structured auction opportunity brief built for decision speed.",
+    body: "Each lead is enriched, screened, and packaged into an operator-facing brief built for fast review.",
   },
   {
     step: "03",
     title: "Route",
-    body: "Qualified opportunities are directed into the right auction, brokerage, and partner channels for monetization and execution.",
+    body: "The strongest candidates are routed selectively into the right operator, brokerage, and execution channels.",
   },
 ]
 
@@ -127,15 +127,14 @@ export default async function HomePage() {
               </h1>
 
               <p className="mt-8 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-                FALCO is a black-box origination layer built to detect upstream
-                distress signals, structure acquisition-ready opportunities, and
-                move qualified deals into execution channels with speed,
-                discipline, and leverage.
+                FALCO is an upstream distress engine that detects signals early,
+                filters them hard, and packages the best candidates into
+                operator-facing briefs.
               </p>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
                 Approved partners receive access to FALCO&apos;s restricted vault,
-                listing materials, and controlled routing paths after acceptance
+                listing materials, and controlled review paths after acceptance
                 of confidentiality and non-circumvention terms.
               </p>
 
@@ -203,8 +202,8 @@ export default async function HomePage() {
                     Positioning
                   </div>
                   <p className="mt-3 text-sm leading-6 text-white/68">
-                    FALCO sits upstream of execution, converting fragmented
-                    distress signals into cleaner, monetizable deal flow.
+                    FALCO sits upstream of execution, turning fragmented distress
+                    data into cleaner screened opportunities.
                   </p>
                 </div>
               </div>
@@ -277,19 +276,19 @@ export default async function HomePage() {
                 What It Is
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A disciplined intelligence and conversion layer for distressed opportunities.
+                A disciplined screening and packaging layer for distressed opportunities.
               </h2>
             </div>
 
             <div className="space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO is designed to identify distress before it becomes crowded,
-                convert noisy lead data into structured acquisition intelligence,
-                and route execution-ready opportunities into aligned channels.
+                FALCO is designed to identify distress early, reduce noise, and
+                turn raw lead flow into structured operator-facing dossiers.
               </p>
               <p className="leading-7">
-                The system is not a listing portal. It is an origination overlay
-                built for speed, signal quality, and clean downstream execution.
+                It is not a listing portal or broad marketing feed. It is a
+                restricted origination system built for signal quality,
+                screening discipline, and controlled downstream review.
               </p>
             </div>
           </div>
@@ -342,9 +341,9 @@ export default async function HomePage() {
                 Built for serious operators, not broad distribution.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
-                FALCO is designed for aligned execution partners who value cleaner
-                upstream opportunities, tighter underwriting, and faster deal
-                movement.
+                FALCO is designed for aligned partners who want cleaner
+                opportunities than raw notice scraping and a tighter review path
+                than public deal circulation.
               </p>
             </div>
 
@@ -375,8 +374,9 @@ export default async function HomePage() {
                 Enter the pipeline.
               </h3>
               <p className="mt-4 max-w-lg text-white/68 leading-7">
-                Access is limited to qualified operators, investors, and execution
-                partners who want direct exposure to structured opportunity flow.
+                Access is limited to qualified operators, investors, and
+                execution partners who want direct exposure to screened
+                opportunity flow.
               </p>
               <div className="mt-8">
                 <Link
