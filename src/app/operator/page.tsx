@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 type ReportRow = {
   lead_key: string
@@ -46,69 +46,384 @@ type OperatorReport = {
   vaultCandidates: ReportRow[]
 }
 
+type AccessRequestRecord = {
+  requestId: string
+  fullName: string
+  email: string
+  company: string
+  role: string
+  marketFocus: string
+  accessType: string
+  executionCapacity: string
+  notes: string
+  submittedAt: string
+  ipAddress: string
+  userAgent: string
+  status: "pending" | "approved" | "rejected"
+}
+
+type VaultPursuitRecord = {
+  requestId: string
+  listingSlug: string
+  email: string
+  fullName: string
+  message: string
+  status: "pursuit_requested" | "pursuit_reserved" | "pursuit_declined" | "pursuit_released"
+  submittedAt: string
+  actedBy: string
+}
+
+type VaultRoutingListing = {
+  listingSlug: string
+  requests: VaultPursuitRecord[]
+}
+
+type OutreachCandidate = {
+  track: "auction_partner" | "principal_broker"
+  rank: number
+  score: number
+  organization: string
+  contact_name: string
+  email: string
+  website: string
+  domain: string
+  city: string
+  state: string
+  reason: string
+  snippet: string
+  personalized_line: string
+  subject: string
+  body: string
+  query?: string
+}
+
+type OutreachTrackReport = {
+  track: "auction_partner" | "principal_broker"
+  generatedAt: string | null
+  fileName: string | null
+  candidates: OutreachCandidate[]
+}
+
+type OutreachReport = {
+  generatedAt: string
+  sourceMode: "full" | "fallback"
+  sourceNote: string
+  sourceDir: string
+  tracks: OutreachTrackReport[]
+}
+
+type OperatorWorkspace = {
+  report: OperatorReport
+  accessRequests: AccessRequestRecord[]
+  routingQueue: VaultRoutingListing[]
+  outreach: OutreachReport
+}
+
+type TaskItem = {
+  id: string
+  title: string
+  detail: string
+  section: "approvals" | "routing" | "vault" | "outreach"
+  priority: "high" | "medium" | "low"
+}
+
+type TaskHistoryItem = {
+  id: string
+  title: string
+  detail: string
+  section: TaskItem["section"]
+  completedAt: string
+}
+
+const HISTORY_KEY = "falco-operator-task-history-v1"
+const DONE_KEY = "falco-operator-task-done-v1"
+
 function badgeClasses(value?: string | null) {
   if ((value || "").toUpperCase() === "GREEN") {
     return "border-white/18 bg-white text-black"
   }
-
   if ((value || "").toUpperCase() === "YELLOW") {
     return "border-white/14 bg-white/10 text-white/82"
   }
-
   return "border-white/10 bg-white/[0.05] text-white/65"
 }
 
-function liveClasses(isLive: boolean) {
-  return isLive
-    ? "border-white/18 bg-white text-black"
-    : "border-white/10 bg-white/[0.05] text-white/60"
+function priorityClasses(priority: TaskItem["priority"]) {
+  if (priority === "high") return "border-white/18 bg-white text-black"
+  if (priority === "medium") return "border-white/12 bg-white/10 text-white/82"
+  return "border-white/10 bg-white/[0.05] text-white/62"
+}
+
+function formatTrackLabel(track: OutreachTrackReport["track"]) {
+  return track === "auction_partner" ? "Auction Partners" : "Principal Brokers"
+}
+
+function statusCopy(status: VaultPursuitRecord["status"]) {
+  if (status === "pursuit_reserved") return "Reserved"
+  if (status === "pursuit_declined") return "Declined"
+  if (status === "pursuit_released") return "Released"
+  return "Requested"
+}
+
+function formatSectionLabel(section: TaskItem["section"]) {
+  if (section === "approvals") return "Approvals"
+  if (section === "routing") return "Routing"
+  if (section === "vault") return "Vault"
+  return "Outreach"
+}
+
+function formatWorkspaceMode(mode: OperatorReport["sourceMode"]) {
+  if (mode === "full") return "Full upstream + vault"
+  if (mode === "snapshot") return "Hosted snapshot"
+  return "Site fallback"
 }
 
 export default function OperatorPage() {
   const [secret, setSecret] = useState("")
-  const [report, setReport] = useState<OperatorReport | null>(null)
+  const [approvedBy, setApprovedBy] = useState("Patrick Armour")
+  const [actedBy, setActedBy] = useState("Patrick Armour")
+  const [workspace, setWorkspace] = useState<OperatorWorkspace | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [result, setResult] = useState("")
+  const [processingId, setProcessingId] = useState("")
+  const [doneTaskIds, setDoneTaskIds] = useState<string[]>([])
+  const [history, setHistory] = useState<TaskHistoryItem[]>([])
+
+  useEffect(() => {
+    try {
+      const savedDone = window.localStorage.getItem(DONE_KEY)
+      const savedHistory = window.localStorage.getItem(HISTORY_KEY)
+      if (savedDone) setDoneTaskIds(JSON.parse(savedDone))
+      if (savedHistory) setHistory(JSON.parse(savedHistory))
+    } catch {
+      setDoneTaskIds([])
+      setHistory([])
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DONE_KEY, JSON.stringify(doneTaskIds))
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+    } catch {}
+  }, [doneTaskIds, history])
+
+  const tasks = useMemo(() => {
+    if (!workspace) return []
+
+    const items: TaskItem[] = []
+
+    for (const request of workspace.accessRequests.filter((row) => row.status === "pending")) {
+      items.push({
+        id: `approval:${request.requestId}`,
+        title: `Review access request: ${request.fullName || request.email}`,
+        detail: `${request.company || "No company"} • ${request.accessType || "No access type"}`,
+        section: "approvals",
+        priority: "high",
+      })
+    }
+
+    for (const listing of workspace.routingQueue) {
+      const openRequests = listing.requests.filter((row) => row.status === "pursuit_requested")
+      if (!openRequests.length) continue
+      items.push({
+        id: `routing:${listing.listingSlug}`,
+        title: `Route pursuit requests for ${listing.listingSlug}`,
+        detail: `${openRequests.length} pending pursuit request${openRequests.length === 1 ? "" : "s"}`,
+        section: "routing",
+        priority: "high",
+      })
+    }
+
+    for (const row of workspace.report.vaultCandidates) {
+      items.push({
+        id: `vault:${row.lead_key}`,
+        title: `Review vault candidate: ${row.address || row.lead_key}`,
+        detail: `${row.county || "Unknown county"} • ${row.auction_readiness || "Unknown"} • ${row.packetCompletenessPct ?? "?"}% complete`,
+        section: "vault",
+        priority: row.topTierReady ? "high" : "medium",
+      })
+    }
+
+    for (const track of workspace.outreach.tracks) {
+      if (!track.candidates.length) continue
+      items.push({
+        id: `outreach:${track.track}`,
+        title: `Review ${formatTrackLabel(track.track)} outreach drafts`,
+        detail: `${track.candidates.length} draft${track.candidates.length === 1 ? "" : "s"} ready for review`,
+        section: "outreach",
+        priority: "medium",
+      })
+    }
+
+    return items
+  }, [workspace])
+
+  const activeTasks = useMemo(
+    () => tasks.filter((task) => !doneTaskIds.includes(task.id)),
+    [doneTaskIds, tasks]
+  )
 
   const cards = useMemo(() => {
-    if (!report) return []
+    if (!workspace) return []
     return [
-      ["Tracked Leads", report.overview.totalLeads],
-      ["Green Ready", report.overview.greenReady],
-      ["Underwritten", report.overview.uwReady],
-      ["Packeted", report.overview.packeted],
-      ["Contact Ready", report.overview.contactReady],
-      ["Vault Live", report.overview.vaultLive],
-      ["Vault Queue", report.overview.vaultQueue],
-      ["Pending Approvals", report.overview.pendingApprovals],
+      ["Tracked Leads", workspace.report.overview.totalLeads],
+      ["Green Ready", workspace.report.overview.greenReady],
+      ["Vault Live", workspace.report.overview.vaultLive],
+      [
+        "Pending Approvals",
+        workspace.accessRequests.filter((row) => row.status === "pending").length,
+      ],
+      [
+        "Routing Requests",
+        workspace.routingQueue.reduce(
+          (sum, listing) =>
+            sum + listing.requests.filter((row) => row.status === "pursuit_requested").length,
+          0
+        ),
+      ],
+      [
+        "Outreach Drafts",
+        workspace.outreach.tracks.reduce((sum, track) => sum + track.candidates.length, 0),
+      ],
     ]
-  }, [report])
+  }, [workspace])
 
-  async function loadReport() {
+  async function loadWorkspace(currentSecret?: string) {
+    const secretToUse = (currentSecret ?? secret).trim()
+    if (!secretToUse) {
+      setError("Approval secret is required.")
+      return
+    }
+
     setLoading(true)
     setError("")
 
     try {
-      const res = await fetch("/api/operator/report", {
+      const res = await fetch("/api/operator/workspace", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ secret }),
+        body: JSON.stringify({ secret: secretToUse }),
       })
 
       const data = await res.json()
       if (!res.ok || !data?.ok) {
-        setError(data?.error || "Unable to load operator report.")
+        setError(data?.error || "Unable to load operator workspace.")
         return
       }
 
-      setReport(data.report)
+      setWorkspace(data.workspace)
     } catch {
-      setError("Unable to load operator report.")
+      setError("Unable to load operator workspace.")
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleApprovalAction(requestId: string, action: "approve" | "reject") {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(requestId)
+    setError("")
+    setResult("")
+
+    try {
+      const res = await fetch("/api/access/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestId,
+          approvedBy,
+          secret,
+          action,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to process request.")
+        return
+      }
+
+      setResult(action === "approve" ? `Approved ${data.email}` : `Rejected ${data.email}`)
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to process request.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
+  async function handleRoutingAction(
+    requestId: string,
+    action: "reserve" | "decline" | "release"
+  ) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(requestId)
+    setError("")
+    setResult("")
+
+    try {
+      const res = await fetch("/api/vault/pursuit/admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          actedBy,
+          requestId,
+          action,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to update routing state.")
+        return
+      }
+
+      setResult("Routing updated.")
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to update routing state.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
+  function completeTask(task: TaskItem) {
+    if (doneTaskIds.includes(task.id)) return
+    setDoneTaskIds((current) => [task.id, ...current])
+    setHistory((current) =>
+      [
+        {
+          id: task.id,
+          title: task.title,
+          detail: task.detail,
+          section: task.section,
+          completedAt: new Date().toISOString(),
+        },
+        ...current,
+      ].slice(0, 30)
+    )
+  }
+
+  function restoreTask(taskId: string) {
+    setDoneTaskIds((current) => current.filter((id) => id !== taskId))
+    setHistory((current) => current.filter((item) => item.id !== taskId))
   }
 
   return (
@@ -119,31 +434,25 @@ export default function OperatorPage() {
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-10 md:pb-24 md:pt-16">
         <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
           <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
-            Operator Console
+            Operator Workspace
           </div>
 
-          <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="mt-6 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
               <h1 className="text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-6xl">
-                See what the bots are finding.
+                Run approvals, routing, and review from one desk.
               </h1>
-
-              <p className="mt-5 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-                This internal page shows upstream lead activity, top green candidates,
-                packet generation, and live vault status in one operator-facing view.
+              <p className="mt-5 max-w-3xl text-base leading-7 text-white/68 md:text-lg">
+                This is the single internal workspace for FALCO operator tasks:
+                access approvals, vault routing, live candidate review, and outreach drafts.
               </p>
-
-              {report ? (
+              {workspace ? (
                 <div className="mt-6 text-sm text-white/45">
-                  Generated: {report.generatedAt}
+                  Generated: {workspace.report.generatedAt}
                   <br />
-                  Source DB: {report.dbPath}
+                  Mode: {formatWorkspaceMode(workspace.report.sourceMode)}
                   <br />
-                  Mode: {report.sourceMode === "full"
-                    ? "Full upstream + vault"
-                    : report.sourceMode === "snapshot"
-                      ? "Hosted snapshot"
-                      : "Site fallback"}
+                  Source DB: {workspace.report.dbPath}
                 </div>
               ) : null}
             </div>
@@ -166,6 +475,25 @@ export default function OperatorPage() {
                     placeholder="Admin secret"
                   />
                 </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Approved By</label>
+                    <input
+                      value={approvedBy}
+                      onChange={(e) => setApprovedBy(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Acted By</label>
+                    <input
+                      value={actedBy}
+                      onChange={(e) => setActedBy(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               {error ? (
@@ -174,161 +502,351 @@ export default function OperatorPage() {
                 </div>
               ) : null}
 
-              <div className="mt-6">
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={loadReport}
-                    disabled={loading}
-                    className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading ? "Loading..." : "Load Operator Report"}
-                  </button>
-                  <Link
-                    href="/outreach"
-                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
-                  >
-                    Outreach Queue
-                  </Link>
+              {result ? (
+                <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                  {result}
                 </div>
+              ) : null}
+
+              <div className="mt-6">
+                <button
+                  onClick={() => loadWorkspace(secret)}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? "Loading..." : "Load Workspace"}
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {report ? (
+        {workspace ? (
           <>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {cards.map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
-                >
+                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {label}
                   </div>
-                  <div className="mt-2 text-2xl font-semibold text-white">
-                    {value}
-                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
                 </div>
               ))}
             </div>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm leading-7 text-white/68">
-              {report.sourceNote}
+              {workspace.report.sourceNote}
             </div>
 
-            <div className="mt-8 grid gap-8">
+            <div className="mt-8 grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
               <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Top Candidates
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Today</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Task List
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {activeTasks.length} open
+                  </div>
                 </div>
+
                 <div className="mt-6 grid gap-4">
-                  {report.topCandidates.map((row) => (
-                    <div
-                      key={row.lead_key}
-                      className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"
-                    >
+                  {activeTasks.length ? activeTasks.map((task) => (
+                    <article key={task.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <div className="text-xl font-semibold tracking-[-0.03em] text-white">
-                            {row.address || row.lead_key}
-                          </div>
-                          <div className="mt-2 text-sm text-white/55">
-                            {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
-                          </div>
+                          <div className="text-lg font-semibold text-white">{task.title}</div>
+                          <div className="mt-2 text-sm text-white/60">{task.detail}</div>
                         </div>
-
                         <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
-                          <span className={`rounded-full border px-3 py-1 ${badgeClasses(row.auction_readiness)}`}>
-                            {row.auction_readiness || "Unknown"}
+                          <span className={`rounded-full border px-3 py-1 ${priorityClasses(task.priority)}`}>
+                            {task.priority}
                           </span>
-                          <span className={`rounded-full border px-3 py-1 ${liveClasses(row.vaultLive)}`}>
-                            {row.vaultLive ? "Vault Live" : "Not Live"}
+                          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-white/60">
+                            {formatSectionLabel(task.section)}
                           </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 grid gap-4 md:grid-cols-5">
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Score</div>
-                          <div className="mt-2 text-sm text-white/82">{row.falco_score_internal ?? "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity</div>
-                          <div className="mt-2 text-sm text-white/82">{row.equity_band || "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days to Sale</div>
-                          <div className="mt-2 text-sm text-white/82">{row.dts_days ?? "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">UW</div>
-                          <div className="mt-2 text-sm text-white/82">{row.uw_ready ? "READY" : "PENDING"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Vault Slug</div>
-                          <div className="mt-2 break-all text-sm text-white/82">{row.vaultSlug || "—"}</div>
                         </div>
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-3">
-                        {row.vaultSlug ? (
-                          <>
-                            <Link
-                              href={`/vault/${row.vaultSlug}`}
-                              className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-                            >
-                              Open Listing
-                            </Link>
-                            <Link
-                              href={`/api/vault/packet?slug=${row.vaultSlug}`}
-                              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
-                            >
-                              Open Packet
-                            </Link>
-                          </>
-                        ) : null}
+                        <a
+                          href={`#${task.section}`}
+                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                        >
+                          Jump to Section
+                        </a>
+                        <button
+                          onClick={() => completeTask(task)}
+                          className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                        >
+                          Mark Complete
+                        </button>
                       </div>
+                    </article>
+                  )) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                      No open operator tasks right now.
                     </div>
-                  ))}
+                  )}
                 </div>
               </section>
 
               <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Vault Queue
-                </div>
-                <div className="mt-3 text-sm text-white/58">
-                  Not-live leads that are ready for vault review or one step away.
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">History</div>
+                <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                  Completed Tasks
                 </div>
 
                 <div className="mt-6 grid gap-4">
-                  {report.vaultCandidates.length ? report.vaultCandidates.map((row) => (
-                    <div
-                      key={`vault-candidate-${row.lead_key}`}
-                      className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"
-                    >
+                  {history.length ? history.map((item) => (
+                    <article key={item.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                      <div className="text-sm uppercase tracking-[0.18em] text-white/40">
+                        {formatSectionLabel(item.section)}
+                      </div>
+                      <div className="mt-2 text-base font-semibold text-white">{item.title}</div>
+                      <div className="mt-2 text-sm text-white/60">{item.detail}</div>
+                      <div className="mt-3 text-xs text-white/40">Completed: {item.completedAt}</div>
+                      <div className="mt-4">
+                        <button
+                          onClick={() => restoreTask(item.id)}
+                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    </article>
+                  )) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                      No completed tasks saved yet.
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <div className="mt-8 grid gap-8">
+              <section
+                id="approvals"
+                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Approvals</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Access Requests
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {workspace.accessRequests.filter((row) => row.status === "pending").length} pending
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  {workspace.accessRequests.length ? workspace.accessRequests.map((request) => (
+                    <article key={request.requestId} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <div className="text-xl font-semibold tracking-[-0.03em] text-white">
-                            {row.address || row.lead_key}
+                          <div className="text-xl font-semibold text-white">
+                            {request.fullName || request.email}
                           </div>
+                          <div className="mt-2 text-sm text-white/55">
+                            {request.email} • {request.company || "No company"}
+                          </div>
+                        </div>
+                        <div className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${request.status === "approved" ? "border-white/18 bg-white text-black" : request.status === "rejected" ? "border-white/10 bg-white/[0.05] text-white/60" : "border-white/12 bg-white/10 text-white/82"}`}>
+                          {request.status}
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid gap-4 md:grid-cols-4">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Role</div>
+                          <div className="mt-2 text-sm text-white/82">{request.role || "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Market Focus</div>
+                          <div className="mt-2 text-sm text-white/82">{request.marketFocus || "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Access Type</div>
+                          <div className="mt-2 text-sm text-white/82">{request.accessType || "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Submitted</div>
+                          <div className="mt-2 text-sm text-white/82">{request.submittedAt || "—"}</div>
+                        </div>
+                      </div>
+
+                      {(request.executionCapacity || request.notes) ? (
+                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                              Execution Capacity
+                            </div>
+                            <div className="mt-3 text-sm leading-7 text-white/76">
+                              {request.executionCapacity || "—"}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                              Notes
+                            </div>
+                            <div className="mt-3 text-sm leading-7 text-white/76">
+                              {request.notes || "—"}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {request.status === "pending" ? (
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          <button
+                            onClick={() => handleApprovalAction(request.requestId, "approve")}
+                            disabled={processingId === request.requestId}
+                            className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {processingId === request.requestId ? "Processing..." : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => handleApprovalAction(request.requestId, "reject")}
+                            disabled={processingId === request.requestId}
+                            className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {processingId === request.requestId ? "Processing..." : "Reject"}
+                          </button>
+                        </div>
+                      ) : null}
+                    </article>
+                  )) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                      No access requests in the queue.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section
+                id="routing"
+                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Routing</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Pursuit Requests
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {workspace.routingQueue.length} listings
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  {workspace.routingQueue.length ? workspace.routingQueue.map((listing) => (
+                    <article key={listing.listingSlug} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                      <div className="text-lg font-semibold text-white">{listing.listingSlug}</div>
+                      <div className="mt-4 grid gap-4">
+                        {listing.requests.map((request) => (
+                          <div key={request.requestId} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div>
+                                <div className="text-base font-semibold text-white">
+                                  {request.fullName || request.email}
+                                </div>
+                                <div className="mt-1 text-sm text-white/55">{request.email}</div>
+                              </div>
+                              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/70">
+                                {statusCopy(request.status)}
+                              </div>
+                            </div>
+
+                            <div className="mt-4 text-sm leading-7 text-white/68">
+                              {request.message || "No pursuit note provided."}
+                            </div>
+
+                            <div className="mt-4 text-xs text-white/40">Submitted: {request.submittedAt}</div>
+
+                            <div className="mt-5 flex flex-wrap gap-3">
+                              {request.status === "pursuit_requested" ? (
+                                <>
+                                  <button
+                                    onClick={() => handleRoutingAction(request.requestId, "reserve")}
+                                    disabled={processingId === request.requestId}
+                                    className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === request.requestId ? "Processing..." : "Reserve"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleRoutingAction(request.requestId, "decline")}
+                                    disabled={processingId === request.requestId}
+                                    className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === request.requestId ? "Processing..." : "Decline"}
+                                  </button>
+                                </>
+                              ) : null}
+
+                              {request.status === "pursuit_reserved" ? (
+                                <button
+                                  onClick={() => handleRoutingAction(request.requestId, "release")}
+                                  disabled={processingId === request.requestId}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === request.requestId ? "Processing..." : "Release"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                      No active pursuit routing requests.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section
+                id="vault"
+                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Vault</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Candidate Queue And Live Shelf
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {workspace.report.vaultCandidates.length} queued
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  {workspace.report.vaultCandidates.length ? workspace.report.vaultCandidates.map((row) => (
+                    <article key={row.lead_key} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <div className="text-xl font-semibold text-white">{row.address || row.lead_key}</div>
                           <div className="mt-2 text-sm text-white/55">
                             {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
                           </div>
                         </div>
-
                         <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
                           <span className={`rounded-full border px-3 py-1 ${badgeClasses(row.auction_readiness)}`}>
                             {row.auction_readiness || "Unknown"}
                           </span>
-                          <span className={`rounded-full border px-3 py-1 ${row.vaultPublishReady ? "border-white/18 bg-white text-black" : "border-white/10 bg-white/[0.05] text-white/65"}`}>
-                            {row.vaultPublishReady ? "Ready" : "Near Miss"}
+                          <span className="rounded-full border border-white/18 bg-white px-3 py-1 text-black">
+                            {row.packetCompletenessPct ?? "?"}% complete
                           </span>
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-4 md:grid-cols-5">
+                      <div className="mt-5 grid gap-4 md:grid-cols-4">
                         <div>
                           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Score</div>
                           <div className="mt-2 text-sm text-white/82">{row.falco_score_internal ?? "—"}</div>
@@ -340,10 +858,6 @@ export default function OperatorPage() {
                         <div>
                           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days to Sale</div>
                           <div className="mt-2 text-sm text-white/82">{row.dts_days ?? "—"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Completeness</div>
-                          <div className="mt-2 text-sm text-white/82">{row.packetCompletenessPct ?? "—"}%</div>
                         </div>
                         <div>
                           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Top Tier</div>
@@ -356,122 +870,139 @@ export default function OperatorPage() {
                           Blockers: {row.executionBlockers.join(" • ")}
                         </div>
                       ) : null}
-                    </div>
+
+                      {row.vaultSlug ? (
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <Link
+                            href={`/vault/${row.vaultSlug}`}
+                            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                          >
+                            Open Listing
+                          </Link>
+                          <Link
+                            href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                          >
+                            Open Packet
+                          </Link>
+                        </div>
+                      ) : null}
+                    </article>
                   )) : (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/58">
-                      No not-live leads currently qualify for the vault queue.
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/60">
+                      No vault candidates are waiting right now.
                     </div>
                   )}
                 </div>
-              </section>
 
-              <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Recent Packets
-                </div>
-                <div className="mt-6 overflow-x-auto">
-                  <table className="w-full min-w-[900px] text-left text-sm text-white/76">
-                    <thead className="text-[11px] uppercase tracking-[0.22em] text-white/38">
-                      <tr>
-                        <th className="pb-3">Lead</th>
-                        <th className="pb-3">County</th>
-                        <th className="pb-3">Readiness</th>
-                        <th className="pb-3">DTS</th>
-                        <th className="pb-3">Run</th>
-                        <th className="pb-3">Created</th>
-                        <th className="pb-3">Vault</th>
-                        <th className="pb-3">Links</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.recentPackets.map((row) => (
-                        <tr key={`${row.lead_key}-${row.run_id}`} className="border-t border-white/8">
-                          <td className="py-3">{row.address || row.lead_key}</td>
-                          <td className="py-3">{row.county || "—"}</td>
-                          <td className="py-3">{row.auction_readiness || "—"}</td>
-                          <td className="py-3">{row.dts_days ?? "—"}</td>
-                          <td className="py-3">{row.run_id || "—"}</td>
-                          <td className="py-3">{row.created_at || "—"}</td>
-                          <td className="py-3">{row.vaultLive ? "LIVE" : "NOT LIVE"}</td>
-                          <td className="py-3">
-                            {row.vaultSlug ? (
-                              <div className="flex flex-wrap gap-2">
-                                <Link
-                                  href={`/vault/${row.vaultSlug}`}
-                                  className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-white/90"
-                                >
-                                  Listing
-                                </Link>
-                                <Link
-                                  href={`/api/vault/packet?slug=${row.vaultSlug}`}
-                                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
-                                >
-                                  Packet
-                                </Link>
-                              </div>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mt-8">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Live Top Candidates</div>
+                  <div className="mt-4 grid gap-4">
+                    {workspace.report.topCandidates.slice(0, 6).map((row) => (
+                      <article key={`top-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
+                            <div className="mt-1 text-sm text-white/55">
+                              {row.county || "Unknown county"} • {row.dts_days ?? "—"} days
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
+                            <span className={`rounded-full border px-3 py-1 ${badgeClasses(row.auction_readiness)}`}>
+                              {row.auction_readiness || "Unknown"}
+                            </span>
+                            <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-white/60">
+                              {row.vaultLive ? "Vault Live" : "Not Live"}
+                            </span>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
               </section>
 
-              <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                  Recent Leads
+              <section
+                id="outreach"
+                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Outreach</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Draft Queues
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {workspace.outreach.tracks.reduce((sum, track) => sum + track.candidates.length, 0)} drafts
+                  </div>
                 </div>
-                <div className="mt-6 overflow-x-auto">
-                  <table className="w-full min-w-[900px] text-left text-sm text-white/76">
-                    <thead className="text-[11px] uppercase tracking-[0.22em] text-white/38">
-                      <tr>
-                        <th className="pb-3">Lead</th>
-                        <th className="pb-3">County</th>
-                        <th className="pb-3">Type</th>
-                        <th className="pb-3">Score</th>
-                        <th className="pb-3">Readiness</th>
-                        <th className="pb-3">DTS</th>
-                        <th className="pb-3">Vault</th>
-                        <th className="pb-3">Links</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.recentLeads.map((row) => (
-                        <tr key={row.lead_key} className="border-t border-white/8">
-                          <td className="py-3">{row.address || row.lead_key}</td>
-                          <td className="py-3">{row.county || "—"}</td>
-                          <td className="py-3">{row.distress_type || "—"}</td>
-                          <td className="py-3">{row.falco_score_internal ?? "—"}</td>
-                          <td className="py-3">{row.auction_readiness || "—"}</td>
-                          <td className="py-3">{row.dts_days ?? "—"}</td>
-                          <td className="py-3">{row.vaultLive ? "LIVE" : "NOT LIVE"}</td>
-                          <td className="py-3">
-                            {row.vaultSlug ? (
-                              <div className="flex flex-wrap gap-2">
-                                <Link
-                                  href={`/vault/${row.vaultSlug}`}
-                                  className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-white/90"
-                                >
-                                  Listing
-                                </Link>
-                                <Link
-                                  href={`/api/vault/packet?slug=${row.vaultSlug}`}
-                                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
-                                >
-                                  Packet
-                                </Link>
+
+                <div className="mt-6 grid gap-6">
+                  {workspace.outreach.tracks.map((track) => (
+                    <article key={track.track} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <div className="text-lg font-semibold text-white">{formatTrackLabel(track.track)}</div>
+                          <div className="mt-2 text-sm text-white/55">
+                            {track.candidates.length} candidates • {track.fileName || "No file"}
+                          </div>
+                        </div>
+                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
+                          {track.generatedAt || "snapshot"}
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid gap-4">
+                        {track.candidates.slice(0, 4).map((candidate) => (
+                          <div key={`${track.track}-${candidate.rank}-${candidate.email}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div>
+                                <div className="text-base font-semibold text-white">{candidate.organization}</div>
+                                <div className="mt-1 text-sm text-white/55">
+                                  {candidate.email || "No email"} • {candidate.city || "Unknown city"}{candidate.state ? `, ${candidate.state}` : ""}
+                                </div>
                               </div>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              <div className="rounded-full border border-white/10 bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-black">
+                                Rank {candidate.rank}
+                              </div>
+                            </div>
+
+                            <div className="mt-4 text-sm leading-7 text-white/68">
+                              {candidate.reason || candidate.snippet || "No reason captured."}
+                            </div>
+
+                            <div className="mt-5 flex flex-wrap gap-3">
+                              {candidate.website ? (
+                                <a
+                                  href={candidate.website}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                                >
+                                  Open Site
+                                </a>
+                              ) : null}
+                              {candidate.email ? (
+                                <a
+                                  href={`mailto:${candidate.email}?subject=${encodeURIComponent(candidate.subject || "")}&body=${encodeURIComponent(candidate.body || "")}`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                                >
+                                  Open Draft
+                                </a>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+
+                        {!track.candidates.length ? (
+                          <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                            No drafts in this queue yet.
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </section>
             </div>
