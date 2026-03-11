@@ -167,15 +167,6 @@ function ListingCard({ listing }: { listing: VaultListing }) {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            FALCO Score
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.falcoScore ?? "-"}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
             Screening Status
           </div>
           <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>

@@ -465,11 +465,6 @@ export default function VaultListingPage() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">FALCO Score</div>
-                <div className="mt-2 text-sm font-medium text-white/82">{listing.falcoScore ?? "-"}</div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Screening Status</div>
                 <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
                   {listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}
@@ -640,7 +635,6 @@ export default function VaultListingPage() {
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Market</div><div className="mt-3 text-lg font-semibold text-white">{listing.market}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Distress Type</div><div className="mt-3 text-lg font-semibold text-white">{listing.distressType}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Window</div><div className="mt-3 text-lg font-semibold text-white">{listing.auctionWindow}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">FALCO Score</div><div className="mt-3 text-lg font-semibold text-white">{listing.falcoScore ?? "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Screening Status</div><div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>{listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div><div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "-"}</div></div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days Until Scheduled Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>

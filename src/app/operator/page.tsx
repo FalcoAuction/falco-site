@@ -984,11 +984,7 @@ export default function OperatorPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 grid gap-4 md:grid-cols-4">
-                        <div>
-                          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Score</div>
-                          <div className="mt-2 text-sm text-white/82">{row.falco_score_internal ?? "—"}</div>
-                        </div>
+                      <div className="mt-5 grid gap-4 md:grid-cols-3">
                         <div>
                           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity</div>
                           <div className="mt-2 text-sm text-white/82">{row.equity_band || "—"}</div>
