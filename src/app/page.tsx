@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { getHomeMetrics } from "@/lib/home-metrics"
+import { FalconFlightLayer } from "@/components/home/FalconFlightLayer"
 
 export const dynamic = "force-dynamic"
 
@@ -74,6 +75,7 @@ export default async function HomePage() {
       `}</style>
 
       <div className="relative isolate overflow-hidden">
+        <FalconFlightLayer />
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
@@ -108,7 +110,10 @@ export default async function HomePage() {
           </div>
         </header>
 
-        <section className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28">
+        <section
+          className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28"
+          data-falcon-section="hero"
+        >
           <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div
@@ -221,7 +226,10 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-10 md:px-10">
+        <section
+          className="mx-auto max-w-7xl px-6 pb-10 md:px-10"
+          data-falcon-section="snapshot"
+        >
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5">
             <div className="grid gap-4 md:grid-cols-4">
               {liveMetrics.map((metric, index) => (
@@ -252,7 +260,10 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10" id="what-it-is">
+        <section
+          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+          data-falcon-section="overview"
+        >
           <div className="grid gap-6 md:grid-cols-3">
             {stats.map((stat, index) => (
               <div
@@ -269,7 +280,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
+        <section
+          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+          data-falcon-section="what-it-is"
+          id="what-it-is"
+        >
           <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
@@ -296,6 +311,7 @@ export default async function HomePage() {
         <section
           id="how-it-works"
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+          data-falcon-section="how-it-works"
         >
           <div className="mb-10">
             <div className="text-xs uppercase tracking-[0.26em] text-white/45">
@@ -330,6 +346,7 @@ export default async function HomePage() {
         <section
           id="partners"
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+          data-falcon-section="partners"
         >
           <div className="grid gap-8 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.95fr_1.05fr] md:p-12">
             <div>
@@ -362,6 +379,7 @@ export default async function HomePage() {
         <section
           id="request-access"
           className="mx-auto max-w-7xl px-6 pb-32 md:px-10"
+          data-falcon-section="request-access"
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-emerald-400/20">
