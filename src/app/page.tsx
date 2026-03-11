@@ -117,6 +117,7 @@ export default async function HomePage() {
           <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div
+                data-falcon-anchor="hero"
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
@@ -230,7 +231,10 @@ export default async function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-10 md:px-10"
           data-falcon-section="snapshot"
         >
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5">
+          <div
+            data-falcon-anchor="snapshot"
+            className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5"
+          >
             <div className="grid gap-4 md:grid-cols-4">
               {liveMetrics.map((metric, index) => (
                 <div
@@ -264,7 +268,7 @@ export default async function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
           data-falcon-section="overview"
         >
-          <div className="grid gap-6 md:grid-cols-3">
+          <div data-falcon-anchor="overview" className="grid gap-6 md:grid-cols-3">
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
@@ -285,7 +289,10 @@ export default async function HomePage() {
           data-falcon-section="what-it-is"
           id="what-it-is"
         >
-          <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
+          <div
+            data-falcon-anchor="what-it-is"
+            className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12"
+          >
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
                 What It Is
@@ -313,7 +320,7 @@ export default async function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
           data-falcon-section="how-it-works"
         >
-          <div className="mb-10">
+          <div data-falcon-anchor="how-it-works" className="mb-10">
             <div className="text-xs uppercase tracking-[0.26em] text-white/45">
               How It Works
             </div>
@@ -348,7 +355,10 @@ export default async function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
           data-falcon-section="partners"
         >
-          <div className="grid gap-8 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.95fr_1.05fr] md:p-12">
+          <div
+            data-falcon-anchor="partners"
+            className="grid gap-8 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.95fr_1.05fr] md:p-12"
+          >
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
                 Partners
@@ -381,7 +391,7 @@ export default async function HomePage() {
           className="mx-auto max-w-7xl px-6 pb-32 md:px-10"
           data-falcon-section="request-access"
         >
-          <div className="grid gap-6 md:grid-cols-2">
+          <div data-falcon-anchor="request-access" className="grid gap-6 md:grid-cols-2">
             <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-emerald-400/20">
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">
                 Request Access

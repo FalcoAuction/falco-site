@@ -10,8 +10,10 @@ export type HomeSectionId =
 export type ViewportProfile = "mobile" | "tablet" | "desktop"
 
 type FalconAnchor = {
-  xPct: number
-  yPct: number
+  fallbackXPct: number
+  fallbackYPct: number
+  offsetX: number
+  offsetY: number
   scale: number
   perchRotate: number
 }
@@ -20,12 +22,6 @@ type SegmentTuning = {
   arcXPct: number
   arcYPct: number
   depth: number
-}
-
-type TrailSettings = {
-  maxDots: number
-  sampleMs: number
-  lifetimeMs: number
 }
 
 export const HOME_SECTION_ORDER: HomeSectionId[] = [
@@ -40,31 +36,178 @@ export const HOME_SECTION_ORDER: HomeSectionId[] = [
 
 const ANCHORS: Record<ViewportProfile, Record<HomeSectionId, FalconAnchor>> = {
   desktop: {
-    hero: { xPct: 82, yPct: 20, scale: 1.08, perchRotate: -8 },
-    snapshot: { xPct: 18, yPct: 34, scale: 0.86, perchRotate: 8 },
-    overview: { xPct: 82, yPct: 41, scale: 0.8, perchRotate: -6 },
-    "what-it-is": { xPct: 20, yPct: 50, scale: 0.9, perchRotate: 7 },
-    "how-it-works": { xPct: 82, yPct: 60, scale: 0.84, perchRotate: -8 },
-    partners: { xPct: 20, yPct: 74, scale: 0.8, perchRotate: 8 },
-    "request-access": { xPct: 78, yPct: 88, scale: 0.92, perchRotate: -6 },
+    hero: {
+      fallbackXPct: 24,
+      fallbackYPct: 18,
+      offsetX: 44,
+      offsetY: -30,
+      scale: 0.58,
+      perchRotate: -7,
+    },
+    snapshot: {
+      fallbackXPct: 18,
+      fallbackYPct: 34,
+      offsetX: -54,
+      offsetY: -34,
+      scale: 0.48,
+      perchRotate: 7,
+    },
+    overview: {
+      fallbackXPct: 81,
+      fallbackYPct: 41,
+      offsetX: 80,
+      offsetY: -30,
+      scale: 0.46,
+      perchRotate: -6,
+    },
+    "what-it-is": {
+      fallbackXPct: 20,
+      fallbackYPct: 50,
+      offsetX: -58,
+      offsetY: -34,
+      scale: 0.48,
+      perchRotate: 8,
+    },
+    "how-it-works": {
+      fallbackXPct: 82,
+      fallbackYPct: 61,
+      offsetX: 72,
+      offsetY: -38,
+      scale: 0.46,
+      perchRotate: -8,
+    },
+    partners: {
+      fallbackXPct: 20,
+      fallbackYPct: 74,
+      offsetX: -56,
+      offsetY: -30,
+      scale: 0.45,
+      perchRotate: 8,
+    },
+    "request-access": {
+      fallbackXPct: 74,
+      fallbackYPct: 88,
+      offsetX: 68,
+      offsetY: -34,
+      scale: 0.48,
+      perchRotate: -7,
+    },
   },
   tablet: {
-    hero: { xPct: 78, yPct: 18, scale: 0.96, perchRotate: -7 },
-    snapshot: { xPct: 22, yPct: 32, scale: 0.8, perchRotate: 8 },
-    overview: { xPct: 76, yPct: 42, scale: 0.76, perchRotate: -6 },
-    "what-it-is": { xPct: 24, yPct: 52, scale: 0.84, perchRotate: 7 },
-    "how-it-works": { xPct: 76, yPct: 63, scale: 0.78, perchRotate: -8 },
-    partners: { xPct: 24, yPct: 76, scale: 0.74, perchRotate: 7 },
-    "request-access": { xPct: 74, yPct: 89, scale: 0.84, perchRotate: -5 },
+    hero: {
+      fallbackXPct: 24,
+      fallbackYPct: 17,
+      offsetX: 38,
+      offsetY: -26,
+      scale: 0.52,
+      perchRotate: -7,
+    },
+    snapshot: {
+      fallbackXPct: 22,
+      fallbackYPct: 32,
+      offsetX: -42,
+      offsetY: -26,
+      scale: 0.44,
+      perchRotate: 7,
+    },
+    overview: {
+      fallbackXPct: 76,
+      fallbackYPct: 43,
+      offsetX: 58,
+      offsetY: -28,
+      scale: 0.42,
+      perchRotate: -6,
+    },
+    "what-it-is": {
+      fallbackXPct: 24,
+      fallbackYPct: 53,
+      offsetX: -44,
+      offsetY: -28,
+      scale: 0.44,
+      perchRotate: 8,
+    },
+    "how-it-works": {
+      fallbackXPct: 76,
+      fallbackYPct: 64,
+      offsetX: 54,
+      offsetY: -32,
+      scale: 0.42,
+      perchRotate: -8,
+    },
+    partners: {
+      fallbackXPct: 24,
+      fallbackYPct: 76,
+      offsetX: -44,
+      offsetY: -28,
+      scale: 0.41,
+      perchRotate: 7,
+    },
+    "request-access": {
+      fallbackXPct: 72,
+      fallbackYPct: 89,
+      offsetX: 48,
+      offsetY: -30,
+      scale: 0.44,
+      perchRotate: -6,
+    },
   },
   mobile: {
-    hero: { xPct: 78, yPct: 14, scale: 0.8, perchRotate: -6 },
-    snapshot: { xPct: 78, yPct: 28, scale: 0.7, perchRotate: -3 },
-    overview: { xPct: 18, yPct: 43, scale: 0.72, perchRotate: 6 },
-    "what-it-is": { xPct: 80, yPct: 56, scale: 0.76, perchRotate: -6 },
-    "how-it-works": { xPct: 18, yPct: 69, scale: 0.7, perchRotate: 6 },
-    partners: { xPct: 82, yPct: 81, scale: 0.72, perchRotate: -6 },
-    "request-access": { xPct: 20, yPct: 92, scale: 0.76, perchRotate: 5 },
+    hero: {
+      fallbackXPct: 36,
+      fallbackYPct: 12,
+      offsetX: 24,
+      offsetY: -18,
+      scale: 0.46,
+      perchRotate: -6,
+    },
+    snapshot: {
+      fallbackXPct: 78,
+      fallbackYPct: 28,
+      offsetX: 28,
+      offsetY: -18,
+      scale: 0.38,
+      perchRotate: -4,
+    },
+    overview: {
+      fallbackXPct: 18,
+      fallbackYPct: 43,
+      offsetX: -26,
+      offsetY: -18,
+      scale: 0.39,
+      perchRotate: 6,
+    },
+    "what-it-is": {
+      fallbackXPct: 80,
+      fallbackYPct: 56,
+      offsetX: 28,
+      offsetY: -18,
+      scale: 0.4,
+      perchRotate: -6,
+    },
+    "how-it-works": {
+      fallbackXPct: 18,
+      fallbackYPct: 69,
+      offsetX: -26,
+      offsetY: -18,
+      scale: 0.38,
+      perchRotate: 6,
+    },
+    partners: {
+      fallbackXPct: 82,
+      fallbackYPct: 81,
+      offsetX: 26,
+      offsetY: -18,
+      scale: 0.39,
+      perchRotate: -6,
+    },
+    "request-access": {
+      fallbackXPct: 20,
+      fallbackYPct: 92,
+      offsetX: -22,
+      offsetY: -18,
+      scale: 0.4,
+      perchRotate: 5,
+    },
   },
 }
 
@@ -99,15 +242,9 @@ const SEGMENTS: Record<
 }
 
 const BIRD_SIZES: Record<ViewportProfile, { width: number; height: number }> = {
-  desktop: { width: 178, height: 140 },
-  tablet: { width: 146, height: 116 },
-  mobile: { width: 112, height: 88 },
-}
-
-const TRAIL: Record<ViewportProfile, TrailSettings> = {
-  desktop: { maxDots: 14, sampleMs: 42, lifetimeMs: 520 },
-  tablet: { maxDots: 11, sampleMs: 48, lifetimeMs: 460 },
-  mobile: { maxDots: 8, sampleMs: 58, lifetimeMs: 380 },
+  desktop: { width: 90, height: 71 },
+  tablet: { width: 74, height: 58 },
+  mobile: { width: 56, height: 44 },
 }
 
 export function getViewportProfile(width: number): ViewportProfile {
@@ -131,10 +268,6 @@ export function getFalconAnchor(
 
 export function getFalconBirdSize(profile: ViewportProfile) {
   return BIRD_SIZES[profile]
-}
-
-export function getFalconTrailSettings(profile: ViewportProfile) {
-  return TRAIL[profile]
 }
 
 export function getSegmentTuning(
@@ -203,7 +336,30 @@ export function viewportPoint(
   viewportHeight: number,
 ) {
   return {
-    x: (anchor.xPct / 100) * viewportWidth,
-    y: (anchor.yPct / 100) * viewportHeight,
+    x: (anchor.fallbackXPct / 100) * viewportWidth,
+    y: (anchor.fallbackYPct / 100) * viewportHeight,
+  }
+}
+
+export function resolveAnchorPoint(
+  sectionId: HomeSectionId,
+  profile: ViewportProfile,
+  viewportWidth: number,
+  viewportHeight: number,
+) {
+  const anchor = ANCHORS[profile][sectionId]
+  const element = globalThis.document?.querySelector<HTMLElement>(
+    `[data-falcon-anchor="${sectionId}"]`,
+  )
+
+  if (!element) {
+    return viewportPoint(anchor, viewportWidth, viewportHeight)
+  }
+
+  const rect = element.getBoundingClientRect()
+
+  return {
+    x: rect.left + rect.width / 2 + anchor.offsetX,
+    y: rect.top + rect.height / 2 + anchor.offsetY,
   }
 }
