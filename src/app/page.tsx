@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic"
 
 const stats = [
   { label: "Primary Focus", value: "Distress Origination" },
-  { label: "System Role", value: "Screening + Packaging Layer" },
+  { label: "System Role", value: "Screening + Review" },
   { label: "Current State", value: "Restricted Vault Live" },
 ]
 
@@ -13,17 +13,17 @@ const workflow = [
   {
     step: "01",
     title: "Detect",
-    body: "FALCO monitors targeted distress sources and surfaces potential opportunities before they become widely visible.",
+    body: "FALCO monitors targeted distress sources and surfaces opportunities early.",
   },
   {
     step: "02",
-    title: "Underwrite",
-    body: "Each lead is enriched, screened, and packaged into an operator-facing brief built for fast review.",
+    title: "Screen",
+    body: "Each lead is enriched, filtered, and organized into a clear operator-facing brief.",
   },
   {
     step: "03",
     title: "Route",
-    body: "The strongest candidates are routed selectively into the right operator, brokerage, and execution channels.",
+    body: "The strongest candidates move into controlled operator and partner review paths.",
   },
 ]
 
@@ -115,7 +115,7 @@ export default async function HomePage() {
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Distress Asset Intelligence Engine
+                Upstream Distress Origination
               </div>
 
               <h1 className="max-w-4xl text-5xl font-semibold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
@@ -127,15 +127,15 @@ export default async function HomePage() {
               </h1>
 
               <p className="mt-8 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-                FALCO is an upstream distress engine that detects signals early,
-                filters them hard, and packages the best candidates into
-                operator-facing briefs.
+                FALCO identifies distressed-property opportunities early and
+                turns the strongest candidates into operator-facing briefs for
+                controlled review.
               </p>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-                Approved partners receive access to FALCO&apos;s restricted vault,
-                listing materials, and controlled review paths after acceptance
-                of confidentiality and non-circumvention terms.
+                Approved partners receive access to a restricted vault,
+                packet materials, and controlled review paths after NDA and
+                non-circumvention acceptance.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -166,7 +166,7 @@ export default async function HomePage() {
                       Signal Flow
                     </div>
                     <div className="mt-2 text-xl font-semibold text-white">
-                      Origination Pipeline
+                      Review Pipeline
                     </div>
                   </div>
 
@@ -177,10 +177,10 @@ export default async function HomePage() {
 
                 <div className="space-y-4 pt-6">
                   {[
-                    "Upstream distress detection",
-                    "Scoring and underwriting layer",
-                    "Auction opportunity brief generation",
-                    "Restricted partner distribution",
+                    "Targeted distress detection",
+                    "Screening and underwriting",
+                    "Operator brief generation",
+                    "Restricted partner review",
                   ].map((item, index) => (
                     <div
                       key={item}
@@ -203,7 +203,7 @@ export default async function HomePage() {
                   </div>
                   <p className="mt-3 text-sm leading-6 text-white/68">
                     FALCO sits upstream of execution, turning fragmented distress
-                    data into cleaner screened opportunities.
+                    signals into cleaner operator review.
                   </p>
                 </div>
               </div>
@@ -276,19 +276,18 @@ export default async function HomePage() {
                 What It Is
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A disciplined screening and packaging layer for distressed opportunities.
+                A private screening and packaging system for distressed opportunities.
               </h2>
             </div>
 
             <div className="space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO is designed to identify distress early, reduce noise, and
-                turn raw lead flow into structured operator-facing dossiers.
+                FALCO identifies distress early, reduces noise, and turns raw
+                lead flow into structured operator-facing dossiers.
               </p>
               <p className="leading-7">
-                It is not a listing portal or broad marketing feed. It is a
-                restricted origination system built for signal quality,
-                screening discipline, and controlled downstream review.
+                It is not a public listing feed. It is a restricted review
+                system built for cleaner sourcing and controlled downstream access.
               </p>
             </div>
           </div>
@@ -303,7 +302,7 @@ export default async function HomePage() {
               How It Works
             </div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-              Structured for clean execution.
+              Built for fast operator review.
             </h2>
           </div>
 
@@ -341,9 +340,8 @@ export default async function HomePage() {
                 Built for serious operators, not broad distribution.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
-                FALCO is designed for aligned partners who want cleaner
-                opportunities than raw notice scraping and a tighter review path
-                than public deal circulation.
+                FALCO is built for aligned partners who want cleaner candidates
+                and a tighter review path than public deal circulation.
               </p>
             </div>
 
@@ -371,12 +369,11 @@ export default async function HomePage() {
                 Request Access
               </div>
               <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white">
-                Enter the pipeline.
+                Enter the review flow.
               </h3>
               <p className="mt-4 max-w-lg text-white/68 leading-7">
                 Access is limited to qualified operators, investors, and
-                execution partners who want direct exposure to screened
-                opportunity flow.
+                execution partners seeking screened opportunity flow.
               </p>
               <div className="mt-8">
                 <Link
@@ -402,7 +399,7 @@ export default async function HomePage() {
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
                 >
                   <span>Submit Opportunity</span>
-                  <span className="text-white/40">→</span>
+                  <span className="text-white/40">&gt;</span>
                 </Link>
 
                 <a
@@ -410,7 +407,7 @@ export default async function HomePage() {
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
                 >
                   <span>Partner Inquiry</span>
-                  <span className="text-white/40">→</span>
+                  <span className="text-white/40">&gt;</span>
                 </a>
               </div>
             </div>
