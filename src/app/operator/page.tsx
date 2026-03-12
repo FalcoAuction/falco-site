@@ -55,6 +55,57 @@ type OperatorReport = {
     preForeclosure: ReportRow[]
     statusChanges: ReportRow[]
   }
+  analyst?: {
+    agent: "falco_analyst"
+    generated_at: string
+    overview: {
+      priority_review_count: number
+      operator_review_candidate_count: number
+      repair_and_retry_count: number
+      watch_and_enrich_count: number
+      monitor_count: number
+      pre_foreclosure_watch_count: number
+    }
+    strategic_notes: string[]
+    priority_review: AnalystRow[]
+    operator_review_candidates: AnalystRow[]
+    repair_and_retry: AnalystRow[]
+    watch_and_enrich: AnalystRow[]
+    monitor: AnalystRow[]
+    pre_foreclosure_watch: Array<{
+      lead_key: string
+      address: string | null
+      county: string | null
+      distress_type: string | null
+      sale_status?: string | null
+      dts_days?: number | null
+    }>
+  } | null
+}
+
+type AnalystRow = {
+  lead_key: string
+  address: string | null
+  county: string | null
+  distress_type: string | null
+  sale_status?: string | null
+  dts_days?: number | null
+  analysis_bucket: string
+  confidence: string
+  urgency: string
+  suggested_execution_lane: VaultExecutionLane | string
+  suggested_lane_reasons: string[]
+  control_party: string
+  contact_path_quality: string
+  execution_posture: string
+  workability_band: string
+  recommended_action: string
+  summary: string
+  execution_blockers: string[]
+  missing_fields: string[]
+  operator_validation_required: boolean
+  top_tier_ready: boolean
+  vault_publish_ready: boolean
 }
 
 type AccessRequestRecord = {
@@ -227,6 +278,21 @@ function laneConfidenceCopy(value?: string) {
   return "Low"
 }
 
+function analystBucketCopy(value?: string) {
+  if (value === "priority_review") return "Priority Review"
+  if (value === "operator_review_candidate") return "Operator Review"
+  if (value === "repair_and_retry") return "Repair And Retry"
+  if (value === "watch_and_enrich") return "Watch And Enrich"
+  return "Monitor"
+}
+
+function urgencyCopy(value?: string) {
+  if (value === "now") return "Now"
+  if (value === "this_week") return "This Week"
+  if (value === "watch") return "Watch"
+  return "Monitor"
+}
+
 function executionStageCopy(listing: LiveVaultListing) {
   if (listing.validationOutcome === "validated_execution_path") return "Validated Execution Path"
   if (listing.validationOutcome === "needs_more_info") return "Needs More Info"
@@ -350,6 +416,7 @@ export default function OperatorPage() {
     return [
       ["Tracked Leads", workspace.report.overview.totalLeads],
       ["Priority Review", workspace.liveListings.filter((listing) => listing.topTierReady).length],
+      ["Analyst Review", workspace.report.analyst?.overview.priority_review_count ?? 0],
       [
         "Validated Paths",
         workspace.liveListings.filter(
@@ -380,6 +447,7 @@ export default function OperatorPage() {
   const sectionLinks = useMemo(
     () => [
       { id: "overview", label: "Overview" },
+      { id: "analyst", label: "Analyst" },
       { id: "intake", label: "Intake" },
       { id: "tasks", label: "Tasks" },
       { id: "approvals", label: "Approvals" },
@@ -876,6 +944,198 @@ export default function OperatorPage() {
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-sm leading-7 text-white/60">
                 {workspace.report.sourceNote}
+              </div>
+            </section>
+
+            <section
+              id="analyst"
+              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Analyst</div>
+                  <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                    FALCO Analyst Desk
+                  </div>
+                  <div className="mt-3 max-w-3xl text-sm leading-7 text-white/62">
+                    A structured recommendation layer over the current pipeline: what is ready now,
+                    what needs repair, and what should stay on early watch instead of moving too fast.
+                  </div>
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                  {workspace.report.analyst?.overview.priority_review_count ?? 0} priority now
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Priority</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.priority_review_count ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Review</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.operator_review_candidate_count ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Repair</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.repair_and_retry_count ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Watch</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.watch_and_enrich_count ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Monitor</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.monitor_count ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Pre-Foreclosure</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {workspace.report.analyst?.overview.pre_foreclosure_watch_count ?? 0}
+                  </div>
+                </div>
+              </div>
+
+              {workspace.report.analyst?.strategic_notes?.length ? (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5 text-sm leading-7 text-white/68">
+                  {workspace.report.analyst.strategic_notes.map((note) => (
+                    <div key={note}>{note}</div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-8 grid gap-6 xl:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">Priority Review</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Move these to real human review now</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-4">
+                    {(workspace.report.analyst?.priority_review ?? []).length ? (
+                      workspace.report.analyst!.priority_review.map((row) => (
+                        <article key={`analyst-priority-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
+                              <div className="mt-1 text-sm text-white/55">
+                                {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em]">
+                              <span className="rounded-full border border-white/18 bg-white px-3 py-1 text-black">
+                                {analystBucketCopy(row.analysis_bucket)}
+                              </span>
+                              <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-white/82">
+                                {urgencyCopy(row.urgency)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-4 text-sm leading-7 text-white/70">{row.summary}</div>
+                          <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Suggested Lane</div>
+                              <div className="mt-2 text-sm text-white/82">{executionLaneCopy(row.suggested_execution_lane as VaultExecutionLane)}</div>
+                              <div className="mt-1 text-xs text-white/45">{laneConfidenceCopy(row.confidence)} confidence</div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Recommended Action</div>
+                              <div className="mt-2 text-sm text-white/82">{row.recommended_action}</div>
+                            </div>
+                          </div>
+                          {row.suggested_lane_reasons?.length ? (
+                            <div className="mt-3 text-sm text-white/60">
+                              Why: {row.suggested_lane_reasons.join(" • ")}
+                            </div>
+                          ) : null}
+                        </article>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No analyst-priority files right now.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/40">Repair And Retry</div>
+                  <div className="mt-2 text-lg font-semibold text-white">
+                    Near misses with real signal but incomplete execution truth
+                  </div>
+                  <div className="mt-4 grid gap-4">
+                    {(workspace.report.analyst?.repair_and_retry ?? []).length ? (
+                      workspace.report.analyst!.repair_and_retry.map((row) => (
+                        <article key={`analyst-repair-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
+                              <div className="mt-1 text-sm text-white/55">
+                                {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                              </div>
+                            </div>
+                            <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/82">
+                              {urgencyCopy(row.urgency)}
+                            </span>
+                          </div>
+                          <div className="mt-4 text-sm leading-7 text-white/70">{row.summary}</div>
+                          {row.execution_blockers?.length ? (
+                            <div className="mt-3 text-sm text-white/60">
+                              Blockers: {row.execution_blockers.join(" • ")}
+                            </div>
+                          ) : null}
+                          {row.missing_fields?.length ? (
+                            <div className="mt-2 text-sm text-white/50">
+                              Missing: {row.missing_fields.join(" • ")}
+                            </div>
+                          ) : null}
+                          <div className="mt-3 text-sm text-white/82">{row.recommended_action}</div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No repair-and-retry files right now.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/40">Pre-Foreclosure Watch</div>
+                <div className="mt-2 text-lg font-semibold text-white">
+                  Early files worth lifecycle tracking before they become sale-scheduled
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {(workspace.report.analyst?.pre_foreclosure_watch ?? []).length ? (
+                    workspace.report.analyst!.pre_foreclosure_watch.map((row) => (
+                      <article key={`analyst-watch-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
+                        <div className="mt-1 text-sm text-white/55">
+                          {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                        </div>
+                        <div className="mt-3 text-sm text-white/65">
+                          Stage: {saleStatusCopy(row.sale_status)}{row.dts_days != null ? ` • ${row.dts_days} days` : ""}
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                      No pre-foreclosure watch files right now.
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 

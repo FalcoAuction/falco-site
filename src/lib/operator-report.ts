@@ -42,6 +42,59 @@ export type OperatorPacketRow = {
   dts_days: number | null
 }
 
+export type AnalystQueueRow = {
+  lead_key: string
+  address: string | null
+  county: string | null
+  distress_type: string | null
+  sale_status?: string | null
+  dts_days?: number | null
+  analysis_bucket: string
+  confidence: string
+  urgency: string
+  suggested_execution_lane: string
+  suggested_lane_reasons: string[]
+  control_party: string
+  contact_path_quality: string
+  execution_posture: string
+  workability_band: string
+  recommended_action: string
+  summary: string
+  execution_blockers: string[]
+  missing_fields: string[]
+  operator_validation_required: boolean
+  top_tier_ready: boolean
+  vault_publish_ready: boolean
+}
+
+export type OperatorAnalystReport = {
+  agent: "falco_analyst"
+  generated_at: string
+  run_id?: string | null
+  overview: {
+    priority_review_count: number
+    operator_review_candidate_count: number
+    repair_and_retry_count: number
+    watch_and_enrich_count: number
+    monitor_count: number
+    pre_foreclosure_watch_count: number
+  }
+  strategic_notes: string[]
+  priority_review: AnalystQueueRow[]
+  operator_review_candidates: AnalystQueueRow[]
+  repair_and_retry: AnalystQueueRow[]
+  watch_and_enrich: AnalystQueueRow[]
+  monitor: AnalystQueueRow[]
+  pre_foreclosure_watch: Array<{
+    lead_key: string
+    address: string | null
+    county: string | null
+    distress_type: string | null
+    sale_status?: string | null
+    dts_days?: number | null
+  }>
+}
+
 export type OperatorReport = {
   generatedAt: string
   dbPath: string
@@ -69,6 +122,7 @@ export type OperatorReport = {
     preForeclosure: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     statusChanges: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   }
+  analyst?: OperatorAnalystReport | null
 }
 
 async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
@@ -141,6 +195,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     recentPackets,
     vaultCandidates,
     foreclosureIntake,
+    analyst: snapshot.analyst ?? null,
   }
 }
 
@@ -314,6 +369,7 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
       preForeclosure: [],
       statusChanges: [],
     },
+    analyst: null,
   }
 }
 
@@ -374,6 +430,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
         attachVaultState(parsed.recentLeads, liveListings),
         liveListings
       ),
+      analyst: (parsed as OperatorReport).analyst ?? null,
     }
   } catch (error) {
     console.warn("getOperatorReport full mode unavailable, trying snapshot", error)

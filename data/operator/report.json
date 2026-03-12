@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-12T02:26:05.763326+00:00",
+  "generatedAt": "2026-03-12T18:36:42.746319+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -946,6 +946,763 @@
         "sale_status": "scheduled",
         "vaultLive": true,
         "vaultSlug": "rutherford-county-foreclosure-5b9d9f7c"
+      }
+    ]
+  },
+  "analyst": {
+    "agent": "falco_analyst",
+    "generated_at": "2026-03-12T18:36:42+00:00",
+    "run_id": "36296dbb-3822-4621-83c5-15262d90a128",
+    "overview": {
+      "priority_review_count": 0,
+      "operator_review_candidate_count": 0,
+      "repair_and_retry_count": 21,
+      "watch_and_enrich_count": 0,
+      "monitor_count": 4,
+      "pre_foreclosure_watch_count": 12
+    },
+    "strategic_notes": [
+      "Most near misses are blocked by missing execution context rather than bad property signal.",
+      "Pre-foreclosure watch is feeding the top of funnel earlier than sale-scheduled notices."
+    ],
+    "priority_review": [],
+    "operator_review_candidates": [],
+    "repair_and_retry": [
+      {
+        "lead_key": "20eb157106fe26386cd30c14a8cd0214edd564aa",
+        "address": "101 Tanasi Shores, Gallatin, TN. 37066",
+        "county": "Sumner County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 21,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "now",
+        "suggested_execution_lane": "borrower_side",
+        "suggested_lane_reasons": [
+          "Owner contact exists, but sale-status control is still unclear",
+          "Owner identity or mailing profile is still incomplete",
+          "Overall workability remains limited"
+        ],
+        "control_party": "OWNER",
+        "contact_path_quality": "PARTIAL",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Run deeper enterprise enrichment before operator review",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "d83be4908fde8671079c58d6a5d5edfc559ca76b",
+        "address": "101 Tanasi Shores, Gallatin, TN. 37066",
+        "county": "Sumner County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 21,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "now",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "0f93b652074e1790049c6f6d68b6e8fa312d51ac",
+        "address": "103 Trailing Blossom Lane, Goodletsville, TN 37072",
+        "county": "Davidson County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "11791470216c2e068bd4ea3ae2b9a686cb1767f3",
+        "address": "307 W 42nd St, Chattanooga, TN 37410",
+        "county": "Hamilton County",
+        "distress_type": "LIS_PENDENS",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "watch",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "24954f6e7d797fcd62c71888e2a7ba29ed96e081",
+        "address": "3922 Yorktown Road, Chattanooga, TN 37416",
+        "county": "Hamilton County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "HIGH",
+        "urgency": "this_week",
+        "suggested_execution_lane": "borrower_side",
+        "suggested_lane_reasons": [
+          "Owner contact path exists and control currently appears owner-side",
+          "Timing leaves room for borrower-side intervention"
+        ],
+        "control_party": "OWNER",
+        "contact_path_quality": "PARTIAL",
+        "execution_posture": "BORROWER OUTREACH",
+        "workability_band": "MODERATE",
+        "recommended_action": "Run deeper enterprise enrichment before operator review",
+        "summary": "The file looks directionally interesting, but it is still blocked by original loan amount missing.",
+        "execution_blockers": [
+          "Original loan amount missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "2d3f25f654f7a925f7699bc87894bbd706b03944",
+        "address": "103 NAUTA COURT, HENDERSONVILLE, TN 37075",
+        "county": "Sumner County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale",
+          "Owner identity or mailing profile is still incomplete",
+          "Debt context is still incomplete"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "LIMITED",
+        "recommended_action": "Run deeper enterprise enrichment before operator review",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "377d852b08f808bffa96177c48929574392e8f17",
+        "address": "1411 Dick Lonas Road, Knoxville, TN 37909",
+        "county": "Knox County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "408587fa390f65481cd0b4d617185f6fc2432584",
+        "address": "103 Trailing Blossom Lane, Goodletsville, TN 37072",
+        "county": "Davidson County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "MEDIUM",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "MODERATE",
+        "recommended_action": "Run deeper enterprise enrichment before operator review",
+        "summary": "The file looks directionally interesting, but it is still blocked by original loan amount missing.",
+        "execution_blockers": [
+          "Original loan amount missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "693ed509bebe699088b0db12b5fb3ff237ade28a",
+        "address": "3922 Yorktown Road, Chattanooga, TN 37416",
+        "county": "Hamilton County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "adaf8ad8f06b692b9cf507ec5251b20104ed8a3a",
+        "address": "407 Overhill Road, Knoxville, TN 37914",
+        "county": "Knox County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "b417ac0fc65c90ac45a478a4a7ed25fb38bcda06",
+        "address": "103 NAUTA COURT, HENDERSONVILLE, TN 37075",
+        "county": "Sumner County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "cca6f0354ced4acbea403a9a79d77ebeb6adb7d1",
+        "address": "307 W 42nd St, Chattanooga, TN 37410",
+        "county": "Hamilton County",
+        "distress_type": "SOT",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "repair_and_retry",
+        "confidence": "LOW",
+        "urgency": "this_week",
+        "suggested_execution_lane": "unclear",
+        "suggested_lane_reasons": [
+          "No clear owner or sale-status contact path is present yet",
+          "Overall workability remains limited",
+          "True control party still needs operator confirmation"
+        ],
+        "control_party": "UNCLEAR",
+        "contact_path_quality": "THIN",
+        "execution_posture": "NEEDS MORE CONTROL CLARITY",
+        "workability_band": "LIMITED",
+        "recommended_action": "Repair contact path before escalating",
+        "summary": "The file looks directionally interesting, but it is still blocked by owner name missing, owner mailing address missing.",
+        "execution_blockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Mortgage lender missing",
+          "Original loan amount missing",
+          "Actionable outreach path missing"
+        ],
+        "missing_fields": [
+          "mortgage_amount",
+          "owner_mail",
+          "year_built",
+          "property_identifier",
+          "last_sale_date",
+          "beds",
+          "building_area_sqft",
+          "baths",
+          "mortgage_lender",
+          "owner_name"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      }
+    ],
+    "watch_and_enrich": [],
+    "monitor": [
+      {
+        "lead_key": "94b7fb7a376e26dbabae4bbd31fe6635820fab99",
+        "address": "1411 Dick Lonas Road, Knoxville, TN 37909",
+        "county": "Knox County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "monitor",
+        "confidence": "MEDIUM",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale",
+          "Underlying workability profile is strong"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "STRONG",
+        "recommended_action": "Hold for additional validation and missing-field repair",
+        "summary": "The file looks directionally interesting, but it is still blocked by key execution context missing.",
+        "execution_blockers": [],
+        "missing_fields": [],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "e84c244d6d1b7df03bd47bb89807510bbb683dc8",
+        "address": "407 Overhill Road, Knoxville, TN 37914",
+        "county": "Knox County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 22,
+        "analysis_bucket": "monitor",
+        "confidence": "MEDIUM",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale",
+          "Underlying workability profile is strong"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "STRONG",
+        "recommended_action": "Hold for additional validation and missing-field repair",
+        "summary": "The file looks directionally interesting, but it is still blocked by key execution context missing.",
+        "execution_blockers": [],
+        "missing_fields": [],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "26f721d976e5645e4830896301c063f8875e076f",
+        "address": "840 BLACKFOOT TRAIL, MURFREESBORO, TN 37129",
+        "county": "Rutherford County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 29,
+        "analysis_bucket": "monitor",
+        "confidence": "MEDIUM",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale",
+          "Underlying workability profile is strong"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "STRONG",
+        "recommended_action": "Hold for additional validation and missing-field repair",
+        "summary": "The file looks directionally interesting, but it is still blocked by key execution context missing.",
+        "execution_blockers": [],
+        "missing_fields": [
+          "beds"
+        ],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      },
+      {
+        "lead_key": "626f8ee67510c7ee4ca6415f7491b41851cc16a9",
+        "address": "1313 Fall Parkway, Murfreesboro, TN 37129,",
+        "county": "Rutherford County",
+        "distress_type": "FORECLOSURE",
+        "sale_status": null,
+        "dts_days": 34,
+        "analysis_bucket": "monitor",
+        "confidence": "MEDIUM",
+        "urgency": "this_week",
+        "suggested_execution_lane": "mixed",
+        "suggested_lane_reasons": [
+          "Owner and sale-status contact paths are both present",
+          "There is still time to test borrower-side control before sale",
+          "Underlying workability profile is strong"
+        ],
+        "control_party": "MIXED",
+        "contact_path_quality": "STRONG",
+        "execution_posture": "MIXED / OPERATOR REVIEW",
+        "workability_band": "STRONG",
+        "recommended_action": "Hold for additional validation and missing-field repair",
+        "summary": "The file looks directionally interesting, but it is still blocked by key execution context missing.",
+        "execution_blockers": [],
+        "missing_fields": [],
+        "operator_validation_required": true,
+        "top_tier_ready": false,
+        "vault_publish_ready": false
+      }
+    ],
+    "pre_foreclosure_watch": [
+      {
+        "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
+        "address": "15456 Old Hickory Blvd, Nashville, TN 37211",
+        "county": "Davidson County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
+        "address": "2724 Ann Drive, Clarksville, TN 37040",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
+        "address": "00 Common Property Address: 378 Treeland Drive, Clarksville, TN 37040",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
+        "address": "41 acres more or less according to a survey by Timothy B. Mounts of T.B.M. land surveying at 639 Riversbend Road, Indian Mound, TN 37079",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "665a934874e9d85a070835070038cc9164d28c28",
+        "address": "00 AM at the North Side Entrance of the City County Building, 400 Main Street, Knoxville, TN 37902",
+        "county": "Knox County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "28a3ea99c6936735a19fb2d44e724041cc45e327",
+        "address": "2050 Alexander Blvd, Murfreesboro, TN 37130",
+        "county": "Rutherford County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
+        "address": "2106 Ivy St., Chattanooga. TN 37404",
+        "county": "Hamilton County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
+        "address": "208 N Saint Marks Ave, Chattanooga, TN 37411",
+        "county": "Hamilton County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
+        "address": "2020 and recorded on October 19, 2020. The street address of the above-described property is believed to be 4209 Van Dyke Dr, Knoxville, TN 37919",
+        "county": "Knox County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
+        "address": "000 Commonly Property Address: 1129 Cotillion Dr., Murfreesboro, TN 37158-1681",
+        "county": "Rutherford County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "2e6d37b40f1002bc485d2dbafe320f86ab386621",
+        "address": "4212 Rogers Rd, Chattanooga, TN 37411",
+        "county": "Hamilton County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
+      },
+      {
+        "lead_key": "340241a9a89f2149aa9d94998cfc6d631868ab28",
+        "address": "000 Commonly Property Address: 1129 Cotillion Dr., Murfreesboro, TN 37158-1681",
+        "county": "Rutherford County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "dts_days": null
       }
     ]
   }
