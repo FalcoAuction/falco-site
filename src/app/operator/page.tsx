@@ -54,6 +54,31 @@ type OperatorReport = {
     expiredCount: number
     preForeclosure: ReportRow[]
     statusChanges: ReportRow[]
+    recentEvents: Array<{
+      event_key: string
+      lead_key: string
+      source: string | null
+      source_url: string | null
+      event_type: string
+      sale_date: string | null
+      derived_status: string | null
+      event_at: string | null
+      address: string | null
+      county: string | null
+      distress_type: string | null
+      current_sale_date?: string | null
+      original_sale_date?: string | null
+      sale_status?: string | null
+      vaultLive: boolean
+      vaultSlug: string | null
+    }>
+  }
+  preForeclosurePromotion: {
+    readyCount: number
+    blockedCount: number
+    readyForReview: ReportRow[]
+    blocked: ReportRow[]
+    blockerCounts: Array<{ label: string; count: number }>
   }
   analyst?: {
     agent: "falco_analyst"
@@ -198,6 +223,23 @@ type OperatorWorkspace = {
   liveListings: LiveVaultListing[]
   taskHistory: TaskHistoryItem[]
   intakeDecisions: OperatorIntakeRecord[]
+  validationRecords: Array<{
+    requestId: string
+    listingSlug: string
+    outcome: VaultValidationOutcome
+    executionLane: VaultExecutionLane
+    note: string
+    submittedAt: string
+    actedBy: string
+    context?: {
+      county: string
+      distressType: string
+      contactPathQuality: string
+      controlParty: string
+      executionPosture: string
+      workabilityBand: string
+    }
+  }>
 }
 
 type TaskItem = {
@@ -319,6 +361,16 @@ function intakeDecisionCopy(value?: OperatorIntakeDecision) {
   return "Undecided"
 }
 
+function lifecycleSourceCopy(value?: string | null) {
+  if (!value) return "Source"
+  if (value === "LIS_PENDENS") return "Lis Pendens"
+  if (value === "SUBSTITUTION_OF_TRUSTEE") return "Substitution Of Trustee"
+  if (value === "TNForeclosureNotices") return "TN Foreclosure Notices"
+  if (value === "ForeclosureTennessee") return "Foreclosure Tennessee"
+  if (value === "PublicNotices") return "Public Notices"
+  return value
+}
+
 export default function OperatorPage() {
   const [secret, setSecret] = useState("")
   const [approvedBy, setApprovedBy] = useState("Patrick Armour")
@@ -417,6 +469,7 @@ export default function OperatorPage() {
       ["Tracked Leads", workspace.report.overview.totalLeads],
       ["Priority Review", workspace.liveListings.filter((listing) => listing.topTierReady).length],
       ["Analyst Review", workspace.report.analyst?.overview.priority_review_count ?? 0],
+      ["Prefc Ready", workspace.report.preForeclosurePromotion?.readyCount ?? 0],
       [
         "Validated Paths",
         workspace.liveListings.filter(
@@ -448,6 +501,7 @@ export default function OperatorPage() {
     () => [
       { id: "overview", label: "Overview" },
       { id: "analyst", label: "Analyst" },
+      { id: "feedback", label: "Feedback" },
       { id: "intake", label: "Intake" },
       { id: "tasks", label: "Tasks" },
       { id: "approvals", label: "Approvals" },
@@ -461,6 +515,28 @@ export default function OperatorPage() {
     () => new Map((workspace?.intakeDecisions ?? []).map((row) => [row.leadKey, row] as const)),
     [workspace]
   )
+
+  const validationSummary = useMemo(() => {
+    const rows = workspace?.validationRecords ?? []
+    const outcomeCounts = new Map<string, number>()
+    const laneCounts = new Map<string, number>()
+
+    for (const row of rows) {
+      outcomeCounts.set(row.outcome, (outcomeCounts.get(row.outcome) ?? 0) + 1)
+      laneCounts.set(row.executionLane, (laneCounts.get(row.executionLane) ?? 0) + 1)
+    }
+
+    return {
+      total: rows.length,
+      outcomes: [...outcomeCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([label, count]) => ({ label, count })),
+      lanes: [...laneCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([label, count]) => ({ label, count })),
+      recent: rows.slice(0, 8),
+    }
+  }, [workspace])
 
   async function loadWorkspace(currentSecret?: string) {
     const secretToUse = (currentSecret ?? secret).trim()
@@ -1140,6 +1216,103 @@ export default function OperatorPage() {
             </section>
 
             <section
+              id="feedback"
+              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Feedback Loop</div>
+                  <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                    Operator Validation Signal
+                  </div>
+                  <div className="mt-3 max-w-3xl text-sm leading-7 text-white/62">
+                    This is the learning layer: real operator outcomes, the lanes they validated,
+                    and the reasons screened candidates failed or moved forward.
+                  </div>
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                  {validationSummary.total} recorded validations
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/40">Outcome Summary</div>
+                  <div className="mt-4 grid gap-3">
+                    {validationSummary.outcomes.length ? (
+                      validationSummary.outcomes.map((row) => (
+                        <div key={`validation-outcome-${row.label}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                          <div className="text-sm text-white/78">{validationOutcomeCopy(row.label as VaultValidationOutcome)}</div>
+                          <div className="text-sm font-semibold text-white">{row.count}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No operator validation history yet.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-5 text-xs uppercase tracking-[0.22em] text-white/40">Lane Summary</div>
+                  <div className="mt-3 grid gap-3">
+                    {validationSummary.lanes.length ? (
+                      validationSummary.lanes.map((row) => (
+                        <div key={`validation-lane-${row.label}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                          <div className="text-sm text-white/78">{executionLaneCopy(row.label as VaultExecutionLane)}</div>
+                          <div className="text-sm font-semibold text-white">{row.count}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        Lane history will appear after a few recorded validations.
+                      </div>
+                    )}
+                  </div>
+                </article>
+
+                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">Recent Validation</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Latest operator outcomes</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {validationSummary.recent.length ? (
+                      validationSummary.recent.map((row) => (
+                        <article key={`validation-recent-${row.requestId}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-white">{row.listingSlug}</div>
+                              <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                {validationOutcomeCopy(row.outcome)} • {executionLaneCopy(row.executionLane)}
+                              </div>
+                            </div>
+                            <div className="text-xs text-white/45">{row.actedBy}</div>
+                          </div>
+                          {row.context ? (
+                            <div className="mt-3 text-sm leading-6 text-white/62">
+                              {row.context.county || "Unknown county"} • {row.context.distressType || "Unknown type"} • {row.context.contactPathQuality || "Unknown contact path"} • {row.context.controlParty || "Unknown control"}
+                            </div>
+                          ) : null}
+                          {row.note ? (
+                            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+                              {row.note}
+                            </div>
+                          ) : null}
+                        </article>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No recent validation history yet.
+                      </div>
+                    )}
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section
               id="intake"
               className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
             >
@@ -1362,6 +1535,105 @@ export default function OperatorPage() {
                     )) : (
                       <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
                         No recent sale-status movement is visible in the current operator snapshot.
+                      </div>
+                    )}
+                  </div>
+                </article>
+              </div>
+
+              <div className="mt-6 grid gap-6 xl:grid-cols-2">
+                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">Pre-Foreclosure Promotion</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Ready for review vs blocked</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
+                      {workspace.report.preForeclosurePromotion.readyCount} ready
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    {workspace.report.preForeclosurePromotion.readyForReview.length ? (
+                      workspace.report.preForeclosurePromotion.readyForReview.map((row) => (
+                        <div key={`prefc-ready-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                            {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                          </div>
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Status</div>
+                              <div className="mt-2 text-sm text-white/78">{saleStatusCopy(row.sale_status)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Complete</div>
+                              <div className="mt-2 text-sm text-white/78">{row.packetCompletenessPct ?? "—"}%</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Vault</div>
+                              <div className="mt-2 text-sm text-white/78">{row.vaultLive ? "Live" : "Ready"}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No pre-foreclosure files are currently staged for review.
+                      </div>
+                    )}
+                  </div>
+
+                  {workspace.report.preForeclosurePromotion.blockerCounts.length ? (
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Top blockers</div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {workspace.report.preForeclosurePromotion.blockerCounts.map((row) => (
+                          <span key={`prefc-blocker-${row.label}`} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                            {row.label} • {row.count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </article>
+
+                <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">Lifecycle History</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Recent foreclosure events</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
+                      {workspace.report.foreclosureIntake.recentEvents.length} recent
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {workspace.report.foreclosureIntake.recentEvents.length ? (
+                      workspace.report.foreclosureIntake.recentEvents.map((row) => (
+                        <div key={row.event_key} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                              <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                              </div>
+                            </div>
+                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                              {lifecycleSourceCopy(row.source)}
+                            </span>
+                          </div>
+                          <div className="mt-3 text-sm text-white/68">
+                            {row.event_type.replace(/_/g, " ")} • {saleStatusCopy(row.derived_status || row.sale_status)}
+                          </div>
+                          <div className="mt-2 text-sm text-white/52">
+                            {row.sale_date ? `Event sale date: ${row.sale_date}` : "No sale date on event"}{row.event_at ? ` • Seen ${row.event_at}` : ""}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        No lifecycle events are available yet in this workspace.
                       </div>
                     )}
                   </div>

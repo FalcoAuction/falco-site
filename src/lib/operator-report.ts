@@ -121,6 +121,31 @@ export type OperatorReport = {
     expiredCount: number
     preForeclosure: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     statusChanges: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    recentEvents: Array<{
+      event_key: string
+      lead_key: string
+      source: string | null
+      source_url: string | null
+      event_type: string
+      sale_date: string | null
+      derived_status: string | null
+      event_at: string | null
+      address: string | null
+      county: string | null
+      distress_type: string | null
+      current_sale_date?: string | null
+      original_sale_date?: string | null
+      sale_status?: string | null
+      vaultLive: boolean
+      vaultSlug: string | null
+    }>
+  }
+  preForeclosurePromotion: {
+    readyCount: number
+    blockedCount: number
+    readyForReview: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    blocked: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    blockerCounts: Array<{ label: string; count: number }>
   }
   analyst?: OperatorAnalystReport | null
 }
@@ -178,6 +203,10 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     recentLeads,
     liveListings
   )
+  const preForeclosurePromotion = buildPreForeclosurePromotion(
+    snapshot.preForeclosurePromotion,
+    liveListings
+  )
 
   return {
     ...snapshot,
@@ -195,6 +224,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     recentPackets,
     vaultCandidates,
     foreclosureIntake,
+    preForeclosurePromotion,
     analyst: snapshot.analyst ?? null,
   }
 }
@@ -260,6 +290,24 @@ function buildForeclosureIntake(
         expiredCount: number
         preForeclosure: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
         statusChanges: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        recentEvents?: Array<{
+          event_key: string
+          lead_key: string
+          source: string | null
+          source_url: string | null
+          event_type: string
+          sale_date: string | null
+          derived_status: string | null
+          event_at: string | null
+          address: string | null
+          county: string | null
+          distress_type: string | null
+          current_sale_date?: string | null
+          original_sale_date?: string | null
+          sale_status?: string | null
+          vaultLive?: boolean
+          vaultSlug?: string | null
+        }>
       }
     | undefined,
   recentLeads: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[],
@@ -273,6 +321,7 @@ function buildForeclosureIntake(
       expiredCount: snapshotSection.expiredCount ?? 0,
       preForeclosure: attachVaultState(snapshotSection.preForeclosure ?? [], liveListings),
       statusChanges: attachVaultState(snapshotSection.statusChanges ?? [], liveListings),
+      recentEvents: attachVaultState(snapshotSection.recentEvents ?? [], liveListings),
     }
   }
 
@@ -288,6 +337,38 @@ function buildForeclosureIntake(
     expiredCount: recentLeads.filter((row) => row.sale_status === "expired").length,
     preForeclosure,
     statusChanges,
+    recentEvents: [],
+  }
+}
+
+function buildPreForeclosurePromotion(
+  snapshotSection:
+    | {
+        readyCount: number
+        blockedCount: number
+        readyForReview: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        blocked: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        blockerCounts?: Array<{ label: string; count: number }>
+      }
+    | undefined,
+  liveListings: { slug: string }[]
+) {
+  if (snapshotSection) {
+    return {
+      readyCount: snapshotSection.readyCount ?? 0,
+      blockedCount: snapshotSection.blockedCount ?? 0,
+      readyForReview: attachVaultState(snapshotSection.readyForReview ?? [], liveListings),
+      blocked: attachVaultState(snapshotSection.blocked ?? [], liveListings),
+      blockerCounts: snapshotSection.blockerCounts ?? [],
+    }
+  }
+
+  return {
+    readyCount: 0,
+    blockedCount: 0,
+    readyForReview: [],
+    blocked: [],
+    blockerCounts: [],
   }
 }
 
@@ -368,6 +449,14 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
       expiredCount: 0,
       preForeclosure: [],
       statusChanges: [],
+      recentEvents: [],
+    },
+    preForeclosurePromotion: {
+      readyCount: 0,
+      blockedCount: 0,
+      readyForReview: [],
+      blocked: [],
+      blockerCounts: [],
     },
     analyst: null,
   }
@@ -408,6 +497,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
     }
 
     const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
+    const snapshot = await readSnapshotOperatorReport()
 
     return {
       generatedAt: parsed.generatedAt,
@@ -426,11 +516,15 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       recentPackets: attachVaultState(parsed.recentPackets, liveListings),
       vaultCandidates: attachVaultState(parsed.vaultCandidates ?? [], liveListings),
       foreclosureIntake: buildForeclosureIntake(
-        (parsed as OperatorReport).foreclosureIntake,
+        (parsed as OperatorReport).foreclosureIntake ?? snapshot?.foreclosureIntake,
         attachVaultState(parsed.recentLeads, liveListings),
         liveListings
       ),
-      analyst: (parsed as OperatorReport).analyst ?? null,
+      preForeclosurePromotion: buildPreForeclosurePromotion(
+        (parsed as OperatorReport).preForeclosurePromotion ?? snapshot?.preForeclosurePromotion,
+        liveListings
+      ),
+      analyst: (parsed as OperatorReport).analyst ?? snapshot?.analyst ?? null,
     }
   } catch (error) {
     console.warn("getOperatorReport full mode unavailable, trying snapshot", error)

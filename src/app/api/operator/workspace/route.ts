@@ -5,7 +5,7 @@ import { listOperatorIntakeDecisions } from "@/lib/operator-intake"
 import { getOperatorReport } from "@/lib/operator-report"
 import { listOperatorTaskHistory } from "@/lib/operator-tasks"
 import { listActiveVaultListings } from "@/lib/vault-listings"
-import { listVaultPursuitRequests } from "@/lib/vault-pursuit"
+import { listVaultPursuitRequests, listVaultValidationRecords } from "@/lib/vault-pursuit"
 
 function buildRoutingQueue(
   rows: Awaited<ReturnType<typeof listVaultPursuitRequests>>
@@ -50,13 +50,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions] = await Promise.all([
+    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords] = await Promise.all([
       getOperatorReport(),
       listAccessRequests(),
       listVaultPursuitRequests(),
       listActiveVaultListings(),
       listOperatorTaskHistory(),
       listOperatorIntakeDecisions(),
+      listVaultValidationRecords(),
     ])
 
     return NextResponse.json({
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
         liveListings,
         taskHistory,
         intakeDecisions,
+        validationRecords,
       },
     })
   } catch (error) {
