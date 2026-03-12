@@ -311,3 +311,23 @@ export async function findApprovalByToken(token: string) {
   if (!data) return null
   return mapApprovalRow(data as PartnerApprovalRow)
 }
+
+export async function listApprovedPartnerEmails() {
+  if (!supabaseAdmin) {
+    console.error("listApprovedPartnerEmails error:", supabaseAdminConfigError)
+    return []
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_approvals")
+    .select("email")
+    .eq("approved", true)
+    .order("approved_at", { ascending: false })
+
+  if (error) {
+    console.error("listApprovedPartnerEmails error:", error.message)
+    return []
+  }
+
+  return [...new Set((data ?? []).map((row) => String(row.email ?? "").trim().toLowerCase()).filter(Boolean))]
+}

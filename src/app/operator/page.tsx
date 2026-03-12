@@ -130,40 +130,6 @@ type LiveVaultListing = {
   validatedBy?: string
 }
 
-type OutreachCandidate = {
-  track: "auction_partner" | "principal_broker"
-  rank: number
-  score: number
-  organization: string
-  contact_name: string
-  email: string
-  website: string
-  domain: string
-  city: string
-  state: string
-  reason: string
-  snippet: string
-  personalized_line: string
-  subject: string
-  body: string
-  query?: string
-}
-
-type OutreachTrackReport = {
-  track: "auction_partner" | "principal_broker"
-  generatedAt: string | null
-  fileName: string | null
-  candidates: OutreachCandidate[]
-}
-
-type OutreachReport = {
-  generatedAt: string
-  sourceMode: "full" | "fallback"
-  sourceNote: string
-  sourceDir: string
-  tracks: OutreachTrackReport[]
-}
-
 type OperatorIntakeDecision = "promote" | "hold" | "needs_more_info"
 
 type OperatorIntakeRecord = {
@@ -178,7 +144,6 @@ type OperatorWorkspace = {
   report: OperatorReport
   accessRequests: AccessRequestRecord[]
   routingQueue: VaultRoutingListing[]
-  outreach: OutreachReport
   liveListings: LiveVaultListing[]
   taskHistory: TaskHistoryItem[]
   intakeDecisions: OperatorIntakeRecord[]
@@ -188,7 +153,7 @@ type TaskItem = {
   id: string
   title: string
   detail: string
-  section: "intake" | "approvals" | "routing" | "vault" | "outreach"
+  section: "intake" | "approvals" | "routing" | "vault"
   priority: "high" | "medium" | "low"
 }
 
@@ -217,10 +182,6 @@ function priorityClasses(priority: TaskItem["priority"]) {
   return "border-white/10 bg-white/[0.05] text-white/62"
 }
 
-function formatTrackLabel(track: OutreachTrackReport["track"]) {
-  return track === "auction_partner" ? "Auction Partners" : "Principal Brokers"
-}
-
 function statusCopy(status: VaultPursuitRecord["status"]) {
   if (status === "pursuit_reserved") return "Reserved"
   if (status === "pursuit_declined") return "Declined"
@@ -232,8 +193,7 @@ function formatSectionLabel(section: TaskItem["section"]) {
   if (section === "intake") return "Intake"
   if (section === "approvals") return "Approvals"
   if (section === "routing") return "Routing"
-  if (section === "vault") return "Vault"
-  return "Outreach"
+  return "Vault"
 }
 
 function formatWorkspaceMode(mode: OperatorReport["sourceMode"]) {
@@ -374,17 +334,6 @@ export default function OperatorPage() {
       })
     }
 
-    for (const track of workspace.outreach.tracks) {
-      if (!track.candidates.length) continue
-      items.push({
-        id: `outreach:${track.track}`,
-        title: `Review ${formatTrackLabel(track.track)} outreach drafts`,
-        detail: `${track.candidates.length} draft${track.candidates.length === 1 ? "" : "s"} ready for review`,
-        section: "outreach",
-        priority: "medium",
-      })
-    }
-
     return items
   }, [workspace])
 
@@ -420,10 +369,6 @@ export default function OperatorPage() {
           0
         ),
       ],
-      [
-        "Outreach Drafts",
-        workspace.outreach.tracks.reduce((sum, track) => sum + track.candidates.length, 0),
-      ],
     ]
   }, [workspace])
 
@@ -440,7 +385,6 @@ export default function OperatorPage() {
       { id: "approvals", label: "Approvals" },
       { id: "routing", label: "Routing" },
       { id: "vault", label: "Validation" },
-      { id: "outreach", label: "Outreach" },
     ],
     []
   )
@@ -812,7 +756,7 @@ export default function OperatorPage() {
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-white/68 md:text-lg">
                 This is the single internal workspace for FALCO operator tasks:
-                access approvals, staged opportunity review, operator validation, routing, and outreach drafts.
+                access approvals, staged opportunity review, operator validation, and routing.
               </p>
               {workspace ? (
                 <div className="mt-6 text-sm text-white/45">
@@ -902,7 +846,7 @@ export default function OperatorPage() {
                     Daily Operator Desk
                   </div>
                   <div className="mt-3 max-w-3xl text-sm leading-7 text-white/62">
-                    One place to review intake, move approvals, route live listings, record operator validation, and review outreach.
+                    One place to review intake, move approvals, route live listings, and record operator validation.
                   </div>
                 </div>
 
@@ -1703,89 +1647,6 @@ export default function OperatorPage() {
                 </div>
               </section>
 
-              <section
-                id="outreach"
-                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Outreach</div>
-                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
-                      Draft Queues
-                    </div>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
-                    {workspace.outreach.tracks.reduce((sum, track) => sum + track.candidates.length, 0)} drafts
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-6">
-                  {workspace.outreach.tracks.map((track) => (
-                    <article key={track.track} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <div className="text-lg font-semibold text-white">{formatTrackLabel(track.track)}</div>
-                          <div className="mt-2 text-sm text-white/55">
-                            {track.candidates.length} candidates • {track.fileName || "No file"}
-                          </div>
-                        </div>
-                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
-                          {track.generatedAt || "snapshot"}
-                        </div>
-                      </div>
-
-                      <div className="mt-5 grid gap-4">
-                        {track.candidates.slice(0, 4).map((candidate) => (
-                          <div key={`${track.track}-${candidate.rank}-${candidate.email}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                              <div>
-                                <div className="text-base font-semibold text-white">{candidate.organization}</div>
-                                <div className="mt-1 text-sm text-white/55">
-                                  {candidate.email || "No email"} • {candidate.city || "Unknown city"}{candidate.state ? `, ${candidate.state}` : ""}
-                                </div>
-                              </div>
-                              <div className="rounded-full border border-white/10 bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-black">
-                                Rank {candidate.rank}
-                              </div>
-                            </div>
-
-                            <div className="mt-4 text-sm leading-7 text-white/68">
-                              {candidate.reason || candidate.snippet || "No reason captured."}
-                            </div>
-
-                            <div className="mt-5 flex flex-wrap gap-3">
-                              {candidate.website ? (
-                                <a
-                                  href={candidate.website}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-                                >
-                                  Open Site
-                                </a>
-                              ) : null}
-                              {candidate.email ? (
-                                <a
-                                  href={`mailto:${candidate.email}?subject=${encodeURIComponent(candidate.subject || "")}&body=${encodeURIComponent(candidate.body || "")}`}
-                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
-                                >
-                                  Open Draft
-                                </a>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))}
-
-                        {!track.candidates.length ? (
-                          <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
-                            No drafts in this queue yet.
-                          </div>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
             </div>
           </>
         ) : null}
