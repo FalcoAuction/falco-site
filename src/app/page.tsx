@@ -3,12 +3,6 @@ import { getHomeMetrics } from "@/lib/home-metrics"
 
 export const dynamic = "force-dynamic"
 
-const stats = [
-  { label: "Primary Focus", value: "Distress Origination" },
-  { label: "System Role", value: "Screening + Review" },
-  { label: "Current State", value: "Restricted Vault Live" },
-]
-
 const workflow = [
   {
     step: "01",
@@ -114,6 +108,47 @@ export default async function HomePage() {
         <section
           className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28"
         >
+          <div className="mb-12">
+            <div className="mb-3 flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.9)]"
+                style={{ animation: "falcoPulse 1.5s ease-in-out infinite" }}
+              />
+              Live System Snapshot
+            </div>
+
+            <div
+              className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5"
+            >
+              <div className="grid gap-4 md:grid-cols-4">
+                {liveMetrics.map((metric, index) => (
+                  <div
+                    key={metric.label}
+                    className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-center transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
+                    style={{ animation: `falcoFloat ${5 + index * 0.4}s ease-in-out infinite` }}
+                  >
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                      {metric.label}
+                    </div>
+                    <div
+                      className="mt-2 text-lg font-semibold text-white"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(52,211,153,0.95) 50%, rgba(255,255,255,1) 100%)",
+                        backgroundSize: "200% 100%",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                        animation: "falcoShimmer 6s linear infinite",
+                      }}
+                    >
+                      {metric.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div
@@ -164,6 +199,38 @@ export default async function HomePage() {
                 >
                   Submit Opportunity
                 </Link>
+              </div>
+
+              <div className="mt-14">
+                <div className="text-xs uppercase tracking-[0.26em] text-white/45">
+                  How It Works
+                </div>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                  Built to move from raw distress signal to operator review.
+                </h2>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
+                  FALCO does the early sourcing and file assembly work first, then puts the strongest opportunities in front of licensed operators and partners for final execution judgment.
+                </p>
+
+                <div className="mt-8 grid gap-6 md:grid-cols-3">
+                  {workflow.map((item, index) => (
+                    <div
+                      key={item.step}
+                      className="rounded-[26px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
+                      style={{ animation: `falcoFloat ${6.5 + index * 0.45}s ease-in-out infinite` }}
+                    >
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/35">
+                        {item.step}
+                      </div>
+                      <div className="mt-4 text-2xl font-semibold text-white">
+                        {item.title}
+                      </div>
+                      <p className="mt-4 text-sm leading-7 text-white/68">
+                        {item.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -223,70 +290,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-6 md:px-10">
-          <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.9)]"
-              style={{ animation: "falcoPulse 1.5s ease-in-out infinite" }}
-            />
-            Live System Snapshot
-          </div>
-        </section>
-
-        <section
-          className="mx-auto max-w-7xl px-6 pb-10 md:px-10"
-        >
-          <div
-            className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5"
-          >
-            <div className="grid gap-4 md:grid-cols-4">
-              {liveMetrics.map((metric, index) => (
-                <div
-                  key={metric.label}
-                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
-                  style={{ animation: `falcoFloat ${5 + index * 0.4}s ease-in-out infinite` }}
-                >
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                    {metric.label}
-                  </div>
-                  <div
-                    className="mt-2 text-lg font-semibold text-white"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(52,211,153,0.95) 50%, rgba(255,255,255,1) 100%)",
-                      backgroundSize: "200% 100%",
-                      WebkitBackgroundClip: "text",
-                      color: "transparent",
-                      animation: "falcoShimmer 6s linear infinite",
-                    }}
-                  >
-                    {metric.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
-        >
-          <div className="grid gap-6 md:grid-cols-3">
-            {stats.map((stat, index) => (
-              <div
-                key={stat.label}
-                className="rounded-[24px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_25px_90px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/20"
-                style={{ animation: `falcoFloat ${6 + index * 0.5}s ease-in-out infinite` }}
-              >
-                <div className="text-2xl font-semibold tracking-[-0.03em] text-white">
-                  {stat.value}
-                </div>
-                <div className="mt-3 text-sm text-white/55">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <section
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
           id="what-it-is"
@@ -315,43 +318,6 @@ export default async function HomePage() {
                 The goal is not to claim that every file is ready to move immediately. The goal is to give serious operators a better starting point than raw notice scraping and a cleaner path to decide whether a file is actually workable.
               </p>
             </div>
-          </div>
-        </section>
-
-        <section
-          id="how-it-works"
-          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
-        >
-          <div className="mb-10">
-            <div className="text-xs uppercase tracking-[0.26em] text-white/45">
-              How It Works
-            </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-              Built to move from raw distress signal to operator review.
-            </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and file assembly work first, then puts the strongest opportunities in front of licensed operators and partners for final execution judgment.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {workflow.map((item, index) => (
-              <div
-                key={item.step}
-                className="rounded-[26px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
-                style={{ animation: `falcoFloat ${6.5 + index * 0.45}s ease-in-out infinite` }}
-              >
-                <div className="text-xs uppercase tracking-[0.22em] text-white/35">
-                  {item.step}
-                </div>
-                <div className="mt-4 text-2xl font-semibold text-white">
-                  {item.title}
-                </div>
-                <p className="mt-4 text-sm leading-7 text-white/68">
-                  {item.body}
-                </p>
-              </div>
-            ))}
           </div>
         </section>
 
