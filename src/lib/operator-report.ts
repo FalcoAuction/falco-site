@@ -19,6 +19,9 @@ export type OperatorLeadRow = {
   first_seen_at?: string | null
   last_seen_at?: string | null
   score_updated_at?: string | null
+  current_sale_date?: string | null
+  original_sale_date?: string | null
+  sale_status?: string | null
   latest_packet_at?: string | null
   vaultPublishReady?: boolean
   topTierReady?: boolean
@@ -58,6 +61,14 @@ export type OperatorReport = {
   topCandidates: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   recentPackets: (OperatorPacketRow & { vaultLive: boolean; vaultSlug: string | null })[]
   vaultCandidates: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+  foreclosureIntake: {
+    preForeclosureCount: number
+    scheduledCount: number
+    rescheduledCount: number
+    expiredCount: number
+    preForeclosure: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    statusChanges: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+  }
 }
 
 async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
@@ -101,6 +112,18 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
   const topCandidates = attachVaultState(snapshot.topCandidates, liveListings)
   const recentPackets = attachVaultState(snapshot.recentPackets, liveListings)
   const vaultCandidates = attachVaultState(snapshot.vaultCandidates ?? [], liveListings)
+  const foreclosureIntake = buildForeclosureIntake(
+    {
+      preForeclosureCount: snapshot.foreclosureIntake?.preForeclosureCount ?? 0,
+      scheduledCount: snapshot.foreclosureIntake?.scheduledCount ?? 0,
+      rescheduledCount: snapshot.foreclosureIntake?.rescheduledCount ?? 0,
+      expiredCount: snapshot.foreclosureIntake?.expiredCount ?? 0,
+      preForeclosure: snapshot.foreclosureIntake?.preForeclosure ?? [],
+      statusChanges: snapshot.foreclosureIntake?.statusChanges ?? [],
+    },
+    recentLeads,
+    liveListings
+  )
 
   return {
     ...snapshot,
@@ -117,6 +140,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     topCandidates,
     recentPackets,
     vaultCandidates,
+    foreclosureIntake,
   }
 }
 
@@ -169,6 +193,46 @@ function mapVaultRowToLead(row: VaultListingLite): OperatorLeadRow & {
     score_updated_at: row.created_at,
     vaultLive: row.is_active !== false,
     vaultSlug: row.slug,
+  }
+}
+
+function buildForeclosureIntake(
+  snapshotSection:
+    | {
+        preForeclosureCount: number
+        scheduledCount: number
+        rescheduledCount: number
+        expiredCount: number
+        preForeclosure: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        statusChanges: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+      }
+    | undefined,
+  recentLeads: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[],
+  liveListings: { slug: string }[]
+) {
+  if (snapshotSection) {
+    return {
+      preForeclosureCount: snapshotSection.preForeclosureCount ?? 0,
+      scheduledCount: snapshotSection.scheduledCount ?? 0,
+      rescheduledCount: snapshotSection.rescheduledCount ?? 0,
+      expiredCount: snapshotSection.expiredCount ?? 0,
+      preForeclosure: attachVaultState(snapshotSection.preForeclosure ?? [], liveListings),
+      statusChanges: attachVaultState(snapshotSection.statusChanges ?? [], liveListings),
+    }
+  }
+
+  const preForeclosure = recentLeads.filter((row) => row.sale_status === "pre_foreclosure")
+  const statusChanges = recentLeads.filter((row) =>
+    ["scheduled", "rescheduled", "expired"].includes(String(row.sale_status ?? ""))
+  )
+
+  return {
+    preForeclosureCount: preForeclosure.length,
+    scheduledCount: recentLeads.filter((row) => row.sale_status === "scheduled").length,
+    rescheduledCount: recentLeads.filter((row) => row.sale_status === "rescheduled").length,
+    expiredCount: recentLeads.filter((row) => row.sale_status === "expired").length,
+    preForeclosure,
+    statusChanges,
   }
 }
 
@@ -242,6 +306,14 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
     topCandidates,
     recentPackets,
     vaultCandidates: [],
+    foreclosureIntake: {
+      preForeclosureCount: 0,
+      scheduledCount: 0,
+      rescheduledCount: 0,
+      expiredCount: 0,
+      preForeclosure: [],
+      statusChanges: [],
+    },
   }
 }
 
@@ -297,6 +369,11 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       topCandidates: attachVaultState(parsed.topCandidates, liveListings),
       recentPackets: attachVaultState(parsed.recentPackets, liveListings),
       vaultCandidates: attachVaultState(parsed.vaultCandidates ?? [], liveListings),
+      foreclosureIntake: buildForeclosureIntake(
+        (parsed as OperatorReport).foreclosureIntake,
+        attachVaultState(parsed.recentLeads, liveListings),
+        liveListings
+      ),
     }
   } catch (error) {
     console.warn("getOperatorReport full mode unavailable, trying snapshot", error)
