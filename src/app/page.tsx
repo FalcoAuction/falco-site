@@ -101,7 +101,7 @@ export default async function HomePage() {
               <Link href="#partners" className="transition hover:text-white">
                 Partners
               </Link>
-              <Link href="/vault" className="transition hover:text-white">
+              <Link href="/partner-login" className="transition hover:text-white">
                 Partner Login
               </Link>
               <Link href="/request-access" className="transition hover:text-white">
@@ -145,7 +145,7 @@ export default async function HomePage() {
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
-                  href="/vault"
+                  href="/partner-login"
                   className="inline-flex items-center justify-center rounded-xl border border-white/15 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.06]"
                 >
                   Partner Login
@@ -420,7 +420,7 @@ export default async function HomePage() {
 
               <div className="mt-6 space-y-4">
                 <Link
-                  href="/vault"
+                  href="/partner-login"
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
                 >
                   <span>Vault Login</span>
