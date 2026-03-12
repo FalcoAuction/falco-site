@@ -81,24 +81,17 @@ export default async function HomePage() {
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
             <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
-              <span className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] shadow-[0_10px_24px_rgba(0,0,0,0.32)]">
-                <Image
-                  src="/falco-logo.jpg"
-                  alt="Falco mark"
-                  width={30}
-                  height={30}
-                  className="h-[30px] w-[30px] object-contain invert [mix-blend-mode:screen]"
-                  priority
-                />
-              </span>
+              <Image
+                src="/falco-logo.jpg"
+                alt="Falco mark"
+                width={34}
+                height={34}
+                className="h-[34px] w-[34px] object-contain invert [mix-blend-mode:screen]"
+                priority
+              />
 
-              <span className="flex flex-col">
-                <span className="text-lg font-semibold tracking-[0.32em] text-white md:text-xl">
-                  FALCO
-                </span>
-                <span className="text-[10px] uppercase tracking-[0.22em] text-white/38">
-                  Distress Intelligence
-                </span>
+              <span className="text-lg font-semibold tracking-[0.32em] text-white md:text-xl">
+                FALCO
               </span>
             </Link>
 
