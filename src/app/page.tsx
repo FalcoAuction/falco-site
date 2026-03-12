@@ -84,9 +84,9 @@ export default async function HomePage() {
               <Image
                 src="/falco-logo.jpg"
                 alt="Falco mark"
-                width={34}
-                height={34}
-                className="h-[34px] w-[34px] object-contain invert [mix-blend-mode:screen]"
+                width={56}
+                height={56}
+                className="h-[56px] w-[56px] object-contain invert [mix-blend-mode:screen]"
                 priority
               />
 
