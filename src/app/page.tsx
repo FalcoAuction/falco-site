@@ -13,17 +13,17 @@ const workflow = [
   {
     step: "01",
     title: "Detect",
-    body: "FALCO monitors targeted distress sources and surfaces opportunities early.",
+    body: "FALCO monitors targeted distress sources and flags files before they are obvious to the broader market.",
   },
   {
     step: "02",
     title: "Screen",
-    body: "Each lead is enriched, filtered, and organized into a clear operator-facing brief.",
+    body: "Each file is cleaned up, enriched with ownership, debt, timing, and contact context, then filtered for real operator use.",
   },
   {
     step: "03",
     title: "Route",
-    body: "The strongest candidates move into controlled operator and partner review paths.",
+    body: "The strongest files are turned into operator review briefs and routed into a controlled partner review path for validation.",
   },
 ]
 
@@ -299,18 +299,20 @@ export default async function HomePage() {
                 What It Is
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A private screening and packaging system for distressed opportunities.
+                A private system for finding, cleaning up, and organizing distressed-property opportunities before they become crowded.
               </h2>
             </div>
 
             <div className="space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO identifies distress early, reduces noise, and turns raw
-                lead flow into structured operator-facing dossiers.
+                FALCO is not a public listing feed and it is not a seller-facing auction proposal.
+                It is an upstream screening system built to take scattered distress data and turn it into a cleaner file an auctioneer, broker, or operator can review quickly.
               </p>
               <p className="leading-7">
-                It is not a public listing feed. It is a restricted review
-                system built for cleaner sourcing and controlled downstream access.
+                In plain terms, the system looks for distress early, pulls together the property, debt, timing, and contact picture, filters out weaker files, and packages the stronger ones into a restricted review vault.
+              </p>
+              <p className="leading-7">
+                The goal is not to claim that every file is ready to move immediately. The goal is to give serious operators a better starting point than raw notice scraping and a cleaner path to decide whether a file is actually workable.
               </p>
             </div>
           </div>
@@ -325,8 +327,11 @@ export default async function HomePage() {
               How It Works
             </div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-              Built for fast operator review.
+              Built to move from raw distress signal to operator review.
             </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
+              FALCO does the early sourcing and file assembly work first, then puts the strongest opportunities in front of licensed operators and partners for final execution judgment.
+            </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
