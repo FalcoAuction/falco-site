@@ -101,6 +101,9 @@ export default async function HomePage() {
               <Link href="#partners" className="transition hover:text-white">
                 Partners
               </Link>
+              <Link href="/vault" className="transition hover:text-white">
+                Partner Portal
+              </Link>
               <Link href="/request-access" className="transition hover:text-white">
                 Request Access
               </Link>
@@ -141,6 +144,13 @@ export default async function HomePage() {
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/vault"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/15 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.06]"
+                >
+                  Partner Portal
+                </Link>
+
                 <Link
                   href="/request-access"
                   className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 shadow-[0_18px_55px_rgba(255,255,255,0.16)]"
@@ -409,6 +419,14 @@ export default async function HomePage() {
               </h3>
 
               <div className="mt-6 space-y-4">
+                <Link
+                  href="/vault"
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
+                >
+                  <span>Partner Portal</span>
+                  <span className="text-white/40">&gt;</span>
+                </Link>
+
                 <Link
                   href="/submit-opportunity"
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
