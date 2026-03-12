@@ -101,6 +101,7 @@ type ListingSuggestionSummary = {
 }
 
 const LOCAL_VAULT_LISTINGS_FILE = path.join(process.cwd(), "data", "vault_listings.ndjson")
+const VAULT_CANDIDATE_FILE = path.join(process.cwd(), "data", "operator", "vault_candidates.json")
 
 function loadLocalVaultListingOverlay() {
   const overlays = new Map<string, LocalVaultListingOverlay>()
@@ -124,6 +125,44 @@ function loadLocalVaultListingOverlay() {
     }
   }
 
+  return overlays
+}
+
+function loadVaultCandidateOverlay() {
+  const overlays = new Map<string, LocalVaultListingOverlay>()
+
+  if (!fs.existsSync(VAULT_CANDIDATE_FILE)) {
+    return overlays
+  }
+
+  try {
+    const raw = fs.readFileSync(VAULT_CANDIDATE_FILE, "utf8").trim()
+    if (!raw) return overlays
+    const parsed = JSON.parse(raw) as {
+      candidates?: Array<{ slug?: string; listingPayload?: LocalVaultListingOverlay }>
+    }
+    for (const row of parsed.candidates ?? []) {
+      const payload = row?.listingPayload
+      const slug = String(row?.slug ?? payload?.slug ?? "").trim()
+      if (!slug || !payload) continue
+      overlays.set(slug, {
+        ...payload,
+        slug,
+      })
+    }
+  } catch {
+    return overlays
+  }
+
+  return overlays
+}
+
+function loadVaultListingOverlay() {
+  const overlays = loadLocalVaultListingOverlay()
+  const candidateOverlays = loadVaultCandidateOverlay()
+  for (const [slug, payload] of candidateOverlays.entries()) {
+    if (!overlays.has(slug)) overlays.set(slug, payload)
+  }
   return overlays
 }
 
@@ -420,7 +459,7 @@ export async function listVaultListings() {
     return []
   }
 
-  const overlayBySlug = loadLocalVaultListingOverlay()
+  const overlayBySlug = loadVaultListingOverlay()
   const mappedRows = (data ?? []).map((row) =>
     mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
   )
@@ -491,7 +530,7 @@ export async function findVaultListing(slug: string) {
 
   if (!data) return null
 
-  const overlayBySlug = loadLocalVaultListingOverlay()
+  const overlayBySlug = loadVaultListingOverlay()
   const mapped = mapRowToVaultListing(
     data as VaultListingRow,
     overlayBySlug.get((data as VaultListingRow).slug)
@@ -576,7 +615,7 @@ export async function updateVaultListingStatus(
   if (!data) return null
 
   return {
-    ...mapRowToVaultListing(data as VaultListingRow, loadLocalVaultListingOverlay().get(slug)),
+    ...mapRowToVaultListing(data as VaultListingRow, loadVaultListingOverlay().get(slug)),
     status,
     claimedAt: status === "claimed" ? new Date().toISOString() : undefined,
     claimedBy: status === "claimed" ? claimedBy || "unknown" : undefined,

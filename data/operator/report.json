@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-12T22:16:14.189883+00:00",
+  "generatedAt": "2026-03-12T22:50:05.690727+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -10,7 +10,7 @@
     "packeted": 28,
     "contactReady": 52,
     "vaultLive": 16,
-    "vaultQueue": 0,
+    "vaultQueue": 4,
     "pendingApprovals": 0
   },
   "recentLeads": [
@@ -973,6 +973,7 @@
       {
         "event_key": "ad2e0dbc07d7a36020f319be2f823fd5504008cf",
         "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-postponement-of-substitute-trustees-sale-2/",
         "event_type": "substitution_of_trustee",
@@ -991,6 +992,7 @@
       {
         "event_key": "574894b0aaf2cb25082c5bf8edb31fa8f4dea6da",
         "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-6/",
         "event_type": "substitution_of_trustee",
@@ -1009,6 +1011,7 @@
       {
         "event_key": "042290f35ec7024198a1132786dbc7472f9f4e65",
         "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustee-sale/",
         "event_type": "substitution_of_trustee",
@@ -1027,6 +1030,7 @@
       {
         "event_key": "aebe5a41ffc32112036ed20e2d1328159f34b52a",
         "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-11/",
         "event_type": "substitution_of_trustee",
@@ -1045,6 +1049,7 @@
       {
         "event_key": "9304c6b05fadcdcf94d32978cc1fadc449e00929",
         "lead_key": "28a3ea99c6936735a19fb2d44e724041cc45e327",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-19/",
         "event_type": "substitution_of_trustee",
@@ -1063,6 +1068,7 @@
       {
         "event_key": "adbee788a3de00c23ab6882b70422d3c7cef6273",
         "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustee-sale-5/",
         "event_type": "substitution_of_trustee",
@@ -1081,6 +1087,7 @@
       {
         "event_key": "27072ccd08255a36032a0e447fcae5a723102a15",
         "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-22/",
         "event_type": "substitution_of_trustee",
@@ -1099,6 +1106,7 @@
       {
         "event_key": "cbfe1b6ebd66623c4a963a177a6083fe29058ec6",
         "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-24/",
         "event_type": "substitution_of_trustee",
@@ -1117,6 +1125,7 @@
       {
         "event_key": "a4d577570e4164f20bb9d52bd79f1e986526e135",
         "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustee-sal/",
         "event_type": "substitution_of_trustee",
@@ -1135,6 +1144,7 @@
       {
         "event_key": "de8859dda52a94cd11e36ad315eaa1180fb8da65",
         "lead_key": "2e6d37b40f1002bc485d2dbafe320f86ab386621",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-30/",
         "event_type": "substitution_of_trustee",
@@ -1153,6 +1163,7 @@
       {
         "event_key": "e05c4741ac74554867f5ca85e93b351fcacfe456",
         "lead_key": "ec27e0befb68c052b78ff1aee09a125b3648627b",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-32/",
         "event_type": "substitution_of_trustee",
@@ -1171,6 +1182,7 @@
       {
         "event_key": "2179342ddb7c50e183a3c342fdd4c82089345b25",
         "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-postponed-substitute-trustee-sale-2/",
         "event_type": "substitution_of_trustee",
@@ -1189,6 +1201,7 @@
       {
         "event_key": "ff7277a915a33b13e70576b0058d9e5530bf1d63",
         "lead_key": "98be102343cc281539efd8113dc95c1d458559f7",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustee-sale-9/",
         "event_type": "substitution_of_trustee",
@@ -1207,6 +1220,7 @@
       {
         "event_key": "702015d64c2a9939b84114969f5bf0d2df00ab82",
         "lead_key": "24954f6e7d797fcd62c71888e2a7ba29ed96e081",
+        "canonical_property_key": null,
         "source": "PublicNotices",
         "source_url": "https://tnlegalpub.com/legal_notice/trustees-notice-of-sale-2/",
         "event_type": "sale_notice",
@@ -1225,6 +1239,7 @@
       {
         "event_key": "04da95b5ecc48897073c7bc42286d06a6613809b",
         "lead_key": "0f709e5ac83aaea6ce1e674a25d026968f221cdf",
+        "canonical_property_key": null,
         "source": "SUBSTITUTION_OF_TRUSTEE",
         "source_url": "https://tnlegalpub.com/legal_notice/notice-of-substitute-trustees-sale-39/",
         "event_type": "substitution_of_trustee",
@@ -1243,6 +1258,7 @@
       {
         "event_key": "fdc496c70f804c5100ef83ad2f94cc934c840243",
         "lead_key": "b03c462ecedc2b47b75006a0daad87869a5fbf5d",
+        "canonical_property_key": null,
         "source": "TNForeclosureNotices",
         "source_url": "https://tnforeclosurenotices.com/results/counties/wilson/#TNFN#13759",
         "event_type": "sale_notice",

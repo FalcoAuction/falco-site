@@ -835,6 +835,8 @@ export default function OperatorPage() {
       setResult(
         decision === "clear"
           ? "Intake review cleared."
+          : decision === "promote" && data?.published?.slug
+          ? `Promoted to vault: ${data.published.slug}`
           : `Intake marked: ${intakeDecisionCopy(decision)}`
       )
       await loadWorkspace(secret)

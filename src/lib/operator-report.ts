@@ -2,6 +2,7 @@ import { execFile } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
+import { listOperatorVaultCandidates } from "@/lib/operator-vault-candidates"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 const execFileAsync = promisify(execFile)
@@ -190,7 +191,11 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
   const recentLeads = attachVaultState(snapshot.recentLeads, liveListings)
   const topCandidates = attachVaultState(snapshot.topCandidates, liveListings)
   const recentPackets = attachVaultState(snapshot.recentPackets, liveListings)
-  const vaultCandidates = attachVaultState(snapshot.vaultCandidates ?? [], liveListings)
+  const manifestVaultCandidates = getManifestVaultCandidates(liveListings)
+  const snapshotVaultCandidates = attachVaultState(snapshot.vaultCandidates ?? [], liveListings).filter(
+    (row) => !row.vaultLive
+  )
+  const vaultCandidates = manifestVaultCandidates.length ? manifestVaultCandidates : snapshotVaultCandidates
   const foreclosureIntake = buildForeclosureIntake(
     {
       preForeclosureCount: snapshot.foreclosureIntake?.preForeclosureCount ?? 0,
@@ -216,7 +221,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     overview: {
       ...snapshot.overview,
       vaultLive: liveListings.length,
-      vaultQueue: vaultCandidates.filter((row) => !row.vaultLive).length,
+      vaultQueue: vaultCandidates.length,
       pendingApprovals,
     },
     recentLeads,
@@ -246,6 +251,57 @@ function attachVaultState<T extends { lead_key: string }>(
       vaultSlug: matched?.slug ?? null,
     }
   })
+}
+
+function getManifestVaultCandidates(liveListings: { slug: string }[]) {
+  const rows = listOperatorVaultCandidates().map((candidate) => {
+    const payload = candidate.listingPayload ?? {}
+
+    return {
+      lead_key: candidate.leadKey,
+      address:
+        typeof candidate.address === "string" && candidate.address.trim()
+          ? candidate.address
+          : typeof payload.title === "string"
+          ? payload.title
+          : candidate.leadKey,
+      county:
+        typeof candidate.county === "string" && candidate.county.trim()
+          ? candidate.county
+          : typeof payload.county === "string"
+          ? payload.county
+          : null,
+      distress_type:
+        typeof candidate.distressType === "string" && candidate.distressType.trim()
+          ? candidate.distressType
+          : typeof payload.distressType === "string"
+          ? payload.distressType
+          : null,
+      sale_status:
+        typeof candidate.saleStatus === "string" && candidate.saleStatus.trim()
+          ? candidate.saleStatus
+          : typeof payload.saleStatus === "string"
+          ? payload.saleStatus
+          : null,
+      falco_score_internal:
+        typeof payload.falcoScore === "number" ? payload.falcoScore : null,
+      auction_readiness:
+        typeof payload.auctionReadiness === "string" ? payload.auctionReadiness : null,
+      equity_band: typeof payload.equityBand === "string" ? payload.equityBand : null,
+      dts_days: typeof payload.dtsDays === "number" ? payload.dtsDays : null,
+      uw_ready: 1,
+      score_updated_at: typeof payload.createdAt === "string" ? payload.createdAt : null,
+      vaultPublishReady: Boolean(payload.vaultPublishReady),
+      topTierReady: Boolean(payload.topTierReady),
+      packetCompletenessPct:
+        typeof payload.packetCompletenessPct === "number" ? payload.packetCompletenessPct : null,
+      executionBlockers: Array.isArray(payload.executionBlockers)
+        ? payload.executionBlockers.filter((value): value is string => typeof value === "string")
+        : [],
+    }
+  })
+
+  return attachVaultState(rows, liveListings).filter((row) => !row.vaultLive)
 }
 
 type VaultListingLite = {
@@ -354,10 +410,13 @@ function buildPreForeclosurePromotion(
   liveListings: { slug: string }[]
 ) {
   if (snapshotSection) {
+    const readyForReview = attachVaultState(snapshotSection.readyForReview ?? [], liveListings).filter(
+      (row) => !row.vaultLive
+    )
     return {
-      readyCount: snapshotSection.readyCount ?? 0,
+      readyCount: readyForReview.length,
       blockedCount: snapshotSection.blockedCount ?? 0,
-      readyForReview: attachVaultState(snapshotSection.readyForReview ?? [], liveListings),
+      readyForReview,
       blocked: attachVaultState(snapshotSection.blocked ?? [], liveListings),
       blockerCounts: snapshotSection.blockerCounts ?? [],
     }
@@ -498,6 +557,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
 
     const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
     const snapshot = await readSnapshotOperatorReport()
+    const manifestVaultCandidates = getManifestVaultCandidates(liveListings)
 
     return {
       generatedAt: parsed.generatedAt,
@@ -508,13 +568,18 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       overview: {
         ...parsed.overview,
         vaultLive: liveListings.length,
-        vaultQueue: parsed.overview.vaultQueue ?? 0,
+        vaultQueue:
+          manifestVaultCandidates.length > 0
+            ? manifestVaultCandidates.length
+            : (parsed.overview.vaultQueue ?? 0),
         pendingApprovals,
       },
       recentLeads: attachVaultState(parsed.recentLeads, liveListings),
       topCandidates: attachVaultState(parsed.topCandidates, liveListings),
       recentPackets: attachVaultState(parsed.recentPackets, liveListings),
-      vaultCandidates: attachVaultState(parsed.vaultCandidates ?? [], liveListings),
+      vaultCandidates: manifestVaultCandidates.length
+        ? manifestVaultCandidates
+        : attachVaultState(parsed.vaultCandidates ?? [], liveListings),
       foreclosureIntake: buildForeclosureIntake(
         (parsed as OperatorReport).foreclosureIntake ?? snapshot?.foreclosureIntake,
         attachVaultState(parsed.recentLeads, liveListings),

@@ -5,6 +5,7 @@ import {
   recordOperatorIntakeDecision,
   type OperatorIntakeDecision,
 } from "@/lib/operator-intake"
+import { publishOperatorVaultCandidate } from "@/lib/vault-publish"
 
 function isDecision(value: string): value is OperatorIntakeDecision {
   return ["promote", "hold", "needs_more_info"].includes(value)
@@ -55,6 +56,9 @@ export async function POST(req: NextRequest) {
     const actedBy = String(body?.actedBy ?? "FALCO Operator").trim() || "FALCO Operator"
     const note = String(body?.note ?? "").trim()
 
+    const published =
+      decision === "promote" ? await publishOperatorVaultCandidate(leadKey) : null
+
     const record = await recordOperatorIntakeDecision({
       leadKey,
       decision,
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
       actedBy,
     })
 
-    return NextResponse.json({ ok: true, record })
+    return NextResponse.json({ ok: true, record, published })
   } catch (error) {
     if (error instanceof Error && error.message === "Missing FALCO_APPROVAL_SECRET.") {
       return NextResponse.json(
