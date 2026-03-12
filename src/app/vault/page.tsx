@@ -303,6 +303,11 @@ export default function VaultPage() {
   const [listings, setListings] = useState<VaultListing[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [approved, setApproved] = useState(false)
+  const [approvedEmail, setApprovedEmail] = useState("")
+  const [emailCheck, setEmailCheck] = useState("")
+  const [approvalSubmitting, setApprovalSubmitting] = useState(false)
+  const [approvalError, setApprovalError] = useState("")
   const [filter, setFilter] = useState<"all" | "active" | "claimed" | "expired">("active")
   const [segmentFilter, setSegmentFilter] = useState<"all" | VaultSegment>("top")
   const [readinessFilter, setReadinessFilter] = useState<VaultReadinessFilter>("all")
@@ -311,6 +316,35 @@ export default function VaultPage() {
   const [stageFilter, setStageFilter] = useState<VaultStage>("all")
 
   useEffect(() => {
+    const loadApprovalSession = async () => {
+      try {
+        const res = await fetch("/api/access/session", { cache: "no-store" })
+        const data = await res.json()
+
+        if (!res.ok || !data?.ok || !data?.approved) {
+          setApproved(false)
+          return
+        }
+
+        const email = String(data.email || "").trim()
+        setApproved(true)
+        setApprovedEmail(email)
+        setEmailCheck(email)
+      } catch {
+        setApproved(false)
+      }
+    }
+
+    void loadApprovalSession()
+  }, [])
+
+  useEffect(() => {
+    if (!approved) {
+      setListings([])
+      setLoading(false)
+      return
+    }
+
     const loadListings = async () => {
       try {
         setLoading(true)
@@ -332,8 +366,47 @@ export default function VaultPage() {
       }
     }
 
-    loadListings()
-  }, [])
+    void loadListings()
+  }, [approved])
+
+  const handleApprovalCheck = async () => {
+    setApprovalError("")
+
+    if (!emailCheck.trim()) {
+      setApprovalError("Approved email is required.")
+      return
+    }
+
+    try {
+      setApprovalSubmitting(true)
+
+      const res = await fetch("/api/access/check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailCheck,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok || !data?.approved) {
+        setApprovalError(data?.error || "Unable to verify vault access.")
+        return
+      }
+
+      setApproved(true)
+      setApprovedEmail(data.email || emailCheck)
+      setEmailCheck(data.email || emailCheck)
+      setApprovalError("")
+    } catch {
+      setApprovalError("Unable to verify approval.")
+    } finally {
+      setApprovalSubmitting(false)
+    }
+  }
 
   const filteredListings = useMemo(() => {
     return listings.filter((listing) => {
@@ -414,6 +487,63 @@ export default function VaultPage() {
         </div>
       </header>
 
+      {!approved ? (
+        <section className="mx-auto max-w-4xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
+            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+              Partner Login
+            </div>
+
+            <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-5xl">
+              Verify your approved vault email.
+            </h1>
+
+            <p className="mt-6 max-w-3xl text-base leading-7 text-white/68 md:text-lg">
+              The FALCO vault is restricted to approved partners. Enter the email
+              that was approved for your firm to open the review shelf and listing
+              packets.
+            </p>
+
+            <div className="mt-8 grid gap-4">
+              <div>
+                <label className="mb-2 block text-sm text-white/70">Approved Email</label>
+                <input
+                  value={emailCheck}
+                  onChange={(event) => setEmailCheck(event.target.value)}
+                  type="email"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                  placeholder="you@firm.com"
+                />
+              </div>
+            </div>
+
+            {approvalError ? (
+              <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {approvalError}
+              </div>
+            ) : null}
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <button
+                onClick={handleApprovalCheck}
+                disabled={approvalSubmitting}
+                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {approvalSubmitting ? "Verifying..." : "Enter Vault"}
+              </button>
+
+              <Link
+                href="/request-access"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+              >
+                Request Access
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
+
       <section className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
@@ -431,6 +561,10 @@ export default function VaultPage() {
               gated by NDA and non-circumvention acceptance. Final execution viability and auction-path
               fit remain subject to licensed/operator validation.
             </p>
+
+            <div className="mt-6 text-sm text-white/45">
+              Verified as {approvedEmail}
+            </div>
           </div>
 
           <div className="rounded-[30px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
@@ -709,6 +843,8 @@ export default function VaultPage() {
           </div>
         )}
       </section>
+        </>
+      )}
     </main>
   )
 }
