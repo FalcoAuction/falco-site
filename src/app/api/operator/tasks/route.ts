@@ -7,7 +7,7 @@ import {
 } from "@/lib/operator-tasks"
 
 function isTaskSection(value: string): value is OperatorTaskSection {
-  return ["approvals", "routing", "vault", "outreach"].includes(value)
+  return ["intake", "approvals", "routing", "vault", "outreach"].includes(value)
 }
 
 export async function POST(req: NextRequest) {

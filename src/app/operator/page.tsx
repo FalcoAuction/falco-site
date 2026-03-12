@@ -164,6 +164,16 @@ type OutreachReport = {
   tracks: OutreachTrackReport[]
 }
 
+type OperatorIntakeDecision = "promote" | "hold" | "needs_more_info"
+
+type OperatorIntakeRecord = {
+  leadKey: string
+  decision: OperatorIntakeDecision
+  note: string
+  actedBy: string
+  decidedAt: string
+}
+
 type OperatorWorkspace = {
   report: OperatorReport
   accessRequests: AccessRequestRecord[]
@@ -171,13 +181,14 @@ type OperatorWorkspace = {
   outreach: OutreachReport
   liveListings: LiveVaultListing[]
   taskHistory: TaskHistoryItem[]
+  intakeDecisions: OperatorIntakeRecord[]
 }
 
 type TaskItem = {
   id: string
   title: string
   detail: string
-  section: "approvals" | "routing" | "vault" | "outreach"
+  section: "intake" | "approvals" | "routing" | "vault" | "outreach"
   priority: "high" | "medium" | "low"
 }
 
@@ -218,6 +229,7 @@ function statusCopy(status: VaultPursuitRecord["status"]) {
 }
 
 function formatSectionLabel(section: TaskItem["section"]) {
+  if (section === "intake") return "Intake"
   if (section === "approvals") return "Approvals"
   if (section === "routing") return "Routing"
   if (section === "vault") return "Vault"
@@ -274,6 +286,13 @@ function saleStatusCopy(value?: string | null) {
   return "Unknown"
 }
 
+function intakeDecisionCopy(value?: OperatorIntakeDecision) {
+  if (value === "promote") return "Promote"
+  if (value === "hold") return "Hold"
+  if (value === "needs_more_info") return "Needs More Info"
+  return "Undecided"
+}
+
 export default function OperatorPage() {
   const [secret, setSecret] = useState("")
   const [approvedBy, setApprovedBy] = useState("Patrick Armour")
@@ -285,12 +304,30 @@ export default function OperatorPage() {
   const [processingId, setProcessingId] = useState("")
   const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
   const [validationLanes, setValidationLanes] = useState<Record<string, VaultExecutionLane>>({})
+  const [intakeNotes, setIntakeNotes] = useState<Record<string, string>>({})
   const [history, setHistory] = useState<TaskHistoryItem[]>([])
 
   const tasks = useMemo(() => {
     if (!workspace) return []
 
     const items: TaskItem[] = []
+    const intakeDecisionMap = new Map(
+      (workspace.intakeDecisions ?? []).map((row) => [row.leadKey, row] as const)
+    )
+
+    for (const row of [
+      ...(workspace.report.foreclosureIntake?.preForeclosure ?? []),
+      ...(workspace.report.foreclosureIntake?.statusChanges ?? []),
+    ]) {
+      if (intakeDecisionMap.has(row.lead_key)) continue
+      items.push({
+        id: `intake:${row.lead_key}`,
+        title: `Review intake lead: ${row.address || row.lead_key}`,
+        detail: `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`,
+        section: "intake",
+        priority: row.sale_status === "pre_foreclosure" ? "high" : "medium",
+      })
+    }
 
     for (const request of workspace.accessRequests.filter((row) => row.status === "pending")) {
       items.push({
@@ -408,6 +445,11 @@ export default function OperatorPage() {
     []
   )
 
+  const intakeDecisionMap = useMemo(
+    () => new Map((workspace?.intakeDecisions ?? []).map((row) => [row.leadKey, row] as const)),
+    [workspace]
+  )
+
   async function loadWorkspace(currentSecret?: string) {
     const secretToUse = (currentSecret ?? secret).trim()
     if (!secretToUse) {
@@ -437,13 +479,18 @@ export default function OperatorPage() {
       setHistory(data.workspace.taskHistory ?? [])
       const nextNotes: Record<string, string> = {}
       const nextLanes: Record<string, VaultExecutionLane> = {}
+      const nextIntakeNotes: Record<string, string> = {}
       for (const listing of data.workspace.liveListings ?? []) {
         nextNotes[listing.slug] = listing.validationNote ?? ""
         nextLanes[listing.slug] =
           listing.executionLane ?? listing.suggestedExecutionLane ?? "unclear"
       }
+      for (const intake of data.workspace.intakeDecisions ?? []) {
+        nextIntakeNotes[intake.leadKey] = intake.note ?? ""
+      }
       setValidationNotes(nextNotes)
       setValidationLanes(nextLanes)
+      setIntakeNotes(nextIntakeNotes)
     } catch {
       setError("Unable to load operator workspace.")
     } finally {
@@ -625,6 +672,86 @@ export default function OperatorPage() {
       await loadWorkspace(secret)
     } catch {
       setError("Unable to update task state.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
+  async function handleIntakeDecision(
+    leadKey: string,
+    decision: "clear" | OperatorIntakeDecision,
+    title: string,
+    detail: string
+  ) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(`intake:${leadKey}:${decision}`)
+    setError("")
+    setResult("")
+
+    try {
+      const res = await fetch("/api/operator/intake", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          action: decision === "clear" ? "clear" : "record",
+          leadKey,
+          decision: decision === "clear" ? undefined : decision,
+          note: intakeNotes[leadKey] ?? "",
+          actedBy,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to record intake review.")
+        return
+      }
+
+      if (decision !== "clear") {
+        await fetch("/api/operator/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secret,
+            action: "complete",
+            taskId: `intake:${leadKey}`,
+            title,
+            detail,
+            section: "intake",
+            completedBy: actedBy,
+          }),
+        })
+      } else {
+        await fetch("/api/operator/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secret,
+            action: "restore",
+            taskId: `intake:${leadKey}`,
+          }),
+        })
+      }
+
+      setResult(
+        decision === "clear"
+          ? "Intake review cleared."
+          : `Intake marked: ${intakeDecisionCopy(decision)}`
+      )
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to record intake review.")
     } finally {
       setProcessingId("")
     }
@@ -849,9 +976,19 @@ export default function OperatorPage() {
                   <div className="mt-4 grid gap-3">
                     {workspace.report.foreclosureIntake.preForeclosure.length ? workspace.report.foreclosureIntake.preForeclosure.map((row) => (
                       <div key={`pf-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        {(() => {
+                          const intake = intakeDecisionMap.get(row.lead_key)
+                          const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
+                          const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
+                          return (
+                            <>
                         <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
                         <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
                           {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                        </div>
+                        <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                          Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
+                          {intake ? ` • ${intake.actedBy}` : ""}
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           <div>
@@ -867,6 +1004,54 @@ export default function OperatorPage() {
                             <div className="mt-2 text-sm text-white/78">{row.dts_days ?? "—"}</div>
                           </div>
                         </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                          <textarea
+                            value={intakeNotes[row.lead_key] ?? ""}
+                            onChange={(event) =>
+                              setIntakeNotes((current) => ({
+                                ...current,
+                                [row.lead_key]: event.target.value,
+                              }))
+                            }
+                            className="min-h-[78px] rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                            placeholder="Optional intake note: why this should be promoted, held, or needs more information."
+                          />
+                          <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:promote`}
+                              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:promote` ? "Saving..." : "Promote"}
+                            </button>
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:hold`}
+                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
+                            </button>
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
+                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
+                            </button>
+                            {intake ? (
+                              <button
+                                onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
+                                disabled={processingId === `intake:${row.lead_key}:clear`}
+                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                            </>
+                          )
+                        })()}
                       </div>
                     )) : (
                       <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
@@ -886,6 +1071,12 @@ export default function OperatorPage() {
                   <div className="mt-4 grid gap-3">
                     {workspace.report.foreclosureIntake.statusChanges.length ? workspace.report.foreclosureIntake.statusChanges.map((row) => (
                       <div key={`status-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        {(() => {
+                          const intake = intakeDecisionMap.get(row.lead_key)
+                          const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
+                          const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
+                          return (
+                            <>
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
@@ -896,6 +1087,10 @@ export default function OperatorPage() {
                           <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${row.sale_status === "expired" ? "border-white/10 bg-white/[0.05] text-white/58" : "border-white/12 bg-white/10 text-white/82"}`}>
                             {saleStatusCopy(row.sale_status)}
                           </span>
+                        </div>
+                        <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                          Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
+                          {intake ? ` • ${intake.actedBy}` : ""}
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           <div>
@@ -911,6 +1106,54 @@ export default function OperatorPage() {
                             <div className="mt-2 text-sm text-white/78">{row.dts_days ?? "—"}</div>
                           </div>
                         </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                          <textarea
+                            value={intakeNotes[row.lead_key] ?? ""}
+                            onChange={(event) =>
+                              setIntakeNotes((current) => ({
+                                ...current,
+                                [row.lead_key]: event.target.value,
+                              }))
+                            }
+                            className="min-h-[78px] rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                            placeholder="Optional intake note: promotion rationale, stale timing, or missing information."
+                          />
+                          <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:promote`}
+                              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:promote` ? "Saving..." : "Promote"}
+                            </button>
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:hold`}
+                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
+                            </button>
+                            <button
+                              onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
+                              disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
+                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
+                            </button>
+                            {intake ? (
+                              <button
+                                onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
+                                disabled={processingId === `intake:${row.lead_key}:clear`}
+                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                            </>
+                          )
+                        })()}
                       </div>
                     )) : (
                       <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">

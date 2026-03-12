@@ -3,7 +3,7 @@ import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 
 export const OPERATOR_TASK_COMPANY = "__falco_operator_task__"
 
-export type OperatorTaskSection = "approvals" | "routing" | "vault" | "outreach"
+export type OperatorTaskSection = "intake" | "approvals" | "routing" | "vault" | "outreach"
 
 export type OperatorTaskHistoryItem = {
   id: string
@@ -53,6 +53,7 @@ function parseOperatorTaskNotes(notes: string | null) {
       parsed.section === "approvals" ||
       parsed.section === "routing" ||
       parsed.section === "vault" ||
+      parsed.section === "intake" ||
       parsed.section === "outreach"
         ? parsed.section
         : "vault"
