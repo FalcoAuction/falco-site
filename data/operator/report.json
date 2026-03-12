@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-03-12T20:26:20.029012+00:00",
+  "generatedAt": "2026-03-12T20:35:32.636402+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
   "overview": {
-    "totalLeads": 87,
+    "totalLeads": 85,
     "greenReady": 9,
     "uwReady": 18,
-    "packeted": 29,
-    "contactReady": 53,
-    "vaultLive": 11,
-    "vaultQueue": 3,
+    "packeted": 28,
+    "contactReady": 52,
+    "vaultLive": 16,
+    "vaultQueue": 0,
     "pendingApprovals": 0
   },
   "recentLeads": [
@@ -255,8 +255,8 @@
       "dts_days": 21,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-12T20:22:51+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "hamilton-county-foreclosure-24954f6e"
     },
     {
       "lead_key": "408587fa390f65481cd0b4d617185f6fc2432584",
@@ -283,8 +283,8 @@
       "dts_days": 21,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-12T20:22:51+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-94b7fb7a"
     },
     {
       "lead_key": "e84c244d6d1b7df03bd47bb89807510bbb683dc8",
@@ -297,8 +297,8 @@
       "dts_days": 21,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-12T20:22:51+00:00",
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "knox-county-foreclosure-e84c244d"
     },
     {
       "lead_key": "26f721d976e5645e4830896301c063f8875e076f",
@@ -420,7 +420,7 @@
       "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\7bb61b91-9502-4476-a513-dda821ff06a4\\e7cdfff43914ee205f995522b4656f83be4dc5c0.pdf",
       "bytes": 218466,
       "created_at": "2026-03-12T20:26:17+00:00",
-      "address": "2106 Ivy St., Chattanooga. TN 37404",
+      "address": "2106 Ivy St., Chattanooga, TN 37404",
       "county": "Hamilton County",
       "falco_score_internal": 82,
       "auction_readiness": "PARTIAL",
@@ -439,8 +439,8 @@
       "falco_score_internal": 82,
       "auction_readiness": "PARTIAL",
       "dts_days": null,
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "montgomery-county-pre-foreclosure-review-6c6531a4"
     },
     {
       "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
@@ -471,20 +471,6 @@
       "vaultSlug": null
     },
     {
-      "lead_key": "340241a9a89f2149aa9d94998cfc6d631868ab28",
-      "run_id": "7bb61b91-9502-4476-a513-dda821ff06a4",
-      "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\7bb61b91-9502-4476-a513-dda821ff06a4\\340241a9a89f2149aa9d94998cfc6d631868ab28.pdf",
-      "bytes": 189244,
-      "created_at": "2026-03-12T20:26:14+00:00",
-      "address": "1129 Cotillion Dr., Murfreesboro, TN 37158-1681",
-      "county": "Rutherford County",
-      "falco_score_internal": 82,
-      "auction_readiness": "PARTIAL",
-      "dts_days": null,
-      "vaultLive": false,
-      "vaultSlug": null
-    },
-    {
       "lead_key": "28a3ea99c6936735a19fb2d44e724041cc45e327",
       "run_id": "7bb61b91-9502-4476-a513-dda821ff06a4",
       "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\7bb61b91-9502-4476-a513-dda821ff06a4\\28a3ea99c6936735a19fb2d44e724041cc45e327.pdf",
@@ -495,8 +481,8 @@
       "falco_score_internal": 82,
       "auction_readiness": "PARTIAL",
       "dts_days": null,
-      "vaultLive": false,
-      "vaultSlug": null
+      "vaultLive": true,
+      "vaultSlug": "rutherford-county-pre-foreclosure-review-28a3ea99"
     },
     {
       "lead_key": "2e6d37b40f1002bc485d2dbafe320f86ab386621",
@@ -539,76 +525,32 @@
       "dts_days": 42,
       "vaultLive": true,
       "vaultSlug": "davidson-county-foreclosure-96f145db"
-    }
-  ],
-  "vaultCandidates": [
-    {
-      "lead_key": "94b7fb7a376e26dbabae4bbd31fe6635820fab99",
-      "address": "1411 Dick Lonas Road, Knoxville, TN 37909",
-      "county": "Knox County",
-      "distress_type": "FORECLOSURE",
-      "sale_status": "scheduled",
-      "falco_score_internal": 100,
-      "auction_readiness": "GREEN",
-      "equity_band": "MED",
-      "dts_days": 21,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "preForeclosureReviewReady": false,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
-    },
-    {
-      "lead_key": "e84c244d6d1b7df03bd47bb89807510bbb683dc8",
-      "address": "407 Overhill Road, Knoxville, TN 37914",
-      "county": "Knox County",
-      "distress_type": "FORECLOSURE",
-      "sale_status": "scheduled",
-      "falco_score_internal": 100,
-      "auction_readiness": "GREEN",
-      "equity_band": "LOW",
-      "dts_days": 21,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "preForeclosureReviewReady": false,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
     },
     {
       "lead_key": "24954f6e7d797fcd62c71888e2a7ba29ed96e081",
+      "run_id": "b4069c54-4f65-447a-8365-49c949f81e6d",
+      "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\b4069c54-4f65-447a-8365-49c949f81e6d\\24954f6e7d797fcd62c71888e2a7ba29ed96e081.pdf",
+      "bytes": 209923,
+      "created_at": "2026-03-12T20:22:51+00:00",
       "address": "3922 Yorktown Road, Chattanooga, TN 37416",
       "county": "Hamilton County",
-      "distress_type": "FORECLOSURE",
-      "sale_status": "scheduled",
       "falco_score_internal": 100,
       "auction_readiness": "GREEN",
-      "equity_band": "LOW",
       "dts_days": 21,
-      "uw_ready": 1,
-      "vaultLive": false,
-      "vaultSlug": null,
-      "vaultPublishReady": true,
-      "preForeclosureReviewReady": false,
-      "topTierReady": true,
-      "packetCompletenessPct": 100,
-      "executionBlockers": []
+      "vaultLive": true,
+      "vaultSlug": "hamilton-county-foreclosure-24954f6e"
     }
   ],
+  "vaultCandidates": [],
   "foreclosureIntake": {
-    "preForeclosureCount": 13,
+    "preForeclosureCount": 11,
     "scheduledCount": 55,
     "rescheduledCount": 0,
     "expiredCount": 15,
     "preForeclosure": [
       {
         "lead_key": "98be102343cc281539efd8113dc95c1d458559f7",
-        "address": "033 07502 Common Address: 3500 Dockery Drive, Mascot, TN 37806",
+        "address": "3500 Dockery Drive, Mascot, TN 37806",
         "county": "Knox County",
         "distress_type": "SUBSTITUTION_OF_TRUSTEE",
         "falco_score_internal": 16,
@@ -618,25 +560,6 @@
         "uw_ready": 0,
         "first_seen_at": "2026-03-12T01:41:42.819120Z",
         "last_seen_at": "2026-03-12T20:25:24.441610Z",
-        "score_updated_at": "2026-03-12T20:26:11+00:00",
-        "current_sale_date": null,
-        "original_sale_date": null,
-        "sale_status": "pre_foreclosure",
-        "vaultLive": false,
-        "vaultSlug": null
-      },
-      {
-        "lead_key": "340241a9a89f2149aa9d94998cfc6d631868ab28",
-        "address": "1129 Cotillion Dr., Murfreesboro, TN 37158-1681",
-        "county": "Rutherford County",
-        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
-        "falco_score_internal": 82,
-        "auction_readiness": "PARTIAL",
-        "equity_band": "UNKNOWN",
-        "dts_days": null,
-        "uw_ready": 0,
-        "first_seen_at": "2026-03-12T01:41:42.960046Z",
-        "last_seen_at": "2026-03-12T20:25:24.640102Z",
         "score_updated_at": "2026-03-12T20:26:11+00:00",
         "current_sale_date": null,
         "original_sale_date": null,
@@ -722,7 +645,7 @@
       },
       {
         "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
-        "address": "2106 Ivy St., Chattanooga. TN 37404",
+        "address": "2106 Ivy St., Chattanooga, TN 37404",
         "county": "Hamilton County",
         "distress_type": "SUBSTITUTION_OF_TRUSTEE",
         "falco_score_internal": 82,
@@ -755,27 +678,8 @@
         "current_sale_date": null,
         "original_sale_date": null,
         "sale_status": "pre_foreclosure",
-        "vaultLive": false,
-        "vaultSlug": null
-      },
-      {
-        "lead_key": "665a934874e9d85a070835070038cc9164d28c28",
-        "address": "00 AM at the North Side Entrance of the City County Building, 400 Main Street, Knoxville, TN 37902",
-        "county": "Knox County",
-        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
-        "falco_score_internal": 16,
-        "auction_readiness": "RED",
-        "equity_band": "UNKNOWN",
-        "dts_days": null,
-        "uw_ready": 0,
-        "first_seen_at": "2026-03-12T01:41:46.449721Z",
-        "last_seen_at": "2026-03-12T20:25:28.567864Z",
-        "score_updated_at": "2026-03-12T20:26:11+00:00",
-        "current_sale_date": null,
-        "original_sale_date": null,
-        "sale_status": "pre_foreclosure",
-        "vaultLive": false,
-        "vaultSlug": null
+        "vaultLive": true,
+        "vaultSlug": "rutherford-county-pre-foreclosure-review-28a3ea99"
       },
       {
         "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
@@ -795,6 +699,44 @@
         "sale_status": "pre_foreclosure",
         "vaultLive": false,
         "vaultSlug": null
+      },
+      {
+        "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
+        "address": "378 Treeland Drive, Clarksville, TN 37040",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "falco_score_internal": 58,
+        "auction_readiness": "RED",
+        "equity_band": "UNKNOWN",
+        "dts_days": null,
+        "uw_ready": 0,
+        "first_seen_at": "2026-03-12T01:41:49.088834Z",
+        "last_seen_at": "2026-03-12T20:25:30.148042Z",
+        "score_updated_at": "2026-03-12T20:26:11+00:00",
+        "current_sale_date": null,
+        "original_sale_date": null,
+        "sale_status": "pre_foreclosure",
+        "vaultLive": false,
+        "vaultSlug": null
+      },
+      {
+        "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
+        "address": "2724 Ann Drive, Clarksville, TN 37040",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "falco_score_internal": 82,
+        "auction_readiness": "PARTIAL",
+        "equity_band": "UNKNOWN",
+        "dts_days": null,
+        "uw_ready": 0,
+        "first_seen_at": "2026-03-12T01:41:54.634403Z",
+        "last_seen_at": "2026-03-12T20:25:30.981072Z",
+        "score_updated_at": "2026-03-12T20:26:11+00:00",
+        "current_sale_date": null,
+        "original_sale_date": null,
+        "sale_status": "pre_foreclosure",
+        "vaultLive": true,
+        "vaultSlug": "montgomery-county-pre-foreclosure-review-6c6531a4"
       }
     ],
     "statusChanges": [
