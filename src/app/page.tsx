@@ -3,12 +3,6 @@ import { getHomeMetrics } from "@/lib/home-metrics"
 
 export const dynamic = "force-dynamic"
 
-const stats = [
-  { label: "Primary Focus", value: "Distress Origination" },
-  { label: "System Role", value: "Screening + Review" },
-  { label: "Current State", value: "Restricted Vault Live" },
-]
-
 const workflow = [
   {
     step: "01",
@@ -262,25 +256,6 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section
-          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
-        >
-          <div className="grid gap-6 md:grid-cols-3">
-            {stats.map((stat, index) => (
-              <div
-                key={stat.label}
-                className="rounded-[24px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_25px_90px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/20"
-                style={{ animation: `falcoFloat ${6 + index * 0.5}s ease-in-out infinite` }}
-              >
-                <div className="text-2xl font-semibold tracking-[-0.03em] text-white">
-                  {stat.value}
-                </div>
-                <div className="mt-3 text-sm text-white/55">{stat.label}</div>
-              </div>
-            ))}
           </div>
         </section>
 
