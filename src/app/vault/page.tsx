@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 
 type VaultListingStatus = "active" | "claimed" | "expired"
 type VaultSegment = "top" | "secondary"
+type VaultStage = "all" | "foreclosure" | "pre_foreclosure"
 type VaultReadinessFilter = "all" | "GREEN" | "YELLOW" | "OTHER"
 type VaultContactFilter = "all" | "ready" | "not_ready"
 
@@ -114,6 +115,16 @@ function getVaultSegment(listing: VaultListing): VaultSegment {
   }
 
   return "secondary"
+}
+
+function getVaultStage(listing: VaultListing): Exclude<VaultStage, "all"> {
+  const type = (listing.distressType || "").toLowerCase()
+  if (type.includes("pre-foreclosure")) return "pre_foreclosure"
+  return "foreclosure"
+}
+
+function vaultStageLabel(stage: Exclude<VaultStage, "all">) {
+  return stage === "pre_foreclosure" ? "Pre-Foreclosure Review" : "Foreclosure"
 }
 
 function ListingCard({ listing }: { listing: VaultListing }) {
@@ -297,6 +308,7 @@ export default function VaultPage() {
   const [readinessFilter, setReadinessFilter] = useState<VaultReadinessFilter>("all")
   const [countyFilter, setCountyFilter] = useState("all")
   const [contactFilter, setContactFilter] = useState<VaultContactFilter>("all")
+  const [stageFilter, setStageFilter] = useState<VaultStage>("all")
 
   useEffect(() => {
     const loadListings = async () => {
@@ -341,10 +353,11 @@ export default function VaultPage() {
       if (countyFilter !== "all" && listing.county !== countyFilter) return false
       if (contactFilter === "ready" && !listing.contactReady) return false
       if (contactFilter === "not_ready" && listing.contactReady) return false
+      if (stageFilter !== "all" && getVaultStage(listing) !== stageFilter) return false
 
       return true
     })
-  }, [contactFilter, countyFilter, filter, listings, readinessFilter, segmentFilter])
+  }, [contactFilter, countyFilter, filter, listings, readinessFilter, segmentFilter, stageFilter])
 
   const segmentedListings = useMemo(() => {
     return {
@@ -369,6 +382,17 @@ export default function VaultPage() {
 
   const counties = useMemo(() => {
     return [...new Set(listings.map((listing) => listing.county).filter(Boolean))].sort()
+  }, [listings])
+
+  const stageCounts = useMemo(() => {
+    const activeListings = listings.filter((listing) => listing.status === "active")
+    const foreclosure = activeListings.filter((listing) => getVaultStage(listing) === "foreclosure").length
+    const preForeclosure = activeListings.filter((listing) => getVaultStage(listing) === "pre_foreclosure").length
+
+    return {
+      foreclosure,
+      preForeclosure,
+    }
   }, [listings])
 
   return (
@@ -503,6 +527,32 @@ export default function VaultPage() {
           </div>
 
           <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+              Distress Stage
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                ["all", `All (${counts.active})`],
+                ["foreclosure", `Foreclosure (${stageCounts.foreclosure})`],
+                ["pre_foreclosure", `Pre-Foreclosure (${stageCounts.preForeclosure})`],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setStageFilter(value as VaultStage)}
+                  className={`rounded-full border px-3 py-2 text-sm transition ${
+                    stageFilter === value
+                      ? "border-white/20 bg-white text-black"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-4">
             <label className="text-[11px] uppercase tracking-[0.22em] text-white/40" htmlFor="vault-readiness-filter">
               Readiness + Contact
             </label>
@@ -590,10 +640,27 @@ export default function VaultPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  {segmentedListings.top.map((listing) => (
-                    <ListingCard key={listing.slug} listing={listing} />
-                  ))}
+                <div className="space-y-8">
+                  {(["foreclosure", "pre_foreclosure"] as const).map((stage) => {
+                    const stageListings = segmentedListings.top.filter(
+                      (listing) => getVaultStage(listing) === stage
+                    )
+
+                    if (stageListings.length === 0) return null
+
+                    return (
+                      <div key={stage}>
+                        <div className="mb-4 text-xs uppercase tracking-[0.22em] text-white/38">
+                          {vaultStageLabel(stage)}
+                        </div>
+                        <div className="grid gap-6 md:grid-cols-2">
+                          {stageListings.map((listing) => (
+                            <ListingCard key={listing.slug} listing={listing} />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ) : null}
@@ -615,10 +682,27 @@ export default function VaultPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  {segmentedListings.secondary.map((listing) => (
-                    <ListingCard key={listing.slug} listing={listing} />
-                  ))}
+                <div className="space-y-8">
+                  {(["foreclosure", "pre_foreclosure"] as const).map((stage) => {
+                    const stageListings = segmentedListings.secondary.filter(
+                      (listing) => getVaultStage(listing) === stage
+                    )
+
+                    if (stageListings.length === 0) return null
+
+                    return (
+                      <div key={stage}>
+                        <div className="mb-4 text-xs uppercase tracking-[0.22em] text-white/38">
+                          {vaultStageLabel(stage)}
+                        </div>
+                        <div className="grid gap-6 md:grid-cols-2">
+                          {stageListings.map((listing) => (
+                            <ListingCard key={listing.slug} listing={listing} />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ) : null}
