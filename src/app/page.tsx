@@ -27,6 +27,13 @@ const workflow = [
   },
 ]
 
+const partnerTypes = [
+  "Auction companies",
+  "Brokerage partners",
+  "Capital partners",
+  "Distress operators",
+]
+
 export default async function HomePage() {
   const metrics = await getHomeMetrics()
 
@@ -90,9 +97,6 @@ export default async function HomePage() {
               </Link>
               <Link href="#how-it-works" className="transition hover:text-white">
                 How It Works
-              </Link>
-              <Link href="#partners" className="transition hover:text-white">
-                Partners
               </Link>
               <Link href="/partner-login" className="transition hover:text-white">
                 Partner Login
@@ -345,6 +349,40 @@ export default async function HomePage() {
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section
+          id="partners"
+          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+        >
+          <div
+            className="grid gap-8 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.95fr_1.05fr] md:p-12"
+          >
+            <div>
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">
+                Partners
+              </div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                Built for serious operators, not broad distribution.
+              </h2>
+              <p className="mt-5 max-w-xl text-white/68 leading-7">
+                FALCO is built for aligned partners who want cleaner candidates
+                and a tighter review path than public deal circulation.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {partnerTypes.map((partner, index) => (
+                <div
+                  key={partner}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78 transition duration-300 hover:-translate-y-1 hover:border-white/20"
+                  style={{ animation: `falcoFloat ${7 + index * 0.35}s ease-in-out infinite` }}
+                >
+                  {partner}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
