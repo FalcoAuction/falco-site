@@ -13,6 +13,23 @@ type WorkflowErrorLike = {
 
 const workflowTableAvailability = new Map<WorkflowTableName, boolean>()
 
+export const WORKFLOW_TABLES: WorkflowTableName[] = [
+  "operator_intake_reviews",
+  "operator_task_history",
+  "vault_pursuit_requests",
+  "vault_validation_records",
+]
+
+export type WorkflowStorageStatus = {
+  mode: "dedicated" | "compatibility" | "unavailable"
+  readyCount: number
+  totalCount: number
+  tables: Array<{
+    name: WorkflowTableName
+    ready: boolean
+  }>
+}
+
 export function requireWorkflowSupabaseAdmin() {
   if (!supabaseAdmin) {
     throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
@@ -52,4 +69,30 @@ export async function hasWorkflowTable(tableName: WorkflowTableName) {
 
   workflowTableAvailability.set(tableName, true)
   return true
+}
+
+export async function getWorkflowStorageStatus(): Promise<WorkflowStorageStatus> {
+  if (!supabaseAdmin) {
+    return {
+      mode: "unavailable",
+      readyCount: 0,
+      totalCount: WORKFLOW_TABLES.length,
+      tables: WORKFLOW_TABLES.map((name) => ({ name, ready: false })),
+    }
+  }
+
+  const tables = await Promise.all(
+    WORKFLOW_TABLES.map(async (name) => ({
+      name,
+      ready: await hasWorkflowTable(name),
+    }))
+  )
+  const readyCount = tables.filter((table) => table.ready).length
+
+  return {
+    mode: readyCount === WORKFLOW_TABLES.length ? "dedicated" : "compatibility",
+    readyCount,
+    totalCount: WORKFLOW_TABLES.length,
+    tables,
+  }
 }

@@ -133,9 +133,9 @@ export default async function HomePage() {
               </h1>
 
               <p className="mt-8 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-                FALCO identifies distressed-property opportunities early and
-                turns the strongest candidates into operator-facing briefs for
-                controlled review.
+                FALCO finds distressed-property files early, cleans them up,
+                and turns the strongest ones into operator review briefs for
+                controlled partner access.
               </p>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
@@ -287,14 +287,22 @@ export default async function HomePage() {
 
             <div className="space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO is not a public listing feed and it is not a seller-facing auction proposal.
-                It is an upstream screening system built to take scattered distress data and turn it into a cleaner file an auctioneer, broker, or operator can review quickly.
+                FALCO is not a public listing feed, and it is not a seller-facing
+                auction proposal. It is an upstream screening system built to
+                take scattered distress data and turn it into a cleaner file an
+                auctioneer, broker, or operator can review quickly.
               </p>
               <p className="leading-7">
-                In plain terms, the system looks for distress early, pulls together the property, debt, timing, and contact picture, filters out weaker files, and packages the stronger ones into a restricted review vault.
+                In plain terms, the system looks for distress early, pulls
+                together the property, debt, timing, and contact picture,
+                filters out weaker files, and packages the stronger ones into a
+                restricted review vault.
               </p>
               <p className="leading-7">
-                The goal is not to claim that every file is ready to move immediately. The goal is to give serious operators a better starting point than raw notice scraping and a cleaner path to decide whether a file is actually workable.
+                The goal is not to claim that every file is ready to move
+                immediately. The goal is to give serious operators a better
+                starting point than raw notice scraping and a cleaner path to
+                decide whether a file is actually workable.
               </p>
             </div>
           </div>
@@ -312,7 +320,9 @@ export default async function HomePage() {
               Built to move from raw distress signal to operator review.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and file assembly work first, then puts the strongest opportunities in front of licensed operators and partners for final execution judgment.
+              FALCO does the early sourcing and file assembly work first, then
+              puts the strongest opportunities in front of licensed operators
+              and partners for final execution judgment.
             </p>
           </div>
 

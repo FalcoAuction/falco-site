@@ -33,6 +33,19 @@ type OperatorReport = {
   dbPath: string
   sourceMode: "full" | "snapshot" | "site_fallback"
   sourceNote: string
+  workflowStorage: {
+    mode: "dedicated" | "compatibility" | "unavailable"
+    readyCount: number
+    totalCount: number
+    tables: Array<{
+      name:
+        | "operator_intake_reviews"
+        | "operator_task_history"
+        | "vault_pursuit_requests"
+        | "vault_validation_records"
+      ready: boolean
+    }>
+  }
   overview: {
     totalLeads: number
     greenReady: number
@@ -293,6 +306,21 @@ function formatWorkspaceMode(mode: OperatorReport["sourceMode"]) {
   if (mode === "full") return "Full upstream + vault"
   if (mode === "snapshot") return "Hosted snapshot"
   return "Site fallback"
+}
+
+function formatWorkflowStorageMode(mode: OperatorReport["workflowStorage"]["mode"]) {
+  if (mode === "dedicated") return "Dedicated tables live"
+  if (mode === "compatibility") return "Compatibility mode"
+  return "Workflow storage unavailable"
+}
+
+function workflowTableLabel(
+  value: OperatorReport["workflowStorage"]["tables"][number]["name"]
+) {
+  if (value === "operator_intake_reviews") return "Intake reviews"
+  if (value === "operator_task_history") return "Task history"
+  if (value === "vault_pursuit_requests") return "Pursuit requests"
+  return "Validation records"
 }
 
 function validationOutcomeCopy(value?: VaultValidationOutcome) {
@@ -1022,6 +1050,37 @@ export default function OperatorPage() {
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-sm leading-7 text-white/60">
                 {workspace.report.sourceNote}
+              </div>
+
+              <div className="mt-5 grid gap-4 xl:grid-cols-[280px_1fr]">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                    Workflow Storage
+                  </div>
+                  <div className="mt-2 text-lg font-semibold text-white">
+                    {formatWorkflowStorageMode(workspace.report.workflowStorage.mode)}
+                  </div>
+                  <div className="mt-2 text-sm text-white/60">
+                    {workspace.report.workflowStorage.readyCount} of{" "}
+                    {workspace.report.workflowStorage.totalCount} workflow tables ready
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {workspace.report.workflowStorage.tables.map((table) => (
+                    <div
+                      key={table.name}
+                      className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4"
+                    >
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                        {workflowTableLabel(table.name)}
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-white">
+                        {table.ready ? "Ready" : "Fallback"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </section>
 

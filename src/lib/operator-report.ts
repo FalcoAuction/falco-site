@@ -4,6 +4,7 @@ import path from "node:path"
 import { promisify } from "node:util"
 import { listOperatorVaultCandidates } from "@/lib/operator-vault-candidates"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { getWorkflowStorageStatus, type WorkflowStorageStatus } from "@/lib/workflow-store"
 
 const execFileAsync = promisify(execFile)
 
@@ -101,6 +102,7 @@ export type OperatorReport = {
   dbPath: string
   sourceMode: "full" | "snapshot" | "site_fallback"
   sourceNote: string
+  workflowStorage: WorkflowStorageStatus
   overview: {
     totalLeads: number
     greenReady: number
@@ -188,6 +190,7 @@ async function getLiveVaultAndApprovalState() {
 
 async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<OperatorReport> {
   const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
+  const workflowStorage = await getWorkflowStorageStatus()
   const recentLeads = attachVaultState(snapshot.recentLeads, liveListings)
   const topCandidates = attachVaultState(snapshot.topCandidates, liveListings)
   const recentPackets = attachVaultState(snapshot.recentPackets, liveListings)
@@ -218,6 +221,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     sourceMode: "snapshot",
     sourceNote:
       "Hosted operator snapshot merged with live vault and approval state for production-safe review.",
+    workflowStorage,
     overview: {
       ...snapshot.overview,
       vaultLive: liveListings.length,
@@ -452,6 +456,7 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
   const vaultRows = vaultResult.error ? [] : ((vaultResult.data ?? []) as VaultListingLite[])
   const pendingApprovals =
     "count" in accessResult && typeof accessResult.count === "number" ? accessResult.count : 0
+  const workflowStorage = await getWorkflowStorageStatus()
 
   const recentLeads = vaultRows.slice(0, 12).map(mapVaultRowToLead)
   const topCandidates = [...vaultRows]
@@ -487,6 +492,7 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
     sourceMode: "site_fallback",
     sourceNote:
       "Running in site fallback mode. Live vault and approval data are shown, but upstream bots DB detail is only available in the shared workspace/local environment.",
+    workflowStorage,
     overview: {
       totalLeads: vaultRows.length,
       greenReady: vaultRows.filter((row) => row.auction_readiness?.toUpperCase() === "GREEN").length,
@@ -556,6 +562,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
     }
 
     const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
+    const workflowStorage = await getWorkflowStorageStatus()
     const snapshot = await readSnapshotOperatorReport()
     const manifestVaultCandidates = getManifestVaultCandidates(liveListings)
 
@@ -565,6 +572,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       sourceMode: "full",
       sourceNote:
         "Full operator mode. Reading upstream bots database plus live vault and approval state.",
+      workflowStorage,
       overview: {
         ...parsed.overview,
         vaultLive: liveListings.length,
