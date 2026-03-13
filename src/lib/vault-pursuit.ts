@@ -1,4 +1,9 @@
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
+import {
+  hasWorkflowTable,
+  isMissingWorkflowTableError,
+  requireWorkflowSupabaseAdmin,
+} from "@/lib/workflow-store"
 
 export const VAULT_PURSUIT_COMPANY = "__falco_vault_pursuit__"
 export const VAULT_VALIDATION_COMPANY = "__falco_operator_validation__"
@@ -118,11 +123,7 @@ function normalizeValidationContext(raw: unknown): VaultValidationContext | unde
 }
 
 function requireSupabaseAdmin() {
-  if (!supabaseAdmin) {
-    throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
-  }
-
-  return supabaseAdmin
+  return requireWorkflowSupabaseAdmin()
 }
 
 function parsePursuitNotes(notes: string | null) {
@@ -250,6 +251,38 @@ export async function listVaultPursuitRequests() {
     return []
   }
 
+  const dedicatedRows: VaultPursuitRecord[] = []
+
+  try {
+    if (await hasWorkflowTable("vault_pursuit_requests")) {
+      const { data, error } = await supabaseAdmin
+        .from("vault_pursuit_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          console.error("listVaultPursuitRequests dedicated error:", error.message)
+        }
+      } else {
+        for (const row of data ?? []) {
+          dedicatedRows.push({
+            requestId: String(row.id ?? ""),
+            listingSlug: String(row.listing_slug ?? ""),
+            email: String(row.email ?? ""),
+            fullName: String(row.full_name ?? ""),
+            message: String(row.message ?? ""),
+            status: row.status as VaultPursuitStatus,
+            submittedAt: String(row.created_at ?? row.updated_at ?? ""),
+            actedBy: String(row.acted_by ?? ""),
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error("listVaultPursuitRequests dedicated error:", error)
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .select("*")
@@ -261,15 +294,64 @@ export async function listVaultPursuitRequests() {
     return []
   }
 
-  return (data ?? [])
+  const legacyRows = (data ?? [])
     .map((row) => mapPursuitRow(row as PartnerAccessRequestRow))
     .filter((row): row is VaultPursuitRecord => Boolean(row))
+
+  const deduped = new Map<string, VaultPursuitRecord>()
+  for (const row of dedicatedRows) {
+    if (row.requestId && !deduped.has(row.requestId)) deduped.set(row.requestId, row)
+  }
+  for (const row of legacyRows) {
+    if (!deduped.has(row.requestId)) deduped.set(row.requestId, row)
+  }
+
+  return [...deduped.values()]
 }
 
 export async function listVaultValidationRecords() {
   if (!supabaseAdmin) {
     console.error("listVaultValidationRecords error:", supabaseAdminConfigError)
     return []
+  }
+
+  const dedicatedRows: VaultValidationRecord[] = []
+
+  try {
+    if (await hasWorkflowTable("vault_validation_records")) {
+      const { data, error } = await supabaseAdmin
+        .from("vault_validation_records")
+        .select("*")
+        .order("submitted_at", { ascending: false })
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          console.error("listVaultValidationRecords dedicated error:", error.message)
+        }
+      } else {
+        for (const row of data ?? []) {
+          dedicatedRows.push({
+            requestId: String(row.listing_slug ?? ""),
+            listingSlug: String(row.listing_slug ?? ""),
+            outcome: row.outcome as VaultValidationOutcome,
+            executionLane: row.execution_lane as VaultExecutionLane,
+            note: String(row.note ?? ""),
+            submittedAt: String(row.submitted_at ?? ""),
+            actedBy: String(row.acted_by ?? ""),
+            context: normalizeValidationContext({
+              county: row.county,
+              distressType: row.distress_type,
+              contactPathQuality: row.contact_path_quality,
+              controlParty: row.control_party,
+              executionPosture: row.execution_posture,
+              workabilityBand: row.workability_band,
+            }),
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error("listVaultValidationRecords dedicated error:", error)
   }
 
   const { data, error } = await supabaseAdmin
@@ -283,9 +365,19 @@ export async function listVaultValidationRecords() {
     return []
   }
 
-  return (data ?? [])
+  const legacyRows = (data ?? [])
     .map((row) => mapValidationRow(row as PartnerAccessRequestRow))
     .filter((row): row is VaultValidationRecord => Boolean(row))
+
+  const deduped = new Map<string, VaultValidationRecord>()
+  for (const row of dedicatedRows) {
+    if (row.listingSlug && !deduped.has(row.listingSlug)) deduped.set(row.listingSlug, row)
+  }
+  for (const row of legacyRows) {
+    if (!deduped.has(row.listingSlug)) deduped.set(row.listingSlug, row)
+  }
+
+  return [...deduped.values()]
 }
 
 export async function getVaultValidationRecordByListing(listingSlug: string) {
@@ -400,6 +492,43 @@ export async function createVaultPursuitRequest(input: {
     return duplicate
   }
 
+  try {
+    if (await hasWorkflowTable("vault_pursuit_requests")) {
+      const { data, error } = await client
+        .from("vault_pursuit_requests")
+        .insert({
+          listing_slug: input.listingSlug,
+          email: input.email.toLowerCase(),
+          full_name: input.fullName,
+          message: input.message,
+          status: "pursuit_requested",
+          acted_by: input.email.toLowerCase(),
+        })
+        .select("*")
+        .single()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`createVaultPursuitRequest failed: ${error.message}`)
+        }
+      } else {
+        return {
+          requestId: String(data.id ?? ""),
+          listingSlug: String(data.listing_slug ?? ""),
+          email: String(data.email ?? ""),
+          fullName: String(data.full_name ?? ""),
+          message: String(data.message ?? ""),
+          status: data.status as VaultPursuitStatus,
+          submittedAt: String(data.created_at ?? data.updated_at ?? ""),
+          actedBy: String(data.acted_by ?? ""),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("createVaultPursuitRequest failed.")
+  }
+
   const { data, error } = await client
     .from("partner_access_requests")
     .insert({
@@ -439,6 +568,42 @@ async function updatePursuitRowStatus(
   actedBy: string
 ) {
   const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("vault_pursuit_requests")) {
+      const { data, error } = await client
+        .from("vault_pursuit_requests")
+        .update({
+          status,
+          acted_by: actedBy,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.requestId)
+        .select("*")
+        .single()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`updatePursuitRowStatus failed: ${error.message}`)
+        }
+      } else {
+        return {
+          requestId: String(data.id ?? ""),
+          listingSlug: String(data.listing_slug ?? ""),
+          email: String(data.email ?? ""),
+          fullName: String(data.full_name ?? ""),
+          message: String(data.message ?? ""),
+          status: data.status as VaultPursuitStatus,
+          submittedAt: String(data.created_at ?? data.updated_at ?? ""),
+          actedBy: String(data.acted_by ?? ""),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("updatePursuitRowStatus failed.")
+  }
+
   const { data, error } = await client
     .from("partner_access_requests")
     .update({
@@ -478,6 +643,60 @@ async function updateValidationRow(
   }
 ) {
   const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("vault_validation_records")) {
+      const { data, error } = await client
+        .from("vault_validation_records")
+        .upsert(
+          {
+            listing_slug: input.listingSlug,
+            outcome: input.outcome,
+            execution_lane: input.executionLane,
+            note: input.note,
+            acted_by: input.actedBy,
+            county: input.context?.county ?? "",
+            distress_type: input.context?.distressType ?? "",
+            contact_path_quality: input.context?.contactPathQuality ?? "",
+            control_party: input.context?.controlParty ?? "",
+            execution_posture: input.context?.executionPosture ?? "",
+            workability_band: input.context?.workabilityBand ?? "",
+            submitted_at: new Date().toISOString(),
+          },
+          { onConflict: "listing_slug" }
+        )
+        .select("*")
+        .single()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`updateValidationRow failed: ${error.message}`)
+        }
+      } else {
+        return {
+          requestId: String(data.listing_slug ?? ""),
+          listingSlug: String(data.listing_slug ?? ""),
+          outcome: data.outcome as VaultValidationOutcome,
+          executionLane: data.execution_lane as VaultExecutionLane,
+          note: String(data.note ?? ""),
+          submittedAt: String(data.submitted_at ?? ""),
+          actedBy: String(data.acted_by ?? ""),
+          context: normalizeValidationContext({
+            county: data.county,
+            distressType: data.distress_type,
+            contactPathQuality: data.contact_path_quality,
+            controlParty: data.control_party,
+            executionPosture: data.execution_posture,
+            workabilityBand: data.workability_band,
+          }),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("updateValidationRow failed.")
+  }
+
   const { data, error } = await client
     .from("partner_access_requests")
     .update({
@@ -511,6 +730,60 @@ export async function upsertVaultValidationRecord(input: {
   context?: VaultValidationContext
 }) {
   const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("vault_validation_records")) {
+      const { data, error } = await client
+        .from("vault_validation_records")
+        .upsert(
+          {
+            listing_slug: input.listingSlug,
+            outcome: input.outcome,
+            execution_lane: input.executionLane,
+            note: input.note,
+            acted_by: input.actedBy,
+            county: input.context?.county ?? "",
+            distress_type: input.context?.distressType ?? "",
+            contact_path_quality: input.context?.contactPathQuality ?? "",
+            control_party: input.context?.controlParty ?? "",
+            execution_posture: input.context?.executionPosture ?? "",
+            workability_band: input.context?.workabilityBand ?? "",
+            submitted_at: new Date().toISOString(),
+          },
+          { onConflict: "listing_slug" }
+        )
+        .select("*")
+        .single()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`upsertVaultValidationRecord failed: ${error.message}`)
+        }
+      } else {
+        return {
+          requestId: String(data.listing_slug ?? ""),
+          listingSlug: String(data.listing_slug ?? ""),
+          outcome: data.outcome as VaultValidationOutcome,
+          executionLane: data.execution_lane as VaultExecutionLane,
+          note: String(data.note ?? ""),
+          submittedAt: String(data.submitted_at ?? ""),
+          actedBy: String(data.acted_by ?? ""),
+          context: normalizeValidationContext({
+            county: data.county,
+            distressType: data.distress_type,
+            contactPathQuality: data.contact_path_quality,
+            controlParty: data.control_party,
+            executionPosture: data.execution_posture,
+            workabilityBand: data.workability_band,
+          }),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("upsertVaultValidationRecord failed.")
+  }
+
   const existing = await getVaultValidationRecordByListing(input.listingSlug)
 
   if (existing) {
@@ -540,6 +813,47 @@ export async function upsertVaultValidationRecord(input: {
 }
 
 export async function clearVaultValidationRecord(listingSlug: string, actedBy: string) {
+  const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("vault_validation_records")) {
+      const { data, error } = await client
+        .from("vault_validation_records")
+        .delete()
+        .eq("listing_slug", listingSlug)
+        .select("*")
+        .maybeSingle()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`clearVaultValidationRecord failed: ${error.message}`)
+        }
+      } else {
+        if (!data) return null
+        return {
+          requestId: String(data.listing_slug ?? ""),
+          listingSlug: String(data.listing_slug ?? ""),
+          outcome: data.outcome as VaultValidationOutcome,
+          executionLane: data.execution_lane as VaultExecutionLane,
+          note: String(data.note ?? ""),
+          submittedAt: String(data.submitted_at ?? ""),
+          actedBy: actedBy || String(data.acted_by ?? ""),
+          context: normalizeValidationContext({
+            county: data.county,
+            distressType: data.distress_type,
+            contactPathQuality: data.contact_path_quality,
+            controlParty: data.control_party,
+            executionPosture: data.execution_posture,
+            workabilityBand: data.workability_band,
+          }),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("clearVaultValidationRecord failed.")
+  }
+
   const existing = await getVaultValidationRecordByListing(listingSlug)
   if (!existing) return null
 

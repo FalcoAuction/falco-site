@@ -1,5 +1,10 @@
 import crypto from "node:crypto"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
+import {
+  hasWorkflowTable,
+  isMissingWorkflowTableError,
+  requireWorkflowSupabaseAdmin,
+} from "@/lib/workflow-store"
 
 export const OPERATOR_TASK_COMPANY = "__falco_operator_task__"
 
@@ -35,11 +40,7 @@ type OperatorTaskNotesPayload = {
 }
 
 function requireSupabaseAdmin() {
-  if (!supabaseAdmin) {
-    throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
-  }
-
-  return supabaseAdmin
+  return requireWorkflowSupabaseAdmin()
 }
 
 function parseOperatorTaskNotes(notes: string | null) {
@@ -108,6 +109,36 @@ export async function listOperatorTaskHistory() {
     return []
   }
 
+  const dedicatedRows: OperatorTaskHistoryItem[] = []
+
+  try {
+    if (await hasWorkflowTable("operator_task_history")) {
+      const { data, error } = await supabaseAdmin
+        .from("operator_task_history")
+        .select("*")
+        .order("completed_at", { ascending: false })
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          console.error("listOperatorTaskHistory dedicated error:", error.message)
+        }
+      } else {
+        for (const row of data ?? []) {
+          dedicatedRows.push({
+            id: String(row.task_id ?? "").trim(),
+            title: String(row.title ?? ""),
+            detail: String(row.detail ?? ""),
+            section: row.section as OperatorTaskSection,
+            completedAt: String(row.completed_at ?? ""),
+            completedBy: String(row.completed_by ?? ""),
+          })
+        }
+      }
+    }
+  } catch (error) {
+    console.error("listOperatorTaskHistory dedicated error:", error)
+  }
+
   const { data, error } = await supabaseAdmin
     .from("partner_access_requests")
     .select("*")
@@ -120,9 +151,19 @@ export async function listOperatorTaskHistory() {
     return []
   }
 
-  return (data ?? [])
+  const legacyRows = (data ?? [])
     .map((row) => mapTaskRow(row as PartnerAccessRequestRow))
     .filter((row): row is OperatorTaskHistoryItem => Boolean(row))
+
+  const deduped = new Map<string, OperatorTaskHistoryItem>()
+  for (const row of dedicatedRows) {
+    if (row.id && !deduped.has(row.id)) deduped.set(row.id, row)
+  }
+  for (const row of legacyRows) {
+    if (!deduped.has(row.id)) deduped.set(row.id, row)
+  }
+
+  return [...deduped.values()]
 }
 
 export async function completeOperatorTask(input: {
@@ -133,6 +174,44 @@ export async function completeOperatorTask(input: {
   completedBy: string
 }) {
   const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("operator_task_history")) {
+      const { data, error } = await client
+        .from("operator_task_history")
+        .upsert(
+          {
+            task_id: input.taskId,
+            title: input.title,
+            detail: input.detail,
+            section: input.section,
+            completed_by: input.completedBy,
+          },
+          { onConflict: "task_id" }
+        )
+        .select("*")
+        .single()
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`completeOperatorTask failed: ${error.message}`)
+        }
+      } else {
+        return {
+          id: String(data.task_id ?? "").trim(),
+          title: String(data.title ?? ""),
+          detail: String(data.detail ?? ""),
+          section: data.section as OperatorTaskSection,
+          completedAt: String(data.completed_at ?? ""),
+          completedBy: String(data.completed_by ?? ""),
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("completeOperatorTask failed.")
+  }
+
   const email = buildTaskEmail(input.taskId)
 
   const { data: existing, error: existingError } = await client
@@ -177,6 +256,27 @@ export async function completeOperatorTask(input: {
 
 export async function restoreOperatorTask(taskId: string) {
   const client = requireSupabaseAdmin()
+
+  try {
+    if (await hasWorkflowTable("operator_task_history")) {
+      const { error } = await client
+        .from("operator_task_history")
+        .delete()
+        .eq("task_id", taskId)
+
+      if (error) {
+        if (!isMissingWorkflowTableError(error)) {
+          throw new Error(`restoreOperatorTask failed: ${error.message}`)
+        }
+      } else {
+        return true
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) throw error
+    throw new Error("restoreOperatorTask failed.")
+  }
+
   const email = buildTaskEmail(taskId)
 
   const { error } = await client
