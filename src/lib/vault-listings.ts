@@ -53,6 +53,10 @@ export type VaultListing = {
   baths?: number | null
   contactPathQuality?: string
   controlParty?: string
+  ownerAgency?: string
+  interventionWindow?: string
+  lenderControlIntensity?: string
+  influenceability?: string
   executionPosture?: string
   workabilityBand?: string
   suggestedExecutionLane?: VaultExecutionLane
@@ -218,6 +222,10 @@ function mapRowToVaultListing(
     baths: overlay?.baths,
     contactPathQuality: overlay?.contactPathQuality,
     controlParty: overlay?.controlParty,
+    ownerAgency: overlay?.ownerAgency,
+    interventionWindow: overlay?.interventionWindow,
+    lenderControlIntensity: overlay?.lenderControlIntensity,
+    influenceability: overlay?.influenceability,
     executionPosture: overlay?.executionPosture,
     workabilityBand: overlay?.workabilityBand,
     suggestedExecutionLane: overlay?.suggestedExecutionLane,
@@ -241,7 +249,16 @@ function buildValidationContextFromListing(
   listing: Partial<
     Pick<
     VaultListing,
-    "county" | "distressType" | "contactPathQuality" | "controlParty" | "executionPosture" | "workabilityBand"
+    | "county"
+    | "distressType"
+    | "contactPathQuality"
+    | "controlParty"
+    | "ownerAgency"
+    | "interventionWindow"
+    | "lenderControlIntensity"
+    | "influenceability"
+    | "executionPosture"
+    | "workabilityBand"
   >
   >
 ): VaultValidationContext | undefined {
@@ -250,6 +267,10 @@ function buildValidationContextFromListing(
     distressType: listing.distressType ?? "",
     contactPathQuality: listing.contactPathQuality ?? "",
     controlParty: listing.controlParty ?? "",
+    ownerAgency: listing.ownerAgency ?? "",
+    interventionWindow: listing.interventionWindow ?? "",
+    lenderControlIntensity: listing.lenderControlIntensity ?? "",
+    influenceability: listing.influenceability ?? "",
     executionPosture: listing.executionPosture ?? "",
     workabilityBand: listing.workabilityBand ?? "",
   }

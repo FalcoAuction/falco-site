@@ -22,10 +22,22 @@ type ReportRow = {
   bytes?: number
   vaultLive: boolean
   vaultSlug: string | null
+  preForeclosureReviewReady?: boolean
   vaultPublishReady?: boolean
   topTierReady?: boolean
   packetCompletenessPct?: number | null
   executionBlockers?: string[]
+  suggestedExecutionLane?: VaultExecutionLane | string | null
+  suggestedLaneConfidence?: string | null
+  contactPathQuality?: string | null
+  controlParty?: string | null
+  ownerAgency?: string | null
+  interventionWindow?: string | null
+  lenderControlIntensity?: string | null
+  influenceability?: string | null
+  executionPosture?: string | null
+  workabilityBand?: string | null
+  recommendedAction?: string | null
 }
 
 type OperatorReport = {
@@ -135,6 +147,10 @@ type AnalystRow = {
   suggested_lane_reasons: string[]
   control_party: string
   contact_path_quality: string
+  owner_agency: string
+  intervention_window: string
+  lender_control_intensity: string
+  influenceability: string
   execution_posture: string
   workability_band: string
   recommended_action: string
@@ -202,6 +218,10 @@ type LiveVaultListing = {
   dtsDays?: number | null
   contactPathQuality?: string
   controlParty?: string
+  ownerAgency?: string
+  interventionWindow?: string
+  lenderControlIntensity?: string
+  influenceability?: string
   executionPosture?: string
   workabilityBand?: string
   suggestedExecutionLane?: VaultExecutionLane
@@ -249,6 +269,10 @@ type OperatorWorkspace = {
       distressType: string
       contactPathQuality: string
       controlParty: string
+      ownerAgency?: string
+      interventionWindow?: string
+      lenderControlIntensity?: string
+      influenceability?: string
       executionPosture: string
       workabilityBand: string
     }
@@ -323,7 +347,7 @@ function workflowTableLabel(
   return "Validation records"
 }
 
-function validationOutcomeCopy(value?: VaultValidationOutcome) {
+function validationOutcomeCopy(value?: VaultValidationOutcome | null) {
   if (value === "validated_execution_path") return "Validated Path"
   if (value === "needs_more_info") return "Needs More Info"
   if (value === "no_real_control_path") return "No Control Path"
@@ -332,7 +356,7 @@ function validationOutcomeCopy(value?: VaultValidationOutcome) {
   return "Validation Required"
 }
 
-function executionLaneCopy(value?: VaultExecutionLane) {
+function executionLaneCopy(value?: VaultExecutionLane | string | null) {
   if (value === "borrower_side") return "Borrower Side"
   if (value === "lender_trustee") return "Lender / Trustee"
   if (value === "auction_only") return "Auction Only"
@@ -340,7 +364,7 @@ function executionLaneCopy(value?: VaultExecutionLane) {
   return "Unclear"
 }
 
-function laneConfidenceCopy(value?: string) {
+function laneConfidenceCopy(value?: string | null) {
   if (!value) return "Low"
   const normalized = value.toUpperCase()
   if (normalized === "HIGH") return "High"
@@ -397,6 +421,23 @@ function lifecycleSourceCopy(value?: string | null) {
   if (value === "ForeclosureTennessee") return "Foreclosure Tennessee"
   if (value === "PublicNotices") return "Public Notices"
   return value
+}
+
+function executionRealityCopy(value?: string | null) {
+  if (!value) return "Unknown"
+  return value
+    .toLowerCase()
+    .split(/[\s_]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function prefcDecisionCopy(row: ReportRow) {
+  if (row.vaultLive) return "Live"
+  if (row.preForeclosureReviewReady) return "Ready For Review"
+  if (row.recommendedAction) return executionRealityCopy(row.recommendedAction)
+  return "Blocked"
 }
 
 export default function OperatorPage() {
@@ -725,12 +766,16 @@ export default function OperatorPage() {
           note: validationNotes[listingSlug] ?? "",
           context:
             action === "clear" || !listing
-              ? undefined
+                ? undefined
               : {
                   county: listing.county ?? "",
                   distressType: listing.distressType ?? "",
                   contactPathQuality: listing.contactPathQuality ?? "",
                   controlParty: listing.controlParty ?? "",
+                  ownerAgency: listing.ownerAgency ?? "",
+                  interventionWindow: listing.interventionWindow ?? "",
+                  lenderControlIntensity: listing.lenderControlIntensity ?? "",
+                  influenceability: listing.influenceability ?? "",
                   executionPosture: listing.executionPosture ?? "",
                   workabilityBand: listing.workabilityBand ?? "",
                 },
@@ -1196,6 +1241,24 @@ export default function OperatorPage() {
                               Why: {row.suggested_lane_reasons.join(" • ")}
                             </div>
                           ) : null}
+                          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Agency</div>
+                              <div className="mt-2 text-sm text-white/82">{row.owner_agency}</div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Intervention Window</div>
+                              <div className="mt-2 text-sm text-white/82">{row.intervention_window}</div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Lender Control</div>
+                              <div className="mt-2 text-sm text-white/82">{row.lender_control_intensity}</div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Influenceability</div>
+                              <div className="mt-2 text-sm text-white/82">{row.influenceability}</div>
+                            </div>
+                          </div>
                         </article>
                       ))
                     ) : (
@@ -1353,7 +1416,7 @@ export default function OperatorPage() {
                           </div>
                           {row.context ? (
                             <div className="mt-3 text-sm leading-6 text-white/62">
-                              {row.context.county || "Unknown county"} • {row.context.distressType || "Unknown type"} • {row.context.contactPathQuality || "Unknown contact path"} • {row.context.controlParty || "Unknown control"}
+                              {row.context.county || "Unknown county"} • {row.context.distressType || "Unknown type"} • {row.context.contactPathQuality || "Unknown contact path"} • {row.context.controlParty || "Unknown control"} • {row.context.ownerAgency || "Unknown owner agency"}
                             </div>
                           ) : null}
                           {row.note ? (
@@ -1618,22 +1681,68 @@ export default function OperatorPage() {
                     {workspace.report.preForeclosurePromotion.readyForReview.length ? (
                       workspace.report.preForeclosurePromotion.readyForReview.map((row) => (
                         <div key={`prefc-ready-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                          <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
-                          <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
-                            {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                              <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                              </div>
+                            </div>
+                            <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                              {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
+                            </div>
                           </div>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                             <div>
                               <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Status</div>
                               <div className="mt-2 text-sm text-white/78">{saleStatusCopy(row.sale_status)}</div>
                             </div>
                             <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Influenceability</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.influenceability)}</div>
+                            </div>
+                            <div>
                               <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Complete</div>
                               <div className="mt-2 text-sm text-white/78">{row.packetCompletenessPct ?? "—"}%</div>
                             </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Vault</div>
-                              <div className="mt-2 text-sm text-white/78">{row.vaultLive ? "Live" : "Ready"}</div>
+                          </div>
+                          <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Execution Posture</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.executionPosture)}</div>
+                              <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-white/38">Control Party</div>
+                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.controlParty)}</div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Cleared Review</div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {[
+                                  row.contactPathQuality && `Contact ${executionRealityCopy(row.contactPathQuality)}`,
+                                  row.workabilityBand && `Workability ${executionRealityCopy(row.workabilityBand)}`,
+                                  row.vaultPublishReady ? "Vault eligible" : null,
+                                ]
+                                  .filter(Boolean)
+                                  .map((item) => (
+                                    <span
+                                      key={`${row.lead_key}-${item}`}
+                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                                    >
+                                      {item}
+                                    </span>
+                                  ))}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1657,6 +1766,75 @@ export default function OperatorPage() {
                       </div>
                     </div>
                   ) : null}
+
+                  <div className="mt-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Blocked files</div>
+                      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
+                        {workspace.report.preForeclosurePromotion.blockedCount} blocked
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3">
+                      {workspace.report.preForeclosurePromotion.blocked.length ? (
+                        workspace.report.preForeclosurePromotion.blocked.map((row) => (
+                          <div key={`prefc-blocked-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                  {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                                </div>
+                              </div>
+                              <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                                {prefcDecisionCopy(row)}
+                              </div>
+                            </div>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.contactPathQuality)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Suggested Lane</div>
+                                <div className="mt-2 text-sm text-white/78">
+                                  {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Is Blocked</div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {(row.executionBlockers?.length ? row.executionBlockers : ["Needs more info"]).map((blocker) => (
+                                  <span
+                                    key={`${row.lead_key}-${blocker}`}
+                                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                                  >
+                                    {blocker}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                          No blocked pre-foreclosure files are currently in the review queue.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </article>
 
                 <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
@@ -2087,18 +2265,34 @@ export default function OperatorPage() {
                                 </div>
                               </div>
 
-                              <div className="mt-5 grid gap-4 md:grid-cols-4">
+                              <div className="mt-5 grid gap-4 md:grid-cols-4 xl:grid-cols-8">
                                 <div>
                                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Path</div>
                                   <div className="mt-2 text-sm text-white/82">{listing.contactPathQuality || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Agency</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.ownerAgency || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Intervention Window</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.interventionWindow || "—"}</div>
                                 </div>
                                 <div>
                                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Likely Control</div>
                                   <div className="mt-2 text-sm text-white/82">{listing.controlParty || "—"}</div>
                                 </div>
                                 <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Lender Control</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.lenderControlIntensity || "—"}</div>
+                                </div>
+                                <div>
                                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Execution Posture</div>
                                   <div className="mt-2 text-sm text-white/82">{listing.executionPosture || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Influenceability</div>
+                                  <div className="mt-2 text-sm text-white/82">{listing.influenceability || "—"}</div>
                                 </div>
                                 <div>
                                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Workability</div>

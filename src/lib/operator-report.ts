@@ -29,6 +29,17 @@ export type OperatorLeadRow = {
   topTierReady?: boolean
   packetCompletenessPct?: number | null
   executionBlockers?: string[]
+  suggestedExecutionLane?: string | null
+  suggestedLaneConfidence?: string | null
+  contactPathQuality?: string | null
+  controlParty?: string | null
+  ownerAgency?: string | null
+  interventionWindow?: string | null
+  lenderControlIntensity?: string | null
+  influenceability?: string | null
+  executionPosture?: string | null
+  workabilityBand?: string | null
+  recommendedAction?: string | null
 }
 
 export type OperatorPacketRow = {
@@ -58,6 +69,10 @@ export type AnalystQueueRow = {
   suggested_lane_reasons: string[]
   control_party: string
   contact_path_quality: string
+  owner_agency: string
+  intervention_window: string
+  lender_control_intensity: string
+  influenceability: string
   execution_posture: string
   workability_band: string
   recommended_action: string
