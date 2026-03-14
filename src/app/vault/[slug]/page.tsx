@@ -199,6 +199,24 @@ function detailValue(value?: string | number | null) {
   return "Unavailable"
 }
 
+function reviewStateMessage(state: PursuitState) {
+  if (state.routingState === "open") {
+    return "Review is open. Open the packet, then request a controlled review path if you want to work the file."
+  }
+  if (state.routingState === "in_discussion") {
+    return `Review is already in discussion with ${state.requestCount} active request${
+      state.requestCount === 1 ? "" : "s"
+    }. FALCO still controls next-step routing.`
+  }
+  if (state.routingState === "reserved" && state.reservedByCurrentUser) {
+    return "This listing is currently reserved to your approved vault email."
+  }
+  if (state.routingState === "reserved") {
+    return "This listing is currently reserved through another active FALCO routing path."
+  }
+  return "This listing is closed for further review routing."
+}
+
 function formatMoney(value?: number | null) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
   return new Intl.NumberFormat("en-US", {
@@ -841,8 +859,8 @@ export default function VaultListingPage() {
           </div>
         </section>
       ) : (
-        <section className="mx-auto max-w-7xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="mx-auto max-w-[1500px] px-6 pb-24 pt-16 md:px-10 md:pt-24">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1.02fr]">
             <div>
               <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
                 Confidential Operator Review
@@ -861,7 +879,7 @@ export default function VaultListingPage() {
                   {listing.distressType}
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
-                  {listing.auctionWindow}
+                  {detailValue(listing.dtsDays)} Days To Sale
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
                   {validationOutcomeCopy(listing.validationOutcome)}
@@ -871,9 +889,9 @@ export default function VaultListingPage() {
                 </div>
               </div>
 
-              <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">At A Glance</div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-7">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Key Facts</div>
+                <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Market</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.market)}</div>
@@ -881,6 +899,10 @@ export default function VaultListingPage() {
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days Until Sale</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.dtsDays)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Auction Window</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.auctionWindow)}</div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Path</div>
@@ -898,12 +920,6 @@ export default function VaultListingPage() {
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Original Loan Amount</div>
                     <div className="mt-2 text-base font-medium text-white">{formatMoney(listing.mortgageAmount)}</div>
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Property And Record</div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
                     <div className="mt-2 text-sm text-white/80">{detailValue(listing.lastSaleDate)}</div>
@@ -923,7 +939,7 @@ export default function VaultListingPage() {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.035] p-6 text-sm leading-7 text-white/68">
+              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.03] p-6 text-sm leading-7 text-white/68">
                 Final execution viability, control path, and auction fit remain subject to licensed/operator review.
                 {listing.validationNote ? (
                   <span> Current note: <span className="text-white/82">{listing.validationNote}</span>.</span>
@@ -934,27 +950,19 @@ export default function VaultListingPage() {
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">
+            <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">Review Actions</div>
 
-              <div className="mt-6 space-y-4 text-sm leading-7 text-white/68">
+              <div className="mt-6 space-y-3 text-sm leading-7 text-white/68">
                 <p>{listing.publicTeaser}</p>
                 <p>Open the packet first, then decide whether you want FALCO to route the file toward your channel.</p>
               </div>
 
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
-                {pursuitState.routingState === "open"
-                  ? "Partner review is open. Approved partners may review the packet and request a controlled execution path review."
-                  : pursuitState.routingState === "in_discussion"
-                  ? `Partner review is already in discussion with ${pursuitState.requestCount} active request${pursuitState.requestCount === 1 ? "" : "s"}. FALCO still controls next-step routing.`
-                  : pursuitState.routingState === "reserved" && pursuitState.reservedByCurrentUser
-                  ? "This listing is currently reserved to your approved vault email."
-                  : pursuitState.routingState === "reserved"
-                  ? "This listing is currently reserved through another active FALCO routing path."
-                  : "This listing is closed for further review routing."}
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/72">
+                {reviewStateMessage(pursuitState)}
               </div>
 
-              <div className="mt-8 grid gap-4">
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
                 {packetBlockedByRouting ? (
                   <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 text-sm text-white/45">
                     <span>{listing.packetLabel}</span>
@@ -963,26 +971,26 @@ export default function VaultListingPage() {
                 ) : (
                   <a
                     href={listing.packetUrl}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
+                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white px-5 py-4 text-sm font-semibold text-black transition hover:bg-white/90"
                   >
-                    <span>{listing.packetLabel}</span>
-                    <span className="text-white/40">&gt;</span>
+                    <span>Open Packet</span>
+                    <span className="text-black/45">&gt;</span>
                   </a>
                 )}
 
                 <a
                   href="mailto:access@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 text-sm font-semibold text-white/88 transition hover:border-white/20 hover:bg-white/[0.09]"
                 >
                   <span>Email FALCO</span>
                   <span className="text-white/40">&gt;</span>
                 </a>
               </div>
 
-              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Operator Review Request</div>
+              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-6">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Request Review Path</div>
                 <p className="mt-3 text-sm leading-7 text-white/68">
-                  Viewing a packet does not certify final readiness or claim the opportunity. If you want FALCO to route this listing toward your channel for execution review, submit a request below.
+                  If you want FALCO to route this listing toward your channel for execution review, submit a request below.
                 </p>
 
                 <textarea
@@ -1009,7 +1017,7 @@ export default function VaultListingPage() {
                   <button
                     onClick={handlePursuitRequest}
                     disabled={pursuitLoading || pursuitSubmitting || packetBlockedByRouting || pursuitState.hasRequestedByCurrentUser}
-                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/40"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white px-5 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/40"
                   >
                     {pursuitState.hasRequestedByCurrentUser
                       ? "Pursuit Requested"
@@ -1019,12 +1027,12 @@ export default function VaultListingPage() {
                   </button>
                 </div>
 
-                <div className="mt-6 border-t border-white/10 pt-6">
+                <div className="mt-8 border-t border-white/10 pt-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-white/45">Rate This Listing</div>
                       <p className="mt-3 max-w-xl text-sm leading-7 text-white/68">
-                        Give a quick operator read while you review the file.
+                        Give a quick operator read.
                       </p>
                     </div>
                     {feedbackRecord ? (
