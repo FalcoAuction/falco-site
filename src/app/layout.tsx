@@ -7,11 +7,10 @@ export const metadata: Metadata = {
     "FALCO - Distress asset intelligence, underwriting, and controlled execution routing.",
   icons: {
     icon: [
-      { url: "/icon.jpg", type: "image/jpeg" },
-      { url: "/falco-logo.jpg", type: "image/jpeg" },
+      { url: "/falco-mark-transparent.png", type: "image/png" },
     ],
-    shortcut: "/icon.jpg",
-    apple: "/icon.jpg",
+    shortcut: "/falco-mark-transparent.png",
+    apple: "/falco-mark-transparent.png",
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
