@@ -570,31 +570,27 @@ export default function OperatorPage() {
   const cards = useMemo(() => {
     if (!workspace) return []
     return [
-      ["Tracked Leads", workspace.report.overview.totalLeads],
-      ["Priority Review", workspace.liveListings.filter((listing) => listing.topTierReady).length],
-      ["Analyst Review", workspace.report.analyst?.overview.priority_review_count ?? 0],
-      ["Prefc Ready", workspace.report.preForeclosurePromotion?.readyCount ?? 0],
+      ["Pre-Foreclosure", workspace.report.foreclosureIntake.preForeclosureCount],
+      ["Ready For Review", workspace.report.preForeclosurePromotion?.readyCount ?? 0],
+      ["Blocked", workspace.report.preForeclosurePromotion?.blockedCount ?? 0],
       [
-        "Validated Paths",
-        workspace.liveListings.filter(
-          (listing) => listing.validationOutcome === "validated_execution_path"
-        ).length,
+        "Open Tasks",
+        activeTasks.length,
       ],
-      ["Vault Live", workspace.report.overview.vaultLive],
       [
         "Pending Approvals",
         workspace.accessRequests.filter((row) => row.status === "pending").length,
       ],
       [
-        "Routing Requests",
-        workspace.routingQueue.reduce(
-          (sum, listing) =>
-            sum + listing.requests.filter((row) => row.status === "pursuit_requested").length,
-          0
-        ),
+        "Validation Queue",
+        workspace.liveListings.filter(
+          (listing) =>
+            (listing.topTierReady || listing.vaultPublishReady) &&
+            listing.validationOutcome !== "validated_execution_path"
+        ).length,
       ],
     ]
-  }, [workspace])
+  }, [activeTasks.length, workspace])
 
   const liveListingBySlug = useMemo(
     () => new Map((workspace?.liveListings ?? []).map((listing) => [listing.slug, listing] as const)),
@@ -604,13 +600,8 @@ export default function OperatorPage() {
   const sectionLinks = useMemo(
     () => [
       { id: "overview", label: "Overview" },
-      { id: "analyst", label: "Analyst" },
-      { id: "feedback", label: "Feedback" },
       { id: "intake", label: "Intake" },
-      { id: "tasks", label: "Tasks" },
-      { id: "approvals", label: "Approvals" },
-      { id: "routing", label: "Routing" },
-      { id: "vault", label: "Validation" },
+      { id: "actions", label: "Actions" },
     ],
     []
   )
@@ -1159,7 +1150,7 @@ export default function OperatorPage() {
                     Daily Operator Desk
                   </div>
                   <div className="mt-3 max-w-3xl text-sm leading-7 text-white/62">
-                    One place to review intake, move approvals, route live listings, and record operator validation.
+                    Start with pre-foreclosure review. Everything else is available below when you need it.
                   </div>
                 </div>
 
@@ -1191,41 +1182,66 @@ export default function OperatorPage() {
                 {workspace.report.sourceNote}
               </div>
 
-              <div className="mt-5 grid gap-4 xl:grid-cols-[280px_1fr]">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                    Workflow Storage
-                  </div>
-                  <div className="mt-2 text-lg font-semibold text-white">
-                    {formatWorkflowStorageMode(workspace.report.workflowStorage.mode)}
-                  </div>
-                  <div className="mt-2 text-sm text-white/60">
-                    {workspace.report.workflowStorage.readyCount} of{" "}
-                    {workspace.report.workflowStorage.totalCount} workflow tables ready
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {workspace.report.workflowStorage.tables.map((table) => (
-                    <div
-                      key={table.name}
-                      className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4"
-                    >
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                        {workflowTableLabel(table.name)}
-                      </div>
-                      <div className="mt-2 text-sm font-semibold text-white">
-                        {table.ready ? "Ready" : "Fallback"}
-                      </div>
+              <details className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+                <summary className="cursor-pointer list-none text-sm font-semibold text-white/78">
+                  System Status
+                </summary>
+                <div className="mt-4 grid gap-4 xl:grid-cols-[280px_1fr]">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                      Workflow Storage
                     </div>
-                  ))}
+                    <div className="mt-2 text-lg font-semibold text-white">
+                      {formatWorkflowStorageMode(workspace.report.workflowStorage.mode)}
+                    </div>
+                    <div className="mt-2 text-sm text-white/60">
+                      {workspace.report.workflowStorage.readyCount} of{" "}
+                      {workspace.report.workflowStorage.totalCount} workflow tables ready
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {workspace.report.workflowStorage.tables.map((table) => (
+                      <div
+                        key={table.name}
+                        className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4"
+                      >
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                          {workflowTableLabel(table.name)}
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-white">
+                          {table.ready ? "Ready" : "Fallback"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </details>
             </section>
 
-            <section
+            <details
               id="analyst"
-              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.4)] md:p-8"
+            >
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Signals</div>
+                    <div className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">
+                      Analyst And Learning
+                    </div>
+                    <div className="mt-2 text-sm text-white/58">
+                      Open only when you want model detail, validation history, or watchlists.
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    Optional
+                  </div>
+                </div>
+              </summary>
+              <div className="mt-6">
+            <section
+              className="rounded-[28px] border border-white/10 bg-white/[0.02] p-8"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -1435,7 +1451,7 @@ export default function OperatorPage() {
 
             <section
               id="feedback"
-              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
+              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.02] p-8"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -1566,6 +1582,8 @@ export default function OperatorPage() {
                 </article>
               </div>
             </section>
+              </div>
+            </details>
 
             <section
               id="intake"
@@ -1597,7 +1615,19 @@ export default function OperatorPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid gap-6 xl:grid-cols-2">
+              <details className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-5">
+                <summary className="cursor-pointer list-none">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/40">Raw Feed</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Watchlist And Sale Changes</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
+                      Optional
+                    </div>
+                  </div>
+                </summary>
+                <div className="mt-6 grid gap-6 xl:grid-cols-2">
                 <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div className="text-lg font-semibold text-white">Pre-Foreclosure Watch</div>
@@ -1795,6 +1825,7 @@ export default function OperatorPage() {
                   </div>
                 </article>
               </div>
+              </details>
 
               <div className="mt-6 grid gap-6 xl:grid-cols-2">
                 <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
@@ -2011,7 +2042,29 @@ export default function OperatorPage() {
               </div>
             </section>
 
-            <div id="tasks" className="mt-8 grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+            <details
+              id="actions"
+              className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.4)] md:p-8"
+              open
+            >
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Actions</div>
+                    <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                      Tasks, Approvals, Routing, And Validation
+                    </div>
+                    <div className="mt-3 max-w-3xl text-sm leading-7 text-white/62">
+                      Open this only when you need to work approvals, route requests, or update live validation.
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/60">
+                    {activeTasks.length} open
+                  </div>
+                </div>
+              </summary>
+              <div className="mt-6 grid gap-8">
+            <div id="tasks" className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
               <section className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -2104,7 +2157,7 @@ export default function OperatorPage() {
               </section>
             </div>
 
-            <div className="mt-8 grid gap-8">
+            <div className="grid gap-8">
               <section
                 id="approvals"
                 className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.4)]"
@@ -2584,6 +2637,8 @@ export default function OperatorPage() {
               </section>
 
             </div>
+              </div>
+            </details>
           </>
         ) : null}
       </section>
