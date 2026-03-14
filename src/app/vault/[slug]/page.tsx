@@ -193,6 +193,12 @@ function feedbackOutcomeActionCopy(value: VaultValidationOutcome) {
   return "Bad Lead"
 }
 
+function detailValue(value?: string | number | null) {
+  if (typeof value === "number") return String(value)
+  if (typeof value === "string" && value.trim()) return value
+  return "Unavailable"
+}
+
 function formatMoney(value?: number | null) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
   return new Intl.NumberFormat("en-US", {
@@ -850,45 +856,90 @@ export default function VaultListingPage() {
                 {listing.summary}
               </p>
 
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
-                Validation status: <span className="text-white/82">{validationOutcomeCopy(listing.validationOutcome)}</span>.
-                {" "}Final execution viability, control path, and auction fit remain subject to licensed/operator review.
-                {listing.validationNote ? <span> Note: <span className="text-white/82">{listing.validationNote}</span>.</span> : null}
+              <div className="mt-6 flex flex-wrap gap-3 text-sm">
+                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                  {listing.distressType}
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                  {listing.auctionWindow}
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                  {validationOutcomeCopy(listing.validationOutcome)}
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                  {executionLaneCopy(listing.executionLane)}
+                </div>
               </div>
 
-              <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Market</div><div className="mt-3 text-lg font-semibold text-white">{listing.market}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Distress Type</div><div className="mt-3 text-lg font-semibold text-white">{listing.distressType}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Auction Window</div><div className="mt-3 text-lg font-semibold text-white">{listing.auctionWindow}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Screening Status</div><div className={`mt-3 text-lg font-semibold ${readinessClasses(listing.auctionReadiness)}`}>{listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Equity Band</div><div className="mt-3 text-lg font-semibold text-white">{listing.equityBand || "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Days Until Scheduled Sale</div><div className="mt-3 text-lg font-semibold text-white">{listing.dtsDays ?? "-"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Direct Contact Path</div><div className="mt-3 text-lg font-semibold text-white">{listing.contactReady ? "Available" : "Thin / Unclear"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Mortgage Lender</div><div className="mt-3 text-lg font-semibold text-white">{listing.mortgageLender || "Unavailable"}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Orig. Loan Amount</div><div className="mt-3 text-lg font-semibold text-white">{formatMoney(listing.mortgageAmount)}</div></div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="text-xs uppercase tracking-[0.22em] text-white/45">Suggested Lane</div><div className="mt-3 text-lg font-semibold text-white">{executionLaneCopy(listing.executionLane)}</div></div>
+              <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">At A Glance</div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Market</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.market)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days Until Sale</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.dtsDays)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Path</div>
+                    <div className="mt-2 text-base font-medium text-white">{listing.contactReady ? "Available" : "Thin / Unclear"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity Band</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.equityBand)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Mortgage Lender</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.mortgageLender)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Original Loan Amount</div>
+                    <div className="mt-2 text-base font-medium text-white">{formatMoney(listing.mortgageAmount)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Property And Record</div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
+                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.lastSaleDate)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Parcel / APN</div>
+                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.propertyIdentifier)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Mailing</div>
+                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerMail)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Source Lead</div>
+                    <div className="mt-2 break-all text-sm text-white/80">{detailValue(listing.sourceLeadKey)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.035] p-6 text-sm leading-7 text-white/68">
+                Final execution viability, control path, and auction fit remain subject to licensed/operator review.
+                {listing.validationNote ? (
+                  <span> Current note: <span className="text-white/82">{listing.validationNote}</span>.</span>
+                ) : null}
+                {criticalDataIssues.length > 0 ? (
+                  <span> Data note: <span className="text-amber-100">{criticalDataIssues.join(" + ")}</span>.</span>
+                ) : null}
               </div>
             </div>
 
             <div className="rounded-[30px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">
-              <div className="text-xs uppercase tracking-[0.24em] text-white/45">Listing Summary</div>
+              <div className="text-xs uppercase tracking-[0.24em] text-white/45">Review Actions</div>
 
-              <div className="mt-6 space-y-5 text-sm leading-7 text-white/68">
+              <div className="mt-6 space-y-4 text-sm leading-7 text-white/68">
                 <p>{listing.publicTeaser}</p>
-                <p>This dossier is intended for operator review. Final execution viability, control path, and auction fit remain subject to licensed/operator validation.</p>
-                <p>Distribution of this opportunity outside the approved FALCO path is prohibited by the accepted NDA and non-circumvention terms.</p>
-              </div>
-
-              {criticalDataIssues.length > 0 ? (
-                <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-sm text-amber-100">
-                  Data note: {criticalDataIssues.join(" + ")}.
-                </div>
-              ) : null}
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
-                <div>Last Transfer: <span className="text-white/82">{listing.lastSaleDate || "Unavailable"}</span></div>
-                <div className="mt-2">Parcel / APN: <span className="text-white/82">{listing.propertyIdentifier || "Unavailable"}</span></div>
-                <div className="mt-2">Owner Mailing: <span className="text-white/82">{listing.ownerMail || "Unavailable"}</span></div>
+                <p>Open the packet first, then decide whether you want FALCO to route the file toward your channel.</p>
               </div>
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/70">
@@ -903,7 +954,7 @@ export default function VaultListingPage() {
                   : "This listing is closed for further review routing."}
               </div>
 
-              <div className="mt-8 space-y-4">
+              <div className="mt-8 grid gap-4">
                 {packetBlockedByRouting ? (
                   <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 text-sm text-white/45">
                     <span>{listing.packetLabel}</span>
@@ -923,7 +974,7 @@ export default function VaultListingPage() {
                   href="mailto:access@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
                 >
-                  <span>Request Deal Discussion</span>
+                  <span>Email FALCO</span>
                   <span className="text-white/40">&gt;</span>
                 </a>
               </div>
@@ -973,7 +1024,7 @@ export default function VaultListingPage() {
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-white/45">Rate This Listing</div>
                       <p className="mt-3 max-w-xl text-sm leading-7 text-white/68">
-                        Give a quick operator read while you review the file. This sits directly in the review flow so it is easy to leave signal on the listing.
+                        Give a quick operator read while you review the file.
                       </p>
                     </div>
                     {feedbackRecord ? (
@@ -1030,59 +1081,64 @@ export default function VaultListingPage() {
                     ) : null}
                   </div>
 
-                  <div className="mt-5 grid gap-3 lg:grid-cols-[220px_1fr]">
-                    <select
-                      value={feedbackLane}
-                      onChange={(event) => setFeedbackLane(event.target.value as VaultExecutionLane)}
-                      className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
-                      disabled={feedbackLoading || feedbackSubmitting}
-                    >
-                      <option value="unclear">Lane: Unclear</option>
-                      <option value="borrower_side">Borrower Side</option>
-                      <option value="lender_trustee">Lender / Trustee</option>
-                      <option value="auction_only">Auction Only</option>
-                      <option value="mixed">Mixed</option>
-                    </select>
+                  <details className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <summary className="cursor-pointer list-none text-sm font-medium text-white/80">
+                      Add Detail
+                    </summary>
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[220px_1fr]">
+                      <select
+                        value={feedbackLane}
+                        onChange={(event) => setFeedbackLane(event.target.value as VaultExecutionLane)}
+                        className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+                        disabled={feedbackLoading || feedbackSubmitting}
+                      >
+                        <option value="unclear">Lane: Unclear</option>
+                        <option value="borrower_side">Borrower Side</option>
+                        <option value="lender_trustee">Lender / Trustee</option>
+                        <option value="auction_only">Auction Only</option>
+                        <option value="mixed">Mixed</option>
+                      </select>
 
-                    <textarea
-                      value={feedbackNote}
-                      onChange={(event) => setFeedbackNote(event.target.value)}
-                      className="min-h-[96px] rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
-                      placeholder="Optional note: what made this workable, too controlled, too late, or unclear."
-                      disabled={feedbackLoading || feedbackSubmitting}
-                    />
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {FEEDBACK_SIGNAL_OPTIONS.map((signal) => {
-                      const active = feedbackSignals.includes(signal)
-                      return (
-                        <button
-                          key={`vault-feedback-${signal}`}
-                          type="button"
-                          onClick={() => toggleFeedbackSignal(signal)}
-                          disabled={feedbackLoading || feedbackSubmitting}
-                          className={`rounded-full border px-3 py-1 text-xs transition ${
-                            active
-                              ? "border-white/18 bg-white text-black"
-                              : "border-white/10 bg-white/5 text-white/68 hover:border-white/20 hover:bg-white/10"
-                          } disabled:cursor-not-allowed disabled:opacity-60`}
-                        >
-                          {feedbackSignalCopy(signal)}
-                        </button>
-                      )
-                    })}
-                    <label className="ml-auto flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/62">
-                      <input
-                        type="checkbox"
-                        checked={feedbackContactAttempted}
-                        onChange={(event) => setFeedbackContactAttempted(event.target.checked)}
-                        className="h-4 w-4 rounded border-white/20 bg-black"
+                      <textarea
+                        value={feedbackNote}
+                        onChange={(event) => setFeedbackNote(event.target.value)}
+                        className="min-h-[96px] rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                        placeholder="Optional note: what made this workable, too controlled, too late, or unclear."
                         disabled={feedbackLoading || feedbackSubmitting}
                       />
-                      Contact Attempted
-                    </label>
-                  </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {FEEDBACK_SIGNAL_OPTIONS.map((signal) => {
+                        const active = feedbackSignals.includes(signal)
+                        return (
+                          <button
+                            key={`vault-feedback-${signal}`}
+                            type="button"
+                            onClick={() => toggleFeedbackSignal(signal)}
+                            disabled={feedbackLoading || feedbackSubmitting}
+                            className={`rounded-full border px-3 py-1 text-xs transition ${
+                              active
+                                ? "border-white/18 bg-white text-black"
+                                : "border-white/10 bg-white/5 text-white/68 hover:border-white/20 hover:bg-white/10"
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            {feedbackSignalCopy(signal)}
+                          </button>
+                        )
+                      })}
+                      <label className="ml-auto flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/62">
+                        <input
+                          type="checkbox"
+                          checked={feedbackContactAttempted}
+                          onChange={(event) => setFeedbackContactAttempted(event.target.checked)}
+                          className="h-4 w-4 rounded border-white/20 bg-black"
+                          disabled={feedbackLoading || feedbackSubmitting}
+                        />
+                        Contact Attempted
+                      </label>
+                    </div>
+                  </details>
 
                   {feedbackSummary?.totalResponses ? (
                     <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/68">
@@ -1117,11 +1173,6 @@ export default function VaultListingPage() {
                     </div>
                   ) : null}
                 </div>
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Source Lead</div>
-                <div className="mt-3 break-all text-sm text-white/68">{listing.sourceLeadKey}</div>
               </div>
             </div>
           </div>
