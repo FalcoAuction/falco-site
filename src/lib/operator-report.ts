@@ -41,6 +41,15 @@ export type OperatorLeadRow = {
   executionPosture?: string | null
   workabilityBand?: string | null
   recommendedAction?: string | null
+  ownerName?: string | null
+  ownerMail?: string | null
+  mortgageLender?: string | null
+  mortgageAmount?: number | null
+  propertyIdentifier?: string | null
+  ownerPhonePrimary?: string | null
+  ownerPhoneSecondary?: string | null
+  trusteePhonePublic?: string | null
+  noticePhone?: string | null
 }
 
 export type OperatorPacketRow = {
@@ -324,6 +333,19 @@ async function getManifestVaultCandidates(liveListings: { slug: string }[]) {
       executionBlockers: Array.isArray(payload.executionBlockers)
         ? payload.executionBlockers.filter((value): value is string => typeof value === "string")
         : [],
+      ownerName: typeof payload.ownerName === "string" ? payload.ownerName : null,
+      ownerMail: typeof payload.ownerMail === "string" ? payload.ownerMail : null,
+      mortgageLender: typeof payload.mortgageLender === "string" ? payload.mortgageLender : null,
+      mortgageAmount: typeof payload.mortgageAmount === "number" ? payload.mortgageAmount : null,
+      propertyIdentifier:
+        typeof payload.propertyIdentifier === "string" ? payload.propertyIdentifier : null,
+      ownerPhonePrimary:
+        typeof payload.ownerPhonePrimary === "string" ? payload.ownerPhonePrimary : null,
+      ownerPhoneSecondary:
+        typeof payload.ownerPhoneSecondary === "string" ? payload.ownerPhoneSecondary : null,
+      trusteePhonePublic:
+        typeof payload.trusteePhonePublic === "string" ? payload.trusteePhonePublic : null,
+      noticePhone: typeof payload.noticePhone === "string" ? payload.noticePhone : null,
     }
   })
 

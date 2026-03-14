@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-14T00:02:03.085736+00:00",
+  "generatedAt": "2026-03-14T21:36:50.474938+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -1312,7 +1312,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "KALI & KALI LLC",
+        "ownerMail": "20 Cherokee Blvd, Chattanooga TN 37405",
+        "mortgageLender": "BPL MORTGAGE TRUST LLC",
+        "mortgageAmount": 392000.0,
+        "propertyIdentifier": "157B H 027",
+        "ownerPhonePrimary": "4233108004",
+        "ownerPhoneSecondary": "4233100090",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
@@ -1346,7 +1355,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "Joseph T Kimberly Woodard",
+        "ownerMail": "1129 Cotillion Dr, Murfreesboro TN 37128",
+        "mortgageLender": "ROCKET MORTGAGE LLC",
+        "mortgageAmount": 397000.0,
+        "propertyIdentifier": "076M-A-013.00-000",
+        "ownerPhonePrimary": "9317970889",
+        "ownerPhoneSecondary": "9104555972",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
@@ -1380,7 +1398,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "Elizabeth Owens",
+        "ownerMail": "208 N Saint Marks Ave, Chattanooga TN 37411",
+        "mortgageLender": "MOVEMENT MORTGAGE",
+        "mortgageAmount": 282865.0,
+        "propertyIdentifier": "157K D 015",
+        "ownerPhonePrimary": "7574422584",
+        "ownerPhoneSecondary": "7577091051",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
@@ -1414,7 +1441,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "Michael R Thompson",
+        "ownerMail": "2106 Ivy St, Chattanooga TN 37404",
+        "mortgageLender": "SUNTRUST MORTGAGE INC",
+        "mortgageAmount": 66930.0,
+        "propertyIdentifier": "146K D 017",
+        "ownerPhonePrimary": "4235054502",
+        "ownerPhoneSecondary": "4235981409",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       }
     ],
     "blocked": [
@@ -1450,7 +1486,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "Cathy Hughes",
+        "ownerMail": "2050 Alexander Blvd, Murfreesboro TN 37130",
+        "mortgageLender": "FIRSTBANK",
+        "mortgageAmount": 420149.0,
+        "propertyIdentifier": "081H-D-006.00-000",
+        "ownerPhonePrimary": "6159736752",
+        "ownerPhoneSecondary": "6153559659",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
@@ -1484,7 +1529,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "HIGH",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE"
+        "workabilityBand": "MODERATE",
+        "ownerName": "CUMBERLAND RIVER INVESTMENTS LLC",
+        "ownerMail": "3225 McLeod Dr # 100, Las Vegas NV 89121",
+        "mortgageLender": "KIAVI FUNDING INC",
+        "mortgageAmount": 172800.0,
+        "propertyIdentifier": "032P C 04600 000",
+        "ownerPhonePrimary": "3014667532",
+        "ownerPhoneSecondary": null,
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
@@ -1521,7 +1575,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "LOW",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "LIMITED"
+        "workabilityBand": "LIMITED",
+        "ownerName": "SALUDA GRADE LOAN TRUST; US BANK TRUST",
+        "ownerMail": "1601 Lyndon B Johnson Fwy Ste 150, Dallas TX 75234",
+        "mortgageLender": null,
+        "mortgageAmount": null,
+        "propertyIdentifier": "107FC020",
+        "ownerPhonePrimary": "6183974952",
+        "ownerPhoneSecondary": "6182369904",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
@@ -1558,7 +1621,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "LOW",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "LIMITED"
+        "workabilityBand": "LIMITED",
+        "ownerName": "Eddie Lee Golliday; Sabine P Golliday",
+        "ownerMail": "639 Riversbend Rd, Indian Mound TN 37079",
+        "mortgageLender": null,
+        "mortgageAmount": null,
+        "propertyIdentifier": "120    01103",
+        "ownerPhonePrimary": "9312327983",
+        "ownerPhoneSecondary": "9312492846",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
@@ -1595,7 +1667,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "LOW",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "LIMITED"
+        "workabilityBand": "LIMITED",
+        "ownerName": "PLAZA RTL TRUST; US BANK NATIONAL ASSOCIATION",
+        "ownerMail": "1601 Lyndon B Johnson Fwy Ste 150, Dallas TX 75234",
+        "mortgageLender": null,
+        "mortgageAmount": null,
+        "propertyIdentifier": "161-14-0-017-00",
+        "ownerPhonePrimary": "6183974952",
+        "ownerPhoneSecondary": "6182369904",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
@@ -1633,7 +1714,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "LOW",
         "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "LIMITED"
+        "workabilityBand": "LIMITED",
+        "ownerName": "Sarah Kelly",
+        "ownerMail": "378 Treeland Dr, Clarksville TN 37040",
+        "mortgageLender": null,
+        "mortgageAmount": null,
+        "propertyIdentifier": "032O A 06200 000",
+        "ownerPhonePrimary": "9316488740",
+        "ownerPhoneSecondary": "9315729739",
+        "trusteePhonePublic": null,
+        "noticePhone": null
       },
       {
         "lead_key": "98be102343cc281539efd8113dc95c1d458559f7",
@@ -1674,7 +1764,16 @@
         "lenderControlIntensity": "LOW",
         "influenceability": "LOW",
         "executionPosture": "NEEDS MORE CONTROL CLARITY",
-        "workabilityBand": "LIMITED"
+        "workabilityBand": "LIMITED",
+        "ownerName": null,
+        "ownerMail": null,
+        "mortgageLender": null,
+        "mortgageAmount": null,
+        "propertyIdentifier": null,
+        "ownerPhonePrimary": null,
+        "ownerPhoneSecondary": null,
+        "trusteePhonePublic": null,
+        "noticePhone": null
       }
     ],
     "blockerCounts": [

@@ -75,6 +75,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (error instanceof Error && error.message) {
+      console.error("operator_intake error", error)
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
+      )
+    }
+
     console.error("operator_intake error", error)
     return NextResponse.json(
       { ok: false, error: "Unable to record intake review." },

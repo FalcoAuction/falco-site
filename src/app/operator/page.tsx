@@ -38,6 +38,15 @@ type ReportRow = {
   executionPosture?: string | null
   workabilityBand?: string | null
   recommendedAction?: string | null
+  ownerName?: string | null
+  ownerMail?: string | null
+  mortgageLender?: string | null
+  mortgageAmount?: number | null
+  propertyIdentifier?: string | null
+  ownerPhonePrimary?: string | null
+  ownerPhoneSecondary?: string | null
+  trusteePhonePublic?: string | null
+  noticePhone?: string | null
 }
 
 type OperatorReport = {
@@ -460,6 +469,25 @@ function executionRealityCopy(value?: string | null) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
+}
+
+function formatMoney(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function bestContactLine(row: ReportRow) {
+  return (
+    row.ownerPhonePrimary ||
+    row.ownerPhoneSecondary ||
+    row.trusteePhonePublic ||
+    row.noticePhone ||
+    "Unavailable"
+  )
 }
 
 function prefcDecisionCopy(row: ReportRow) {
@@ -1918,6 +1946,37 @@ export default function OperatorPage() {
                                 </div>
                               </div>
                             </div>
+                            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Data On File</div>
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Owner</div>
+                                  <div className="mt-2 text-sm text-white/78">{row.ownerName || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Mailing</div>
+                                  <div className="mt-2 text-sm text-white/78">{row.ownerMail || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Lender</div>
+                                  <div className="mt-2 text-sm text-white/78">{row.mortgageLender || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Loan Amount</div>
+                                  <div className="mt-2 text-sm text-white/78">{formatMoney(row.mortgageAmount)}</div>
+                                </div>
+                              </div>
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Best Contact</div>
+                                  <div className="mt-2 text-sm text-white/78">{bestContactLine(row)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Parcel / APN</div>
+                                  <div className="mt-2 text-sm text-white/78">{row.propertyIdentifier || "Unavailable"}</div>
+                                </div>
+                              </div>
+                            </div>
                             <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
                               <textarea
                                 value={intakeNotes[row.lead_key] ?? ""}
@@ -2007,6 +2066,26 @@ export default function OperatorPage() {
                                 <div>
                                   <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Workability</div>
                                   <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.workabilityBand)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner</div>
+                                  <div className="mt-2 text-sm text-white/74">{row.ownerName || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Mailing</div>
+                                  <div className="mt-2 text-sm text-white/74">{row.ownerMail || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender</div>
+                                  <div className="mt-2 text-sm text-white/74">{row.mortgageLender || "Unavailable"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Loan Amount</div>
+                                  <div className="mt-2 text-sm text-white/74">{formatMoney(row.mortgageAmount)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Best Contact</div>
+                                  <div className="mt-2 text-sm text-white/74">{bestContactLine(row)}</div>
                                 </div>
                               </div>
                             </details>
@@ -2100,6 +2179,37 @@ export default function OperatorPage() {
                                   ))}
                                 </div>
                               </div>
+                              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Data On File</div>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Owner</div>
+                                    <div className="mt-2 text-sm text-white/78">{row.ownerName || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Mailing</div>
+                                    <div className="mt-2 text-sm text-white/78">{row.ownerMail || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Lender</div>
+                                    <div className="mt-2 text-sm text-white/78">{row.mortgageLender || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Loan Amount</div>
+                                    <div className="mt-2 text-sm text-white/78">{formatMoney(row.mortgageAmount)}</div>
+                                  </div>
+                                </div>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Best Contact</div>
+                                    <div className="mt-2 text-sm text-white/78">{bestContactLine(row)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Parcel / APN</div>
+                                    <div className="mt-2 text-sm text-white/78">{row.propertyIdentifier || "Unavailable"}</div>
+                                  </div>
+                                </div>
+                              </div>
                               <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
                                 <textarea
                                   value={intakeNotes[row.lead_key] ?? ""}
@@ -2189,6 +2299,26 @@ export default function OperatorPage() {
                                   <div>
                                     <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Workability</div>
                                     <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.workabilityBand)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner</div>
+                                    <div className="mt-2 text-sm text-white/74">{row.ownerName || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Mailing</div>
+                                    <div className="mt-2 text-sm text-white/74">{row.ownerMail || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender</div>
+                                    <div className="mt-2 text-sm text-white/74">{row.mortgageLender || "Unavailable"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Loan Amount</div>
+                                    <div className="mt-2 text-sm text-white/74">{formatMoney(row.mortgageAmount)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Best Contact</div>
+                                    <div className="mt-2 text-sm text-white/74">{bestContactLine(row)}</div>
                                   </div>
                                 </div>
                               </details>
