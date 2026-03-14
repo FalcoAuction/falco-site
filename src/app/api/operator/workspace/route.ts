@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
 import { listAccessRequests } from "@/lib/access-workflow"
+import { listOperatorEnrichmentRequests } from "@/lib/operator-enrichment"
 import { listOperatorIntakeDecisions } from "@/lib/operator-intake"
 import { getOperatorReport } from "@/lib/operator-report"
 import { listOperatorTaskHistory } from "@/lib/operator-tasks"
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords] = await Promise.all([
+    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords, enrichmentRequests] = await Promise.all([
       getOperatorReport(),
       listAccessRequests(),
       listVaultPursuitRequests(),
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
       listOperatorTaskHistory(),
       listOperatorIntakeDecisions(),
       listVaultValidationRecords(),
+      listOperatorEnrichmentRequests(),
     ])
 
     return NextResponse.json({
@@ -70,6 +72,7 @@ export async function POST(req: NextRequest) {
         taskHistory,
         intakeDecisions,
         validationRecords,
+        enrichmentRequests,
       },
     })
   } catch (error) {

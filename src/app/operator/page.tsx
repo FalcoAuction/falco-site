@@ -270,6 +270,18 @@ type OperatorIntakeRecord = {
   decidedAt: string
 }
 
+type OperatorEnrichmentStatus = "requested" | "processing" | "completed" | "failed"
+
+type OperatorEnrichmentRequest = {
+  leadKey: string
+  status: OperatorEnrichmentStatus
+  note: string
+  requestedBy: string
+  requestedAt: string
+  updatedAt: string
+  resultMessage: string
+}
+
 type OperatorWorkspace = {
   report: OperatorReport
   accessRequests: AccessRequestRecord[]
@@ -277,6 +289,7 @@ type OperatorWorkspace = {
   liveListings: LiveVaultListing[]
   taskHistory: TaskHistoryItem[]
   intakeDecisions: OperatorIntakeRecord[]
+  enrichmentRequests: OperatorEnrichmentRequest[]
   validationRecords: Array<{
     requestId: string
     listingSlug: string
@@ -449,6 +462,14 @@ function intakeDecisionCopy(value?: OperatorIntakeDecision) {
   if (value === "hold") return "Hold"
   if (value === "needs_more_info") return "Needs More Info"
   return "Undecided"
+}
+
+function enrichmentStatusCopy(value?: OperatorEnrichmentStatus) {
+  if (value === "requested") return "Queued"
+  if (value === "processing") return "Running"
+  if (value === "completed") return "Completed"
+  if (value === "failed") return "Failed"
+  return "Not Requested"
 }
 
 function lifecycleSourceCopy(value?: string | null) {
@@ -636,6 +657,11 @@ export default function OperatorPage() {
 
   const intakeDecisionMap = useMemo(
     () => new Map((workspace?.intakeDecisions ?? []).map((row) => [row.leadKey, row] as const)),
+    [workspace]
+  )
+
+  const enrichmentRequestMap = useMemo(
+    () => new Map((workspace?.enrichmentRequests ?? []).map((row) => [row.leadKey, row] as const)),
     [workspace]
   )
 
@@ -1028,6 +1054,46 @@ export default function OperatorPage() {
       await loadWorkspace(secret)
     } catch {
       setError("Unable to record intake review.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
+  async function handleEnrichmentRequest(leadKey: string) {
+    if (!secret.trim()) {
+      setError("Approval secret is required.")
+      return
+    }
+
+    setProcessingId(`intake:${leadKey}:refresh_enrichment`)
+    setError("")
+    setResult("")
+
+    try {
+      const res = await fetch("/api/operator/intake", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret,
+          action: "refresh_enrichment",
+          leadKey,
+          note: intakeNotes[leadKey] ?? "",
+          actedBy,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to queue enrichment refresh.")
+        return
+      }
+
+      setResult("Enrichment refresh queued for the next bots cycle.")
+      await loadWorkspace(secret)
+    } catch {
+      setError("Unable to queue enrichment refresh.")
     } finally {
       setProcessingId("")
     }
@@ -1874,6 +1940,7 @@ export default function OperatorPage() {
                     {workspace.report.preForeclosurePromotion.readyForReview.length ? (
                       workspace.report.preForeclosurePromotion.readyForReview.map((row) => {
                         const intake = intakeDecisionMap.get(row.lead_key)
+                        const enrichment = enrichmentRequestMap.get(row.lead_key)
                         const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
                         const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
                         return (
@@ -1887,6 +1954,10 @@ export default function OperatorPage() {
                                 <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
                                   Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
                                   {intake ? ` • ${intake.actedBy}` : ""}
+                                </div>
+                                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                                  Enrichment: <span className="text-white/75">{enrichmentStatusCopy(enrichment?.status)}</span>
+                                  {enrichment?.requestedBy ? ` • ${enrichment.requestedBy}` : ""}
                                 </div>
                               </div>
                               <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
@@ -1991,6 +2062,23 @@ export default function OperatorPage() {
                               />
                               <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
                                 <button
+                                  onClick={() => handleEnrichmentRequest(row.lead_key)}
+                                  disabled={
+                                    processingId === `intake:${row.lead_key}:refresh_enrichment` ||
+                                    enrichment?.status === "requested" ||
+                                    enrichment?.status === "processing"
+                                  }
+                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `intake:${row.lead_key}:refresh_enrichment`
+                                    ? "Queueing..."
+                                    : enrichment?.status === "processing"
+                                    ? "Running"
+                                    : enrichment?.status === "requested"
+                                    ? "Queued"
+                                    : "Run Enrichment"}
+                                </button>
+                                <button
                                   onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
                                   disabled={processingId === `intake:${row.lead_key}:promote`}
                                   className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -2038,6 +2126,11 @@ export default function OperatorPage() {
                                 ) : null}
                               </div>
                             </div>
+                            {enrichment?.resultMessage ? (
+                              <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/68">
+                                {enrichment.resultMessage}
+                              </div>
+                            ) : null}
                             <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                               <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
                                 Review Data
@@ -2123,6 +2216,7 @@ export default function OperatorPage() {
                       {workspace.report.preForeclosurePromotion.blocked.length ? (
                         workspace.report.preForeclosurePromotion.blocked.map((row) => {
                           const intake = intakeDecisionMap.get(row.lead_key)
+                          const enrichment = enrichmentRequestMap.get(row.lead_key)
                           const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
                           const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
                           return (
@@ -2136,6 +2230,10 @@ export default function OperatorPage() {
                                   <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
                                     Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
                                     {intake ? ` • ${intake.actedBy}` : ""}
+                                  </div>
+                                  <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                                    Enrichment: <span className="text-white/75">{enrichmentStatusCopy(enrichment?.status)}</span>
+                                    {enrichment?.requestedBy ? ` • ${enrichment.requestedBy}` : ""}
                                   </div>
                                 </div>
                                 <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
@@ -2224,6 +2322,23 @@ export default function OperatorPage() {
                                 />
                                 <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
                                   <button
+                                    onClick={() => handleEnrichmentRequest(row.lead_key)}
+                                    disabled={
+                                      processingId === `intake:${row.lead_key}:refresh_enrichment` ||
+                                      enrichment?.status === "requested" ||
+                                      enrichment?.status === "processing"
+                                    }
+                                    className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === `intake:${row.lead_key}:refresh_enrichment`
+                                      ? "Queueing..."
+                                      : enrichment?.status === "processing"
+                                      ? "Running"
+                                      : enrichment?.status === "requested"
+                                      ? "Queued"
+                                      : "Run Enrichment"}
+                                  </button>
+                                  <button
                                     onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
                                     disabled={processingId === `intake:${row.lead_key}:promote`}
                                     className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -2271,6 +2386,11 @@ export default function OperatorPage() {
                                   ) : null}
                                 </div>
                               </div>
+                              {enrichment?.resultMessage ? (
+                                <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/68">
+                                  {enrichment.resultMessage}
+                                </div>
+                              ) : null}
                               <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                                 <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
                                   Review Data

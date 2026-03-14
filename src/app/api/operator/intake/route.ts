@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
+import { requestOperatorEnrichment } from "@/lib/operator-enrichment"
 import {
   clearOperatorIntakeDecision,
   recordOperatorIntakeDecision,
@@ -36,6 +37,18 @@ export async function POST(req: NextRequest) {
     if (action === "clear") {
       await clearOperatorIntakeDecision(leadKey)
       return NextResponse.json({ ok: true })
+    }
+
+    if (action === "refresh_enrichment") {
+      const actedBy = String(body?.actedBy ?? "FALCO Operator").trim() || "FALCO Operator"
+      const note = String(body?.note ?? "").trim()
+      const request = await requestOperatorEnrichment({
+        leadKey,
+        note,
+        requestedBy: actedBy,
+      })
+
+      return NextResponse.json({ ok: true, request })
     }
 
     if (action !== "record") {
