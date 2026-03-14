@@ -80,16 +80,7 @@ export default async function HomePage() {
 
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
-            <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
-              <Image
-                src="/falco-logo.jpg"
-                alt="Falco mark"
-                width={56}
-                height={56}
-                className="h-[56px] w-[56px] object-contain invert [mix-blend-mode:screen]"
-                priority
-              />
-
+            <Link href="/" className="flex items-center transition-opacity hover:opacity-90">
               <span className="text-lg font-semibold tracking-[0.32em] text-white md:text-xl">
                 FALCO
               </span>
@@ -172,53 +163,19 @@ export default async function HomePage() {
               className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
               style={{ animation: "falcoFloat 7s ease-in-out infinite" }}
             >
-              <div className="rounded-[24px] border border-white/10 bg-black/70 p-6">
-                <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                      Signal Flow
-                    </div>
-                    <div className="mt-2 text-xl font-semibold text-white">
-                      Review Pipeline
-                    </div>
-                  </div>
-
-                  <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-                    Live System
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-6">
-                  {[
-                    "Targeted distress detection",
-                    "Screening and underwriting",
-                    "Operator brief generation",
-                    "Restricted partner review",
-                  ].map((item, index) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition duration-300 hover:border-emerald-400/25 hover:bg-white/[0.055]"
-                    >
-                      <div
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300"
-                        style={{ animation: `falcoPulse ${2 + index * 0.35}s ease-in-out infinite` }}
-                      >
-                        0{index + 1}
-                      </div>
-                      <div className="text-sm text-white/78">{item}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                    Positioning
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-white/68">
-                    FALCO sits upstream of execution, turning fragmented distress
-                    signals into cleaner operator review.
-                  </p>
-                </div>
+              <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/70 p-6 md:min-h-[520px] md:p-8">
+                <div
+                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.18),transparent_52%)]"
+                  style={{ animation: "falcoGlow 6.5s ease-in-out infinite" }}
+                />
+                <Image
+                  src="/falco-mark-transparent.png"
+                  alt="Falco mark"
+                  width={1024}
+                  height={1024}
+                  className="relative z-10 h-auto w-full max-w-[520px] object-contain md:max-w-[620px]"
+                  priority
+                />
               </div>
             </div>
           </div>
