@@ -199,6 +199,82 @@ function detailValue(value?: string | number | null) {
   return "Unavailable"
 }
 
+function distressChipClasses(type?: string) {
+  const normalized = String(type ?? "").toLowerCase()
+  if (normalized.includes("pre-foreclosure")) {
+    return "border-sky-500/20 bg-sky-500/10 text-sky-100"
+  }
+  if (normalized.includes("foreclosure")) {
+    return "border-amber-500/20 bg-amber-500/10 text-amber-100"
+  }
+  return "border-white/10 bg-white/[0.05] text-white/80"
+}
+
+function dtsChipClasses(days?: number | null) {
+  if (typeof days !== "number") {
+    return "border-white/10 bg-white/[0.05] text-white/80"
+  }
+  if (days <= 7) {
+    return "border-red-500/20 bg-red-500/10 text-red-100"
+  }
+  if (days <= 21) {
+    return "border-amber-500/20 bg-amber-500/10 text-amber-100"
+  }
+  return "border-emerald-500/20 bg-emerald-500/10 text-emerald-100"
+}
+
+function validationChipClasses(value?: VaultValidationOutcome) {
+  if (value === "validated_execution_path") {
+    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-100"
+  }
+  if (value === "needs_more_info" || !value) {
+    return "border-amber-500/20 bg-amber-500/10 text-amber-100"
+  }
+  return "border-red-500/20 bg-red-500/10 text-red-100"
+}
+
+function laneChipClasses(value?: VaultExecutionLane) {
+  if (value === "borrower_side") {
+    return "border-sky-500/20 bg-sky-500/10 text-sky-100"
+  }
+  if (value === "lender_trustee") {
+    return "border-indigo-500/20 bg-indigo-500/10 text-indigo-100"
+  }
+  if (value === "auction_only" || value === "mixed") {
+    return "border-white/10 bg-white/[0.07] text-white/88"
+  }
+  return "border-white/10 bg-white/[0.05] text-white/70"
+}
+
+function emphasisCardClasses(kind: "urgent" | "watch" | "ready" | "neutral") {
+  if (kind === "urgent") {
+    return "border-red-500/20 bg-red-500/10"
+  }
+  if (kind === "watch") {
+    return "border-amber-500/20 bg-amber-500/10"
+  }
+  if (kind === "ready") {
+    return "border-emerald-500/20 bg-emerald-500/10"
+  }
+  return "border-white/10 bg-white/[0.04]"
+}
+
+function feedbackButtonClasses(kind: "positive" | "watch" | "caution" | "danger" | "neutral") {
+  if (kind === "positive") {
+    return "border-emerald-500/20 bg-emerald-500/12 text-emerald-50 hover:border-emerald-400/30 hover:bg-emerald-500/18"
+  }
+  if (kind === "watch") {
+    return "border-amber-500/20 bg-amber-500/12 text-amber-50 hover:border-amber-400/30 hover:bg-amber-500/18"
+  }
+  if (kind === "caution") {
+    return "border-orange-500/20 bg-orange-500/12 text-orange-50 hover:border-orange-400/30 hover:bg-orange-500/18"
+  }
+  if (kind === "danger") {
+    return "border-red-500/20 bg-red-500/12 text-red-50 hover:border-red-400/30 hover:bg-red-500/18"
+  }
+  return "border-white/10 bg-white/5 text-white/82 hover:border-white/20 hover:bg-white/10"
+}
+
 function reviewStateMessage(state: PursuitState) {
   if (state.routingState === "open") {
     return "Review is open. Open the packet, then request a controlled review path if you want to work the file."
@@ -875,50 +951,73 @@ export default function VaultListingPage() {
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3 text-sm">
-                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                <div className={`rounded-full border px-4 py-2 ${distressChipClasses(listing.distressType)}`}>
                   {listing.distressType}
                 </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                <div className={`rounded-full border px-4 py-2 ${dtsChipClasses(listing.dtsDays)}`}>
                   {detailValue(listing.dtsDays)} Days To Sale
                 </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                <div className={`rounded-full border px-4 py-2 ${validationChipClasses(listing.validationOutcome)}`}>
                   {validationOutcomeCopy(listing.validationOutcome)}
                 </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-white/80">
+                <div className={`rounded-full border px-4 py-2 ${laneChipClasses(listing.executionLane)}`}>
                   {executionLaneCopy(listing.executionLane)}
                 </div>
               </div>
 
+              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.03] p-7">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Most Important</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-white/35">Fast operator read</div>
+                </div>
+                <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                  <div className={`rounded-2xl border p-5 ${dtsChipClasses(listing.dtsDays)}`}>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">Sale Window</div>
+                    <div className="mt-2 text-2xl font-semibold text-current">
+                      {typeof listing.dtsDays === "number" ? `${listing.dtsDays} Days` : "Unavailable"}
+                    </div>
+                    <div className="mt-2 text-sm text-current/80">{detailValue(listing.auctionWindow)}</div>
+                  </div>
+                  <div
+                    className={`rounded-2xl border p-5 ${
+                      listing.contactReady
+                        ? emphasisCardClasses("ready")
+                        : emphasisCardClasses("watch")
+                    }`}
+                  >
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Owner Reach</div>
+                    <div className="mt-2 text-lg font-semibold text-white">
+                      {listing.contactReady ? "Available" : "Thin / Unclear"}
+                    </div>
+                    <div className="mt-2 text-sm text-white/62">
+                      {listing.ownerName?.trim() || listing.ownerMail?.trim() || "No strong owner detail yet"}
+                    </div>
+                  </div>
+                  <div className={`rounded-2xl border p-5 ${emphasisCardClasses("neutral")}`}>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Debt Picture</div>
+                    <div className="mt-2 text-lg font-semibold text-white">{detailValue(listing.mortgageLender)}</div>
+                    <div className="mt-2 text-sm text-white/62">{formatMoney(listing.mortgageAmount)}</div>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-7">
-                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Key Facts</div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Property Snapshot</div>
+                  <div className="text-xs text-white/35">Secondary detail</div>
+                </div>
                 <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Market</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.market)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days Until Sale</div>
-                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.dtsDays)}</div>
-                  </div>
-                  <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Auction Window</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.auctionWindow)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Contact Path</div>
-                    <div className="mt-2 text-base font-medium text-white">{listing.contactReady ? "Available" : "Thin / Unclear"}</div>
-                  </div>
-                  <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity Band</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.equityBand)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Mortgage Lender</div>
-                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.mortgageLender)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Original Loan Amount</div>
-                    <div className="mt-2 text-base font-medium text-white">{formatMoney(listing.mortgageAmount)}</div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
@@ -932,11 +1031,23 @@ export default function VaultListingPage() {
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Mailing</div>
                     <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerMail)}</div>
                   </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Source Lead</div>
-                    <div className="mt-2 break-all text-sm text-white/80">{detailValue(listing.sourceLeadKey)}</div>
-                  </div>
                 </div>
+
+                <details className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
+                    Full Record Detail
+                  </summary>
+                  <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Name</div>
+                      <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerName)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Source Lead</div>
+                      <div className="mt-2 break-all text-sm text-white/80">{detailValue(listing.sourceLeadKey)}</div>
+                    </div>
+                  </div>
+                </details>
               </div>
 
               <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.03] p-6 text-sm leading-7 text-white/68">
@@ -954,8 +1065,8 @@ export default function VaultListingPage() {
               <div className="text-xs uppercase tracking-[0.24em] text-white/45">Review Actions</div>
 
               <div className="mt-6 space-y-3 text-sm leading-7 text-white/68">
-                <p>{listing.publicTeaser}</p>
                 <p>Open the packet first, then decide whether you want FALCO to route the file toward your channel.</p>
+                <p className="text-white/52">{listing.publicTeaser}</p>
               </div>
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-sm text-white/72">
@@ -1046,35 +1157,35 @@ export default function VaultListingPage() {
                     <button
                       onClick={() => handleFeedbackAction("record", "validated_execution_path")}
                       disabled={feedbackLoading || feedbackSubmitting}
-                      className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("positive")}`}
                     >
                       {feedbackSubmitting ? "Saving..." : "Worth Pursuing"}
                     </button>
                     <button
                       onClick={() => handleFeedbackAction("record", "needs_more_info")}
                       disabled={feedbackLoading || feedbackSubmitting}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("watch")}`}
                     >
                       {feedbackSubmitting ? "Saving..." : "Needs Info"}
                     </button>
                     <button
                       onClick={() => handleFeedbackAction("record", "no_real_control_path")}
                       disabled={feedbackLoading || feedbackSubmitting}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("caution")}`}
                     >
                       {feedbackSubmitting ? "Saving..." : "Too Controlled"}
                     </button>
                     <button
                       onClick={() => handleFeedbackAction("record", "low_leverage")}
                       disabled={feedbackLoading || feedbackSubmitting}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("watch")}`}
                     >
                       {feedbackSubmitting ? "Saving..." : "Too Late"}
                     </button>
                     <button
                       onClick={() => handleFeedbackAction("record", "dead_lead")}
                       disabled={feedbackLoading || feedbackSubmitting}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("danger")}`}
                     >
                       {feedbackSubmitting ? "Saving..." : "Bad Lead"}
                     </button>
@@ -1082,7 +1193,7 @@ export default function VaultListingPage() {
                       <button
                         onClick={() => handleFeedbackAction("clear")}
                         disabled={feedbackLoading || feedbackSubmitting}
-                        className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white/72 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${feedbackButtonClasses("neutral")}`}
                       >
                         {feedbackSubmitting ? "Saving..." : "Clear Rating"}
                       </button>
