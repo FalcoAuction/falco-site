@@ -3,6 +3,8 @@ import { findOperatorVaultCandidateByLeadKeyLive } from "@/lib/operator-vault-ca
 
 function candidatePublishIssues(payload: Record<string, unknown>) {
   const issues: string[] = []
+  const saleStatus = String(payload.saleStatus ?? "").trim().toLowerCase()
+  const equityBand = String(payload.equityBand ?? "").trim().toUpperCase()
 
   if (!String(payload.ownerName ?? "").trim()) issues.push("owner")
   if (!String(payload.ownerMail ?? "").trim()) issues.push("mailing")
@@ -18,6 +20,9 @@ function candidatePublishIssues(payload: Record<string, unknown>) {
     Boolean(String(payload.noticePhone ?? "").trim())
 
   if (!hasContact) issues.push("contact path")
+  if (saleStatus === "pre_foreclosure" && (!equityBand || equityBand === "UNKNOWN")) {
+    issues.push("equity / valuation")
+  }
 
   return issues
 }
