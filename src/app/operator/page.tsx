@@ -1832,7 +1832,10 @@ export default function OperatorPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-white/40">Pre-Foreclosure Promotion</div>
-                      <div className="mt-2 text-lg font-semibold text-white">Ready for review vs blocked</div>
+                      <div className="mt-2 text-lg font-semibold text-white">Review And Push</div>
+                      <div className="mt-2 text-sm text-white/58">
+                        Review these files here and decide whether to promote, hold, or kick back for more info.
+                      </div>
                     </div>
                     <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
                       {workspace.report.preForeclosurePromotion.readyCount} ready
@@ -1841,74 +1844,128 @@ export default function OperatorPage() {
 
                   <div className="mt-4 grid gap-3">
                     {workspace.report.preForeclosurePromotion.readyForReview.length ? (
-                      workspace.report.preForeclosurePromotion.readyForReview.map((row) => (
-                        <div key={`prefc-ready-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
-                              <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
-                                {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                      workspace.report.preForeclosurePromotion.readyForReview.map((row) => {
+                        const intake = intakeDecisionMap.get(row.lead_key)
+                        const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
+                        const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
+                        return (
+                          <div key={`prefc-ready-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                  {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                                </div>
+                                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                                  Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
+                                  {intake ? ` • ${intake.actedBy}` : ""}
+                                </div>
+                              </div>
+                              <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                                {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
                               </div>
                             </div>
-                            <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
-                              {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
+                            <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Status</div>
+                                <div className="mt-2 text-sm text-white/78">{saleStatusCopy(row.sale_status)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Influenceability</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.influenceability)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Complete</div>
+                                <div className="mt-2 text-sm text-white/78">{row.packetCompletenessPct ?? "—"}%</div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Status</div>
-                              <div className="mt-2 text-sm text-white/78">{saleStatusCopy(row.sale_status)}</div>
+                            <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+                              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Execution Posture</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.executionPosture)}</div>
+                                <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-white/38">Control Party</div>
+                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.controlParty)}</div>
+                              </div>
+                              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Cleared Review</div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {[
+                                    row.contactPathQuality && `Contact ${executionRealityCopy(row.contactPathQuality)}`,
+                                    row.workabilityBand && `Workability ${executionRealityCopy(row.workabilityBand)}`,
+                                    row.vaultPublishReady ? "Vault eligible" : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .map((item) => (
+                                      <span
+                                        key={`${row.lead_key}-${item}`}
+                                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                                      >
+                                        {item}
+                                      </span>
+                                    ))}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Influenceability</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.influenceability)}</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Complete</div>
-                              <div className="mt-2 text-sm text-white/78">{row.packetCompletenessPct ?? "—"}%</div>
-                            </div>
-                          </div>
-                          <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
-                            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Execution Posture</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.executionPosture)}</div>
-                              <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-white/38">Control Party</div>
-                              <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.controlParty)}</div>
-                            </div>
-                            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Cleared Review</div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {[
-                                  row.contactPathQuality && `Contact ${executionRealityCopy(row.contactPathQuality)}`,
-                                  row.workabilityBand && `Workability ${executionRealityCopy(row.workabilityBand)}`,
-                                  row.vaultPublishReady ? "Vault eligible" : null,
-                                ]
-                                  .filter(Boolean)
-                                  .map((item) => (
-                                    <span
-                                      key={`${row.lead_key}-${item}`}
-                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
-                                    >
-                                      {item}
-                                    </span>
-                                  ))}
+                            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                              <textarea
+                                value={intakeNotes[row.lead_key] ?? ""}
+                                onChange={(event) =>
+                                  setIntakeNotes((current) => ({
+                                    ...current,
+                                    [row.lead_key]: event.target.value,
+                                  }))
+                                }
+                                className="min-h-[78px] rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                                placeholder="Optional review note: why this should move, hold, or needs more work."
+                              />
+                              <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                                <button
+                                  onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
+                                  disabled={processingId === `intake:${row.lead_key}:promote`}
+                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `intake:${row.lead_key}:promote` ? "Saving..." : "Promote"}
+                                </button>
+                                <button
+                                  onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
+                                  disabled={processingId === `intake:${row.lead_key}:hold`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
+                                </button>
+                                <button
+                                  onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
+                                  disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
+                                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
+                                </button>
+                                {intake ? (
+                                  <button
+                                    onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
+                                    disabled={processingId === `intake:${row.lead_key}:clear`}
+                                    className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
+                                  </button>
+                                ) : null}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        )
+                      })
                     ) : (
                       <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
                         No pre-foreclosure files are currently staged for review.
@@ -1938,58 +1995,112 @@ export default function OperatorPage() {
                     </div>
                     <div className="mt-3 grid gap-3">
                       {workspace.report.preForeclosurePromotion.blocked.length ? (
-                        workspace.report.preForeclosurePromotion.blocked.map((row) => (
-                          <div key={`prefc-blocked-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
-                                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
-                                  {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                        workspace.report.preForeclosurePromotion.blocked.map((row) => {
+                          const intake = intakeDecisionMap.get(row.lead_key)
+                          const taskTitle = `Review intake lead: ${row.address || row.lead_key}`
+                          const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
+                          return (
+                            <div key={`prefc-blocked-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
+                                    {row.county || "Unknown county"} • {row.distress_type || "Unknown type"}
+                                  </div>
+                                  <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                                    Intake Review: <span className="text-white/75">{intakeDecisionCopy(intake?.decision)}</span>
+                                    {intake ? ` • ${intake.actedBy}` : ""}
+                                  </div>
+                                </div>
+                                <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
+                                  {prefcDecisionCopy(row)}
                                 </div>
                               </div>
-                              <div className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/70">
-                                {prefcDecisionCopy(row)}
-                              </div>
-                            </div>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                              <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
-                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
-                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
-                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
-                                <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.contactPathQuality)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Suggested Lane</div>
-                                <div className="mt-2 text-sm text-white/78">
-                                  {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                                  <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                                  <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                                  <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
+                                  <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.contactPathQuality)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Suggested Lane</div>
+                                  <div className="mt-2 text-sm text-white/78">
+                                    {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                              <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Is Blocked</div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {(row.executionBlockers?.length ? row.executionBlockers : ["Needs more info"]).map((blocker) => (
-                                  <span
-                                    key={`${row.lead_key}-${blocker}`}
-                                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Is Blocked</div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {(row.executionBlockers?.length ? row.executionBlockers : ["Needs more info"]).map((blocker) => (
+                                    <span
+                                      key={`${row.lead_key}-${blocker}`}
+                                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                                    >
+                                      {blocker}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                                <textarea
+                                  value={intakeNotes[row.lead_key] ?? ""}
+                                  onChange={(event) =>
+                                    setIntakeNotes((current) => ({
+                                      ...current,
+                                      [row.lead_key]: event.target.value,
+                                    }))
+                                  }
+                                  className="min-h-[78px] rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                                  placeholder="Optional review note: what is missing or what would make this movable."
+                                />
+                                <div className="flex flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                                  <button
+                                    onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
+                                    disabled={processingId === `intake:${row.lead_key}:promote`}
+                                    className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
                                   >
-                                    {blocker}
-                                  </span>
-                                ))}
+                                    {processingId === `intake:${row.lead_key}:promote` ? "Saving..." : "Promote"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
+                                    disabled={processingId === `intake:${row.lead_key}:hold`}
+                                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
+                                    disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
+                                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
+                                  </button>
+                                  {intake ? (
+                                    <button
+                                      onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
+                                      disabled={processingId === `intake:${row.lead_key}:clear`}
+                                      className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
+                                    </button>
+                                  ) : null}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          )
+                        })
                       ) : (
                         <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
                           No blocked pre-foreclosure files are currently in the review queue.
