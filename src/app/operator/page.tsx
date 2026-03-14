@@ -1961,8 +1961,55 @@ export default function OperatorPage() {
                                     {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
                                   </button>
                                 ) : null}
+                                {row.vaultSlug ? (
+                                  <Link
+                                    href={`/vault/${row.vaultSlug}`}
+                                    className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                  >
+                                    Open Listing
+                                  </Link>
+                                ) : null}
+                                {row.vaultSlug ? (
+                                  <Link
+                                    href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                                    className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                  >
+                                    Open Packet
+                                  </Link>
+                                ) : null}
                               </div>
                             </div>
+                            <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                              <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
+                                Review Data
+                              </summary>
+                              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Source Lead</div>
+                                  <div className="mt-2 break-all text-sm text-white/74">{row.lead_key}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Current Sale</div>
+                                  <div className="mt-2 text-sm text-white/74">{row.current_sale_date || "Not scheduled"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Recommended Action</div>
+                                  <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.recommendedAction)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
+                                  <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.contactPathQuality)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Control Party</div>
+                                  <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.controlParty)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Workability</div>
+                                  <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.workabilityBand)}</div>
+                                </div>
+                              </div>
+                            </details>
                           </div>
                         )
                       })
@@ -2096,8 +2143,55 @@ export default function OperatorPage() {
                                       {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
                                     </button>
                                   ) : null}
+                                  {row.vaultSlug ? (
+                                    <Link
+                                      href={`/vault/${row.vaultSlug}`}
+                                      className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                    >
+                                      Open Listing
+                                    </Link>
+                                  ) : null}
+                                  {row.vaultSlug ? (
+                                    <Link
+                                      href={`/api/vault/packet?slug=${row.vaultSlug}`}
+                                      className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                    >
+                                      Open Packet
+                                    </Link>
+                                  ) : null}
                                 </div>
                               </div>
+                              <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                                <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
+                                  Review Data
+                                </summary>
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Source Lead</div>
+                                    <div className="mt-2 break-all text-sm text-white/74">{row.lead_key}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Current Sale</div>
+                                    <div className="mt-2 text-sm text-white/74">{row.current_sale_date || "Not scheduled"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Recommended Action</div>
+                                    <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.recommendedAction)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
+                                    <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.contactPathQuality)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Control Party</div>
+                                    <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.controlParty)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Workability</div>
+                                    <div className="mt-2 text-sm text-white/74">{executionRealityCopy(row.workabilityBand)}</div>
+                                  </div>
+                                </div>
+                              </details>
                             </div>
                           )
                         })
