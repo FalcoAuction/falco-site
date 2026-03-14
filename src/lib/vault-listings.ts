@@ -1,11 +1,16 @@
 import fs from "fs"
 import path from "path"
+import {
+  listVaultPartnerFeedbackRecords,
+  type VaultPartnerFeedbackRecord,
+} from "@/lib/vault-feedback"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 import {
   getVaultRoutingSnapshot,
   getVaultRoutingSnapshotsForListings,
   getVaultValidationRecordByListing,
   listVaultValidationRecords,
+  type VaultOperatorFeedbackSignal,
   type VaultValidationContext,
   getVaultValidationSnapshotsForListings,
   type VaultExecutionLane,
@@ -103,6 +108,11 @@ type ListingSuggestionSummary = {
   suggestionSource?: "rules" | "operator_feedback"
   suggestedLaneFeedbackCount?: number
 }
+
+type LearningFeedbackRecord = Pick<
+  VaultPartnerFeedbackRecord,
+  "listingSlug" | "outcome" | "executionLane" | "feedbackSignals" | "context"
+>
 
 const LOCAL_VAULT_LISTINGS_FILE = path.join(process.cwd(), "data", "vault_listings.ndjson")
 const VAULT_CANDIDATE_FILE = path.join(process.cwd(), "data", "operator", "vault_candidates.json")
@@ -318,6 +328,37 @@ function scoreValidationSimilarity(
   }
 
   if (
+    normalizeComparableValue(current.ownerAgency) &&
+    normalizeComparableValue(current.ownerAgency) === normalizeComparableValue(historical.ownerAgency)
+  ) {
+    score += 2
+  }
+
+  if (
+    normalizeComparableValue(current.interventionWindow) &&
+    normalizeComparableValue(current.interventionWindow) ===
+      normalizeComparableValue(historical.interventionWindow)
+  ) {
+    score += 2
+  }
+
+  if (
+    normalizeComparableValue(current.lenderControlIntensity) &&
+    normalizeComparableValue(current.lenderControlIntensity) ===
+      normalizeComparableValue(historical.lenderControlIntensity)
+  ) {
+    score += 2
+  }
+
+  if (
+    normalizeComparableValue(current.influenceability) &&
+    normalizeComparableValue(current.influenceability) ===
+      normalizeComparableValue(historical.influenceability)
+  ) {
+    score += 2
+  }
+
+  if (
     normalizeComparableValue(current.executionPosture) &&
     normalizeComparableValue(current.executionPosture) ===
       normalizeComparableValue(historical.executionPosture)
@@ -371,6 +412,24 @@ function outcomeWeight(outcome?: VaultValidationOutcome) {
   return 0
 }
 
+function feedbackSignalWeight(signals: VaultOperatorFeedbackSignal[]) {
+  let weight = 0
+
+  for (const signal of signals) {
+    if (signal === "worth_pursuing") weight += 0.45
+    if (signal === "good_upstream_candidate") weight += 0.35
+    if (signal === "owner_has_room") weight += 0.3
+    if (signal === "needs_more_info") weight -= 0.1
+    if (signal === "no_contact_path") weight -= 0.35
+    if (signal === "too_lender_controlled") weight -= 0.55
+    if (signal === "too_late") weight -= 0.65
+    if (signal === "not_auction_lane") weight -= 0.3
+    if (signal === "bad_noisy_lead") weight -= 0.75
+  }
+
+  return weight
+}
+
 function confidenceFromFeedback(score: number, sampleCount: number) {
   if (sampleCount >= 3 && score >= 12) return "HIGH"
   if (sampleCount >= 2 && score >= 6) return "MEDIUM"
@@ -379,7 +438,7 @@ function confidenceFromFeedback(score: number, sampleCount: number) {
 
 function applyOperatorFeedbackToSuggestion(
   listing: VaultListing,
-  validations: Awaited<ReturnType<typeof listVaultValidationRecords>>,
+  feedbackRecords: LearningFeedbackRecord[],
   listingBySlug: Map<string, VaultListing>
 ): ListingSuggestionSummary {
   const baseLane = listing.suggestedExecutionLane ?? "unclear"
@@ -401,7 +460,7 @@ function applyOperatorFeedbackToSuggestion(
   const laneSupport = new Map<VaultExecutionLane, number>()
   let sampleCount = 0
 
-  for (const record of validations) {
+  for (const record of feedbackRecords) {
     if (record.listingSlug === listing.slug || record.executionLane === "unclear") continue
 
     const historicalContext =
@@ -413,7 +472,8 @@ function applyOperatorFeedbackToSuggestion(
     if (similarity < 5) continue
 
     sampleCount += 1
-    const score = similarity * outcomeWeight(record.outcome)
+    const score =
+      similarity * (outcomeWeight(record.outcome) + feedbackSignalWeight(record.feedbackSignals ?? []))
     laneScores.set(record.executionLane, (laneScores.get(record.executionLane) ?? 0) + score)
     laneSupport.set(record.executionLane, (laneSupport.get(record.executionLane) ?? 0) + 1)
   }
@@ -484,7 +544,8 @@ export async function listVaultListings() {
   const mappedRows = (data ?? []).map((row) =>
     mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
   )
-  const [routingSnapshots, validationSnapshots, validationHistory] = await Promise.all([
+  const [routingSnapshots, validationSnapshots, validationHistory, partnerFeedbackHistory] =
+    await Promise.all([
     getVaultRoutingSnapshotsForListings(
       mappedRows.map((listing) => ({
         slug: listing.slug,
@@ -493,15 +554,20 @@ export async function listVaultListings() {
     ),
     getVaultValidationSnapshotsForListings(mappedRows.map((listing) => listing.slug)),
     listVaultValidationRecords(),
-  ])
+    listVaultPartnerFeedbackRecords(),
+    ])
   const listingBySlug = new Map(mappedRows.map((listing) => [listing.slug, listing]))
+  const learningHistory: LearningFeedbackRecord[] = [
+    ...validationHistory,
+    ...partnerFeedbackHistory,
+  ]
 
   return mappedRows.map((listing) => {
     const snapshot = routingSnapshots.get(listing.slug)
     const validation = validationSnapshots.get(listing.slug)
     const suggestion = applyOperatorFeedbackToSuggestion(
       listing,
-      validationHistory,
+      learningHistory,
       listingBySlug
     )
 
@@ -556,11 +622,17 @@ export async function findVaultListing(slug: string) {
     data as VaultListingRow,
     overlayBySlug.get((data as VaultListingRow).slug)
   )
-  const [snapshot, validation] = await Promise.all([
+  const [snapshot, validation, validationHistory, partnerFeedbackHistory] = await Promise.all([
     getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active"),
     getVaultValidationRecordByListing(mapped.slug),
+    listVaultValidationRecords(),
+    listVaultPartnerFeedbackRecords(),
   ])
-  const suggestion = applyOperatorFeedbackToSuggestion(mapped, await listVaultValidationRecords(), new Map([[mapped.slug, mapped]]))
+  const suggestion = applyOperatorFeedbackToSuggestion(
+    mapped,
+    [...validationHistory, ...partnerFeedbackHistory],
+    new Map([[mapped.slug, mapped]])
+  )
 
   return {
     ...mapped,

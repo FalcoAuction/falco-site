@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-13T04:04:12.798677+00:00",
+  "generatedAt": "2026-03-14T00:02:03.271997+00:00",
   "count": 4,
   "candidates": [
     {
@@ -45,21 +45,28 @@
         "buildingAreaSqft": 4227.0,
         "beds": 5.0,
         "baths": 3.0,
-        "contactPathQuality": "PARTIAL",
+        "contactPathQuality": "GOOD",
         "controlParty": "OWNER",
-        "executionPosture": "BORROWER OUTREACH",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "HIGH",
+        "executionPosture": "OWNER ACTIONABLE",
         "workabilityBand": "MODERATE",
         "suggestedExecutionLane": "borrower_side",
         "suggestedLaneConfidence": "HIGH",
         "suggestedLaneReasons": [
-          "Owner contact path exists and control currently appears owner-side",
-          "Timing leaves room for borrower-side intervention"
+          "Owner still appears reachable, influenceable, and able to shape the file",
+          "There is enough runway for operator help before lender control hardens",
+          "The file still appears influenceable rather than fully controlled"
         ],
         "topTierReady": false,
         "vaultPublishReady": true,
         "preForeclosureReviewReady": true,
         "saleStatus": "pre_foreclosure",
         "dataNotes": [
+          "Owner still appears to have enough flexibility to influence the outcome",
+          "There is still meaningful time to shape outcome before hard sale pressure",
           "Execution path is credible but not yet fully turn-key"
         ]
       },
@@ -119,21 +126,28 @@
         "buildingAreaSqft": 1855.0,
         "beds": 4.0,
         "baths": 3.0,
-        "contactPathQuality": "PARTIAL",
+        "contactPathQuality": "GOOD",
         "controlParty": "OWNER",
-        "executionPosture": "BORROWER OUTREACH",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "HIGH",
+        "executionPosture": "OWNER ACTIONABLE",
         "workabilityBand": "MODERATE",
         "suggestedExecutionLane": "borrower_side",
         "suggestedLaneConfidence": "HIGH",
         "suggestedLaneReasons": [
-          "Owner contact path exists and control currently appears owner-side",
-          "Timing leaves room for borrower-side intervention"
+          "Owner still appears reachable, influenceable, and able to shape the file",
+          "There is enough runway for operator help before lender control hardens",
+          "The file still appears influenceable rather than fully controlled"
         ],
         "topTierReady": false,
         "vaultPublishReady": true,
         "preForeclosureReviewReady": true,
         "saleStatus": "pre_foreclosure",
         "dataNotes": [
+          "Owner still appears to have enough flexibility to influence the outcome",
+          "There is still meaningful time to shape outcome before hard sale pressure",
           "Execution path is credible but not yet fully turn-key"
         ]
       },
@@ -193,21 +207,28 @@
         "buildingAreaSqft": 1736.0,
         "beds": 3.0,
         "baths": 2.0,
-        "contactPathQuality": "PARTIAL",
+        "contactPathQuality": "GOOD",
         "controlParty": "OWNER",
-        "executionPosture": "BORROWER OUTREACH",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "HIGH",
+        "executionPosture": "OWNER ACTIONABLE",
         "workabilityBand": "MODERATE",
         "suggestedExecutionLane": "borrower_side",
         "suggestedLaneConfidence": "HIGH",
         "suggestedLaneReasons": [
-          "Owner contact path exists and control currently appears owner-side",
-          "Timing leaves room for borrower-side intervention"
+          "Owner still appears reachable, influenceable, and able to shape the file",
+          "There is enough runway for operator help before lender control hardens",
+          "The file still appears influenceable rather than fully controlled"
         ],
         "topTierReady": false,
         "vaultPublishReady": true,
         "preForeclosureReviewReady": true,
         "saleStatus": "pre_foreclosure",
         "dataNotes": [
+          "Owner still appears to have enough flexibility to influence the outcome",
+          "There is still meaningful time to shape outcome before hard sale pressure",
           "Execution path is credible but not yet fully turn-key"
         ]
       },
@@ -267,21 +288,28 @@
         "buildingAreaSqft": 1248.0,
         "beds": 3.0,
         "baths": 1.0,
-        "contactPathQuality": "PARTIAL",
+        "contactPathQuality": "GOOD",
         "controlParty": "OWNER",
-        "executionPosture": "BORROWER OUTREACH",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "HIGH",
+        "executionPosture": "OWNER ACTIONABLE",
         "workabilityBand": "MODERATE",
         "suggestedExecutionLane": "borrower_side",
         "suggestedLaneConfidence": "HIGH",
         "suggestedLaneReasons": [
-          "Owner contact path exists and control currently appears owner-side",
-          "Timing leaves room for borrower-side intervention"
+          "Owner still appears reachable, influenceable, and able to shape the file",
+          "There is enough runway for operator help before lender control hardens",
+          "The file still appears influenceable rather than fully controlled"
         ],
         "topTierReady": false,
         "vaultPublishReady": true,
         "preForeclosureReviewReady": true,
         "saleStatus": "pre_foreclosure",
         "dataNotes": [
+          "Owner still appears to have enough flexibility to influence the outcome",
+          "There is still meaningful time to shape outcome before hard sale pressure",
           "Execution path is credible but not yet fully turn-key"
         ]
       },

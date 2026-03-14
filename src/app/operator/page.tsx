@@ -55,6 +55,7 @@ type OperatorReport = {
         | "operator_task_history"
         | "vault_pursuit_requests"
         | "vault_validation_records"
+        | "vault_partner_feedback"
       ready: boolean
     }>
   }
@@ -196,6 +197,17 @@ type VaultValidationOutcome =
   | "low_leverage"
   | "dead_lead"
 
+type VaultOperatorFeedbackSignal =
+  | "worth_pursuing"
+  | "too_late"
+  | "too_lender_controlled"
+  | "owner_has_room"
+  | "no_contact_path"
+  | "needs_more_info"
+  | "bad_noisy_lead"
+  | "good_upstream_candidate"
+  | "not_auction_lane"
+
 type VaultExecutionLane =
   | "borrower_side"
   | "lender_trustee"
@@ -262,6 +274,8 @@ type OperatorWorkspace = {
     outcome: VaultValidationOutcome
     executionLane: VaultExecutionLane
     note: string
+    feedbackSignals: VaultOperatorFeedbackSignal[]
+    contactAttempted: boolean
     submittedAt: string
     actedBy: string
     context?: {
@@ -275,6 +289,8 @@ type OperatorWorkspace = {
       influenceability?: string
       executionPosture: string
       workabilityBand: string
+      saleStatus?: string
+      sourceLeadKey?: string
     }
   }>
 }
@@ -344,6 +360,7 @@ function workflowTableLabel(
   if (value === "operator_intake_reviews") return "Intake reviews"
   if (value === "operator_task_history") return "Task history"
   if (value === "vault_pursuit_requests") return "Pursuit requests"
+  if (value === "vault_partner_feedback") return "Partner feedback"
   return "Validation records"
 }
 
@@ -362,6 +379,18 @@ function executionLaneCopy(value?: VaultExecutionLane | string | null) {
   if (value === "auction_only") return "Auction Only"
   if (value === "mixed") return "Mixed"
   return "Unclear"
+}
+
+function feedbackSignalCopy(value: VaultOperatorFeedbackSignal) {
+  if (value === "worth_pursuing") return "Worth Pursuing"
+  if (value === "too_late") return "Too Late"
+  if (value === "too_lender_controlled") return "Too Lender-Controlled"
+  if (value === "owner_has_room") return "Owner Has Room"
+  if (value === "no_contact_path") return "No Contact Path"
+  if (value === "needs_more_info") return "Needs More Info"
+  if (value === "bad_noisy_lead") return "Bad / Noisy Lead"
+  if (value === "good_upstream_candidate") return "Good Upstream Candidate"
+  return "Not Auction Lane"
 }
 
 function laneConfidenceCopy(value?: string | null) {
@@ -451,6 +480,12 @@ export default function OperatorPage() {
   const [processingId, setProcessingId] = useState("")
   const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
   const [validationLanes, setValidationLanes] = useState<Record<string, VaultExecutionLane>>({})
+  const [validationSignals, setValidationSignals] = useState<
+    Record<string, VaultOperatorFeedbackSignal[]>
+  >({})
+  const [validationContactAttempted, setValidationContactAttempted] = useState<
+    Record<string, boolean>
+  >({})
   const [intakeNotes, setIntakeNotes] = useState<Record<string, string>>({})
   const [history, setHistory] = useState<TaskHistoryItem[]>([])
 
@@ -585,14 +620,23 @@ export default function OperatorPage() {
     [workspace]
   )
 
+  const validationRecordMap = useMemo(
+    () => new Map((workspace?.validationRecords ?? []).map((row) => [row.listingSlug, row] as const)),
+    [workspace]
+  )
+
   const validationSummary = useMemo(() => {
     const rows = workspace?.validationRecords ?? []
     const outcomeCounts = new Map<string, number>()
     const laneCounts = new Map<string, number>()
+    const signalCounts = new Map<string, number>()
 
     for (const row of rows) {
       outcomeCounts.set(row.outcome, (outcomeCounts.get(row.outcome) ?? 0) + 1)
       laneCounts.set(row.executionLane, (laneCounts.get(row.executionLane) ?? 0) + 1)
+      for (const signal of row.feedbackSignals ?? []) {
+        signalCounts.set(signal, (signalCounts.get(signal) ?? 0) + 1)
+      }
     }
 
     return {
@@ -601,6 +645,9 @@ export default function OperatorPage() {
         .sort((a, b) => b[1] - a[1])
         .map(([label, count]) => ({ label, count })),
       lanes: [...laneCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([label, count]) => ({ label, count })),
+      signals: [...signalCounts.entries()]
         .sort((a, b) => b[1] - a[1])
         .map(([label, count]) => ({ label, count })),
       recent: rows.slice(0, 8),
@@ -636,17 +683,28 @@ export default function OperatorPage() {
       setHistory(data.workspace.taskHistory ?? [])
       const nextNotes: Record<string, string> = {}
       const nextLanes: Record<string, VaultExecutionLane> = {}
+      const nextSignals: Record<string, VaultOperatorFeedbackSignal[]> = {}
+      const nextContactAttempted: Record<string, boolean> = {}
       const nextIntakeNotes: Record<string, string> = {}
       for (const listing of data.workspace.liveListings ?? []) {
         nextNotes[listing.slug] = listing.validationNote ?? ""
         nextLanes[listing.slug] =
           listing.executionLane ?? listing.suggestedExecutionLane ?? "unclear"
       }
+      for (const record of data.workspace.validationRecords ?? []) {
+        nextNotes[record.listingSlug] = record.note ?? nextNotes[record.listingSlug] ?? ""
+        nextLanes[record.listingSlug] =
+          record.executionLane ?? nextLanes[record.listingSlug] ?? "unclear"
+        nextSignals[record.listingSlug] = record.feedbackSignals ?? []
+        nextContactAttempted[record.listingSlug] = record.contactAttempted === true
+      }
       for (const intake of data.workspace.intakeDecisions ?? []) {
         nextIntakeNotes[intake.leadKey] = intake.note ?? ""
       }
       setValidationNotes(nextNotes)
       setValidationLanes(nextLanes)
+      setValidationSignals(nextSignals)
+      setValidationContactAttempted(nextContactAttempted)
       setIntakeNotes(nextIntakeNotes)
     } catch {
       setError("Unable to load operator workspace.")
@@ -738,7 +796,21 @@ export default function OperatorPage() {
 
   async function handleValidationAction(
     listingSlug: string,
-    action: "clear" | VaultValidationOutcome
+    action: "clear" | VaultValidationOutcome,
+    contextOverride?: {
+      county?: string | null
+      distressType?: string | null
+      contactPathQuality?: string | null
+      controlParty?: string | null
+      ownerAgency?: string | null
+      interventionWindow?: string | null
+      lenderControlIntensity?: string | null
+      influenceability?: string | null
+      executionPosture?: string | null
+      workabilityBand?: string | null
+      saleStatus?: string | null
+      sourceLeadKey?: string | null
+    }
   ) {
     if (!secret.trim()) {
       setError("Approval secret is required.")
@@ -751,6 +823,40 @@ export default function OperatorPage() {
 
     try {
       const listing = liveListingBySlug.get(listingSlug)
+      const effectiveContext =
+        action === "clear"
+          ? undefined
+          : contextOverride
+            ? {
+                county: contextOverride.county ?? "",
+                distressType: contextOverride.distressType ?? "",
+                contactPathQuality: contextOverride.contactPathQuality ?? "",
+                controlParty: contextOverride.controlParty ?? "",
+                ownerAgency: contextOverride.ownerAgency ?? "",
+                interventionWindow: contextOverride.interventionWindow ?? "",
+                lenderControlIntensity: contextOverride.lenderControlIntensity ?? "",
+                influenceability: contextOverride.influenceability ?? "",
+                executionPosture: contextOverride.executionPosture ?? "",
+                workabilityBand: contextOverride.workabilityBand ?? "",
+                saleStatus: contextOverride.saleStatus ?? "",
+                sourceLeadKey: contextOverride.sourceLeadKey ?? "",
+              }
+            : !listing
+              ? undefined
+              : {
+                  county: listing.county ?? "",
+                  distressType: listing.distressType ?? "",
+                  contactPathQuality: listing.contactPathQuality ?? "",
+                  controlParty: listing.controlParty ?? "",
+                  ownerAgency: listing.ownerAgency ?? "",
+                  interventionWindow: listing.interventionWindow ?? "",
+                  lenderControlIntensity: listing.lenderControlIntensity ?? "",
+                  influenceability: listing.influenceability ?? "",
+                  executionPosture: listing.executionPosture ?? "",
+                  workabilityBand: listing.workabilityBand ?? "",
+                  saleStatus: "",
+                  sourceLeadKey: "",
+                }
       const res = await fetch("/api/operator/validation", {
         method: "POST",
         headers: {
@@ -764,21 +870,9 @@ export default function OperatorPage() {
           outcome: action === "clear" ? undefined : action,
           executionLane: validationLanes[listingSlug] ?? "unclear",
           note: validationNotes[listingSlug] ?? "",
-          context:
-            action === "clear" || !listing
-                ? undefined
-              : {
-                  county: listing.county ?? "",
-                  distressType: listing.distressType ?? "",
-                  contactPathQuality: listing.contactPathQuality ?? "",
-                  controlParty: listing.controlParty ?? "",
-                  ownerAgency: listing.ownerAgency ?? "",
-                  interventionWindow: listing.interventionWindow ?? "",
-                  lenderControlIntensity: listing.lenderControlIntensity ?? "",
-                  influenceability: listing.influenceability ?? "",
-                  executionPosture: listing.executionPosture ?? "",
-                  workabilityBand: listing.workabilityBand ?? "",
-                },
+          feedbackSignals: validationSignals[listingSlug] ?? [],
+          contactAttempted: validationContactAttempted[listingSlug] === true,
+          context: effectiveContext,
         }),
       })
 
@@ -1392,6 +1486,24 @@ export default function OperatorPage() {
                       </div>
                     )}
                   </div>
+
+                  <div className="mt-5 text-xs uppercase tracking-[0.22em] text-white/40">Signal Summary</div>
+                  <div className="mt-3 grid gap-3">
+                    {validationSummary.signals.length ? (
+                      validationSummary.signals.map((row) => (
+                        <div key={`validation-signal-${row.label}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                          <div className="text-sm text-white/78">
+                            {feedbackSignalCopy(row.label as VaultOperatorFeedbackSignal)}
+                          </div>
+                          <div className="text-sm font-semibold text-white">{row.count}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/60">
+                        Signal history will appear after operators start tagging files.
+                      </div>
+                    )}
+                  </div>
                 </article>
 
                 <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
@@ -1407,7 +1519,9 @@ export default function OperatorPage() {
                         <article key={`validation-recent-${row.requestId}`} className="rounded-2xl border border-white/10 bg-black/30 p-4">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <div className="text-sm font-semibold text-white">{row.listingSlug}</div>
+                              <div className="text-sm font-semibold text-white">
+                                {row.context?.sourceLeadKey || row.listingSlug}
+                              </div>
                               <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/42">
                                 {validationOutcomeCopy(row.outcome)} • {executionLaneCopy(row.executionLane)}
                               </div>
@@ -1417,6 +1531,23 @@ export default function OperatorPage() {
                           {row.context ? (
                             <div className="mt-3 text-sm leading-6 text-white/62">
                               {row.context.county || "Unknown county"} • {row.context.distressType || "Unknown type"} • {row.context.contactPathQuality || "Unknown contact path"} • {row.context.controlParty || "Unknown control"} • {row.context.ownerAgency || "Unknown owner agency"}
+                            </div>
+                          ) : null}
+                          {row.feedbackSignals?.length || row.contactAttempted ? (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {(row.feedbackSignals ?? []).map((signal) => (
+                                <span
+                                  key={`${row.requestId}-${signal}`}
+                                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72"
+                                >
+                                  {feedbackSignalCopy(signal)}
+                                </span>
+                              ))}
+                              {row.contactAttempted ? (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72">
+                                  Contact Attempted
+                                </span>
+                              ) : null}
                             </div>
                           ) : null}
                           {row.note ? (
@@ -2334,6 +2465,24 @@ export default function OperatorPage() {
                                   Operator lane:{" "}
                                   <span className="text-white/82">{executionLaneCopy(listing.executionLane)}</span>
                                 </div>
+                                {validationRecordMap.get(listing.slug)?.feedbackSignals?.length ||
+                                validationContactAttempted[listing.slug] ? (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {(validationSignals[listing.slug] ?? []).map((signal) => (
+                                      <span
+                                        key={`${listing.slug}-${signal}`}
+                                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72"
+                                      >
+                                        {feedbackSignalCopy(signal)}
+                                      </span>
+                                    ))}
+                                    {validationContactAttempted[listing.slug] ? (
+                                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72">
+                                        Contact Attempted
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
                                 {listing.validationNote ? (
                                   <div className="mt-2">Note: <span className="text-white/82">{listing.validationNote}</span></div>
                                 ) : null}
@@ -2397,14 +2546,14 @@ export default function OperatorPage() {
                                   disabled={processingId === `${processingKeyPrefix}low_leverage`}
                                   className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  {processingId === `${processingKeyPrefix}low_leverage` ? "Processing..." : "Low Leverage"}
+                                  {processingId === `${processingKeyPrefix}low_leverage` ? "Processing..." : "Too Late"}
                                 </button>
                                 <button
                                   onClick={() => handleValidationAction(listing.slug, "dead_lead")}
                                   disabled={processingId === `${processingKeyPrefix}dead_lead`}
                                   className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                  {processingId === `${processingKeyPrefix}dead_lead` ? "Processing..." : "Dead Lead"}
+                                  {processingId === `${processingKeyPrefix}dead_lead` ? "Processing..." : "Bad Lead"}
                                 </button>
                                 {listing.validationOutcome ? (
                                   <button

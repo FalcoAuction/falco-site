@@ -1,12 +1,12 @@
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
-import { findOperatorVaultCandidateByLeadKey } from "@/lib/operator-vault-candidates"
+import { findOperatorVaultCandidateByLeadKeyLive } from "@/lib/operator-vault-candidates"
 
 export async function publishOperatorVaultCandidate(leadKey: string) {
   if (!supabaseAdmin) {
     throw new Error(supabaseAdminConfigError ?? "Supabase admin client is not configured.")
   }
 
-  const candidate = findOperatorVaultCandidateByLeadKey(leadKey)
+  const candidate = await findOperatorVaultCandidateByLeadKeyLive(leadKey)
   if (!candidate) {
     throw new Error("Publish candidate not found.")
   }
@@ -28,4 +28,3 @@ export async function publishOperatorVaultCandidate(leadKey: string) {
     row: data,
   }
 }
-

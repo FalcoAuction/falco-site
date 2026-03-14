@@ -21,6 +21,16 @@ export type VaultValidationOutcome =
   | "no_real_control_path"
   | "low_leverage"
   | "dead_lead"
+export type VaultOperatorFeedbackSignal =
+  | "worth_pursuing"
+  | "too_late"
+  | "too_lender_controlled"
+  | "owner_has_room"
+  | "no_contact_path"
+  | "needs_more_info"
+  | "bad_noisy_lead"
+  | "good_upstream_candidate"
+  | "not_auction_lane"
 
 export type VaultExecutionLane =
   | "borrower_side"
@@ -34,8 +44,14 @@ export type VaultValidationContext = {
   distressType: string
   contactPathQuality: string
   controlParty: string
+  ownerAgency?: string
+  interventionWindow?: string
+  lenderControlIntensity?: string
+  influenceability?: string
   executionPosture: string
   workabilityBand: string
+  saleStatus?: string
+  sourceLeadKey?: string
 }
 
 export type VaultRoutingState = "open" | "in_discussion" | "reserved" | "closed"
@@ -65,6 +81,8 @@ export type VaultValidationRecord = {
   outcome: VaultValidationOutcome
   executionLane: VaultExecutionLane
   note: string
+  feedbackSignals: VaultOperatorFeedbackSignal[]
+  contactAttempted: boolean
   submittedAt: string
   actedBy: string
   context?: VaultValidationContext
@@ -95,8 +113,39 @@ type VaultValidationNotesPayload = {
   outcome: VaultValidationOutcome
   executionLane: VaultExecutionLane
   note: string
+  feedbackSignals?: VaultOperatorFeedbackSignal[]
+  contactAttempted?: boolean
   actedBy: string
   context?: VaultValidationContext
+}
+
+type StructuredValidationNotePayload = {
+  version: 1
+  type: "vault_validation_meta"
+  note: string
+  feedbackSignals: VaultOperatorFeedbackSignal[]
+  contactAttempted: boolean
+}
+
+function normalizeFeedbackSignals(value: unknown): VaultOperatorFeedbackSignal[] {
+  if (!Array.isArray(value)) return []
+
+  const allowed = new Set<VaultOperatorFeedbackSignal>([
+    "worth_pursuing",
+    "too_late",
+    "too_lender_controlled",
+    "owner_has_room",
+    "no_contact_path",
+    "needs_more_info",
+    "bad_noisy_lead",
+    "good_upstream_candidate",
+    "not_auction_lane",
+  ])
+
+  return value.filter(
+    (entry): entry is VaultOperatorFeedbackSignal =>
+      typeof entry === "string" && allowed.has(entry as VaultOperatorFeedbackSignal)
+  )
 }
 
 function normalizeValidationContext(raw: unknown): VaultValidationContext | undefined {
@@ -109,10 +158,21 @@ function normalizeValidationContext(raw: unknown): VaultValidationContext | unde
     contactPathQuality:
       typeof context.contactPathQuality === "string" ? context.contactPathQuality.trim() : "",
     controlParty: typeof context.controlParty === "string" ? context.controlParty.trim() : "",
+    ownerAgency: typeof context.ownerAgency === "string" ? context.ownerAgency.trim() : "",
+    interventionWindow:
+      typeof context.interventionWindow === "string" ? context.interventionWindow.trim() : "",
+    lenderControlIntensity:
+      typeof context.lenderControlIntensity === "string"
+        ? context.lenderControlIntensity.trim()
+        : "",
+    influenceability:
+      typeof context.influenceability === "string" ? context.influenceability.trim() : "",
     executionPosture:
       typeof context.executionPosture === "string" ? context.executionPosture.trim() : "",
     workabilityBand:
       typeof context.workabilityBand === "string" ? context.workabilityBand.trim() : "",
+    saleStatus: typeof context.saleStatus === "string" ? context.saleStatus.trim() : "",
+    sourceLeadKey: typeof context.sourceLeadKey === "string" ? context.sourceLeadKey.trim() : "",
   }
 
   if (Object.values(normalized).every((value) => !value)) {
@@ -155,6 +215,39 @@ function buildPursuitNotes(payload: Omit<VaultPursuitNotesPayload, "version" | "
   } satisfies VaultPursuitNotesPayload)
 }
 
+function parseStructuredValidationNote(note: string | null) {
+  if (!note) return null
+
+  try {
+    const parsed = JSON.parse(note) as Partial<StructuredValidationNotePayload>
+    if (parsed.version !== 1 || parsed.type !== "vault_validation_meta") return null
+
+    return {
+      version: 1 as const,
+      type: "vault_validation_meta" as const,
+      note: typeof parsed.note === "string" ? parsed.note : "",
+      feedbackSignals: normalizeFeedbackSignals(parsed.feedbackSignals),
+      contactAttempted: parsed.contactAttempted === true,
+    }
+  } catch {
+    return null
+  }
+}
+
+function buildStructuredValidationNote(input: {
+  note: string
+  feedbackSignals: VaultOperatorFeedbackSignal[]
+  contactAttempted: boolean
+}) {
+  return JSON.stringify({
+    version: 1,
+    type: "vault_validation_meta",
+    note: input.note,
+    feedbackSignals: input.feedbackSignals,
+    contactAttempted: input.contactAttempted,
+  } satisfies StructuredValidationNotePayload)
+}
+
 function parseValidationNotes(notes: string | null) {
   if (!notes) return null
 
@@ -175,6 +268,8 @@ function parseValidationNotes(notes: string | null) {
           ? (parsed.executionLane as VaultExecutionLane)
           : "unclear",
       note: typeof parsed.note === "string" ? parsed.note : "",
+      feedbackSignals: normalizeFeedbackSignals(parsed.feedbackSignals),
+      contactAttempted: parsed.contactAttempted === true,
       actedBy: typeof parsed.actedBy === "string" ? parsed.actedBy : "",
       context: normalizeValidationContext(parsed.context),
     }
@@ -193,6 +288,8 @@ function buildValidationNotes(
     outcome: payload.outcome,
     executionLane: payload.executionLane,
     note: payload.note,
+    feedbackSignals: payload.feedbackSignals,
+    contactAttempted: payload.contactAttempted,
     actedBy: payload.actedBy,
     context: payload.context,
   } satisfies VaultValidationNotesPayload)
@@ -239,6 +336,8 @@ function mapValidationRow(row: PartnerAccessRequestRow): VaultValidationRecord |
     outcome: notes.outcome,
     executionLane: notes.executionLane,
     note: notes.note,
+    feedbackSignals: notes.feedbackSignals,
+    contactAttempted: notes.contactAttempted,
     submittedAt: row.created_at,
     actedBy: notes.actedBy,
     context: notes.context,
@@ -330,12 +429,15 @@ export async function listVaultValidationRecords() {
         }
       } else {
         for (const row of data ?? []) {
+          const noteMeta = parseStructuredValidationNote(String(row.note ?? ""))
           dedicatedRows.push({
             requestId: String(row.listing_slug ?? ""),
             listingSlug: String(row.listing_slug ?? ""),
             outcome: row.outcome as VaultValidationOutcome,
             executionLane: row.execution_lane as VaultExecutionLane,
-            note: String(row.note ?? ""),
+            note: noteMeta?.note ?? String(row.note ?? ""),
+            feedbackSignals: noteMeta?.feedbackSignals ?? [],
+            contactAttempted: noteMeta?.contactAttempted ?? false,
             submittedAt: String(row.submitted_at ?? ""),
             actedBy: String(row.acted_by ?? ""),
             context: normalizeValidationContext({
@@ -343,8 +445,14 @@ export async function listVaultValidationRecords() {
               distressType: row.distress_type,
               contactPathQuality: row.contact_path_quality,
               controlParty: row.control_party,
+              ownerAgency: row.owner_agency,
+              interventionWindow: row.intervention_window,
+              lenderControlIntensity: row.lender_control_intensity,
+              influenceability: row.influenceability,
               executionPosture: row.execution_posture,
               workabilityBand: row.workability_band,
+              saleStatus: row.sale_status,
+              sourceLeadKey: row.source_lead_key,
             }),
           })
         }
@@ -637,6 +745,8 @@ async function updateValidationRow(
     outcome: VaultValidationOutcome
     executionLane: VaultExecutionLane
     note: string
+    feedbackSignals: VaultOperatorFeedbackSignal[]
+    contactAttempted: boolean
     actedBy: string
     status: VaultValidationStatus
     context?: VaultValidationContext
@@ -653,14 +763,24 @@ async function updateValidationRow(
             listing_slug: input.listingSlug,
             outcome: input.outcome,
             execution_lane: input.executionLane,
-            note: input.note,
+            note: buildStructuredValidationNote({
+              note: input.note,
+              feedbackSignals: input.feedbackSignals,
+              contactAttempted: input.contactAttempted,
+            }),
             acted_by: input.actedBy,
             county: input.context?.county ?? "",
             distress_type: input.context?.distressType ?? "",
             contact_path_quality: input.context?.contactPathQuality ?? "",
             control_party: input.context?.controlParty ?? "",
+            owner_agency: input.context?.ownerAgency ?? "",
+            intervention_window: input.context?.interventionWindow ?? "",
+            lender_control_intensity: input.context?.lenderControlIntensity ?? "",
+            influenceability: input.context?.influenceability ?? "",
             execution_posture: input.context?.executionPosture ?? "",
             workability_band: input.context?.workabilityBand ?? "",
+            sale_status: input.context?.saleStatus ?? "",
+            source_lead_key: input.context?.sourceLeadKey ?? "",
             submitted_at: new Date().toISOString(),
           },
           { onConflict: "listing_slug" }
@@ -670,15 +790,18 @@ async function updateValidationRow(
 
       if (error) {
         if (!isMissingWorkflowTableError(error)) {
-          throw new Error(`updateValidationRow failed: ${error.message}`)
+          console.error("updateValidationRow dedicated error:", error.message)
         }
       } else {
+        const noteMeta = parseStructuredValidationNote(String(data.note ?? ""))
         return {
           requestId: String(data.listing_slug ?? ""),
           listingSlug: String(data.listing_slug ?? ""),
           outcome: data.outcome as VaultValidationOutcome,
           executionLane: data.execution_lane as VaultExecutionLane,
-          note: String(data.note ?? ""),
+          note: noteMeta?.note ?? String(data.note ?? ""),
+          feedbackSignals: noteMeta?.feedbackSignals ?? [],
+          contactAttempted: noteMeta?.contactAttempted ?? false,
           submittedAt: String(data.submitted_at ?? ""),
           actedBy: String(data.acted_by ?? ""),
           context: normalizeValidationContext({
@@ -686,15 +809,20 @@ async function updateValidationRow(
             distressType: data.distress_type,
             contactPathQuality: data.contact_path_quality,
             controlParty: data.control_party,
+            ownerAgency: data.owner_agency,
+            interventionWindow: data.intervention_window,
+            lenderControlIntensity: data.lender_control_intensity,
+            influenceability: data.influenceability,
             executionPosture: data.execution_posture,
             workabilityBand: data.workability_band,
+            saleStatus: data.sale_status,
+            sourceLeadKey: data.source_lead_key,
           }),
         }
       }
     }
   } catch (error) {
-    if (error instanceof Error) throw error
-    throw new Error("updateValidationRow failed.")
+    console.error("updateValidationRow dedicated error:", error)
   }
 
   const { data, error } = await client
@@ -706,6 +834,8 @@ async function updateValidationRow(
         outcome: input.outcome,
         executionLane: input.executionLane,
         note: input.note,
+        feedbackSignals: input.feedbackSignals,
+        contactAttempted: input.contactAttempted,
         actedBy: input.actedBy,
         context: input.context,
       }),
@@ -726,6 +856,8 @@ export async function upsertVaultValidationRecord(input: {
   outcome: VaultValidationOutcome
   executionLane: VaultExecutionLane
   note: string
+  feedbackSignals?: VaultOperatorFeedbackSignal[]
+  contactAttempted?: boolean
   actedBy: string
   context?: VaultValidationContext
 }) {
@@ -740,14 +872,24 @@ export async function upsertVaultValidationRecord(input: {
             listing_slug: input.listingSlug,
             outcome: input.outcome,
             execution_lane: input.executionLane,
-            note: input.note,
+            note: buildStructuredValidationNote({
+              note: input.note,
+              feedbackSignals: input.feedbackSignals ?? [],
+              contactAttempted: input.contactAttempted === true,
+            }),
             acted_by: input.actedBy,
             county: input.context?.county ?? "",
             distress_type: input.context?.distressType ?? "",
             contact_path_quality: input.context?.contactPathQuality ?? "",
             control_party: input.context?.controlParty ?? "",
+            owner_agency: input.context?.ownerAgency ?? "",
+            intervention_window: input.context?.interventionWindow ?? "",
+            lender_control_intensity: input.context?.lenderControlIntensity ?? "",
+            influenceability: input.context?.influenceability ?? "",
             execution_posture: input.context?.executionPosture ?? "",
             workability_band: input.context?.workabilityBand ?? "",
+            sale_status: input.context?.saleStatus ?? "",
+            source_lead_key: input.context?.sourceLeadKey ?? "",
             submitted_at: new Date().toISOString(),
           },
           { onConflict: "listing_slug" }
@@ -757,15 +899,18 @@ export async function upsertVaultValidationRecord(input: {
 
       if (error) {
         if (!isMissingWorkflowTableError(error)) {
-          throw new Error(`upsertVaultValidationRecord failed: ${error.message}`)
+          console.error("upsertVaultValidationRecord dedicated error:", error.message)
         }
       } else {
+        const noteMeta = parseStructuredValidationNote(String(data.note ?? ""))
         return {
           requestId: String(data.listing_slug ?? ""),
           listingSlug: String(data.listing_slug ?? ""),
           outcome: data.outcome as VaultValidationOutcome,
           executionLane: data.execution_lane as VaultExecutionLane,
-          note: String(data.note ?? ""),
+          note: noteMeta?.note ?? String(data.note ?? ""),
+          feedbackSignals: noteMeta?.feedbackSignals ?? [],
+          contactAttempted: noteMeta?.contactAttempted ?? false,
           submittedAt: String(data.submitted_at ?? ""),
           actedBy: String(data.acted_by ?? ""),
           context: normalizeValidationContext({
@@ -773,22 +918,34 @@ export async function upsertVaultValidationRecord(input: {
             distressType: data.distress_type,
             contactPathQuality: data.contact_path_quality,
             controlParty: data.control_party,
+            ownerAgency: data.owner_agency,
+            interventionWindow: data.intervention_window,
+            lenderControlIntensity: data.lender_control_intensity,
+            influenceability: data.influenceability,
             executionPosture: data.execution_posture,
             workabilityBand: data.workability_band,
+            saleStatus: data.sale_status,
+            sourceLeadKey: data.source_lead_key,
           }),
         }
       }
     }
   } catch (error) {
-    if (error instanceof Error) throw error
-    throw new Error("upsertVaultValidationRecord failed.")
+    console.error("upsertVaultValidationRecord dedicated error:", error)
   }
 
   const existing = await getVaultValidationRecordByListing(input.listingSlug)
 
   if (existing) {
     return updateValidationRow(existing.requestId, {
-      ...input,
+      listingSlug: input.listingSlug,
+      outcome: input.outcome,
+      executionLane: input.executionLane,
+      note: input.note,
+      feedbackSignals: input.feedbackSignals ?? [],
+      contactAttempted: input.contactAttempted === true,
+      actedBy: input.actedBy,
+      context: input.context,
       status: "validation_recorded",
     })
   }
@@ -830,12 +987,15 @@ export async function clearVaultValidationRecord(listingSlug: string, actedBy: s
         }
       } else {
         if (!data) return null
+        const noteMeta = parseStructuredValidationNote(String(data.note ?? ""))
         return {
           requestId: String(data.listing_slug ?? ""),
           listingSlug: String(data.listing_slug ?? ""),
           outcome: data.outcome as VaultValidationOutcome,
           executionLane: data.execution_lane as VaultExecutionLane,
-          note: String(data.note ?? ""),
+          note: noteMeta?.note ?? String(data.note ?? ""),
+          feedbackSignals: noteMeta?.feedbackSignals ?? [],
+          contactAttempted: noteMeta?.contactAttempted ?? false,
           submittedAt: String(data.submitted_at ?? ""),
           actedBy: actedBy || String(data.acted_by ?? ""),
           context: normalizeValidationContext({
@@ -843,8 +1003,14 @@ export async function clearVaultValidationRecord(listingSlug: string, actedBy: s
             distressType: data.distress_type,
             contactPathQuality: data.contact_path_quality,
             controlParty: data.control_party,
+            ownerAgency: data.owner_agency,
+            interventionWindow: data.intervention_window,
+            lenderControlIntensity: data.lender_control_intensity,
+            influenceability: data.influenceability,
             executionPosture: data.execution_posture,
             workabilityBand: data.workability_band,
+            saleStatus: data.sale_status,
+            sourceLeadKey: data.source_lead_key,
           }),
         }
       }
@@ -862,6 +1028,8 @@ export async function clearVaultValidationRecord(listingSlug: string, actedBy: s
     outcome: existing.outcome,
     executionLane: existing.executionLane,
     note: existing.note,
+    feedbackSignals: existing.feedbackSignals,
+    contactAttempted: existing.contactAttempted,
     actedBy,
     status: "validation_cleared",
     context: existing.context,

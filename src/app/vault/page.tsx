@@ -132,7 +132,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
   const criticalDataIssues = listing.dataNotes ?? []
 
   return (
-    <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
+    <div className="flex h-full flex-col rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="text-xs uppercase tracking-[0.24em] text-white/45">
@@ -287,10 +287,10 @@ function ListingCard({ listing }: { listing: VaultListing }) {
         </div>
       ) : null}
 
-      <div className="mt-8">
+      <div className="mt-auto pt-8">
         <Link
           href={`/vault/${listing.slug}`}
-          className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+          className="flex w-full items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
         >
           View Listing
         </Link>

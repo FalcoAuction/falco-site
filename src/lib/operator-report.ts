@@ -2,8 +2,9 @@ import { execFile } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
-import { listOperatorVaultCandidates } from "@/lib/operator-vault-candidates"
+import { listOperatorVaultCandidatesLive } from "@/lib/operator-vault-candidates"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { readSystemState } from "@/lib/system-state-store"
 import { getWorkflowStorageStatus, type WorkflowStorageStatus } from "@/lib/workflow-store"
 
 const execFileAsync = promisify(execFile)
@@ -169,6 +170,11 @@ export type OperatorReport = {
 }
 
 async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
+  const storedSnapshot = await readSystemState<OperatorReport>("operator_report")
+  if (storedSnapshot) {
+    return storedSnapshot
+  }
+
   const snapshotPath = path.join(process.cwd(), "data", "operator", "report.json")
 
   try {
@@ -209,7 +215,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
   const recentLeads = attachVaultState(snapshot.recentLeads, liveListings)
   const topCandidates = attachVaultState(snapshot.topCandidates, liveListings)
   const recentPackets = attachVaultState(snapshot.recentPackets, liveListings)
-  const manifestVaultCandidates = getManifestVaultCandidates(liveListings)
+  const manifestVaultCandidates = await getManifestVaultCandidates(liveListings)
   const snapshotVaultCandidates = attachVaultState(snapshot.vaultCandidates ?? [], liveListings).filter(
     (row) => !row.vaultLive
   )
@@ -272,8 +278,9 @@ function attachVaultState<T extends { lead_key: string }>(
   })
 }
 
-function getManifestVaultCandidates(liveListings: { slug: string }[]) {
-  const rows = listOperatorVaultCandidates().map((candidate) => {
+async function getManifestVaultCandidates(liveListings: { slug: string }[]) {
+  const candidates = await listOperatorVaultCandidatesLive()
+  const rows = candidates.map((candidate) => {
     const payload = candidate.listingPayload ?? {}
 
     return {
@@ -472,6 +479,8 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
   const pendingApprovals =
     "count" in accessResult && typeof accessResult.count === "number" ? accessResult.count : 0
   const workflowStorage = await getWorkflowStorageStatus()
+  const liveListings = vaultRows.filter((row) => row.is_active !== false).map((row) => ({ slug: row.slug }))
+  const manifestVaultCandidates = await getManifestVaultCandidates(liveListings)
 
   const recentLeads = vaultRows.slice(0, 12).map(mapVaultRowToLead)
   const topCandidates = [...vaultRows]
@@ -506,7 +515,7 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
     dbPath: "site_fallback",
     sourceMode: "site_fallback",
     sourceNote:
-      "Running in site fallback mode. Live vault and approval data are shown, but upstream bots DB detail is only available in the shared workspace/local environment.",
+      "Running in site fallback mode. Live vault and approval data are shown, but upstream bots DB detail is only available when the shared workspace or stored operator snapshots are available.",
     workflowStorage,
     overview: {
       totalLeads: vaultRows.length,
@@ -514,14 +523,14 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
       uwReady: vaultRows.filter((row) => row.auction_readiness?.toUpperCase() === "GREEN").length,
       packeted: vaultRows.filter((row) => Boolean(row.packet_path)).length,
       contactReady: vaultRows.filter((row) => row.auction_readiness?.toUpperCase() === "GREEN").length,
-      vaultLive: vaultRows.filter((row) => row.is_active !== false).length,
-      vaultQueue: 0,
+      vaultLive: liveListings.length,
+      vaultQueue: manifestVaultCandidates.length,
       pendingApprovals,
     },
     recentLeads,
     topCandidates,
     recentPackets,
-    vaultCandidates: [],
+    vaultCandidates: manifestVaultCandidates,
     foreclosureIntake: {
       preForeclosureCount: 0,
       scheduledCount: 0,
@@ -579,7 +588,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
     const { liveListings, pendingApprovals } = await getLiveVaultAndApprovalState()
     const workflowStorage = await getWorkflowStorageStatus()
     const snapshot = await readSnapshotOperatorReport()
-    const manifestVaultCandidates = getManifestVaultCandidates(liveListings)
+    const manifestVaultCandidates = await getManifestVaultCandidates(liveListings)
 
     return {
       generatedAt: parsed.generatedAt,

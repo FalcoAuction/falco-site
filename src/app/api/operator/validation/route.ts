@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
 import {
   clearVaultValidationRecord,
+  type VaultOperatorFeedbackSignal,
   upsertVaultValidationRecord,
   type VaultExecutionLane,
   type VaultValidationContext,
@@ -22,6 +23,27 @@ function isExecutionLane(value: string): value is VaultExecutionLane {
   return ["borrower_side", "lender_trustee", "auction_only", "mixed", "unclear"].includes(value)
 }
 
+function parseFeedbackSignals(value: unknown): VaultOperatorFeedbackSignal[] {
+  if (!Array.isArray(value)) return []
+
+  const allowed = new Set<VaultOperatorFeedbackSignal>([
+    "worth_pursuing",
+    "too_late",
+    "too_lender_controlled",
+    "owner_has_room",
+    "no_contact_path",
+    "needs_more_info",
+    "bad_noisy_lead",
+    "good_upstream_candidate",
+    "not_auction_lane",
+  ])
+
+  return value.filter(
+    (entry): entry is VaultOperatorFeedbackSignal =>
+      typeof entry === "string" && allowed.has(entry as VaultOperatorFeedbackSignal)
+  )
+}
+
 function parseValidationContext(value: unknown): VaultValidationContext | undefined {
   if (!value || typeof value !== "object") return undefined
 
@@ -32,10 +54,21 @@ function parseValidationContext(value: unknown): VaultValidationContext | undefi
     contactPathQuality:
       typeof context.contactPathQuality === "string" ? context.contactPathQuality.trim() : "",
     controlParty: typeof context.controlParty === "string" ? context.controlParty.trim() : "",
+    ownerAgency: typeof context.ownerAgency === "string" ? context.ownerAgency.trim() : "",
+    interventionWindow:
+      typeof context.interventionWindow === "string" ? context.interventionWindow.trim() : "",
+    lenderControlIntensity:
+      typeof context.lenderControlIntensity === "string"
+        ? context.lenderControlIntensity.trim()
+        : "",
+    influenceability:
+      typeof context.influenceability === "string" ? context.influenceability.trim() : "",
     executionPosture:
       typeof context.executionPosture === "string" ? context.executionPosture.trim() : "",
     workabilityBand:
       typeof context.workabilityBand === "string" ? context.workabilityBand.trim() : "",
+    saleStatus: typeof context.saleStatus === "string" ? context.saleStatus.trim() : "",
+    sourceLeadKey: typeof context.sourceLeadKey === "string" ? context.sourceLeadKey.trim() : "",
   }
 
   if (Object.values(normalized).every((entry) => !entry)) {
@@ -77,6 +110,8 @@ export async function POST(req: NextRequest) {
     const executionLane = String(body?.executionLane ?? "unclear").trim()
     const note = String(body?.note ?? "").trim()
     const context = parseValidationContext(body?.context)
+    const feedbackSignals = parseFeedbackSignals(body?.feedbackSignals)
+    const contactAttempted = body?.contactAttempted === true
 
     if (!isValidationOutcome(outcome)) {
       return NextResponse.json(
@@ -97,6 +132,8 @@ export async function POST(req: NextRequest) {
       outcome,
       executionLane,
       note,
+      feedbackSignals,
+      contactAttempted,
       actedBy,
       context,
     })

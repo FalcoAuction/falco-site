@@ -41,7 +41,44 @@ create table if not exists public.vault_validation_records (
   distress_type text not null default '',
   contact_path_quality text not null default '',
   control_party text not null default '',
+  owner_agency text not null default '',
+  intervention_window text not null default '',
+  lender_control_intensity text not null default '',
+  influenceability text not null default '',
   execution_posture text not null default '',
   workability_band text not null default '',
+  sale_status text not null default '',
+  source_lead_key text not null default '',
   submitted_at timestamptz not null default now()
 );
+
+create table if not exists public.vault_partner_feedback (
+  id uuid primary key default gen_random_uuid(),
+  listing_slug text not null,
+  email text not null,
+  partner_name text not null default '',
+  outcome text not null check (outcome in ('validated_execution_path', 'needs_more_info', 'no_real_control_path', 'low_leverage', 'dead_lead')),
+  execution_lane text not null check (execution_lane in ('borrower_side', 'lender_trustee', 'auction_only', 'mixed', 'unclear')),
+  note text not null default '',
+  feedback_signals jsonb not null default '[]'::jsonb,
+  contact_attempted boolean not null default false,
+  acted_by text not null default '',
+  county text not null default '',
+  distress_type text not null default '',
+  contact_path_quality text not null default '',
+  control_party text not null default '',
+  owner_agency text not null default '',
+  intervention_window text not null default '',
+  lender_control_intensity text not null default '',
+  influenceability text not null default '',
+  execution_posture text not null default '',
+  workability_band text not null default '',
+  sale_status text not null default '',
+  source_lead_key text not null default '',
+  submitted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (listing_slug, email)
+);
+
+create index if not exists vault_partner_feedback_listing_slug_idx
+  on public.vault_partner_feedback (listing_slug);

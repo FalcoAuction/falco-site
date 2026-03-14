@@ -5,6 +5,28 @@ import { useEffect, useState } from "react"
 
 type VaultListingStatus = "active" | "claimed" | "expired"
 type VaultRoutingState = "open" | "in_discussion" | "reserved" | "closed"
+type VaultValidationOutcome =
+  | "validated_execution_path"
+  | "needs_more_info"
+  | "no_real_control_path"
+  | "low_leverage"
+  | "dead_lead"
+type VaultExecutionLane =
+  | "borrower_side"
+  | "lender_trustee"
+  | "auction_only"
+  | "mixed"
+  | "unclear"
+type VaultOperatorFeedbackSignal =
+  | "worth_pursuing"
+  | "too_late"
+  | "too_lender_controlled"
+  | "owner_has_room"
+  | "no_contact_path"
+  | "needs_more_info"
+  | "bad_noisy_lead"
+  | "good_upstream_candidate"
+  | "not_auction_lane"
 
 type VaultListing = {
   slug: string
@@ -41,18 +63,21 @@ type VaultListing = {
   topTierReady?: boolean
   vaultPublishReady?: boolean
   dataNotes?: string[]
-  validationOutcome?:
-    | "validated_execution_path"
-    | "needs_more_info"
-    | "no_real_control_path"
-    | "low_leverage"
-    | "dead_lead"
-  executionLane?: "borrower_side" | "lender_trustee" | "auction_only" | "mixed" | "unclear"
+  validationOutcome?: VaultValidationOutcome
+  executionLane?: VaultExecutionLane
   validationNote?: string
   routingState?: VaultRoutingState
   routingReservedByEmail?: string
   routingReservedByName?: string
   pursuitRequestCount?: number
+  contactPathQuality?: string
+  controlParty?: string
+  ownerAgency?: string
+  interventionWindow?: string
+  lenderControlIntensity?: string
+  influenceability?: string
+  executionPosture?: string
+  workabilityBand?: string
 }
 
 type PursuitState = {
@@ -61,6 +86,43 @@ type PursuitState = {
   reservedByCurrentUser: boolean
   hasRequestedByCurrentUser: boolean
 }
+
+type PartnerFeedbackRecord = {
+  requestId: string
+  listingSlug: string
+  email: string
+  partnerName: string
+  outcome: VaultValidationOutcome
+  executionLane: VaultExecutionLane
+  note: string
+  feedbackSignals: VaultOperatorFeedbackSignal[]
+  contactAttempted: boolean
+  submittedAt: string
+}
+
+type PartnerFeedbackSummary = {
+  totalResponses: number
+  outcomeCounts: Array<{
+    outcome: VaultValidationOutcome
+    count: number
+  }>
+  signalCounts: Array<{
+    signal: VaultOperatorFeedbackSignal
+    count: number
+  }>
+}
+
+const FEEDBACK_SIGNAL_OPTIONS: VaultOperatorFeedbackSignal[] = [
+  "worth_pursuing",
+  "good_upstream_candidate",
+  "owner_has_room",
+  "too_late",
+  "too_lender_controlled",
+  "no_contact_path",
+  "needs_more_info",
+  "bad_noisy_lead",
+  "not_auction_lane",
+]
 
 function hasAgreementCookie(slug: string) {
   return document.cookie
@@ -111,6 +173,26 @@ function executionLaneCopy(value?: VaultListing["executionLane"]) {
   return "Unclear"
 }
 
+function feedbackSignalCopy(value: VaultOperatorFeedbackSignal) {
+  if (value === "worth_pursuing") return "Worth Pursuing"
+  if (value === "too_late") return "Too Late"
+  if (value === "too_lender_controlled") return "Too Lender-Controlled"
+  if (value === "owner_has_room") return "Owner Has Room"
+  if (value === "no_contact_path") return "No Contact Path"
+  if (value === "needs_more_info") return "Needs More Info"
+  if (value === "bad_noisy_lead") return "Bad / Noisy Lead"
+  if (value === "good_upstream_candidate") return "Good Upstream Candidate"
+  return "Not Auction Lane"
+}
+
+function feedbackOutcomeActionCopy(value: VaultValidationOutcome) {
+  if (value === "validated_execution_path") return "Worth Pursuing"
+  if (value === "needs_more_info") return "Needs Info"
+  if (value === "no_real_control_path") return "Too Controlled"
+  if (value === "low_leverage") return "Too Late"
+  return "Bad Lead"
+}
+
 function formatMoney(value?: number | null) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "Unavailable"
   return new Intl.NumberFormat("en-US", {
@@ -152,6 +234,16 @@ export default function VaultListingPage() {
     reservedByCurrentUser: false,
     hasRequestedByCurrentUser: false,
   })
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackError, setFeedbackError] = useState("")
+  const [feedbackSuccess, setFeedbackSuccess] = useState("")
+  const [feedbackNote, setFeedbackNote] = useState("")
+  const [feedbackLane, setFeedbackLane] = useState<VaultExecutionLane>("unclear")
+  const [feedbackSignals, setFeedbackSignals] = useState<VaultOperatorFeedbackSignal[]>([])
+  const [feedbackContactAttempted, setFeedbackContactAttempted] = useState(false)
+  const [feedbackRecord, setFeedbackRecord] = useState<PartnerFeedbackRecord | null>(null)
+  const [feedbackSummary, setFeedbackSummary] = useState<PartnerFeedbackSummary | null>(null)
 
   const loadPursuitState = async (listingSlug: string) => {
     if (!listingSlug) return
@@ -173,6 +265,115 @@ export default function VaultListingPage() {
       })
     } finally {
       setPursuitLoading(false)
+    }
+  }
+
+  const loadFeedbackState = async (listingSlug: string) => {
+    if (!listingSlug) return
+
+    try {
+      setFeedbackLoading(true)
+      setFeedbackError("")
+
+      const res = await fetch(`/api/vault/feedback?slug=${encodeURIComponent(listingSlug)}`, {
+        cache: "no-store",
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) {
+        setFeedbackError(data?.error || "Unable to load partner feedback.")
+        return
+      }
+
+      const record = (data.record ?? null) as PartnerFeedbackRecord | null
+      setFeedbackRecord(record)
+      setFeedbackSummary((data.summary ?? null) as PartnerFeedbackSummary | null)
+      setFeedbackNote(record?.note ?? "")
+      setFeedbackLane(record?.executionLane ?? listing?.executionLane ?? "unclear")
+      setFeedbackSignals(record?.feedbackSignals ?? [])
+      setFeedbackContactAttempted(record?.contactAttempted === true)
+    } catch {
+      setFeedbackError("Unable to load partner feedback.")
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }
+
+  const toggleFeedbackSignal = (signal: VaultOperatorFeedbackSignal) => {
+    setFeedbackSignals((current) =>
+      current.includes(signal)
+        ? current.filter((entry) => entry !== signal)
+        : [...current, signal]
+    )
+  }
+
+  const handleFeedbackAction = async (action: "record" | "clear", outcome?: VaultValidationOutcome) => {
+    if (!slug) return
+
+    setFeedbackError("")
+    setFeedbackSuccess("")
+
+    try {
+      setFeedbackSubmitting(true)
+
+      const res = await fetch("/api/vault/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          listingSlug: slug,
+          partnerName: fullName || approvedEmail,
+          outcome,
+          executionLane: feedbackLane,
+          note: feedbackNote,
+          feedbackSignals,
+          contactAttempted: feedbackContactAttempted,
+          context: {
+            county: listing?.county ?? "",
+            distressType: listing?.distressType ?? "",
+            contactPathQuality: listing?.contactPathQuality ?? "",
+            controlParty: listing?.controlParty ?? "",
+            ownerAgency: listing?.ownerAgency ?? "",
+            interventionWindow: listing?.interventionWindow ?? "",
+            lenderControlIntensity: listing?.lenderControlIntensity ?? "",
+            influenceability: listing?.influenceability ?? "",
+            executionPosture: listing?.executionPosture ?? "",
+            workabilityBand: listing?.workabilityBand ?? "",
+            sourceLeadKey: listing?.sourceLeadKey ?? "",
+          },
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) {
+        setFeedbackError(data?.error || "Unable to save partner feedback.")
+        return
+      }
+
+      const nextRecord = (data.record ?? null) as PartnerFeedbackRecord | null
+      setFeedbackRecord(nextRecord)
+      setFeedbackSummary((data.summary ?? null) as PartnerFeedbackSummary | null)
+
+      if (action === "clear") {
+        setFeedbackNote("")
+        setFeedbackLane(listing?.executionLane ?? "unclear")
+        setFeedbackSignals([])
+        setFeedbackContactAttempted(false)
+        setFeedbackSuccess("Partner feedback cleared.")
+      } else {
+        setFeedbackNote(nextRecord?.note ?? feedbackNote)
+        setFeedbackLane(nextRecord?.executionLane ?? feedbackLane)
+        setFeedbackSignals(nextRecord?.feedbackSignals ?? feedbackSignals)
+        setFeedbackContactAttempted(nextRecord?.contactAttempted === true)
+        setFeedbackSuccess("Partner feedback recorded.")
+      }
+    } catch {
+      setFeedbackError("Unable to save partner feedback.")
+    } finally {
+      setFeedbackSubmitting(false)
     }
   }
 
@@ -225,6 +426,11 @@ export default function VaultListingPage() {
       setEmailCheck(session.email)
     })
   }, [])
+
+  useEffect(() => {
+    if (!slug || !approved || !accepted) return
+    void loadFeedbackState(slug)
+  }, [accepted, approved, slug])
 
   const handleApprovalCheck = async () => {
     setApprovalError("")
@@ -307,6 +513,7 @@ export default function VaultListingPage() {
       setSuccess("Acceptance recorded.")
       setAccepted(true)
       await loadPursuitState(slug)
+      await loadFeedbackState(slug)
     } catch {
       setError("Unable to record acceptance.")
     } finally {
@@ -759,6 +966,156 @@ export default function VaultListingPage() {
                       ? "Submitting..."
                       : "Request Review Path"}
                   </button>
+                </div>
+
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Rate This Listing</div>
+                      <p className="mt-3 max-w-xl text-sm leading-7 text-white/68">
+                        Give a quick operator read while you review the file. This sits directly in the review flow so it is easy to leave signal on the listing.
+                      </p>
+                    </div>
+                    {feedbackRecord ? (
+                      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
+                        Saved: {feedbackOutcomeActionCopy(feedbackRecord.outcome)}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <button
+                      onClick={() => handleFeedbackAction("record", "validated_execution_path")}
+                      disabled={feedbackLoading || feedbackSubmitting}
+                      className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Saving..." : "Worth Pursuing"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedbackAction("record", "needs_more_info")}
+                      disabled={feedbackLoading || feedbackSubmitting}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Saving..." : "Needs Info"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedbackAction("record", "no_real_control_path")}
+                      disabled={feedbackLoading || feedbackSubmitting}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Saving..." : "Too Controlled"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedbackAction("record", "low_leverage")}
+                      disabled={feedbackLoading || feedbackSubmitting}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Saving..." : "Too Late"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedbackAction("record", "dead_lead")}
+                      disabled={feedbackLoading || feedbackSubmitting}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Saving..." : "Bad Lead"}
+                    </button>
+                    {feedbackRecord ? (
+                      <button
+                        onClick={() => handleFeedbackAction("clear")}
+                        disabled={feedbackLoading || feedbackSubmitting}
+                        className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white/72 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {feedbackSubmitting ? "Saving..." : "Clear Rating"}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-5 grid gap-3 lg:grid-cols-[220px_1fr]">
+                    <select
+                      value={feedbackLane}
+                      onChange={(event) => setFeedbackLane(event.target.value as VaultExecutionLane)}
+                      className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
+                      disabled={feedbackLoading || feedbackSubmitting}
+                    >
+                      <option value="unclear">Lane: Unclear</option>
+                      <option value="borrower_side">Borrower Side</option>
+                      <option value="lender_trustee">Lender / Trustee</option>
+                      <option value="auction_only">Auction Only</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+
+                    <textarea
+                      value={feedbackNote}
+                      onChange={(event) => setFeedbackNote(event.target.value)}
+                      className="min-h-[96px] rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                      placeholder="Optional note: what made this workable, too controlled, too late, or unclear."
+                      disabled={feedbackLoading || feedbackSubmitting}
+                    />
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {FEEDBACK_SIGNAL_OPTIONS.map((signal) => {
+                      const active = feedbackSignals.includes(signal)
+                      return (
+                        <button
+                          key={`vault-feedback-${signal}`}
+                          type="button"
+                          onClick={() => toggleFeedbackSignal(signal)}
+                          disabled={feedbackLoading || feedbackSubmitting}
+                          className={`rounded-full border px-3 py-1 text-xs transition ${
+                            active
+                              ? "border-white/18 bg-white text-black"
+                              : "border-white/10 bg-white/5 text-white/68 hover:border-white/20 hover:bg-white/10"
+                          } disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          {feedbackSignalCopy(signal)}
+                        </button>
+                      )
+                    })}
+                    <label className="ml-auto flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/62">
+                      <input
+                        type="checkbox"
+                        checked={feedbackContactAttempted}
+                        onChange={(event) => setFeedbackContactAttempted(event.target.checked)}
+                        className="h-4 w-4 rounded border-white/20 bg-black"
+                        disabled={feedbackLoading || feedbackSubmitting}
+                      />
+                      Contact Attempted
+                    </label>
+                  </div>
+
+                  {feedbackSummary?.totalResponses ? (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/68">
+                      <div>
+                        {feedbackSummary.totalResponses} approved partner response
+                        {feedbackSummary.totalResponses === 1 ? "" : "s"} recorded on this listing.
+                      </div>
+                      {feedbackSummary.outcomeCounts.length ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {feedbackSummary.outcomeCounts.map((entry) => (
+                            <span
+                              key={`outcome-${entry.outcome}`}
+                              className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/72"
+                            >
+                              {feedbackOutcomeActionCopy(entry.outcome)} {entry.count}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {feedbackError ? (
+                    <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      {feedbackError}
+                    </div>
+                  ) : null}
+
+                  {feedbackSuccess ? (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                      {feedbackSuccess}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
