@@ -1865,29 +1865,29 @@ export default function OperatorPage() {
                                 {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
                               </div>
                             </div>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Status</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Status</div>
                                 <div className="mt-2 text-sm text-white/78">{saleStatusCopy(row.sale_status)}</div>
                               </div>
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Owner Agency</div>
                                 <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
                               </div>
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Intervention Window</div>
                                 <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
                               </div>
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Lender Control</div>
                                 <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
                               </div>
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Influenceability</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Influenceability</div>
                                 <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.influenceability)}</div>
                               </div>
                               <div>
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Complete</div>
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Complete</div>
                                 <div className="mt-2 text-sm text-white/78">{row.packetCompletenessPct ?? "—"}%</div>
                               </div>
                             </div>
@@ -1900,8 +1900,8 @@ export default function OperatorPage() {
                               </div>
                               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
                                 <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Why It Cleared Review</div>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {[
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {[
                                     row.contactPathQuality && `Contact ${executionRealityCopy(row.contactPathQuality)}`,
                                     row.workabilityBand && `Workability ${executionRealityCopy(row.workabilityBand)}`,
                                     row.vaultPublishReady ? "Vault eligible" : null,
@@ -2063,25 +2063,25 @@ export default function OperatorPage() {
                                   {prefcDecisionCopy(row)}
                                 </div>
                               </div>
-                              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                 <div>
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Owner Agency</div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Owner Agency</div>
                                   <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.ownerAgency)}</div>
                                 </div>
                                 <div>
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Intervention Window</div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Intervention Window</div>
                                   <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.interventionWindow)}</div>
                                 </div>
                                 <div>
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Lender Control</div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Lender Control</div>
                                   <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.lenderControlIntensity)}</div>
                                 </div>
                                 <div>
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Contact Path</div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Contact Path</div>
                                   <div className="mt-2 text-sm text-white/78">{executionRealityCopy(row.contactPathQuality)}</div>
                                 </div>
                                 <div>
-                                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/38">Suggested Lane</div>
+                                  <div className="text-[10px] uppercase tracking-[0.16em] text-white/38">Suggested Lane</div>
                                   <div className="mt-2 text-sm text-white/78">
                                     {executionLaneCopy((row.suggestedExecutionLane as VaultExecutionLane) || "unclear")} • {laneConfidenceCopy(row.suggestedLaneConfidence)}
                                   </div>
