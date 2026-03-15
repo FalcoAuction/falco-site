@@ -153,21 +153,10 @@ export default async function HomePage() {
               </h1>
 
               <p className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl">
-                FALCO finds distressed-property files early, cleans them up,
-                and turns the strongest ones into review briefs for approved
-                auction, broker, and execution partners.
+                FALCO finds distressed-property files early, cleans them up, and
+                turns the strongest ones into private review briefs for approved
+                partners.
               </p>
-
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-                Not a public listing feed. Not a seller proposal. A private
-                review system built to help serious partners decide what deserves
-                real attention.
-              </p>
-
-              <div className="mt-6 max-w-2xl rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/58">
-                Packeted files have already held up under direct operator review.
-                Final execution fit still belongs to the partner side.
-              </div>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
@@ -193,8 +182,8 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-7 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
-              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-7">
+            <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-white/45">
@@ -210,41 +199,41 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="mt-7 space-y-4">
+                <p className="mt-5 text-sm leading-6 text-white/56">
+                  Three steps from early signal to partner review.
+                </p>
+
+                <div className="mt-5 space-y-3">
                   {[
                     {
                       step: "01",
                       title: "Detect early distress",
-                      body: "Targeted sources are watched before files become obvious to the broader market.",
+                      body: "Targeted sources are watched before files become obvious.",
                     },
                     {
                       step: "02",
                       title: "Build the file",
-                      body: "Property, debt, timing, and contact context are assembled into a cleaner review record.",
+                      body: "Property, debt, timing, and contact context are assembled.",
                     },
                     {
                       step: "03",
                       title: "Route to partners",
-                      body: "The strongest files move into the restricted vault for partner review and validation.",
+                      body: "The strongest files move into the restricted vault for review.",
                     },
                   ].map((item) => (
                     <div
                       key={item.step}
-                      className="flex gap-4 rounded-2xl border border-white/10 bg-black/32 px-5 py-5"
+                      className="flex gap-4 rounded-2xl border border-white/10 bg-black/32 px-4 py-4"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300">
                         {item.step}
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-white">{item.title}</div>
-                        <div className="mt-1 text-sm leading-6 text-white/60">{item.body}</div>
+                        <div className="mt-1 text-sm leading-6 text-white/56">{item.body}</div>
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-black/28 px-5 py-4 text-sm leading-6 text-white/56">
-                  Restricted vault access, per-listing terms, and partner-side judgment stay in place all the way through the review flow.
                 </div>
               </div>
             </div>
