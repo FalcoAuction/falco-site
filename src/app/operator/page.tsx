@@ -245,6 +245,44 @@ export default function OperatorPage() {
     [workspace]
   )
 
+  const autoRunningPreForeclosures = useMemo(
+    () =>
+      readyPreForeclosures.filter((row: any) => {
+        const enrichment = enrichmentRequestMap.get(row.lead_key) as any
+        const status = enrichment?.status
+        return status === "requested" || status === "processing"
+      }),
+    [enrichmentRequestMap, readyPreForeclosures]
+  )
+
+  const stagedPreForeclosures = useMemo(
+    () =>
+      readyPreForeclosures.filter((row: any) => {
+        const enrichment = enrichmentRequestMap.get(row.lead_key) as any
+        const status = enrichment?.status
+        return status !== "requested" && status !== "processing"
+      }),
+    [enrichmentRequestMap, readyPreForeclosures]
+  )
+
+  const failedPreForeclosures = useMemo(
+    () =>
+      [...readyPreForeclosures, ...blockedPreForeclosures].filter((row: any) => {
+        const enrichment = enrichmentRequestMap.get(row.lead_key) as any
+        const status = enrichment?.status
+        return status === "failed"
+      }),
+    [blockedPreForeclosures, enrichmentRequestMap, readyPreForeclosures]
+  )
+
+  const livePreForeclosureCount = useMemo(
+    () =>
+      (workspace?.liveListings ?? []).filter((listing: any) =>
+        String(listing.distressType ?? "").toLowerCase().includes("pre-foreclosure")
+      ).length,
+    [workspace]
+  )
+
   const openRoutingQueue = useMemo(
     () =>
       (workspace?.routingQueue ?? []).filter((row: any) =>
@@ -269,8 +307,12 @@ export default function OperatorPage() {
     const items: TaskItem[] = []
     const decisionMap = new Map((workspace.intakeDecisions ?? []).map((row: any) => [row.leadKey, row] as const))
     const intakeRows = [
-      ...(workspace.report.preForeclosurePromotion?.readyForReview ?? []),
       ...(workspace.report.preForeclosurePromotion?.blocked ?? []),
+      ...(workspace.report.preForeclosurePromotion?.readyForReview ?? []).filter((row: any) => {
+        const enrichment = enrichmentRequestMap.get(row.lead_key) as any
+        const status = enrichment?.status
+        return status === "failed"
+      }),
     ]
 
     for (const row of intakeRows) {
@@ -316,7 +358,7 @@ export default function OperatorPage() {
     }
 
     return items.sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]))
-  }, [openRoutingQueue, validationQueue, workspace])
+  }, [enrichmentRequestMap, openRoutingQueue, validationQueue, workspace])
 
   const activeTasks = useMemo(() => {
     const doneIds = new Set(history.map((item: any) => item.id))
@@ -819,16 +861,16 @@ export default function OperatorPage() {
                     <div className="mt-2 text-2xl font-semibold text-white">Simple daily run order</div>
                     <div className="mt-5 grid gap-3">
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
-                        <div className="font-semibold text-white">1. Review ready pre-foreclosures</div>
-                        <div className="mt-1">{readyPreForeclosures.length} staged files are waiting for push decisions.</div>
+                      <div className="font-semibold text-white">1. Let autopilot clear the easy wins</div>
+                        <div className="mt-1">{autoRunningPreForeclosures.length} files are running or queued. {stagedPreForeclosures.length} are already system-cleared for vault path.</div>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
-                        <div className="font-semibold text-white">2. Check what changed</div>
-                        <div className="mt-1">{updateFeed.length} recent updates are in the feed, including enrichment and validation changes.</div>
+                        <div className="font-semibold text-white">2. Review only the exceptions</div>
+                        <div className="mt-1">{blockedPreForeclosures.length} pre-foreclosures still need a human call. {failedPreForeclosures.length} have failed automation and need attention first.</div>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
-                        <div className="font-semibold text-white">3. Clear admin items</div>
-                        <div className="mt-1">{(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length} approvals and {openRoutingQueue.length} routing groups are waiting.</div>
+                        <div className="font-semibold text-white">3. Handle partner-facing work</div>
+                        <div className="mt-1">{livePreForeclosureCount} pre-foreclosures are live in vault. {(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length} approvals and {openRoutingQueue.length} routing groups are waiting.</div>
                       </div>
                     </div>
                   </article>
@@ -881,20 +923,37 @@ export default function OperatorPage() {
             ) : null}
 
             {activeTab === "pre_foreclosure" ? (
-              <section className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+              <section className="mt-6 grid gap-6">
+                <div className="grid gap-4 md:grid-cols-4">
+                  <StatCard label="Auto-Staged" value={stagedPreForeclosures.length} sublabel="System-cleared for vault path" />
+                  <StatCard label="Auto-Running" value={autoRunningPreForeclosures.length} sublabel="Queued or processing now" />
+                  <StatCard label="Needs Human" value={blockedPreForeclosures.length} sublabel="Still blocked or incomplete" />
+                  <StatCard label="Live Prefc" value={livePreForeclosureCount} sublabel="Already in partner vault" />
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Ready To Push</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">Review and decide</div>
-                      <div className="mt-2 text-sm text-white/58">These are the shortest-path candidates for vault promotion.</div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Auto-Staged</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">System-cleared for vault path</div>
+                      <div className="mt-2 text-sm text-white/58">Autopilot has already done the heavy lifting here. Review only if you want to override or push immediately.</div>
                     </div>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{readyPreForeclosures.length} ready</span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{stagedPreForeclosures.length} staged</span>
                   </div>
 
+                  {autoRunningPreForeclosures.length ? (
+                    <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                      <div className="text-xs uppercase tracking-[0.18em] text-emerald-100/75">Automation Running</div>
+                      <div className="mt-2 text-sm text-emerald-50/85">
+                        {autoRunningPreForeclosures.length} pre-foreclosure file{autoRunningPreForeclosures.length === 1 ? "" : "s"} are still being enriched or finalized.
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="mt-5 grid gap-4">
-                    {readyPreForeclosures.length ? (
-                      readyPreForeclosures.map((row: any) => {
+                    {stagedPreForeclosures.length ? (
+                      stagedPreForeclosures.map((row: any) => {
                         const intake = intakeDecisionMap.get(row.lead_key) as any
                         const enrichment = enrichmentRequestMap.get(row.lead_key) as any
                         const taskTitle = row.address || row.lead_key
@@ -937,25 +996,11 @@ export default function OperatorPage() {
                               <div>Equity: <span className="text-white/82">{executionRealityCopy(row.equity_band)}</span></div>
                             </div>
 
-                            <textarea
-                              value={intakeNotes[row.lead_key] ?? ""}
-                              onChange={(event) => setIntakeNotes((current) => ({ ...current, [row.lead_key]: event.target.value }))}
-                              className="mt-4 min-h-[84px] w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
-                              placeholder="Optional note for this review decision."
-                            />
-
                             {enrichment?.resultMessage ? (
                               <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/68">{enrichment.resultMessage}</div>
                             ) : null}
 
                             <div className="mt-4 flex flex-wrap gap-3">
-                              <button
-                                onClick={() => handleEnrichmentRequest(row.lead_key)}
-                                disabled={processingId === `intake:${row.lead_key}:refresh_enrichment` || enrichment?.status === "requested" || enrichment?.status === "processing"}
-                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:refresh_enrichment` ? "Queueing..." : enrichment?.status === "processing" ? "Running" : enrichment?.status === "requested" ? "Queued" : "Run Enrichment"}
-                              </button>
                               <button
                                 onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
                                 disabled={processingId === `intake:${row.lead_key}:promote`}
@@ -986,6 +1031,13 @@ export default function OperatorPage() {
                                   {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
                                 </button>
                               ) : null}
+                              <button
+                                onClick={() => handleEnrichmentRequest(row.lead_key)}
+                                disabled={processingId === `intake:${row.lead_key}:refresh_enrichment` || enrichment?.status === "requested" || enrichment?.status === "processing"}
+                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {processingId === `intake:${row.lead_key}:refresh_enrichment` ? "Queueing..." : enrichment?.status === "processing" ? "Running" : enrichment?.status === "requested" ? "Queued" : "Re-Enrich"}
+                              </button>
                               {row.vaultSlug ? (
                                 <Link href={`/vault/${row.vaultSlug}`} className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10">
                                   Open Listing
@@ -996,7 +1048,7 @@ export default function OperatorPage() {
                         )
                       })
                     ) : (
-                      <EmptyState title="No pre-foreclosure files are staged for push right now." />
+                      <EmptyState title="No pre-foreclosure files are currently auto-staged for vault path." />
                     )}
                   </div>
                 </article>
@@ -1004,9 +1056,9 @@ export default function OperatorPage() {
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Needs Work</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">Blocked or incomplete</div>
-                      <div className="mt-2 text-sm text-white/58">These are real files, but they still need more data or a better path.</div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Needs Human Review</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Blocked, incomplete, or unclear</div>
+                      <div className="mt-2 text-sm text-white/58">This is the real exception queue. These files still need more data or a human judgment call.</div>
                     </div>
                     <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{blockedPreForeclosures.length} blocked</span>
                   </div>
@@ -1097,6 +1149,7 @@ export default function OperatorPage() {
                     )}
                   </div>
                 </article>
+                </div>
               </section>
             ) : null}
 
