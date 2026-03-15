@@ -7,17 +7,17 @@ const workflow = [
   {
     step: "01",
     title: "Detect",
-    body: "FALCO monitors targeted distress sources and flags files before they are obvious to the broader market.",
+    body: "FALCO watches targeted distress sources and catches files before they are obvious to the broader market.",
   },
   {
     step: "02",
-    title: "Screen",
-    body: "Each file is cleaned up, enriched with ownership, debt, timing, and contact context, then filtered for real operator use.",
+    title: "Assemble",
+    body: "Each file is cleaned up and enriched with ownership, debt, timing, and contact context so the record reads clearly.",
   },
   {
     step: "03",
-    title: "Route",
-    body: "The strongest files are turned into operator review briefs and routed into a controlled partner review path for validation.",
+    title: "Review",
+    body: "The strongest files are packaged into review briefs and routed into a controlled partner path for real-world validation.",
   },
 ]
 
@@ -26,6 +26,51 @@ const partnerTypes = [
   "Brokerage partners",
   "Capital partners",
   "Distress operators",
+]
+
+const proofPoints = [
+  {
+    label: "What It Is",
+    title: "Private review flow",
+    body: "A screened partner surface for distressed-property files, not a public listing marketplace.",
+  },
+  {
+    label: "What It Is Not",
+    title: "Not seller-facing",
+    body: "The vault is not a seller proposal, and it does not pretend every file is ready to execute.",
+  },
+  {
+    label: "Why It Matters",
+    title: "Cleaner starting point",
+    body: "Operators get a clearer file than raw notice scraping, with timing, debt, and contact context assembled upfront.",
+  },
+]
+
+const vaultPreview = [
+  {
+    stage: "Pre-Foreclosure Review",
+    county: "Hamilton County",
+    address: "208 N Saint Marks Ave",
+    detail: "Owner and debt context assembled. Early enough for operator review.",
+  },
+  {
+    stage: "Foreclosure",
+    county: "Rutherford County",
+    address: "2050 Alexander Blvd",
+    detail: "Sale timing, record history, and packet materials in one restricted listing.",
+  },
+  {
+    stage: "Partner Feedback",
+    county: "Controlled Access",
+    address: "Vault Listing Response",
+    detail: "Approved partners can rate and comment directly inside the listing workflow.",
+  },
+]
+
+const updateFeed = [
+  "Early-stage pre-foreclosure files enrich automatically before partner review.",
+  "Sale timing updates in the vault when the live sale date changes.",
+  "Partner feedback now lives inside each vault listing instead of the operator desk.",
 ]
 
 export default async function HomePage() {
@@ -44,6 +89,12 @@ export default async function HomePage() {
         @keyframes falcoFloat {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-8px); }
+        }
+
+        @keyframes falcoFlow {
+          0% { transform: translateX(-14px); opacity: 0.35; }
+          50% { opacity: 1; }
+          100% { transform: translateX(14px); opacity: 0.35; }
         }
 
         @keyframes falcoPulse {
@@ -71,6 +122,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:88px_88px] opacity-[0.08]" />
 
         <div
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]"
@@ -105,16 +157,16 @@ export default async function HomePage() {
         <section
           className="mx-auto max-w-7xl px-6 pb-24 pt-20 md:px-10 md:pb-32 md:pt-28"
         >
-          <div className="grid items-end gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid items-end gap-14 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Early Distress Review System
+                Private Distress Review System
               </div>
 
-              <h1 className="max-w-4xl text-5xl font-semibold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
+              <h1 className="max-w-5xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl">
                 Find distress sooner.
                 <br />
                 Underwrite faster.
@@ -122,7 +174,7 @@ export default async function HomePage() {
                 Route cleaner deals.
               </h1>
 
-              <p className="mt-8 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
+              <p className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl">
                 FALCO finds distressed-property files early, cleans them up,
                 and turns the strongest ones into review briefs for approved
                 auction, broker, and execution partners.
@@ -133,6 +185,17 @@ export default async function HomePage() {
                 Approved partners get access to a restricted vault and per-listing
                 packet materials after NDA and non-circumvention acceptance.
               </p>
+
+              <div className="mt-8 inline-flex flex-wrap items-center gap-3 rounded-[20px] border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white/65 shadow-[0_18px_50px_rgba(0,0,0,0.34)]">
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-emerald-300">
+                  Live Now
+                </span>
+                <span>{metrics.trackedLeads} tracked files</span>
+                <span className="text-white/22">•</span>
+                <span>{metrics.packetsInVault} live vault packets</span>
+                <span className="text-white/22">•</span>
+                <span>{metrics.approvedPartners} approved partners</span>
+              </div>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
@@ -159,17 +222,17 @@ export default async function HomePage() {
             </div>
 
             <div
-              className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+              className="rounded-[30px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
               style={{ animation: "falcoFloat 7s ease-in-out infinite" }}
             >
-              <div className="rounded-[24px] border border-white/10 bg-black/70 p-6">
+              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                      Signal Flow
+                      Live System Canvas
                     </div>
                     <div className="mt-2 text-xl font-semibold text-white">
-                      Review Pipeline
+                      Signal to Vault
                     </div>
                   </div>
 
@@ -178,39 +241,97 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-6">
-                  {[
-                    "Targeted distress detection",
-                    "Screening and underwriting",
-                    "Operator brief generation",
-                    "Restricted partner review",
-                  ].map((item, index) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition duration-300 hover:border-emerald-400/25 hover:bg-white/[0.055]"
-                    >
+                <div className="relative mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-black/55 p-5">
+                  <div className="absolute inset-x-10 top-[70px] hidden h-px bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent lg:block" />
+                  <div
+                    className="absolute left-[18%] right-[18%] top-[64px] hidden h-3 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.55),transparent_62%)] blur-md lg:block"
+                    style={{ animation: "falcoFlow 4.6s linear infinite" }}
+                  />
+
+                  <div className="grid gap-4 lg:grid-cols-4">
+                    {[
+                      { label: "Detect", value: String(metrics.trackedLeads), note: "Tracked files" },
+                      { label: "Screen", value: String(metrics.activeCounties), note: "Active counties" },
+                      { label: "Brief", value: String(metrics.packetsInVault), note: "Vault packets" },
+                      { label: "Route", value: String(metrics.approvedPartners), note: "Approved partners" },
+                    ].map((item, index) => (
                       <div
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300"
-                        style={{ animation: `falcoPulse ${2 + index * 0.35}s ease-in-out infinite` }}
+                        key={item.label}
+                        className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition duration-300 hover:border-emerald-400/25 hover:bg-white/[0.055]"
                       >
-                        0{index + 1}
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300"
+                          style={{ animation: `falcoPulse ${2 + index * 0.35}s ease-in-out infinite` }}
+                        >
+                          0{index + 1}
+                        </div>
+                        <div className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/40">
+                          {item.label}
+                        </div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{item.value}</div>
+                        <div className="mt-1 text-sm text-white/55">{item.note}</div>
                       </div>
-                      <div className="text-sm text-white/78">{item}</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    {updateFeed.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-white/62"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                    Positioning
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                      Review Surface
+                    </div>
+                    <div className="mt-2 text-sm leading-6 text-white/70">
+                      A controlled partner vault, not open deal circulation.
+                    </div>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-white/68">
-                    FALCO sits upstream of execution, turning fragmented distress
-                    signals into cleaner operator review.
-                  </p>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                      File Standard
+                    </div>
+                    <div className="mt-2 text-sm leading-6 text-white/70">
+                      Property, debt, timing, and contact context assembled before review.
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+                      Decision Point
+                    </div>
+                    <div className="mt-2 text-sm leading-6 text-white/70">
+                      Final execution fit still belongs to licensed operators and partners.
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-8 md:px-10">
+          <div className="grid gap-4 lg:grid-cols-3">
+            {proofPoints.map((item, index) => (
+              <div
+                key={item.title}
+                className="rounded-[24px] border border-white/10 bg-white/[0.035] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
+                style={{ animation: `falcoFloat ${6 + index * 0.35}s ease-in-out infinite` }}
+              >
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">
+                  {item.label}
+                </div>
+                <div className="mt-3 text-xl font-semibold text-white">{item.title}</div>
+                <p className="mt-3 text-sm leading-7 text-white/65">{item.body}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -234,14 +355,14 @@ export default async function HomePage() {
               {liveMetrics.map((metric, index) => (
                 <div
                   key={metric.label}
-                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-4 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
+                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-5 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
                   style={{ animation: `falcoFloat ${5 + index * 0.4}s ease-in-out infinite` }}
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
                   </div>
                   <div
-                    className="mt-2 text-lg font-semibold text-white"
+                    className="mt-3 text-2xl font-semibold text-white"
                     style={{
                       backgroundImage:
                         "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(52,211,153,0.95) 50%, rgba(255,255,255,1) 100%)",
@@ -316,13 +437,14 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3">
             {workflow.map((item, index) => (
               <div
                 key={item.step}
-                className="rounded-[26px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
+                className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
                 style={{ animation: `falcoFloat ${6.5 + index * 0.45}s ease-in-out infinite` }}
               >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent" />
                 <div className="text-xs uppercase tracking-[0.22em] text-white/35">
                   {item.step}
                 </div>
@@ -332,8 +454,74 @@ export default async function HomePage() {
                 <p className="mt-4 text-sm leading-7 text-white/68">
                   {item.body}
                 </p>
+                <div className="mt-8 h-1.5 rounded-full bg-white/8">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-white to-emerald-300"
+                    style={{ width: `${(index + 1) * 33}%` }}
+                  />
+                </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
+          <div className="grid gap-10 rounded-[32px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] lg:grid-cols-[0.88fr_1.12fr] md:p-12">
+            <div>
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">
+                Private Vault Surface
+              </div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                Designed to feel like a private market workflow, not a public listing board.
+              </h2>
+              <p className="mt-5 max-w-xl text-white/68 leading-7">
+                The vault is where screened files, packet materials, and partner
+                feedback come together. It is intentionally controlled, gated,
+                and built for decision-making rather than browsing.
+              </p>
+              <div className="mt-8 grid gap-3">
+                {[
+                  "Per-listing NDA and non-circumvention gate",
+                  "Packet delivery inside a restricted vault flow",
+                  "Partner feedback captured on the listing itself",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 text-sm text-white/72"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {vaultPreview.map((item, index) => (
+                <div
+                  key={item.address}
+                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
+                  style={{ animation: `falcoFloat ${6.8 + index * 0.4}s ease-in-out infinite` }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/85">
+                        {item.stage}
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-white/95">
+                        {item.address}
+                      </div>
+                      <div className="mt-1 text-sm text-white/45">{item.county}</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/55">
+                      Restricted
+                    </div>
+                  </div>
+                  <p className="mt-5 max-w-2xl text-sm leading-7 text-white/63">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -356,13 +544,22 @@ export default async function HomePage() {
                 cleaner review briefs, and a tighter review path than public
                 deal circulation.
               </p>
+              <div className="mt-8 rounded-[22px] border border-white/10 bg-black/30 p-5">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/42">
+                  Operator Fit
+                </div>
+                <p className="mt-3 text-sm leading-7 text-white/66">
+                  Best fit is a partner who wants earlier visibility, cleaner files,
+                  and a private review path before deciding whether a file is truly workable.
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               {partnerTypes.map((partner, index) => (
                 <div
                   key={partner}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78 transition duration-300 hover:-translate-y-1 hover:border-white/20"
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25 hover:bg-white/[0.055]"
                   style={{ animation: `falcoFloat ${7 + index * 0.35}s ease-in-out infinite` }}
                 >
                   {partner}
@@ -376,60 +573,61 @@ export default async function HomePage() {
           id="request-access"
           className="mx-auto max-w-7xl px-6 pb-32 md:px-10"
         >
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-emerald-400/20">
-              <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                Request Access
+          <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-12">
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+              <div>
+                <div className="text-xs uppercase tracking-[0.24em] text-white/45">
+                  Next Step
+                </div>
+                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white md:text-4xl">
+                  Enter the review flow through the path that fits.
+                </h3>
+                <p className="mt-5 max-w-xl text-white/68 leading-7">
+                  FALCO is built for approved partners, not open distribution.
+                  Use the path that matches your role and we will keep the review
+                  flow controlled from there.
+                </p>
               </div>
-              <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white">
-                Enter the review flow.
-              </h3>
-              <p className="mt-4 max-w-lg text-white/68 leading-7">
-                Access is limited to qualified operators, investors, and
-                execution partners seeking screened opportunity flow.
-              </p>
-              <div className="mt-8">
-                <Link
-                  href="/request-access"
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90"
-                >
-                  Request Access
-                </Link>
-              </div>
-            </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)] md:p-10 transition duration-300 hover:border-white/20">
-              <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                Direct Paths
-              </div>
-              <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white">
-                Route the right inquiry fast.
-              </h3>
-
-              <div className="mt-6 space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
                 <Link
                   href="/partner-login"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
+                  className="rounded-[24px] border border-white/10 bg-black/35 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]"
                 >
-                  <span>Vault Login</span>
-                  <span className="text-white/40">&gt;</span>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">
+                    Existing Partner
+                  </div>
+                  <div className="mt-3 text-2xl font-semibold text-white">Vault Login</div>
+                  <p className="mt-3 text-sm leading-7 text-white/62">
+                    Enter the restricted vault and review screened files already in flow.
+                  </p>
+                </Link>
+
+                <Link
+                  href="/request-access"
+                  className="rounded-[24px] border border-white/10 bg-white p-6 text-black transition hover:-translate-y-1 hover:bg-white/92 shadow-[0_18px_60px_rgba(255,255,255,0.12)]"
+                >
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-black/45">
+                    New Partner
+                  </div>
+                  <div className="mt-3 text-2xl font-semibold">Request Access</div>
+                  <p className="mt-3 text-sm leading-7 text-black/68">
+                    Apply for access if you want screened early-stage distress files and packets.
+                  </p>
                 </Link>
 
                 <Link
                   href="/submit-opportunity"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
+                  className="rounded-[24px] border border-white/10 bg-black/35 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]"
                 >
-                  <span>Submit Opportunity</span>
-                  <span className="text-white/40">&gt;</span>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">
+                    Send A File
+                  </div>
+                  <div className="mt-3 text-2xl font-semibold text-white">Submit Opportunity</div>
+                  <p className="mt-3 text-sm leading-7 text-white/62">
+                    Route a file into the system if it belongs in the review pipeline.
+                  </p>
                 </Link>
-
-                <a
-                  href="mailto:access@falco.llc?subject=Falco%20Partner%20Inquiry"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/78 transition hover:border-white/25 hover:bg-white/[0.06]"
-                >
-                  <span>Partner Inquiry</span>
-                  <span className="text-white/40">&gt;</span>
-                </a>
               </div>
             </div>
           </div>
