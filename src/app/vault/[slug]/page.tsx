@@ -1155,7 +1155,7 @@ export default function VaultListingPage() {
                 )}
 
                 <a
-                  href="mailto:access@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
+                  href="mailto:falco@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 text-sm font-semibold text-white/88 transition hover:border-white/20 hover:bg-white/[0.09]"
                 >
                   <span>Email FALCO</span>
