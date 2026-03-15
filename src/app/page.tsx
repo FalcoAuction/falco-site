@@ -28,24 +28,6 @@ const partnerTypes = [
   "Distress operators",
 ]
 
-const proofPoints = [
-  {
-    label: "What It Is",
-    title: "Private review flow",
-    body: "A screened partner surface for distressed-property files, not a public listing marketplace.",
-  },
-  {
-    label: "What It Is Not",
-    title: "Not seller-facing",
-    body: "The vault is not a seller proposal, and it does not pretend every file is ready to execute.",
-  },
-  {
-    label: "Why It Matters",
-    title: "Cleaner starting point",
-    body: "Operators get a clearer file than raw notice scraping, with timing, debt, and contact context assembled upfront.",
-  },
-]
-
 const vaultPreview = [
   {
     stage: "Pre-Foreclosure Review",
@@ -64,12 +46,6 @@ const vaultPreview = [
   },
 ]
 
-const updateFeed = [
-  "Early-stage pre-foreclosure files enrich automatically before partner review.",
-  "Sale timing updates in the vault when the live sale date changes.",
-  "Partner feedback now lives inside each vault listing instead of the operator desk.",
-]
-
 export default async function HomePage() {
   const metrics = await getHomeMetrics()
 
@@ -86,12 +62,6 @@ export default async function HomePage() {
         @keyframes falcoFloat {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-8px); }
-        }
-
-        @keyframes falcoFlow {
-          0% { transform: translateX(-14px); opacity: 0.35; }
-          50% { opacity: 1; }
-          100% { transform: translateX(14px); opacity: 0.35; }
         }
 
         @keyframes falcoPulse {
@@ -226,7 +196,7 @@ export default async function HomePage() {
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-                      Live System Canvas
+                      Live System
                     </div>
                     <div className="mt-2 text-xl font-semibold text-white">
                       Signal to Vault
@@ -234,101 +204,44 @@ export default async function HomePage() {
                   </div>
 
                   <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-                    Live System
+                    Active
                   </div>
                 </div>
 
-                <div className="relative mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-black/55 p-5">
-                  <div className="absolute inset-x-10 top-[70px] hidden h-px bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent lg:block" />
-                  <div
-                    className="absolute left-[18%] right-[18%] top-[64px] hidden h-3 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.55),transparent_62%)] blur-md lg:block"
-                    style={{ animation: "falcoFlow 4.6s linear infinite" }}
-                  />
-
-                  <div className="grid gap-4 lg:grid-cols-4">
-                    {[
-                      { label: "Detect", value: String(metrics.trackedLeads), note: "Tracked files" },
-                      { label: "Screen", value: String(metrics.activeCounties), note: "Active counties" },
-                      { label: "Brief", value: String(metrics.packetsInVault), note: "Vault packets" },
-                      { label: "Route", value: String(metrics.approvedPartners), note: "Approved partners" },
-                    ].map((item, index) => (
-                      <div
-                        key={item.label}
-                        className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition duration-300 hover:border-emerald-400/25 hover:bg-white/[0.055]"
-                      >
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300"
-                          style={{ animation: `falcoPulse ${2 + index * 0.35}s ease-in-out infinite` }}
-                        >
-                          0{index + 1}
-                        </div>
-                        <div className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/40">
-                          {item.label}
-                        </div>
-                        <div className="mt-2 text-2xl font-semibold text-white">{item.value}</div>
-                        <div className="mt-1 text-sm text-white/55">{item.note}</div>
+                <div className="mt-6 space-y-3">
+                  {[
+                    {
+                      step: "01",
+                      title: "Detect early distress",
+                      body: "Targeted sources are watched before files become obvious to the broader market.",
+                    },
+                    {
+                      step: "02",
+                      title: "Build the file",
+                      body: "Property, debt, timing, and contact context are assembled into a cleaner review record.",
+                    },
+                    {
+                      step: "03",
+                      title: "Route to partners",
+                      body: "The strongest files move into the restricted vault for partner review and validation.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.step}
+                      className="flex gap-4 rounded-2xl border border-white/10 bg-black/35 px-4 py-4"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300">
+                        {item.step}
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    {updateFeed.map((item) => (
-                      <div
-                        key={item}
-                        className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-white/62"
-                      >
-                        {item}
+                      <div>
+                        <div className="text-sm font-semibold text-white">{item.title}</div>
+                        <div className="mt-1 text-sm leading-6 text-white/60">{item.body}</div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                      Review Surface
                     </div>
-                    <div className="mt-2 text-sm leading-6 text-white/70">
-                      A controlled partner vault, not open deal circulation.
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                      File Standard
-                    </div>
-                    <div className="mt-2 text-sm leading-6 text-white/70">
-                      Property, debt, timing, and contact context assembled before review.
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">
-                      Decision Point
-                    </div>
-                    <div className="mt-2 text-sm leading-6 text-white/70">
-                      Final execution fit still belongs to licensed operators and partners.
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-6 pb-8 md:px-10">
-          <div className="grid gap-4 lg:grid-cols-3">
-            {proofPoints.map((item, index) => (
-              <div
-                key={item.title}
-                className="rounded-[24px] border border-white/10 bg-white/[0.035] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)]"
-                style={{ animation: `falcoFloat ${6 + index * 0.35}s ease-in-out infinite` }}
-              >
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">
-                  {item.label}
-                </div>
-                <div className="mt-3 text-xl font-semibold text-white">{item.title}</div>
-                <p className="mt-3 text-sm leading-7 text-white/65">{item.body}</p>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -373,6 +286,35 @@ export default async function HomePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+        >
+          <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
+            <div>
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">
+                Why It Matters
+              </div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                A cleaner starting point for serious operators.
+              </h2>
+            </div>
+
+            <div className="space-y-5 text-white/68">
+              <p className="leading-7">
+                FALCO is built to give operators a cleaner file than raw notice
+                scraping. Instead of starting with scattered public fragments,
+                the review begins with the property, debt, timing, and contact
+                picture already assembled.
+              </p>
+              <p className="leading-7">
+                That does not mean every file is immediately workable. It means
+                the strongest files start from a better place, with less noise
+                and a clearer path to decide whether they are worth real attention.
+              </p>
             </div>
           </div>
         </section>
