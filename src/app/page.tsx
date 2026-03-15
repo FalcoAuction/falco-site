@@ -50,20 +50,31 @@ export default async function HomePage() {
   const metrics = await getHomeMetrics()
 
   const liveMetrics = [
-    { label: "Active Counties", value: String(metrics.activeCounties) },
-    { label: "Tracked Leads", value: String(metrics.trackedLeads) },
-    { label: "Packets in Vault", value: String(metrics.packetsInVault) },
-    { label: "Approved Partners", value: String(metrics.approvedPartners) },
+    {
+      label: "Active Counties",
+      value: String(metrics.activeCounties),
+      note: "Targeted coverage",
+    },
+    {
+      label: "Tracked Leads",
+      value: String(metrics.trackedLeads),
+      note: "Current review universe",
+    },
+    {
+      label: "Packets in Vault",
+      value: String(metrics.packetsInVault),
+      note: "Restricted live packets",
+    },
+    {
+      label: "Approved Partners",
+      value: String(metrics.approvedPartners),
+      note: "Access-cleared operators",
+    },
   ]
 
   return (
     <main className="min-h-screen bg-black text-white">
       <style>{`
-        @keyframes falcoFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-
         @keyframes falcoPulse {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.15); }
@@ -149,9 +160,14 @@ export default async function HomePage() {
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
                 It is not a public listing feed and it is not a seller proposal.
-                Approved partners get access to a restricted vault and per-listing
-                packet materials after NDA and non-circumvention acceptance.
+                It is a private review system built to help serious partners
+                decide what deserves real attention.
               </p>
+
+              <div className="mt-6 max-w-2xl rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/58">
+                Packeted files have already held up under direct operator review.
+                Final execution fit still belongs to the partner side.
+              </div>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
@@ -177,10 +193,8 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div
-              className="rounded-[30px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
-            >
-              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6">
+            <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-7 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-7">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-white/45">
@@ -196,7 +210,7 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-3">
+                <div className="mt-7 space-y-4">
                   {[
                     {
                       step: "01",
@@ -216,7 +230,7 @@ export default async function HomePage() {
                   ].map((item) => (
                     <div
                       key={item.step}
-                      className="flex gap-4 rounded-2xl border border-white/10 bg-black/35 px-4 py-4"
+                      className="flex gap-4 rounded-2xl border border-white/10 bg-black/32 px-5 py-5"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300">
                         {item.step}
@@ -227,6 +241,10 @@ export default async function HomePage() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-white/10 bg-black/28 px-5 py-4 text-sm leading-6 text-white/56">
+                  Restricted vault access, per-listing terms, and partner-side judgment stay in place all the way through the review flow.
                 </div>
               </div>
             </div>
@@ -253,7 +271,7 @@ export default async function HomePage() {
               {liveMetrics.map((metric) => (
                 <div
                   key={metric.label}
-                  className="rounded-2xl border border-white/10 bg-black/40 px-4 py-5 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
+                  className="rounded-2xl border border-white/10 bg-black/38 px-5 py-5 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
@@ -270,6 +288,9 @@ export default async function HomePage() {
                     }}
                   >
                     {metric.value}
+                  </div>
+                  <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/38">
+                    {metric.note}
                   </div>
                 </div>
               ))}
@@ -303,8 +324,8 @@ export default async function HomePage() {
                 restricted review vault.
               </p>
               <p className="leading-7">
-                The goal is not to claim that every file is ready to move immediately.
-                The goal is to give serious operators a better starting point than raw notice scraping.
+                It is built to help serious operators start from a cleaner file,
+                not from raw courthouse fragments.
               </p>
             </div>
           </div>
@@ -382,6 +403,12 @@ export default async function HomePage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
+          <div className="mb-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-white/40">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/14 to-transparent" />
+            Restricted View
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/14 to-transparent" />
+          </div>
+
           <div className="grid gap-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] lg:grid-cols-[0.88fr_1.12fr] md:p-12">
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
@@ -393,13 +420,12 @@ export default async function HomePage() {
               <p className="mt-5 max-w-xl text-white/68 leading-7">
                 The vault is where screened files, packet materials, and partner
                 feedback come together. It is intentionally controlled, gated,
-                and built for decision-making rather than browsing.
+                and built for decision-making rather than casual browsing.
               </p>
               <div className="mt-8 grid gap-3">
                 {[
                   "Per-listing NDA and non-circumvention gate",
-                  "Packet delivery inside a restricted vault flow",
-                  "Partner feedback captured on the listing itself",
+                  "Packet delivery inside the listing workflow",
                 ].map((item) => (
                   <div
                     key={item}
@@ -415,20 +441,20 @@ export default async function HomePage() {
               {vaultPreview.map((item) => (
                 <div
                   key={`${item.stage}-${item.county}`}
-                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
+                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/85">
                         {item.stage}
                       </div>
-                      <div className="mt-2 text-2xl font-semibold text-white/95">{item.county}</div>
+                      <div className="mt-2 text-xl font-semibold text-white/95">{item.county}</div>
                     </div>
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/55">
-                      Restricted
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-white/50">
+                      Private
                     </div>
                   </div>
-                  <p className="mt-5 max-w-2xl text-sm leading-7 text-white/63">
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60">
                     {item.detail}
                   </p>
                 </div>
@@ -500,7 +526,7 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-[0.95fr_1.2fr_0.95fr]">
                 <Link
                   href="/partner-login"
                   className="rounded-[24px] border border-white/10 bg-black/35 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]"
@@ -516,7 +542,7 @@ export default async function HomePage() {
 
                 <Link
                   href="/request-access"
-                  className="rounded-[24px] border border-white/10 bg-white p-6 text-black transition hover:-translate-y-1 hover:bg-white/92 shadow-[0_18px_60px_rgba(255,255,255,0.12)]"
+                  className="rounded-[24px] border border-white/10 bg-white p-7 text-black transition hover:-translate-y-1 hover:bg-white/92 shadow-[0_22px_70px_rgba(255,255,255,0.16)]"
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-black/45">
                     New Partner
