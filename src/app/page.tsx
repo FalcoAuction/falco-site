@@ -73,7 +73,7 @@ export default async function HomePage() {
   ]
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="falco-mobile-calm min-h-screen bg-black text-white">
       <style>{`
         @keyframes falcoPulse {
           0%, 100% { opacity: 0.55; transform: scale(1); }
@@ -108,6 +108,13 @@ export default async function HomePage() {
         @keyframes falcoDrift {
           0%, 100% { transform: translateY(0px); opacity: 0.72; }
           50% { transform: translateY(-3px); opacity: 1; }
+        }
+
+        @media (max-width: 767px) {
+          .falco-mobile-calm * {
+            animation: none !important;
+            transition-duration: 0ms !important;
+          }
         }
       `}</style>
 
