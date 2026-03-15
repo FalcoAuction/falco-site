@@ -111,7 +111,7 @@ export default async function HomePage() {
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Upstream Distress Origination
+                Early Distress Review System
               </div>
 
               <h1 className="max-w-4xl text-5xl font-semibold leading-[0.95] tracking-[-0.04em] text-white md:text-7xl">
@@ -124,14 +124,14 @@ export default async function HomePage() {
 
               <p className="mt-8 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
                 FALCO finds distressed-property files early, cleans them up,
-                and turns the strongest ones into operator review briefs for
-                controlled partner access.
+                and turns the strongest ones into review briefs for approved
+                auction, broker, and execution partners.
               </p>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-                Approved partners receive access to a restricted vault,
-                packet materials, and controlled review paths after NDA and
-                non-circumvention acceptance.
+                It is not a public listing feed and it is not a seller proposal.
+                Approved partners get access to a restricted vault and per-listing
+                packet materials after NDA and non-circumvention acceptance.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -271,21 +271,21 @@ export default async function HomePage() {
                 What It Is
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A private system for finding, cleaning up, and organizing distressed-property opportunities before they become crowded.
+                A private system for finding and screening distressed-property files before they become crowded.
               </h2>
             </div>
 
             <div className="space-y-5 text-white/68">
               <p className="leading-7">
                 FALCO is not a public listing feed, and it is not a seller-facing
-                auction proposal. It is an upstream screening system built to
-                take scattered distress data and turn it into a cleaner file an
+                auction proposal. It is a private screening system built to take
+                scattered distress data and turn it into a cleaner file an
                 auctioneer, broker, or operator can review quickly.
               </p>
               <p className="leading-7">
                 In plain terms, the system looks for distress early, pulls
-                together the property, debt, timing, and contact picture,
-                filters out weaker files, and packages the stronger ones into a
+                together the property, debt, timing, and contact picture, and
+                filters out weaker files before stronger ones are placed in a
                 restricted review vault.
               </p>
               <p className="leading-7">
@@ -307,12 +307,12 @@ export default async function HomePage() {
               How It Works
             </div>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-              Built to move from raw distress signal to operator review.
+              Built to move from raw distress signal to partner review.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
               FALCO does the early sourcing and file assembly work first, then
-              puts the strongest opportunities in front of licensed operators
-              and partners for final execution judgment.
+              puts the strongest files in front of approved operators and
+              partners for final real-world judgment.
             </p>
           </div>
 
@@ -349,11 +349,12 @@ export default async function HomePage() {
                 Partners
               </div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                Built for serious operators, not broad distribution.
+                Built for serious operators, not public deal circulation.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
-                FALCO is built for aligned partners who want cleaner candidates
-                and a tighter review path than public deal circulation.
+                FALCO is built for aligned partners who want earlier files,
+                cleaner review briefs, and a tighter review path than public
+                deal circulation.
               </p>
             </div>
 

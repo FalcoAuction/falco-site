@@ -30,6 +30,9 @@ type VaultListing = {
   auctionReadiness?: string
   equityBand?: string
   dtsDays?: number | null
+  currentSaleDate?: string
+  originalSaleDate?: string
+  distressRecordedAt?: string
   contactReady?: boolean
   propertyIdentifier?: string
   ownerName?: string
@@ -56,6 +59,40 @@ type VaultListing = {
   routingReservedByEmail?: string
   routingReservedByName?: string
   pursuitRequestCount?: number
+}
+
+function formatDisplayDate(value?: string) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return "Unavailable"
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  const parsed = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(raw)
+
+  if (Number.isNaN(parsed.getTime())) return raw
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+}
+
+function saleTimingCopy(listing: VaultListing) {
+  if (listing.currentSaleDate) {
+    if (typeof listing.dtsDays === "number") {
+      if (listing.dtsDays < 0) return `Expired ${formatDisplayDate(listing.currentSaleDate)}`
+      if (listing.dtsDays === 0) return `Sale Today • ${formatDisplayDate(listing.currentSaleDate)}`
+      return `${listing.dtsDays} day${listing.dtsDays === 1 ? "" : "s"} • ${formatDisplayDate(
+        listing.currentSaleDate
+      )}`
+    }
+    return formatDisplayDate(listing.currentSaleDate)
+  }
+
+  return listing.auctionWindow
 }
 
 function statusClasses(status: VaultListingStatus) {
@@ -178,11 +215,16 @@ function ListingCard({ listing }: { listing: VaultListing }) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Auction Window
-          </div>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Sale Timing</div>
           <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.auctionWindow}
+            {saleTimingCopy(listing)}
+          </div>
+          <div className="mt-2 text-xs text-white/50">
+            {listing.distressRecordedAt
+              ? `Recorded ${formatDisplayDate(listing.distressRecordedAt)}`
+              : listing.originalSaleDate
+              ? `Originally ${formatDisplayDate(listing.originalSaleDate)}`
+              : "Timeline refreshes automatically"}
           </div>
         </div>
 
@@ -552,14 +594,14 @@ export default function VaultPage() {
             </div>
 
             <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-6xl">
-              Restricted screened opportunity flow for approved FALCO partners.
+              Screened distressed-property files for approved FALCO partners.
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-              The vault contains heavily filtered opportunities, operator-facing briefs, and controlled
-              distribution paths. Full listing access is available only to approved users and remains
-              gated by NDA and non-circumvention acceptance. Final execution viability and auction-path
-              fit remain subject to licensed/operator validation.
+              The vault contains screened files, review briefs, and packet
+              materials for approved partners. Full listing access is limited to
+              approved users and remains gated by NDA and non-circumvention
+              acceptance. Final execution fit still depends on partner review.
             </p>
 
             <div className="mt-6 text-sm text-white/45">

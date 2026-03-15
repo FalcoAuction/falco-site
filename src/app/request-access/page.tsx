@@ -102,8 +102,8 @@ export default function RequestAccessPage() {
 
             <p className="mt-6 max-w-xl text-base leading-7 text-white/68 md:text-lg">
               Access is limited to qualified capital, execution partners, and
-              aligned operators seeking structured exposure to upstream distress
-              opportunity flow.
+              aligned operators who want screened early-stage distress files and
+              a controlled review path.
             </p>
 
             <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
@@ -114,7 +114,7 @@ export default function RequestAccessPage() {
               <div className="mt-4 space-y-3 text-sm leading-7 text-white/68">
                 <div>1. Submit your access request.</div>
                 <div>2. FALCO reviews your role, capacity, and fit.</div>
-                <div>3. Approved users receive access to restricted vault listings.</div>
+                <div>3. Approved users receive access to restricted vault listings and packets.</div>
                 <div>4. Individual listings remain gated behind NDA and non-circumvention acceptance.</div>
               </div>
             </div>
