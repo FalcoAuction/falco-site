@@ -49,6 +49,9 @@ type VaultListing = {
   auctionReadiness?: string
   equityBand?: string
   dtsDays?: number | null
+  currentSaleDate?: string
+  originalSaleDate?: string
+  distressRecordedAt?: string
   contactReady?: boolean
   propertyIdentifier?: string
   ownerName?: string
@@ -197,6 +200,56 @@ function detailValue(value?: string | number | null) {
   if (typeof value === "number") return String(value)
   if (typeof value === "string" && value.trim()) return value
   return "Unavailable"
+}
+
+function formatDisplayDate(value?: string) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return "Unavailable"
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  const parsed = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(raw)
+
+  if (Number.isNaN(parsed.getTime())) return raw
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+}
+
+function saleWindowHeadline(listing: VaultListing) {
+  if (listing.currentSaleDate) {
+    if (typeof listing.dtsDays === "number") {
+      if (listing.dtsDays < 0) return "Expired"
+      if (listing.dtsDays === 0) return "Sale Today"
+      return `${listing.dtsDays} Day${listing.dtsDays === 1 ? "" : "s"}`
+    }
+    return formatDisplayDate(listing.currentSaleDate)
+  }
+
+  return listing.auctionWindow || "Unavailable"
+}
+
+function saleWindowDetail(listing: VaultListing) {
+  const parts: string[] = []
+
+  if (listing.currentSaleDate) {
+    parts.push(`Sale ${formatDisplayDate(listing.currentSaleDate)}`)
+  } else if (listing.auctionWindow) {
+    parts.push(listing.auctionWindow)
+  }
+
+  if (listing.distressRecordedAt) {
+    parts.push(`Recorded ${formatDisplayDate(listing.distressRecordedAt)}`)
+  } else if (listing.originalSaleDate && listing.originalSaleDate !== listing.currentSaleDate) {
+    parts.push(`Originally ${formatDisplayDate(listing.originalSaleDate)}`)
+  }
+
+  return parts.join(" • ") || "Timeline refreshes automatically"
 }
 
 function distressChipClasses(type?: string) {
@@ -974,9 +1027,9 @@ export default function VaultListingPage() {
                   <div className={`rounded-2xl border p-5 ${dtsChipClasses(listing.dtsDays)}`}>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">Sale Window</div>
                     <div className="mt-2 text-2xl font-semibold text-current">
-                      {typeof listing.dtsDays === "number" ? `${listing.dtsDays} Days` : "Unavailable"}
+                      {saleWindowHeadline(listing)}
                     </div>
-                    <div className="mt-2 text-sm text-current/80">{detailValue(listing.auctionWindow)}</div>
+                    <div className="mt-2 text-sm text-current/80">{saleWindowDetail(listing)}</div>
                   </div>
                   <div
                     className={`rounded-2xl border p-5 ${
@@ -1012,16 +1065,22 @@ export default function VaultListingPage() {
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.market)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Auction Window</div>
-                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.auctionWindow)}</div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Scheduled Sale</div>
+                    <div className="mt-2 text-base font-medium text-white">
+                      {listing.currentSaleDate ? formatDisplayDate(listing.currentSaleDate) : detailValue(listing.auctionWindow)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity Band</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.equityBand)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
-                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.lastSaleDate)}</div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Recorded Date</div>
+                    <div className="mt-2 text-sm text-white/80">
+                      {listing.distressRecordedAt
+                        ? formatDisplayDate(listing.distressRecordedAt)
+                        : detailValue(listing.originalSaleDate)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Parcel / APN</div>
@@ -1041,6 +1100,10 @@ export default function VaultListingPage() {
                     <div>
                       <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Name</div>
                       <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerName)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
+                      <div className="mt-2 text-sm text-white/80">{detailValue(listing.lastSaleDate)}</div>
                     </div>
                     <div>
                       <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Source Lead</div>
@@ -1082,6 +1145,8 @@ export default function VaultListingPage() {
                 ) : (
                   <a
                     href={listing.packetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-between rounded-2xl border border-white/10 bg-white px-5 py-4 text-sm font-semibold text-black transition hover:bg-white/90"
                   >
                     <span>Open Packet</span>
