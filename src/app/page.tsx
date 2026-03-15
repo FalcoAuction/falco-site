@@ -141,7 +141,7 @@ export default async function HomePage() {
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Private Distress Review System
+                Early Distress Review
               </div>
 
               <h1 className="max-w-5xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl">
@@ -159,9 +159,9 @@ export default async function HomePage() {
               </p>
 
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-                It is not a public listing feed and it is not a seller proposal.
-                It is a private review system built to help serious partners
-                decide what deserves real attention.
+                Not a public listing feed. Not a seller proposal. A private
+                review system built to help serious partners decide what deserves
+                real attention.
               </p>
 
               <div className="mt-6 max-w-2xl rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/58">
@@ -261,9 +261,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section
-          className="mx-auto max-w-7xl px-6 pb-16 md:px-10"
-        >
+        <section className="mx-auto max-w-7xl px-6 pb-20 md:px-10">
           <div
             className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5"
           >
@@ -305,12 +303,12 @@ export default async function HomePage() {
           <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">What It Is</div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
                 A private system for finding and screening distressed-property files before they become crowded.
               </h2>
             </div>
 
-            <div className="space-y-5 text-white/68">
+            <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
                 FALCO is not a public listing feed, and it is not a seller-facing
                 auction proposal. It is a private screening system built to take
@@ -337,12 +335,12 @@ export default async function HomePage() {
               <div className="text-xs uppercase tracking-[0.26em] text-emerald-300/80">
                 Why It Matters
               </div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
                 A cleaner starting point for serious operators.
               </h2>
             </div>
 
-            <div className="space-y-5 text-white/68">
+            <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
                 FALCO is built to give operators a cleaner file than raw notice scraping.
                 Instead of starting with scattered public fragments, review begins with
@@ -368,10 +366,10 @@ export default async function HomePage() {
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
               Built to move from raw distress signal to partner review.
             </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and file assembly work first, then
-              puts the strongest files in front of approved operators and
-              partners for final real-world judgment.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
+              FALCO does the early sourcing and file assembly first, then puts
+              the strongest files in front of approved partners for final
+              real-world judgment.
             </p>
           </div>
 
@@ -414,10 +412,10 @@ export default async function HomePage() {
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
                 Private Vault Surface
               </div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
                 Designed to feel like a private market workflow, not a public listing board.
               </h2>
-              <p className="mt-5 max-w-xl text-white/68 leading-7">
+              <p className="mt-5 max-w-lg text-white/68 leading-7">
                 The vault is where screened files, packet materials, and partner
                 feedback come together. It is intentionally controlled, gated,
                 and built for decision-making rather than casual browsing.
@@ -474,7 +472,7 @@ export default async function HomePage() {
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
                 Partners
               </div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
                 Built for serious operators, not public deal circulation.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
@@ -516,10 +514,10 @@ export default async function HomePage() {
                 <div className="text-xs uppercase tracking-[0.24em] text-white/45">
                   Next Step
                 </div>
-                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white md:text-4xl">
+                <h3 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] text-white md:text-4xl">
                   Enter the review flow through the path that fits.
                 </h3>
-                <p className="mt-5 max-w-xl text-white/68 leading-7">
+                <p className="mt-5 max-w-lg text-white/68 leading-7">
                   FALCO is built for approved partners, not open distribution.
                   Use the path that matches your role and we will keep the review
                   flow controlled from there.
