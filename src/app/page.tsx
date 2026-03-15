@@ -80,6 +80,21 @@ export default async function HomePage() {
           50% { opacity: 1; transform: scale(1.15); }
         }
 
+        @keyframes falcoReveal {
+          0% { opacity: 0; transform: translateY(12px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes falcoSignal {
+          0%, 100% { transform: translateX(0); opacity: 0.3; }
+          50% { transform: translateX(24px); opacity: 0.75; }
+        }
+
+        @keyframes falcoTrace {
+          0%, 100% { opacity: 0.28; }
+          50% { opacity: 0.7; }
+        }
+
         @keyframes falcoShimmer {
           0% { background-position: 0% 50%; }
           100% { background-position: 100% 50%; }
@@ -144,7 +159,10 @@ export default async function HomePage() {
                 Early Distress Review
               </div>
 
-              <h1 className="max-w-5xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl">
+              <h1
+                className="max-w-5xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl"
+                style={{ animation: "falcoReveal 700ms ease-out both" }}
+              >
                 Find distress sooner.
                 <br />
                 Underwrite faster.
@@ -152,13 +170,19 @@ export default async function HomePage() {
                 Route cleaner deals.
               </h1>
 
-              <p className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl">
+              <p
+                className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl"
+                style={{ animation: "falcoReveal 820ms ease-out both" }}
+              >
                 FALCO finds distressed-property files early, cleans them up, and
                 turns the strongest ones into private review briefs for approved
                 partners.
               </p>
 
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <div
+                className="mt-10 flex flex-col gap-4 sm:flex-row"
+                style={{ animation: "falcoReveal 940ms ease-out both" }}
+              >
                 <Link
                   href="/partner-login"
                   className="inline-flex items-center justify-center rounded-xl border border-white/15 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.06]"
@@ -182,7 +206,10 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+            <div
+              className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+              style={{ animation: "falcoReveal 900ms ease-out both" }}
+            >
               <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
                   <div>
@@ -202,6 +229,12 @@ export default async function HomePage() {
                 <p className="mt-5 text-sm leading-6 text-white/56">
                   Three steps from early signal to partner review.
                 </p>
+
+                <div className="mt-4 rounded-full bg-white/8 p-[1px]">
+                  <div className="relative h-1.5 overflow-hidden rounded-full bg-black/35">
+                    <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-gradient-to-r from-emerald-300/0 via-emerald-300 to-emerald-300/0" style={{ animation: "falcoSignal 3.8s ease-in-out infinite" }} />
+                  </div>
+                </div>
 
                 <div className="mt-5 space-y-3">
                   {[
@@ -224,6 +257,7 @@ export default async function HomePage() {
                     <div
                       key={item.step}
                       className="flex gap-4 rounded-2xl border border-white/10 bg-black/32 px-4 py-4"
+                      style={{ animation: `falcoReveal ${1050 + Number(item.step) * 90}ms ease-out both` }}
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-xs text-emerald-300">
                         {item.step}
@@ -247,6 +281,9 @@ export default async function HomePage() {
               style={{ animation: "falcoPulse 1.5s ease-in-out infinite" }}
             />
             Live System Snapshot
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] tracking-[0.18em] text-white/40">
+              Updated Recently
+            </span>
           </div>
         </section>
 
@@ -259,9 +296,14 @@ export default async function HomePage() {
                 <div
                   key={metric.label}
                   className="rounded-2xl border border-white/10 bg-black/38 px-5 py-5 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
+                  style={{ animation: "falcoReveal 650ms ease-out both" }}
                 >
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                  <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-emerald-400/80 shadow-[0_0_10px_rgba(16,185,129,0.8)]"
+                      style={{ animation: "falcoPulse 1.8s ease-in-out infinite" }}
+                    />
                   </div>
                   <div
                     className="mt-3 text-2xl font-semibold text-white"
@@ -362,11 +404,13 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="relative grid gap-6 lg:grid-cols-3">
+            <div className="pointer-events-none absolute left-[12%] right-[12%] top-0 hidden h-px bg-gradient-to-r from-transparent via-emerald-300/28 to-transparent lg:block" style={{ animation: "falcoTrace 4.2s ease-in-out infinite" }} />
             {workflow.map((item, index) => (
               <div
                 key={item.step}
                 className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
+                style={{ animation: `falcoReveal ${720 + index * 120}ms ease-out both` }}
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent" />
                 <div className="text-xs uppercase tracking-[0.22em] text-white/35">
@@ -429,6 +473,7 @@ export default async function HomePage() {
                 <div
                   key={`${item.stage}-${item.county}`}
                   className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
+                  style={{ animation: "falcoReveal 700ms ease-out both" }}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
