@@ -50,19 +50,16 @@ const vaultPreview = [
   {
     stage: "Pre-Foreclosure Review",
     county: "Hamilton County",
-    address: "208 N Saint Marks Ave",
     detail: "Owner and debt context assembled. Early enough for operator review.",
   },
   {
     stage: "Foreclosure",
     county: "Rutherford County",
-    address: "2050 Alexander Blvd",
     detail: "Sale timing, record history, and packet materials in one restricted listing.",
   },
   {
     stage: "Partner Feedback",
     county: "Controlled Access",
-    address: "Vault Listing Response",
     detail: "Approved partners can rate and comment directly inside the listing workflow.",
   },
 ]
@@ -498,7 +495,7 @@ export default async function HomePage() {
             <div className="grid gap-4">
               {vaultPreview.map((item, index) => (
                 <div
-                  key={item.address}
+                  key={`${item.stage}-${item.county}`}
                   className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
                   style={{ animation: `falcoFloat ${6.8 + index * 0.4}s ease-in-out infinite` }}
                 >
@@ -507,10 +504,7 @@ export default async function HomePage() {
                       <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/85">
                         {item.stage}
                       </div>
-                      <div className="mt-2 text-2xl font-semibold text-white/95">
-                        {item.address}
-                      </div>
-                      <div className="mt-1 text-sm text-white/45">{item.county}</div>
+                      <div className="mt-2 text-2xl font-semibold text-white/95">{item.county}</div>
                     </div>
                     <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/55">
                       Restricted
