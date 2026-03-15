@@ -89,7 +89,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:88px_88px] opacity-[0.08]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:88px_88px] opacity-[0.05]" />
 
         <div
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]"
@@ -153,17 +153,6 @@ export default async function HomePage() {
                 packet materials after NDA and non-circumvention acceptance.
               </p>
 
-              <div className="mt-8 inline-flex flex-wrap items-center gap-3 rounded-[20px] border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white/65 shadow-[0_18px_50px_rgba(0,0,0,0.34)]">
-                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-emerald-300">
-                  Live Now
-                </span>
-                <span>{metrics.trackedLeads} tracked files</span>
-                <span className="text-white/22">•</span>
-                <span>{metrics.packetsInVault} live vault packets</span>
-                <span className="text-white/22">•</span>
-                <span>{metrics.approvedPartners} approved partners</span>
-              </div>
-
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/partner-login"
@@ -190,7 +179,6 @@ export default async function HomePage() {
 
             <div
               className="rounded-[30px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl"
-              style={{ animation: "falcoFloat 7s ease-in-out infinite" }}
             >
               <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-5">
@@ -256,17 +244,16 @@ export default async function HomePage() {
         </section>
 
         <section
-          className="mx-auto max-w-7xl px-6 pb-10 md:px-10"
+          className="mx-auto max-w-7xl px-6 pb-16 md:px-10"
         >
           <div
             className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-5"
           >
             <div className="grid gap-4 md:grid-cols-4">
-              {liveMetrics.map((metric, index) => (
+              {liveMetrics.map((metric) => (
                 <div
                   key={metric.label}
                   className="rounded-2xl border border-white/10 bg-black/40 px-4 py-5 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_0_35px_rgba(16,185,129,0.10)]"
-                  style={{ animation: `falcoFloat ${5 + index * 0.4}s ease-in-out infinite` }}
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
                     {metric.label}
@@ -292,44 +279,11 @@ export default async function HomePage() {
 
         <section
           className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
+          id="what-it-is"
         >
           <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
-              <div className="text-xs uppercase tracking-[0.26em] text-white/45">
-                Why It Matters
-              </div>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A cleaner starting point for serious operators.
-              </h2>
-            </div>
-
-            <div className="space-y-5 text-white/68">
-              <p className="leading-7">
-                FALCO is built to give operators a cleaner file than raw notice
-                scraping. Instead of starting with scattered public fragments,
-                the review begins with the property, debt, timing, and contact
-                picture already assembled.
-              </p>
-              <p className="leading-7">
-                That does not mean every file is immediately workable. It means
-                the strongest files start from a better place, with less noise
-                and a clearer path to decide whether they are worth real attention.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="mx-auto max-w-7xl px-6 pb-24 md:px-10"
-          id="what-it-is"
-        >
-          <div
-            className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12"
-          >
-            <div>
-              <div className="text-xs uppercase tracking-[0.26em] text-white/45">
-                What It Is
-              </div>
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">What It Is</div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
                 A private system for finding and screening distressed-property files before they become crowded.
               </h2>
@@ -349,10 +303,34 @@ export default async function HomePage() {
                 restricted review vault.
               </p>
               <p className="leading-7">
-                The goal is not to claim that every file is ready to move
-                immediately. The goal is to give serious operators a better
-                starting point than raw notice scraping and a cleaner path to
-                decide whether a file is actually workable.
+                The goal is not to claim that every file is ready to move immediately.
+                The goal is to give serious operators a better starting point than raw notice scraping.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
+          <div className="grid gap-10 rounded-[30px] border border-emerald-400/14 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0.02))] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
+            <div>
+              <div className="text-xs uppercase tracking-[0.26em] text-emerald-300/80">
+                Why It Matters
+              </div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                A cleaner starting point for serious operators.
+              </h2>
+            </div>
+
+            <div className="space-y-5 text-white/68">
+              <p className="leading-7">
+                FALCO is built to give operators a cleaner file than raw notice scraping.
+                Instead of starting with scattered public fragments, review begins with
+                the property, debt, timing, and contact picture already assembled.
+              </p>
+              <p className="leading-7">
+                That does not mean every file is immediately workable. It means the
+                strongest files start from a better place, with less noise and a clearer
+                path to decide whether they deserve real attention.
               </p>
             </div>
           </div>
@@ -381,7 +359,6 @@ export default async function HomePage() {
               <div
                 key={item.step}
                 className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
-                style={{ animation: `falcoFloat ${6.5 + index * 0.45}s ease-in-out infinite` }}
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent" />
                 <div className="text-xs uppercase tracking-[0.22em] text-white/35">
@@ -405,7 +382,7 @@ export default async function HomePage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-6 pb-24 md:px-10">
-          <div className="grid gap-10 rounded-[32px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] lg:grid-cols-[0.88fr_1.12fr] md:p-12">
+          <div className="grid gap-10 rounded-[32px] border border-white/10 bg-white/[0.03] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] lg:grid-cols-[0.88fr_1.12fr] md:p-12">
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">
                 Private Vault Surface
@@ -435,11 +412,10 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-4">
-              {vaultPreview.map((item, index) => (
+              {vaultPreview.map((item) => (
                 <div
                   key={`${item.stage}-${item.county}`}
-                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
-                  style={{ animation: `falcoFloat ${6.8 + index * 0.4}s ease-in-out infinite` }}
+                  className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -492,11 +468,10 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {partnerTypes.map((partner, index) => (
+              {partnerTypes.map((partner) => (
                 <div
                   key={partner}
                   className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-sm text-white/78 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25 hover:bg-white/[0.055]"
-                  style={{ animation: `falcoFloat ${7 + index * 0.35}s ease-in-out infinite` }}
                 >
                   {partner}
                 </div>
