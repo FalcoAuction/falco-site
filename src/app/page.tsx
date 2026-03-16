@@ -7,17 +7,17 @@ const workflow = [
   {
     step: "01",
     title: "Detect",
-    body: "FALCO watches targeted distress sources and catches files before they are obvious to the broader market.",
+    body: "FALCO watches targeted distress sources and catches opportunities before they are obvious to the broader market.",
   },
   {
     step: "02",
     title: "Assemble",
-    body: "Each file is assembled with ownership, debt, timing, and contact context so the record reads clearly.",
+    body: "Each opportunity record is assembled with ownership, debt, timing, and contact context so the record reads clearly.",
   },
   {
     step: "03",
     title: "Review",
-    body: "The strongest files are packaged into Review Briefs and routed into a controlled partner path for real-world validation.",
+    body: "The strongest opportunities are packaged into Review Briefs and routed into a controlled partner path for real-world validation.",
   },
 ]
 
@@ -32,7 +32,7 @@ const vaultPreview = [
   {
     stage: "Pre-Foreclosure Review",
     county: "Hamilton County",
-    detail: "Internal file assembled early enough for operator review inside a restricted workflow.",
+    detail: "Internal opportunity record assembled early enough for operator review inside a restricted workflow.",
   },
   {
     stage: "Foreclosure",
@@ -182,8 +182,8 @@ export default async function HomePage() {
                 style={{ animation: "falcoReveal 820ms ease-out both" }}
               >
                 FALCO is a private operator review system that finds distressed-property
-                files early, assembles the property, debt, timing, and contact picture,
-                and routes the strongest files into a restricted partner workflow.
+                opportunities early, assembles the property, debt, timing, and contact picture,
+                and routes the strongest opportunities into a restricted partner workflow.
               </p>
 
               <div
@@ -248,17 +248,17 @@ export default async function HomePage() {
                     {
                       step: "01",
                       title: "Detect early distress",
-                      body: "Targeted sources are watched before files become obvious.",
+                      body: "Targeted sources are watched before opportunities become obvious.",
                     },
                     {
                       step: "02",
-                      title: "Build the file",
+                      title: "Build the record",
                       body: "Property, debt, timing, and contact context are assembled.",
                     },
                     {
                       step: "03",
                       title: "Route to partners",
-                      body: "The strongest files move into the restricted partner workflow for review.",
+                      body: "The strongest opportunities move into the restricted partner workflow for review.",
                     },
                   ].map((item) => (
                     <div
@@ -350,13 +350,13 @@ export default async function HomePage() {
               <p className="leading-7">
                 FALCO is not a public listing feed, and it is not a seller-facing
                 auction proposal. It is a private review system built to take
-                scattered distress data and turn it into a structured File an
+                scattered distress data and turn it into a structured opportunity record an
                 auctioneer, broker, or operator can assess quickly.
               </p>
               <p className="leading-7">
                 In plain terms, the system identifies distress early, assembles
                 the property, debt, timing, and contact picture, screens out
-                weaker noise, and packages stronger Files into Review Briefs for
+                weaker noise, and packages stronger opportunities into Review Briefs for
                 a restricted partner workflow.
               </p>
               <p className="leading-7">
@@ -380,13 +380,13 @@ export default async function HomePage() {
 
             <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
-                Operators use FALCO to start from a structured File instead of
+                Operators use FALCO to start from a structured opportunity record instead of
                 scattered public fragments. Review begins with the property,
                 debt, timing, and contact picture already assembled.
               </p>
               <p className="leading-7">
-                That does not mean every file is immediately workable. It means
-                the stronger files arrive with less noise, better triage, and a
+                That does not mean every opportunity is immediately workable. It means
+                the stronger opportunities arrive with less noise, better triage, and a
                 clearer path to decide whether they deserve real attention.
               </p>
             </div>
@@ -405,7 +405,7 @@ export default async function HomePage() {
               Built to move from raw distress signal to partner review.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and File assembly first, then puts
+              FALCO does the early sourcing and record assembly first, then puts
               the strongest Review Briefs in front of approved partners for
               final real-world judgment.
             </p>
@@ -456,7 +456,7 @@ export default async function HomePage() {
                 Built as restricted workflow infrastructure, not a public listing board.
               </h2>
               <p className="mt-5 max-w-lg text-white/68 leading-7">
-                The vault is where screened Files, Review Briefs, and partner
+                The vault is where screened opportunities, Review Briefs, and partner
                 feedback come together. It is intentionally controlled, gated,
                 and built for operator review rather than casual browsing.
               </p>
@@ -526,7 +526,7 @@ export default async function HomePage() {
                   Operator Fit
                 </div>
                 <p className="mt-3 text-sm leading-7 text-white/66">
-                  Best fit is a partner who wants earlier visibility, cleaner Files,
+                  Best fit is a partner who wants earlier visibility, cleaner opportunities,
                   and a private review path before deciding whether something is truly workable.
                 </p>
               </div>
@@ -575,7 +575,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-3 text-2xl font-semibold text-white">Vault Login</div>
                   <p className="mt-3 text-sm leading-7 text-white/62">
-                    Enter the restricted vault and review screened files already in flow.
+                    Enter the restricted vault and review screened opportunities already in flow.
                   </p>
                 </Link>
 
@@ -588,7 +588,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-3 text-2xl font-semibold">Request Access</div>
                   <p className="mt-3 text-sm leading-7 text-black/68">
-                    Apply for access if you want screened early-stage distress Files and Review Briefs.
+                    Apply for access if you want screened early-stage distress opportunities and Review Briefs.
                   </p>
                 </Link>
 
@@ -597,11 +597,11 @@ export default async function HomePage() {
                   className="rounded-[24px] border border-white/10 bg-black/35 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.05]"
                 >
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">
-                    Send A File
+                    Send An Opportunity
                   </div>
                   <div className="mt-3 text-2xl font-semibold text-white">Submit Opportunity</div>
                   <p className="mt-3 text-sm leading-7 text-white/62">
-                    Route a file into the system if it belongs in the review pipeline.
+                    Route an opportunity into the system if it belongs in the review pipeline.
                   </p>
                 </Link>
               </div>
