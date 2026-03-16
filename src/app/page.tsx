@@ -160,7 +160,7 @@ export default async function HomePage() {
           <div className="grid items-end gap-14 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div
-                className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
+                className="mb-6 inline-flex items-center rounded-full border border-emerald-400/16 bg-emerald-400/[0.07] px-4 py-2 text-xs uppercase tracking-[0.22em] text-emerald-100/78 shadow-[0_12px_40px_rgba(16,185,129,0.08)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
                 Private Distress Intelligence for Serious Operators
