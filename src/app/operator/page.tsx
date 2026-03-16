@@ -1,6 +1,5 @@
 'use client'
 
-import Link from "next/link"
 import { useMemo, useState } from "react"
 
 type VaultValidationOutcome =
@@ -19,7 +18,7 @@ type VaultExecutionLane =
 
 type OperatorIntakeDecision = "promote" | "hold" | "needs_more_info"
 type OperatorEnrichmentStatus = "requested" | "processing" | "completed" | "failed"
-type ActiveTab = "priority" | "pre_foreclosure" | "updates" | "admin"
+type ActiveTab = "priority" | "pre_foreclosure" | "vault" | "updates" | "admin"
 
 type TaskItem = {
   id: string
@@ -208,6 +207,7 @@ export default function OperatorPage() {
   const [result, setResult] = useState("")
   const [processingId, setProcessingId] = useState("")
   const [activeTab, setActiveTab] = useState<ActiveTab>("priority")
+  const [selectedVaultSlug, setSelectedVaultSlug] = useState("")
   const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
   const [validationLanes, setValidationLanes] = useState<Record<string, VaultExecutionLane>>({})
   const [validationSignals, setValidationSignals] = useState<Record<string, string[]>>({})
@@ -229,6 +229,13 @@ export default function OperatorPage() {
     () => new Map((workspace?.liveListings ?? []).map((row: any) => [row.slug, row] as const)),
     [workspace]
   )
+
+  const liveVaultListings = useMemo(() => workspace?.liveListings ?? [], [workspace])
+
+  const selectedVaultListing = useMemo(() => {
+    if (!selectedVaultSlug) return liveVaultListings[0] ?? null
+    return liveListingBySlug.get(selectedVaultSlug) ?? liveVaultListings[0] ?? null
+  }, [liveListingBySlug, liveVaultListings, selectedVaultSlug])
 
   const readyPreForeclosures = useMemo(() => {
     if (!workspace) return []
@@ -293,13 +300,20 @@ export default function OperatorPage() {
 
   const validationQueue = useMemo(
     () =>
-      (workspace?.liveListings ?? []).filter(
+      liveVaultListings.filter(
         (listing: any) =>
           (listing.topTierReady || listing.vaultPublishReady) &&
           listing.validationOutcome !== "validated_execution_path"
       ),
-    [workspace]
+    [liveVaultListings]
   )
+
+  function openVaultDesk(slug?: string | null) {
+    if (slug) {
+      setSelectedVaultSlug(slug)
+    }
+    setActiveTab("vault")
+  }
 
   const tasks = useMemo(() => {
     if (!workspace) return [] as TaskItem[]
@@ -440,6 +454,16 @@ export default function OperatorPage() {
 
       setWorkspace(data.workspace)
       setHistory(data.workspace.taskHistory ?? [])
+      setSelectedVaultSlug((current) => {
+        if (
+          current &&
+          (data.workspace.liveListings ?? []).some((listing: any) => listing.slug === current)
+        ) {
+          return current
+        }
+
+        return data.workspace.liveListings?.[0]?.slug ?? ""
+      })
 
       const nextNotes: Record<string, string> = {}
       const nextLanes: Record<string, VaultExecutionLane> = {}
@@ -643,6 +667,10 @@ export default function OperatorPage() {
       })
       const data = await res.json()
       if (!res.ok || !data?.ok) return setError(data?.error || "Unable to record intake review.")
+      const publishedSlug =
+        decision === "promote" && typeof data?.published?.slug === "string"
+          ? data.published.slug
+          : ""
       if (decision !== "clear") {
         await fetch("/api/operator/tasks", {
           method: "POST",
@@ -667,11 +695,14 @@ export default function OperatorPage() {
       setResult(
         decision === "clear"
           ? "Intake review cleared."
-          : decision === "promote" && data?.published?.slug
-            ? `Promoted to vault: ${data.published.slug}`
+          : decision === "promote" && publishedSlug
+            ? `Promoted to vault: ${publishedSlug}`
             : `Intake marked: ${intakeDecisionCopy(decision)}`
       )
       await loadWorkspace(secret)
+      if (publishedSlug) {
+        openVaultDesk(publishedSlug)
+      }
     } catch {
       setError("Unable to record intake review.")
     } finally {
@@ -780,7 +811,7 @@ export default function OperatorPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard label="Priority Tasks" value={activeTasks.length} sublabel={`${readyPreForeclosures.length} ready to push`} />
               <StatCard label="Pre-Foreclosure Ready" value={readyPreForeclosures.length} sublabel={`${blockedPreForeclosures.length} blocked`} />
-              <StatCard label="Update Feed" value={updateFeed.length} sublabel={`${validationQueue.length} validation items`} />
+              <StatCard label="Vault Live" value={liveVaultListings.length} sublabel={`${validationQueue.length} validation items`} />
               <StatCard
                 label="Admin Queue"
                 value={(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length + openRoutingQueue.length}
@@ -792,6 +823,7 @@ export default function OperatorPage() {
               <div className="flex flex-wrap gap-2">
                 <TabButton active={activeTab === "priority"} onClick={() => setActiveTab("priority")} label="Priority" count={activeTasks.length} />
                 <TabButton active={activeTab === "pre_foreclosure"} onClick={() => setActiveTab("pre_foreclosure")} label="Pre-Foreclosure" count={readyPreForeclosures.length} />
+                <TabButton active={activeTab === "vault"} onClick={() => openVaultDesk(selectedVaultListing?.slug)} label="Vault" count={liveVaultListings.length} />
                 <TabButton active={activeTab === "updates"} onClick={() => setActiveTab("updates")} label="Updates" count={updateFeed.length} />
                 <TabButton
                   active={activeTab === "admin"}
@@ -901,9 +933,12 @@ export default function OperatorPage() {
                             </div>
                             <div className="mt-3 text-sm text-white/65">{executionLaneCopy(listing.suggestedExecutionLane)} • {executionRealityCopy(listing.executionPosture)} • {executionRealityCopy(listing.ownerAgency)}</div>
                             <div className="mt-4 flex flex-wrap gap-3">
-                              <Link href={`/vault/${listing.slug}`} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10">
-                                Open Listing
-                              </Link>
+                              <button
+                                onClick={() => openVaultDesk(listing.slug)}
+                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10"
+                              >
+                                View In Desk
+                              </button>
                               <button
                                 onClick={() => setActiveTab("admin")}
                                 className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
@@ -1039,9 +1074,12 @@ export default function OperatorPage() {
                                 {processingId === `intake:${row.lead_key}:refresh_enrichment` ? "Queueing..." : enrichment?.status === "processing" ? "Running" : enrichment?.status === "requested" ? "Queued" : "Re-Enrich"}
                               </button>
                               {row.vaultSlug ? (
-                                <Link href={`/vault/${row.vaultSlug}`} className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10">
-                                  Open Listing
-                                </Link>
+                                <button
+                                  onClick={() => openVaultDesk(row.vaultSlug)}
+                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                >
+                                  View In Desk
+                                </button>
                               ) : null}
                             </div>
                           </div>
@@ -1127,9 +1165,12 @@ export default function OperatorPage() {
                                 {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
                               </button>
                               {row.vaultSlug ? (
-                                <Link href={`/vault/${row.vaultSlug}`} className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10">
-                                  Open Listing
-                                </Link>
+                                <button
+                                  onClick={() => openVaultDesk(row.vaultSlug)}
+                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                                >
+                                  View In Desk
+                                </button>
                               ) : null}
                               {intake ? (
                                 <button
@@ -1150,6 +1191,142 @@ export default function OperatorPage() {
                   </div>
                 </article>
                 </div>
+              </section>
+            ) : null}
+
+            {activeTab === "vault" ? (
+              <section className="mt-6 grid gap-6 xl:grid-cols-[360px_1fr]">
+                <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Vault Desk</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Live listings and packets</div>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">
+                      {liveVaultListings.length} live
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-sm text-white/58">
+                    Stay in the operator desk to review live vault listings and open packets without leaving this workspace.
+                  </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {liveVaultListings.length ? (
+                      liveVaultListings.map((listing: any) => {
+                        const selected = selectedVaultListing?.slug === listing.slug
+                        return (
+                          <button
+                            key={listing.slug}
+                            onClick={() => setSelectedVaultSlug(listing.slug)}
+                            className={`rounded-2xl border p-4 text-left transition ${
+                              selected
+                                ? "border-white/20 bg-white/[0.08]"
+                                : "border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.05]"
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{listing.title || listing.slug}</div>
+                                <div className="mt-1 text-sm text-white/58">
+                                  {listing.county || "Unknown county"} • {listing.distressType || "Unknown type"}
+                                </div>
+                              </div>
+                              <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${badgeClasses(listing.auctionReadiness)}`}>
+                                {listing.auctionReadiness || "Unknown"}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 grid gap-2 text-sm text-white/62">
+                              <div>
+                                Sale: <span className="text-white/82">{listing.currentSaleDate || listing.auctionWindow || "Unavailable"}</span>
+                              </div>
+                              <div>
+                                Lane: <span className="text-white/82">{executionLaneCopy(listing.executionLane || listing.suggestedExecutionLane)}</span>
+                              </div>
+                              <div>
+                                Packet: <span className="text-white/82">{listing.packetLabel || "Vault packet"}</span>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })
+                    ) : (
+                      <EmptyState title="No live vault listings are available right now." />
+                    )}
+                  </div>
+                </article>
+
+                <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                  {selectedVaultListing ? (
+                    <>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <div className="text-xs uppercase tracking-[0.22em] text-white/45">Selected Listing</div>
+                          <div className="mt-2 text-2xl font-semibold text-white">
+                            {selectedVaultListing.title || selectedVaultListing.slug}
+                          </div>
+                          <div className="mt-2 text-sm text-white/58">
+                            {selectedVaultListing.county || "Unknown county"} • {selectedVaultListing.distressType || "Unknown type"}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${badgeClasses(selectedVaultListing.auctionReadiness)}`}>
+                            {selectedVaultListing.auctionReadiness || "Unknown"}
+                          </span>
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
+                            {validationOutcomeCopy(selectedVaultListing.validationOutcome)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4 text-sm text-white/65">
+                        <div>Sale: <span className="text-white/82">{selectedVaultListing.currentSaleDate || selectedVaultListing.auctionWindow || "Unavailable"}</span></div>
+                        <div>Lender: <span className="text-white/82">{selectedVaultListing.mortgageLender || "Unavailable"}</span></div>
+                        <div>Loan: <span className="text-white/82">{formatMoney(selectedVaultListing.mortgageAmount)}</span></div>
+                        <div>Contact: <span className="text-white/82">{bestContactLine(selectedVaultListing)}</span></div>
+                        <div>Lane: <span className="text-white/82">{executionLaneCopy(selectedVaultListing.executionLane || selectedVaultListing.suggestedExecutionLane)}</span></div>
+                        <div>Agency: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.ownerAgency)}</span></div>
+                        <div>Control: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.controlParty)}</span></div>
+                        <div>Workability: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.workabilityBand)}</span></div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <button
+                          onClick={() => setActiveTab("admin")}
+                          className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                        >
+                          Open Validation Queue
+                        </button>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(selectedVaultListing.slug)}
+                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10"
+                        >
+                          Copy Slug
+                        </button>
+                      </div>
+
+                      <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-black/35">
+                        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                          <div>
+                            <div className="text-xs uppercase tracking-[0.22em] text-white/45">Packet Viewer</div>
+                            <div className="mt-1 text-sm text-white/58">
+                              Internal operator view for {selectedVaultListing.packetLabel || "vault packet"}
+                            </div>
+                          </div>
+                        </div>
+                        <iframe
+                          key={selectedVaultListing.slug}
+                          title={`Operator packet for ${selectedVaultListing.title || selectedVaultListing.slug}`}
+                          src={`/api/operator/packet?slug=${selectedVaultListing.slug}`}
+                          className="h-[920px] w-full bg-black"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <EmptyState title="Select a live vault listing to review it and open its packet here." />
+                  )}
+                </article>
               </section>
             ) : null}
 
@@ -1380,7 +1557,12 @@ export default function OperatorPage() {
                               <button onClick={() => handleValidationAction(listing.slug, "no_real_control_path")} disabled={processingId === `validation:${listing.slug}:no_real_control_path`} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">{processingId === `validation:${listing.slug}:no_real_control_path` ? "Saving..." : "No Control"}</button>
                               <button onClick={() => handleValidationAction(listing.slug, "low_leverage")} disabled={processingId === `validation:${listing.slug}:low_leverage`} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">{processingId === `validation:${listing.slug}:low_leverage` ? "Saving..." : "Low Leverage"}</button>
                               <button onClick={() => handleValidationAction(listing.slug, "dead_lead")} disabled={processingId === `validation:${listing.slug}:dead_lead`} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">{processingId === `validation:${listing.slug}:dead_lead` ? "Saving..." : "Dead Lead"}</button>
-                              <Link href={`/vault/${listing.slug}`} className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10">Open Listing</Link>
+                              <button
+                                onClick={() => openVaultDesk(listing.slug)}
+                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/10"
+                              >
+                                View In Desk
+                              </button>
                             </div>
                           </div>
                         ))

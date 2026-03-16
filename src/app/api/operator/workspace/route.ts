@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminApprovalSecret } from "@/lib/admin-approval-secret"
+import { clearOperatorSession, setOperatorSession } from "@/lib/operator-access-session"
 import { listAccessRequests } from "@/lib/access-workflow"
 import { listOperatorEnrichmentRequests } from "@/lib/operator-enrichment"
 import { listOperatorIntakeDecisions } from "@/lib/operator-intake"
@@ -45,10 +46,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (secret !== adminApprovalSecret) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { ok: false, error: "Unauthorized operator request." },
         { status: 401 }
       )
+      clearOperatorSession(res)
+      return res
     }
 
     const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords, enrichmentRequests] = await Promise.all([
@@ -62,7 +65,7 @@ export async function POST(req: NextRequest) {
       listOperatorEnrichmentRequests(),
     ])
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       ok: true,
       workspace: {
         report,
@@ -75,6 +78,8 @@ export async function POST(req: NextRequest) {
         enrichmentRequests,
       },
     })
+    setOperatorSession(res)
+    return res
   } catch (error) {
     if (error instanceof Error && error.message === "Missing FALCO_APPROVAL_SECRET.") {
       return NextResponse.json(
