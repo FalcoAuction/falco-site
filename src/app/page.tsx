@@ -12,12 +12,12 @@ const workflow = [
   {
     step: "02",
     title: "Assemble",
-    body: "Each file is cleaned up and enriched with ownership, debt, timing, and contact context so the record reads clearly.",
+    body: "Each file is assembled with ownership, debt, timing, and contact context so the record reads clearly.",
   },
   {
     step: "03",
     title: "Review",
-    body: "The strongest files are packaged into review briefs and routed into a controlled partner path for real-world validation.",
+    body: "The strongest files are packaged into Review Briefs and routed into a controlled partner path for real-world validation.",
   },
 ]
 
@@ -32,17 +32,17 @@ const vaultPreview = [
   {
     stage: "Pre-Foreclosure Review",
     county: "Hamilton County",
-    detail: "Owner and debt context assembled. Early enough for operator review.",
+    detail: "Internal file assembled early enough for operator review inside a restricted workflow.",
   },
   {
     stage: "Foreclosure",
     county: "Rutherford County",
-    detail: "Sale timing, record history, and packet materials in one restricted listing.",
+    detail: "Sale timing, record history, and Review Brief materials held in one restricted workflow record.",
   },
   {
     stage: "Partner Feedback",
     county: "Controlled Access",
-    detail: "Approved partners can rate and comment directly inside the listing workflow.",
+    detail: "Approved partners can comment directly inside the private review flow without opening the system publicly.",
   },
 ]
 
@@ -163,27 +163,27 @@ export default async function HomePage() {
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Early Distress Review
+                Private Upstream Distress Review
               </div>
 
               <h1
                 className="max-w-5xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl"
                 style={{ animation: "falcoReveal 700ms ease-out both" }}
               >
-                Find distress sooner.
+                See distress earlier.
                 <br />
-                Underwrite faster.
+                Review it cleaner.
                 <br />
-                Route cleaner deals.
+                Decide faster.
               </h1>
 
               <p
                 className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl"
                 style={{ animation: "falcoReveal 820ms ease-out both" }}
               >
-                FALCO finds distressed-property files early, cleans them up, and
-                turns the strongest ones into private review briefs for approved
-                partners.
+                FALCO is a private operator review system that finds distressed-property
+                files early, assembles the property, debt, timing, and contact picture,
+                and routes the strongest files into a restricted partner workflow.
               </p>
 
               <div
@@ -258,7 +258,7 @@ export default async function HomePage() {
                     {
                       step: "03",
                       title: "Route to partners",
-                      body: "The strongest files move into the restricted vault for review.",
+                      body: "The strongest files move into the restricted partner workflow for review.",
                     },
                   ].map((item) => (
                     <div
@@ -287,7 +287,7 @@ export default async function HomePage() {
               className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.9)]"
               style={{ animation: "falcoPulse 1.5s ease-in-out infinite" }}
             />
-            Live System Snapshot
+            Current Pipeline Snapshot
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] tracking-[0.18em] text-white/40">
               Updated Recently
             </span>
@@ -340,28 +340,28 @@ export default async function HomePage() {
         >
           <div className="grid gap-10 rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
-              <div className="text-xs uppercase tracking-[0.26em] text-white/45">What It Is</div>
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">What FALCO Actually Is</div>
               <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A private system for finding and screening distressed-property files before they become crowded.
+                A private upstream distress review system built for serious operators.
               </h2>
             </div>
 
             <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
                 FALCO is not a public listing feed, and it is not a seller-facing
-                auction proposal. It is a private screening system built to take
-                scattered distress data and turn it into a cleaner file an
-                auctioneer, broker, or operator can review quickly.
+                auction proposal. It is a private review system built to take
+                scattered distress data and turn it into a structured File an
+                auctioneer, broker, or operator can assess quickly.
               </p>
               <p className="leading-7">
-                In plain terms, the system looks for distress early, pulls
-                together the property, debt, timing, and contact picture, and
-                filters out weaker files before stronger ones are placed in a
-                restricted review vault.
+                In plain terms, the system identifies distress early, assembles
+                the property, debt, timing, and contact picture, screens out
+                weaker noise, and packages stronger Files into Review Briefs for
+                a restricted partner workflow.
               </p>
               <p className="leading-7">
-                It is built to help serious operators start from a cleaner file,
-                not from raw courthouse fragments.
+                It is built to give serious operators a clearer starting point,
+                better triage, and less noise than raw courthouse fragments.
               </p>
             </div>
           </div>
@@ -371,23 +371,23 @@ export default async function HomePage() {
           <div className="grid gap-10 rounded-[30px] border border-emerald-400/14 bg-[linear-gradient(180deg,rgba(16,185,129,0.06),rgba(255,255,255,0.02))] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:grid-cols-[0.9fr_1.1fr] md:p-12">
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-emerald-300/80">
-                Why It Matters
+                Why Operators Use FALCO
               </div>
               <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A cleaner starting point for serious operators.
+                Earlier visibility, cleaner review, and a tighter decision path.
               </h2>
             </div>
 
             <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO is built to give operators a cleaner file than raw notice scraping.
-                Instead of starting with scattered public fragments, review begins with
-                the property, debt, timing, and contact picture already assembled.
+                Operators use FALCO to start from a structured File instead of
+                scattered public fragments. Review begins with the property,
+                debt, timing, and contact picture already assembled.
               </p>
               <p className="leading-7">
-                That does not mean every file is immediately workable. It means the
-                strongest files start from a better place, with less noise and a clearer
-                path to decide whether they deserve real attention.
+                That does not mean every file is immediately workable. It means
+                the stronger files arrive with less noise, better triage, and a
+                clearer path to decide whether they deserve real attention.
               </p>
             </div>
           </div>
@@ -405,9 +405,9 @@ export default async function HomePage() {
               Built to move from raw distress signal to partner review.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and file assembly first, then puts
-              the strongest files in front of approved partners for final
-              real-world judgment.
+              FALCO does the early sourcing and File assembly first, then puts
+              the strongest Review Briefs in front of approved partners for
+              final real-world judgment.
             </p>
           </div>
 
@@ -453,17 +453,17 @@ export default async function HomePage() {
                 Private Vault Surface
               </div>
               <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                Designed to feel like a private market workflow, not a public listing board.
+                Built as restricted workflow infrastructure, not a public listing board.
               </h2>
               <p className="mt-5 max-w-lg text-white/68 leading-7">
-                The vault is where screened files, packet materials, and partner
+                The vault is where screened Files, Review Briefs, and partner
                 feedback come together. It is intentionally controlled, gated,
-                and built for decision-making rather than casual browsing.
+                and built for operator review rather than casual browsing.
               </p>
               <div className="mt-8 grid gap-3">
                 {[
                   "Per-listing NDA and non-circumvention gate",
-                  "Packet delivery inside the listing workflow",
+                  "Review Brief delivery inside the restricted workflow",
                 ].map((item) => (
                   <div
                     key={item}
@@ -517,8 +517,8 @@ export default async function HomePage() {
                 Built for serious operators, not public deal circulation.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
-                FALCO is built for aligned partners who want earlier files,
-                cleaner review briefs, and a tighter review path than public
+                FALCO is built for aligned partners who want earlier visibility,
+                cleaner Review Briefs, and a tighter review path than public
                 deal circulation.
               </p>
               <div className="mt-8 rounded-[22px] border border-white/10 bg-black/30 p-5">
@@ -526,8 +526,8 @@ export default async function HomePage() {
                   Operator Fit
                 </div>
                 <p className="mt-3 text-sm leading-7 text-white/66">
-                  Best fit is a partner who wants earlier visibility, cleaner files,
-                  and a private review path before deciding whether a file is truly workable.
+                  Best fit is a partner who wants earlier visibility, cleaner Files,
+                  and a private review path before deciding whether something is truly workable.
                 </p>
               </div>
             </div>
@@ -588,7 +588,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-3 text-2xl font-semibold">Request Access</div>
                   <p className="mt-3 text-sm leading-7 text-black/68">
-                    Apply for access if you want screened early-stage distress files and packets.
+                    Apply for access if you want screened early-stage distress Files and Review Briefs.
                   </p>
                 </Link>
 
