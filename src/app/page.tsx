@@ -16,8 +16,8 @@ const workflow = [
   },
   {
     step: "03",
-    title: "Review",
-    body: "The strongest opportunities are packaged into Review Briefs and routed into a controlled partner path for real-world validation.",
+    title: "Route",
+    body: "The strongest opportunities are packaged into Review Briefs and moved into partner review for real-world validation.",
   },
 ]
 
@@ -32,17 +32,17 @@ const vaultPreview = [
   {
     stage: "Pre-Foreclosure Review",
     county: "Hamilton County",
-    detail: "Internal opportunity record assembled early enough for operator review inside a restricted workflow.",
+    detail: "Early distress visibility with the key record assembled for fast partner review.",
   },
   {
     stage: "Foreclosure",
     county: "Rutherford County",
-    detail: "Sale timing, record history, and Review Brief materials held in one restricted workflow record.",
+    detail: "Sale timing, record history, and review materials held together in one controlled listing.",
   },
   {
     stage: "Partner Feedback",
     county: "Controlled Access",
-    detail: "Approved partners can comment directly inside the private review flow without opening the system publicly.",
+    detail: "Approved partners can comment directly inside the listing path without opening anything publicly.",
   },
 ]
 
@@ -163,7 +163,7 @@ export default async function HomePage() {
                 className="mb-6 inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/62 shadow-[0_12px_40px_rgba(255,255,255,0.04)]"
                 style={{ animation: "falcoDrift 5.5s ease-in-out infinite" }}
               >
-                Private Upstream Distress Review
+                Private Distress Intelligence for Serious Operators
               </div>
 
               <h1
@@ -181,9 +181,9 @@ export default async function HomePage() {
                 className="mt-7 max-w-3xl text-lg leading-8 text-white/72 md:text-xl"
                 style={{ animation: "falcoReveal 820ms ease-out both" }}
               >
-                FALCO is a private operator review system that finds distressed-property
-                opportunities early, assembles the property, debt, timing, and contact picture,
-                and routes the strongest opportunities into a restricted partner workflow.
+                FALCO helps serious operators see distressed-property opportunities
+                earlier, assemble the key record faster, and review stronger
+                opportunities inside a controlled partner path.
               </p>
 
               <div
@@ -252,13 +252,13 @@ export default async function HomePage() {
                     },
                     {
                       step: "02",
-                      title: "Build the record",
+                      title: "Assemble the record",
                       body: "Property, debt, timing, and contact context are assembled.",
                     },
                     {
                       step: "03",
                       title: "Route to partners",
-                      body: "The strongest opportunities move into the restricted partner workflow for review.",
+                      body: "The strongest opportunities move into partner review for judgment.",
                     },
                   ].map((item) => (
                     <div
@@ -342,26 +342,25 @@ export default async function HomePage() {
             <div>
               <div className="text-xs uppercase tracking-[0.26em] text-white/45">What FALCO Actually Is</div>
               <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                A private upstream distress review system built for serious operators.
+                A private operator-facing distress intelligence platform.
               </h2>
             </div>
 
             <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
-                FALCO is not a public listing feed, and it is not a seller-facing
-                auction proposal. It is a private review system built to take
-                scattered distress data and turn it into a structured opportunity record an
-                auctioneer, broker, or operator can assess quickly.
+                FALCO is not a public listing feed and it is not a seller-facing
+                auction proposal.
               </p>
               <p className="leading-7">
-                In plain terms, the system identifies distress early, assembles
-                the property, debt, timing, and contact picture, screens out
-                weaker noise, and packages stronger opportunities into Review Briefs for
-                a restricted partner workflow.
+                It is built to identify distress early, assemble the property,
+                debt, timing, and contact picture, and package stronger
+                opportunities into structured Review Briefs that approved
+                partners can assess quickly.
               </p>
               <p className="leading-7">
-                It is built to give serious operators a clearer starting point,
-                better triage, and less noise than raw courthouse fragments.
+                The goal is simple: give serious operators a cleaner starting
+                point, better triage, and less noise than raw courthouse
+                fragments.
               </p>
             </div>
           </div>
@@ -374,20 +373,23 @@ export default async function HomePage() {
                 Why Operators Use FALCO
               </div>
               <h2 className="mt-4 max-w-lg text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                Earlier visibility, cleaner review, and a tighter decision path.
+                A cleaner starting point for real-world judgment.
               </h2>
             </div>
 
             <div className="max-w-2xl space-y-5 text-white/68">
               <p className="leading-7">
-                Operators use FALCO to start from a structured opportunity record instead of
-                scattered public fragments. Review begins with the property,
-                debt, timing, and contact picture already assembled.
+                Raw distress data is fragmented, late, and noisy.
               </p>
               <p className="leading-7">
-                That does not mean every opportunity is immediately workable. It means
-                the stronger opportunities arrive with less noise, better triage, and a
-                clearer path to decide whether they deserve real attention.
+                FALCO assembles the key picture earlier, packages it more
+                clearly, and helps partners decide faster whether an
+                opportunity is worth real attention.
+              </p>
+              <p className="leading-7">
+                That does not mean every opportunity is workable. It means
+                stronger opportunities arrive with less noise and a clearer
+                path to review.
               </p>
             </div>
           </div>
@@ -405,9 +407,9 @@ export default async function HomePage() {
               Built to move from raw distress signal to partner review.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
-              FALCO does the early sourcing and record assembly first, then puts
-              the strongest Review Briefs in front of approved partners for
-              final real-world judgment.
+              FALCO handles the early signal detection and record assembly
+              first, then routes the strongest Review Briefs into a controlled
+              partner path for final real-world judgment.
             </p>
           </div>
 
@@ -453,17 +455,17 @@ export default async function HomePage() {
                 Private Vault Surface
               </div>
               <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                Built as restricted workflow infrastructure, not a public listing board.
+                The private review layer behind FALCO.
               </h2>
               <p className="mt-5 max-w-lg text-white/68 leading-7">
-                The vault is where screened opportunities, Review Briefs, and partner
-                feedback come together. It is intentionally controlled, gated,
-                and built for operator review rather than casual browsing.
+                The vault is where screened opportunities, Review Briefs, and
+                partner input come together. It is intentionally gated and built
+                for serious review, not casual browsing.
               </p>
               <div className="mt-8 grid gap-3">
                 {[
                   "Per-listing NDA and non-circumvention gate",
-                  "Review Brief delivery inside the restricted workflow",
+                  "Structured listing feedback inside the access path",
                 ].map((item) => (
                   <div
                     key={item}
@@ -514,20 +516,20 @@ export default async function HomePage() {
                 Partners
               </div>
               <h2 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
-                Built for serious operators, not public deal circulation.
+                Built for aligned operators.
               </h2>
               <p className="mt-5 max-w-xl text-white/68 leading-7">
-                FALCO is built for aligned partners who want earlier visibility,
-                cleaner Review Briefs, and a tighter review path than public
-                deal circulation.
+                FALCO is built for serious partners who want earlier distress
+                visibility, cleaner review materials, and a controlled path to
+                evaluate whether something is truly workable.
               </p>
               <div className="mt-8 rounded-[22px] border border-white/10 bg-black/30 p-5">
                 <div className="text-xs uppercase tracking-[0.22em] text-white/42">
                   Operator Fit
                 </div>
                 <p className="mt-3 text-sm leading-7 text-white/66">
-                  Best fit is a partner who wants earlier visibility, cleaner opportunities,
-                  and a private review path before deciding whether something is truly workable.
+                  This is not open deal circulation. It is a controlled review
+                  path for partners who know how to judge, act, and execute.
                 </p>
               </div>
             </div>
@@ -556,12 +558,12 @@ export default async function HomePage() {
                   Next Step
                 </div>
                 <h3 className="mt-4 max-w-xl text-3xl font-semibold tracking-[-0.03em] text-white md:text-4xl">
-                  Enter the review flow through the path that fits.
+                  Use the path that fits your role.
                 </h3>
                 <p className="mt-5 max-w-lg text-white/68 leading-7">
-                  FALCO is built for approved partners, not open distribution.
-                  Use the path that matches your role and we will keep the review
-                  flow controlled from there.
+                  FALCO is built for approved partners and controlled access.
+                  Enter through the path that matches your role and the review
+                  flow stays structured from there.
                 </p>
               </div>
 
