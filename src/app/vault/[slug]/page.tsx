@@ -127,12 +127,6 @@ const FEEDBACK_SIGNAL_OPTIONS: VaultOperatorFeedbackSignal[] = [
   "not_auction_lane",
 ]
 
-function hasAgreementCookie(slug: string) {
-  return document.cookie
-    .split("; ")
-    .some((cookie) => cookie.startsWith(`falco_vault_access_${slug}=accepted`))
-}
-
 async function loadApprovalSession() {
   const res = await fetch("/api/access/session", { cache: "no-store" })
   const data = await res.json()
@@ -366,6 +360,7 @@ export default function VaultListingPage() {
   const [emailCheck, setEmailCheck] = useState("")
   const [approvalSubmitting, setApprovalSubmitting] = useState(false)
   const [approvalError, setApprovalError] = useState("")
+  const [approvalNotice, setApprovalNotice] = useState("")
 
   const [accepted, setAccepted] = useState(false)
   const [fullName, setFullName] = useState("")
@@ -398,6 +393,71 @@ export default function VaultListingPage() {
   const [feedbackRecord, setFeedbackRecord] = useState<PartnerFeedbackRecord | null>(null)
   const [feedbackSummary, setFeedbackSummary] = useState<PartnerFeedbackSummary | null>(null)
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/access/logout", { method: "POST" })
+    } finally {
+      window.location.href = "/partner-login"
+    }
+  }
+
+  const loadListing = async (listingSlug: string) => {
+    if (!listingSlug) return
+
+    try {
+      setLoading(true)
+      setLoadError("")
+
+      const res = await fetch(`/api/vault/listing?slug=${encodeURIComponent(listingSlug)}`, {
+        cache: "no-store",
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) {
+        if (res.status === 401) {
+          setApproved(false)
+          setApprovedEmail("")
+          setAccepted(false)
+          setLoading(false)
+          return
+        }
+        setLoadError(data?.error || "Unable to load vault listing.")
+        return
+      }
+
+      setListing((data.listing ?? null) as VaultListing | null)
+    } catch {
+      setLoadError("Unable to load vault listing.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAcceptanceState = async (listingSlug: string) => {
+    if (!listingSlug) return
+
+    try {
+      const res = await fetch(`/api/vault/acceptance?slug=${encodeURIComponent(listingSlug)}`, {
+        cache: "no-store",
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.ok) {
+        if (res.status === 401) {
+          setApproved(false)
+          setAccepted(false)
+          return
+        }
+        setAccepted(false)
+        return
+      }
+
+      setAccepted(Boolean(data.accepted))
+    } catch {
+      setAccepted(false)
+    }
+  }
+
   const loadPursuitState = async (listingSlug: string) => {
     if (!listingSlug) return
 
@@ -408,7 +468,13 @@ export default function VaultListingPage() {
       })
       const data = await res.json()
 
-      if (!res.ok || !data?.ok) return
+      if (!res.ok || !data?.ok) {
+        if (res.status === 401) {
+          setApproved(false)
+          setAccepted(false)
+        }
+        return
+      }
 
       setPursuitState({
         routingState: data.routingState || "open",
@@ -434,6 +500,10 @@ export default function VaultListingPage() {
       const data = await res.json()
 
       if (!res.ok || !data?.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setAccepted(false)
+          return
+        }
         setFeedbackError(data?.error || "Unable to load partner feedback.")
         return
       }
@@ -534,45 +604,11 @@ export default function VaultListingPage() {
     const pathParts = window.location.pathname.split("/").filter(Boolean)
     const currentSlug = pathParts[pathParts.length - 1] || ""
     setSlug(currentSlug)
-
-    if (currentSlug) {
-      setAccepted(hasAgreementCookie(currentSlug))
-      void loadPursuitState(currentSlug)
-    }
-
-    const loadListing = async () => {
-      try {
-        setLoading(true)
-        setLoadError("")
-
-        const res = await fetch("/api/vault/listings", { cache: "no-store" })
-        const data = await res.json()
-
-        if (!res.ok || !data?.ok) {
-          setLoadError(data?.error || "Unable to load vault listing.")
-          return
-        }
-
-        const found = (data.listings || []).find(
-          (item: VaultListing) => item.slug === currentSlug
-        )
-
-        if (!found) {
-          setLoadError("Listing not found.")
-          return
-        }
-
-        setListing(found)
-      } catch {
-        setLoadError("Unable to load vault listing.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void loadListing()
     void loadApprovalSession().then((session) => {
-      if (!session?.email) return
+      if (!session?.email) {
+        setLoading(false)
+        return
+      }
       setApproved(true)
       setApprovedEmail(session.email)
       setEmail(session.email)
@@ -581,12 +617,20 @@ export default function VaultListingPage() {
   }, [])
 
   useEffect(() => {
+    if (!slug || !approved) return
+    void loadListing(slug)
+    void loadPursuitState(slug)
+    void loadAcceptanceState(slug)
+  }, [approved, slug])
+
+  useEffect(() => {
     if (!slug || !approved || !accepted) return
     void loadFeedbackState(slug)
   }, [accepted, approved, slug])
 
   const handleApprovalCheck = async () => {
     setApprovalError("")
+    setApprovalNotice("")
 
     if (!emailCheck.trim()) {
       setApprovalError("Approved email is required.")
@@ -608,18 +652,17 @@ export default function VaultListingPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.approved) {
-        setApprovalError(data?.error || "Unable to verify vault access.")
+      if (!res.ok || !data?.ok || !data?.sent) {
+        setApprovalError(data?.error || "Unable to send vault login link.")
         return
       }
 
-      setApproved(true)
-      setApprovedEmail(data.email || emailCheck)
-      setEmail(data.email || emailCheck)
-      setSuccess("")
-      await loadPursuitState(slug)
+      setApprovalNotice(
+        data?.message ||
+          "If that email is approved for vault access, a secure login link has been sent."
+      )
     } catch {
-      setApprovalError("Unable to verify approval.")
+      setApprovalError("Unable to send vault login link.")
     } finally {
       setApprovalSubmitting(false)
     }
@@ -664,7 +707,7 @@ export default function VaultListingPage() {
       }
 
       setSuccess("Acceptance recorded.")
-      setAccepted(true)
+      await loadAcceptanceState(slug)
       await loadPursuitState(slug)
       await loadFeedbackState(slug)
     } catch {
@@ -760,6 +803,14 @@ export default function VaultListingPage() {
             <Link href="/vault" className="text-sm text-white/65 transition hover:text-white">
               Back to Vault
             </Link>
+            {approved ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm text-white/65 transition hover:text-white"
+              >
+                Sign Out
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
@@ -800,13 +851,19 @@ export default function VaultListingPage() {
               </div>
             ) : null}
 
+            {approvalNotice ? (
+              <div className="falco-accent-surface mt-6 rounded-xl border px-4 py-3 text-sm">
+                {approvalNotice}
+              </div>
+            ) : null}
+
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={handleApprovalCheck}
                 disabled={approvalSubmitting}
                 className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {approvalSubmitting ? "Verifying..." : "Verify Approved Access"}
+                {approvalSubmitting ? "Sending..." : "Email Login Link"}
               </button>
 
               <Link

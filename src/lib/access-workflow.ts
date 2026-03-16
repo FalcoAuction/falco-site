@@ -26,6 +26,12 @@ export type AccessApprovalRecord = {
   approvalToken: string
 }
 
+export type AccessRequestRateLimitResult = {
+  allowed: boolean
+  status: number
+  error?: string
+}
+
 type PartnerAccessRequestRow = {
   id: string
   email: string
@@ -310,6 +316,60 @@ export async function findApprovalByToken(token: string) {
 
   if (!data) return null
   return mapApprovalRow(data as PartnerApprovalRow)
+}
+
+export async function checkAccessRequestRateLimit(input: {
+  email: string
+  ipAddress: string
+}): Promise<AccessRequestRateLimitResult> {
+  if (!supabaseAdmin) {
+    console.error("checkAccessRequestRateLimit error:", supabaseAdminConfigError)
+    return { allowed: true, status: 200 }
+  }
+
+  const now = Date.now()
+  const lastDay = new Date(now - 24 * 60 * 60 * 1000).toISOString()
+  const lastHour = new Date(now - 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_access_requests")
+    .select("*")
+    .gte("created_at", lastDay)
+    .in("status", ["pending", "approved", "rejected"])
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("checkAccessRequestRateLimit error:", error.message)
+    return { allowed: true, status: 200 }
+  }
+
+  const rows = (data ?? []).map((row) => mapRequestRow(row as PartnerAccessRequestRow))
+  const normalizedEmail = input.email.trim().toLowerCase()
+  const normalizedIp = input.ipAddress.trim()
+
+  const emailRequests = rows.filter((row) => row.email === normalizedEmail)
+  if (emailRequests.length >= 3) {
+    return {
+      allowed: false,
+      status: 429,
+      error: "Too many access requests were submitted for this email recently.",
+    }
+  }
+
+  const ipRequestsLastHour = rows.filter((row) => {
+    if (row.ipAddress !== normalizedIp) return false
+    return new Date(row.submittedAt).getTime() >= new Date(lastHour).getTime()
+  })
+
+  if (normalizedIp && normalizedIp !== "unknown" && ipRequestsLastHour.length >= 5) {
+    return {
+      allowed: false,
+      status: 429,
+      error: "Too many access requests were submitted from this network recently.",
+    }
+  }
+
+  return { allowed: true, status: 200 }
 }
 
 export async function listApprovedPartnerEmails() {

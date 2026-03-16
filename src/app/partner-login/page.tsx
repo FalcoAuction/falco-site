@@ -1,17 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function PartnerLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [loadingSession, setLoadingSession] = useState(true)
   const [approved, setApproved] = useState(false)
   const [approvedEmail, setApprovedEmail] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   useEffect(() => {
     const loadSession = async () => {
@@ -33,8 +32,28 @@ export default function PartnerLoginPage() {
     void loadSession()
   }, [])
 
+  useEffect(() => {
+    const errorValue = String(new URLSearchParams(window.location.search).get("error") ?? "").trim()
+    if (errorValue === "expired-link") {
+      setError("That login link has expired. Request a new one below.")
+      return
+    }
+    if (errorValue === "approval-invalid" || errorValue === "missing-link") {
+      setError("Unable to verify that login link. Request a new one below.")
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/access/logout", { method: "POST" })
+    } finally {
+      window.location.reload()
+    }
+  }
+
   const handleLogin = async () => {
     setError("")
+    setSuccess("")
 
     if (!email.trim()) {
       setError("Approved email is required.")
@@ -54,15 +73,14 @@ export default function PartnerLoginPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.approved) {
-        setError(data?.error || "Unable to verify vault access.")
+      if (!res.ok || !data?.ok || !data?.sent) {
+        setError(data?.error || "Unable to send vault login link.")
         return
       }
 
-      router.push("/vault")
-      router.refresh()
+      setSuccess(data?.message || "If that email is approved for vault access, a secure login link has been sent.")
     } catch {
-      setError("Unable to verify vault access.")
+      setError("Unable to send vault login link.")
     } finally {
       setSubmitting(false)
     }
@@ -123,6 +141,12 @@ export default function PartnerLoginPage() {
                 >
                   Request Access for Another Email
                 </Link>
+                <button
+                  onClick={handleLogout}
+                  className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
+                >
+                  Sign Out
+                </button>
               </div>
             </div>
           ) : (
@@ -146,13 +170,19 @@ export default function PartnerLoginPage() {
                 </div>
               ) : null}
 
+              {success ? (
+                <div className="falco-accent-surface mt-6 rounded-xl border px-4 py-3 text-sm">
+                  {success}
+                </div>
+              ) : null}
+
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <button
                   onClick={handleLogin}
                   disabled={submitting}
                   className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submitting ? "Verifying..." : "Enter Vault"}
+                  {submitting ? "Sending..." : "Email Login Link"}
                 </button>
 
                 <Link

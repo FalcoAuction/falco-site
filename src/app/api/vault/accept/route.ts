@@ -5,8 +5,7 @@ import {
   NON_CIRC_VERSION,
 } from "@/lib/vault-agreements"
 import { getVaultApprovalSession } from "@/lib/vault-access-session"
-
-const COOKIE_IS_SECURE = process.env.NODE_ENV === "production"
+import { findVaultListing } from "@/lib/vault-listings"
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,6 +55,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const listing = await findVaultListing(listingSlug)
+    if (!listing) {
+      return NextResponse.json(
+        { ok: false, error: "Listing not found." },
+        { status: 404 }
+      )
+    }
+
     const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
     const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
     const userAgent = req.headers.get("user-agent") ?? "unknown"
@@ -73,25 +80,10 @@ export async function POST(req: NextRequest) {
 
     console.info("vault_accept recorded", { listingSlug, email: approvedEmail })
 
-    const res = NextResponse.json({ ok: true })
-
-    res.cookies.set(`falco_vault_access_${listingSlug}`, "accepted", {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: COOKIE_IS_SECURE,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+    return NextResponse.json({
+      ok: true,
+      accepted: true,
     })
-
-    res.cookies.set(`falco_vault_email_${listingSlug}`, approvedEmail, {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: COOKIE_IS_SECURE,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    })
-
-    return res
   } catch (error) {
     console.error("vault_accept error", error)
     return NextResponse.json(

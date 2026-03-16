@@ -28,6 +28,13 @@ export async function GET(req: NextRequest) {
 
     const approval = await getVaultApprovalSession(req)
     const approvedEmail = approval?.email?.trim().toLowerCase() || ""
+    if (!approvedEmail || !approval) {
+      return NextResponse.json(
+        { ok: false, error: "Approved vault access required." },
+        { status: 401 }
+      )
+    }
+
     const snapshot = await getVaultRoutingSnapshot(listingSlug, listing.status !== "active")
     const requests = await listVaultPursuitRequestsByListing(listingSlug)
     const currentRequest = approvedEmail

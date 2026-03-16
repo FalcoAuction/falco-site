@@ -350,6 +350,7 @@ export default function VaultPage() {
   const [emailCheck, setEmailCheck] = useState("")
   const [approvalSubmitting, setApprovalSubmitting] = useState(false)
   const [approvalError, setApprovalError] = useState("")
+  const [approvalNotice, setApprovalNotice] = useState("")
   const [filter, setFilter] = useState<"all" | "active" | "claimed" | "expired">("active")
   const [segmentFilter, setSegmentFilter] = useState<"all" | VaultSegment>("top")
   const [readinessFilter, setReadinessFilter] = useState<VaultReadinessFilter>("all")
@@ -396,6 +397,13 @@ export default function VaultPage() {
         const data = await res.json()
 
         if (!res.ok || !data?.ok) {
+          if (res.status === 401) {
+            setApproved(false)
+            setApprovedEmail("")
+            setListings([])
+            setLoading(false)
+            return
+          }
           setError(data?.error || "Unable to load vault listings.")
           return
         }
@@ -413,6 +421,7 @@ export default function VaultPage() {
 
   const handleApprovalCheck = async () => {
     setApprovalError("")
+    setApprovalNotice("")
 
     if (!emailCheck.trim()) {
       setApprovalError("Approved email is required.")
@@ -434,19 +443,27 @@ export default function VaultPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.approved) {
-        setApprovalError(data?.error || "Unable to verify vault access.")
+      if (!res.ok || !data?.ok || !data?.sent) {
+        setApprovalError(data?.error || "Unable to send vault login link.")
         return
       }
 
-      setApproved(true)
-      setApprovedEmail(data.email || emailCheck)
-      setEmailCheck(data.email || emailCheck)
-      setApprovalError("")
+      setApprovalNotice(
+        data?.message ||
+          "If that email is approved for vault access, a secure login link has been sent."
+      )
     } catch {
-      setApprovalError("Unable to verify approval.")
+      setApprovalError("Unable to send vault login link.")
     } finally {
       setApprovalSubmitting(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/access/logout", { method: "POST" })
+    } finally {
+      window.location.reload()
     }
   }
 
@@ -525,6 +542,14 @@ export default function VaultPage() {
             <Link href="/request-access" className="text-sm text-white/65 transition hover:text-white">
               Request Access
             </Link>
+            {approved ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm text-white/65 transition hover:text-white"
+              >
+                Sign Out
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
@@ -565,13 +590,19 @@ export default function VaultPage() {
               </div>
             ) : null}
 
+            {approvalNotice ? (
+              <div className="falco-accent-surface mt-6 rounded-xl border px-4 py-3 text-sm">
+                {approvalNotice}
+              </div>
+            ) : null}
+
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={handleApprovalCheck}
                 disabled={approvalSubmitting}
                 className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {approvalSubmitting ? "Verifying..." : "Enter Vault"}
+                {approvalSubmitting ? "Sending..." : "Email Login Link"}
               </button>
 
               <Link

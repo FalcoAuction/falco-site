@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { findApprovalByEmail } from "@/lib/access-workflow"
-import {
-  clearVaultApprovalSession,
-  setVaultApprovalSession,
-} from "@/lib/vault-access-session"
+import { sendVaultLoginLinkEmail } from "@/lib/partner-login-link"
+import { clearVaultApprovalSession } from "@/lib/vault-access-session"
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,31 +16,36 @@ export async function POST(req: NextRequest) {
     }
 
     const approval = await findApprovalByEmail(email)
+    const origin = (process.env.FALCO_SITE_URL?.trim() || req.nextUrl.origin).replace(/\/+$/, "")
 
     if (!approval) {
       console.warn("access_check denied_unapproved_email", { email })
       const res = NextResponse.json(
-        { ok: false, error: "Unable to verify vault access." },
-        { status: 403 }
+        {
+          ok: true,
+          sent: true,
+          message: "If that email is approved for vault access, a secure login link has been sent.",
+        }
       )
       clearVaultApprovalSession(res)
       return res
     }
 
-    const res = NextResponse.json({
-      ok: true,
-      approved: true,
+    await sendVaultLoginLinkEmail({
       email: approval.email,
-      approvedAt: approval.approvedAt,
+      approvalId: approval.approvalToken,
+      origin,
     })
 
-    setVaultApprovalSession(res, approval.approvalToken, approval.email)
-
-    return res
+    return NextResponse.json({
+      ok: true,
+      sent: true,
+      message: "If that email is approved for vault access, a secure login link has been sent.",
+    })
   } catch (error) {
     console.error("access_check error", error)
     return NextResponse.json(
-      { ok: false, error: "Unable to verify approval." },
+      { ok: false, error: "Unable to send vault login link." },
       { status: 500 }
     )
   }

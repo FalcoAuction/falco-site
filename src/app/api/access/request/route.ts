@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAccessRequest } from "@/lib/access-workflow"
+import { checkAccessRequestRateLimit, createAccessRequest } from "@/lib/access-workflow"
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +24,17 @@ export async function POST(req: NextRequest) {
     const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
     const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
     const userAgent = req.headers.get("user-agent") ?? "unknown"
+
+    const rateLimit = await checkAccessRequestRateLimit({
+      email,
+      ipAddress,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { ok: false, error: rateLimit.error || "Too many access requests." },
+        { status: rateLimit.status }
+      )
+    }
 
     const record = await createAccessRequest({
       fullName,
