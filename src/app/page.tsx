@@ -172,7 +172,7 @@ export default async function HomePage() {
               >
                 See distress earlier.
                 <br />
-                Review it cleaner.
+                Assess it more clearly.
                 <br />
                 Decide faster.
               </h1>
