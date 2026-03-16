@@ -153,6 +153,41 @@ function formatDateTime(value?: string | null) {
   }).format(date)
 }
 
+function formatDisplayDate(value?: string | null) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return "Unavailable"
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  const parsed = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(raw)
+
+  if (Number.isNaN(parsed.getTime())) return raw
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+}
+
+function saleTimingCopy(listing: any) {
+  if (listing.currentSaleDate) {
+    if (typeof listing.dtsDays === "number") {
+      if (listing.dtsDays < 0) return `Expired ${formatDisplayDate(listing.currentSaleDate)}`
+      if (listing.dtsDays === 0) return `Sale Today • ${formatDisplayDate(listing.currentSaleDate)}`
+      return `${listing.dtsDays} day${listing.dtsDays === 1 ? "" : "s"} • ${formatDisplayDate(
+        listing.currentSaleDate
+      )}`
+    }
+
+    return formatDisplayDate(listing.currentSaleDate)
+  }
+
+  return String(listing.auctionWindow ?? "").trim() || "Unavailable"
+}
+
 function bestContactLine(row: any) {
   return row.ownerPhonePrimary || row.ownerPhoneSecondary || row.trusteePhonePublic || row.noticePhone || "Unavailable"
 }
@@ -1506,12 +1541,12 @@ export default function OperatorPage() {
                             </div>
 
                             <div className="mt-3 grid gap-2 text-sm text-white/62">
-                              <div>
-                                Sale: <span className="text-white/82">{listing.currentSaleDate || listing.auctionWindow || "Unavailable"}</span>
-                              </div>
-                              <div>
-                                Lane: <span className="text-white/82">{executionLaneCopy(listing.executionLane || listing.suggestedExecutionLane)}</span>
-                              </div>
+                                <div>
+                                  Sale: <span className="text-white/82">{saleTimingCopy(listing)}</span>
+                                </div>
+                                <div>
+                                  Lane: <span className="text-white/82">{executionLaneCopy(listing.executionLane || listing.suggestedExecutionLane)}</span>
+                                </div>
                               <div>
                                 Packet: <span className="text-white/82">{listing.packetLabel || "Vault packet"}</span>
                               </div>
@@ -1549,7 +1584,7 @@ export default function OperatorPage() {
                       </div>
 
                       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4 text-sm text-white/65">
-                        <div>Sale: <span className="text-white/82">{selectedVaultListing.currentSaleDate || selectedVaultListing.auctionWindow || "Unavailable"}</span></div>
+                        <div>Sale: <span className="text-white/82">{saleTimingCopy(selectedVaultListing)}</span></div>
                         <div>Lender: <span className="text-white/82">{selectedVaultListing.mortgageLender || "Unavailable"}</span></div>
                         <div>Loan: <span className="text-white/82">{formatMoney(selectedVaultListing.mortgageAmount)}</span></div>
                         <div>Contact: <span className="text-white/82">{bestContactLine(selectedVaultListing)}</span></div>
