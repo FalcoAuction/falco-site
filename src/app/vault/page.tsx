@@ -553,9 +553,6 @@ export default function VaultPage() {
           </Link>
 
           <div className="flex items-center gap-6">
-            <Link href="/request-access" className="text-sm text-white/65 transition hover:text-white">
-              Request Access
-            </Link>
             {approved ? (
               <button
                 onClick={handleLogout}
@@ -618,13 +615,6 @@ export default function VaultPage() {
               >
                 {approvalSubmitting ? "Sending..." : "Email Login Link"}
               </button>
-
-              <Link
-                href="/request-access"
-                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
-              >
-                Request Access
-              </Link>
             </div>
           </div>
         </section>

@@ -882,13 +882,6 @@ export default function VaultListingPage() {
               >
                 {approvalSubmitting ? "Sending..." : "Email Login Link"}
               </button>
-
-              <Link
-                href="/request-access"
-                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
-              >
-                Request Access
-              </Link>
             </div>
           </div>
         </section>
