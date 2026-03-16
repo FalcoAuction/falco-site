@@ -1,9 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function PartnerLoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [loadingSession, setLoadingSession] = useState(true)
   const [approved, setApproved] = useState(false)
@@ -73,7 +75,18 @@ export default function PartnerLoginPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.sent) {
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "Unable to send vault login link.")
+        return
+      }
+
+      if (data?.approved) {
+        router.push("/vault")
+        router.refresh()
+        return
+      }
+
+      if (!data?.sent) {
         setError(data?.error || "Unable to send vault login link.")
         return
       }

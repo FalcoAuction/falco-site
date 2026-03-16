@@ -443,7 +443,21 @@ export default function VaultPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.sent) {
+      if (!res.ok || !data?.ok) {
+        setApprovalError(data?.error || "Unable to send vault login link.")
+        return
+      }
+
+      if (data?.approved) {
+        setApproved(true)
+        setApprovedEmail(data.email || emailCheck)
+        setEmailCheck(data.email || emailCheck)
+        setApprovalError("")
+        setApprovalNotice("")
+        return
+      }
+
+      if (!data?.sent) {
         setApprovalError(data?.error || "Unable to send vault login link.")
         return
       }

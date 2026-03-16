@@ -652,7 +652,24 @@ export default function VaultListingPage() {
 
       const data = await res.json()
 
-      if (!res.ok || !data?.ok || !data?.sent) {
+      if (!res.ok || !data?.ok) {
+        setApprovalError(data?.error || "Unable to send vault login link.")
+        return
+      }
+
+      if (data?.approved) {
+        setApproved(true)
+        setApprovedEmail(data.email || emailCheck)
+        setEmail(data.email || emailCheck)
+        setApprovalNotice("")
+        setSuccess("")
+        await loadListing(slug)
+        await loadPursuitState(slug)
+        await loadAcceptanceState(slug)
+        return
+      }
+
+      if (!data?.sent) {
         setApprovalError(data?.error || "Unable to send vault login link.")
         return
       }

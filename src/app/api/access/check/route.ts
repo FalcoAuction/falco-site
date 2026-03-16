@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { findApprovalByEmail } from "@/lib/access-workflow"
 import { sendVaultLoginLinkEmail } from "@/lib/partner-login-link"
-import { clearVaultApprovalSession } from "@/lib/vault-access-session"
+import {
+  clearVaultApprovalSession,
+  setVaultApprovalSession,
+} from "@/lib/vault-access-session"
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,17 +34,30 @@ export async function POST(req: NextRequest) {
       return res
     }
 
-    await sendVaultLoginLinkEmail({
-      email: approval.email,
-      approvalId: approval.approvalToken,
-      origin,
-    })
+    try {
+      await sendVaultLoginLinkEmail({
+        email: approval.email,
+        approvalId: approval.approvalToken,
+        origin,
+      })
 
-    return NextResponse.json({
-      ok: true,
-      sent: true,
-      message: "If that email is approved for vault access, a secure login link has been sent.",
-    })
+      return NextResponse.json({
+        ok: true,
+        sent: true,
+        message: "If that email is approved for vault access, a secure login link has been sent.",
+      })
+    } catch (mailError) {
+      console.error("access_check mail_send_failed", mailError)
+      const res = NextResponse.json({
+        ok: true,
+        approved: true,
+        email: approval.email,
+        approvedAt: approval.approvedAt,
+        fallbackDirectLogin: true,
+      })
+      setVaultApprovalSession(res, approval.approvalToken, approval.email)
+      return res
+    }
   } catch (error) {
     console.error("access_check error", error)
     return NextResponse.json(
