@@ -20,8 +20,12 @@ function candidatePublishIssues(payload: Record<string, unknown>) {
     Boolean(String(payload.noticePhone ?? "").trim())
 
   if (!hasContact) issues.push("contact path")
-  if (saleStatus === "pre_foreclosure" && (!equityBand || equityBand === "UNKNOWN")) {
-    issues.push("equity / valuation")
+  if (saleStatus === "pre_foreclosure") {
+    if (!equityBand || equityBand === "UNKNOWN") {
+      issues.push("equity / valuation")
+    } else if (equityBand === "LOW") {
+      issues.push("equity risk")
+    }
   }
 
   return issues

@@ -877,6 +877,33 @@ export default function OperatorPage() {
     }
   }
 
+  async function handleVaultAction(slug: string, action: "remove") {
+    if (!secret.trim()) return setError("Approval secret is required.")
+    setProcessingId(`vault:${slug}:${action}`)
+    setError("")
+    setResult("")
+    try {
+      const res = await fetch("/api/operator/vault", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret,
+          action,
+          slug,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) return setError(data?.error || "Unable to update vault listing.")
+      setResult("Listing removed from vault.")
+      await loadWorkspace(secret)
+      setActiveTab("pre_foreclosure")
+    } catch {
+      setError("Unable to update vault listing.")
+    } finally {
+      setProcessingId("")
+    }
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="absolute inset-0 -z-20 bg-black" />
@@ -1410,16 +1437,23 @@ export default function OperatorPage() {
                             <div>Contact: <span className="text-white/82">{bestContactLine(listing)}</span></div>
                           </div>
 
-                          <div className="mt-4 flex flex-wrap gap-3">
-                            <button
-                              onClick={() => openVaultDesk(listing.slug)}
-                              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-                            >
-                              View In Desk
-                            </button>
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              <button
+                                onClick={() => openVaultDesk(listing.slug)}
+                                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                              >
+                                View In Desk
+                              </button>
+                              <button
+                                onClick={() => handleVaultAction(listing.slug, "remove")}
+                                disabled={processingId === `vault:${listing.slug}:remove`}
+                                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/30 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {processingId === `vault:${listing.slug}:remove` ? "Removing..." : "Remove From Vault"}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))
                     ) : (
                       <EmptyState title="No live pre-foreclosure listings right now." />
                     )}
@@ -1525,17 +1559,26 @@ export default function OperatorPage() {
                         <div>Workability: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.workabilityBand)}</span></div>
                       </div>
 
-                      <div className="mt-5 flex flex-wrap gap-3">
-                        <button
-                          onClick={() => setActiveTab("admin")}
-                          className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-                        >
-                          Open Validation Queue
-                        </button>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(selectedVaultListing.slug)}
-                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10"
-                        >
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <button
+                            onClick={() => setActiveTab("admin")}
+                            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                          >
+                            Open Validation Queue
+                          </button>
+                          <button
+                            onClick={() => handleVaultAction(selectedVaultListing.slug, "remove")}
+                            disabled={processingId === `vault:${selectedVaultListing.slug}:remove`}
+                            className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/30 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {processingId === `vault:${selectedVaultListing.slug}:remove`
+                              ? "Removing..."
+                              : "Remove From Vault"}
+                          </button>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(selectedVaultListing.slug)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10"
+                          >
                           Copy Slug
                         </button>
                       </div>
