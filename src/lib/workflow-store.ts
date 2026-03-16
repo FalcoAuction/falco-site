@@ -6,6 +6,7 @@ type WorkflowTableName =
   | "vault_pursuit_requests"
   | "vault_validation_records"
   | "vault_partner_feedback"
+  | "vault_activity_events"
 
 type WorkflowErrorLike = {
   code?: string
@@ -20,6 +21,7 @@ export const WORKFLOW_TABLES: WorkflowTableName[] = [
   "vault_pursuit_requests",
   "vault_validation_records",
   "vault_partner_feedback",
+  "vault_activity_events",
 ]
 
 export type WorkflowStorageStatus = {

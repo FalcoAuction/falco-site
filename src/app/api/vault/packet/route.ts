@@ -3,6 +3,7 @@ import path from "path"
 import { NextRequest, NextResponse } from "next/server"
 import { findVaultAcceptance } from "@/lib/vault-agreements"
 import { getVaultApprovalSession } from "@/lib/vault-access-session"
+import { recordVaultActivity } from "@/lib/vault-activity"
 import { findVaultListing } from "@/lib/vault-listings"
 
 const PRIVATE_PACKET_DIR = path.join(process.cwd(), "private", "vault", "packets")
@@ -97,6 +98,24 @@ export async function GET(req: NextRequest) {
     }
 
     const fileBuffer = fs.readFileSync(packetPath)
+    const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
+    const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
+    const userAgent = req.headers.get("user-agent") ?? "unknown"
+    await recordVaultActivity({
+      eventType: "vault_packet_viewed",
+      email: approvedEmail,
+      partnerName: approvedEmail,
+      listingSlug: listing.slug,
+      detail: `Opened packet for ${listing.title || listing.slug}.`,
+      ipAddress,
+      userAgent,
+      actedBy: approvedEmail,
+      context: {
+        county: listing.county || "",
+        distressType: listing.distressType || "",
+        packetFileName,
+      },
+    })
     console.info("vault_packet served", { slug, approvedEmail, packetFileName })
 
     return new NextResponse(fileBuffer, {

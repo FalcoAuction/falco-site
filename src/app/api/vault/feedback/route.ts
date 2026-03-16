@@ -7,6 +7,7 @@ import {
   getVaultPartnerFeedbackSummary,
   upsertVaultPartnerFeedbackRecord,
 } from "@/lib/vault-feedback"
+import { recordVaultActivity } from "@/lib/vault-activity"
 import { findVaultListing } from "@/lib/vault-listings"
 import type {
   VaultExecutionLane,
@@ -186,6 +187,19 @@ export async function POST(req: NextRequest) {
     if (action === "clear") {
       await clearVaultPartnerFeedbackRecord(listingSlug, auth.approvedEmail)
       const summary = await getVaultPartnerFeedbackSummary(listingSlug)
+      const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
+      const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
+      const userAgent = req.headers.get("user-agent") ?? "unknown"
+      await recordVaultActivity({
+        eventType: "vault_feedback_cleared",
+        email: auth.approvedEmail,
+        partnerName: auth.approvedEmail,
+        listingSlug,
+        detail: `Cleared partner feedback for ${listingSlug}.`,
+        ipAddress,
+        userAgent,
+        actedBy: auth.approvedEmail,
+      })
       return NextResponse.json({
         ok: true,
         record: null,
@@ -226,6 +240,23 @@ export async function POST(req: NextRequest) {
       contactAttempted,
       actedBy: auth.approvedEmail,
       context,
+    })
+    const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
+    const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
+    const userAgent = req.headers.get("user-agent") ?? "unknown"
+    await recordVaultActivity({
+      eventType: "vault_feedback_recorded",
+      email: auth.approvedEmail,
+      partnerName,
+      listingSlug,
+      detail: `${outcome.replace(/_/g, " ")} feedback saved for ${listingSlug}.`,
+      ipAddress,
+      userAgent,
+      actedBy: auth.approvedEmail,
+      context: {
+        outcome,
+        executionLane,
+      },
     })
 
     const summary = await getVaultPartnerFeedbackSummary(listingSlug)

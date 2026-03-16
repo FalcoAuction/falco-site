@@ -18,7 +18,16 @@ type VaultExecutionLane =
 
 type OperatorIntakeDecision = "promote" | "hold" | "needs_more_info"
 type OperatorEnrichmentStatus = "requested" | "processing" | "completed" | "failed"
-type ActiveTab = "priority" | "pre_foreclosure" | "vault" | "updates" | "admin"
+type ActiveTab = "priority" | "pre_foreclosure" | "vault" | "activity" | "updates" | "admin"
+type VaultActivityEventType =
+  | "vault_login_verified"
+  | "vault_listing_viewed"
+  | "vault_packet_viewed"
+  | "vault_acceptance_recorded"
+  | "vault_pursuit_requested"
+  | "vault_feedback_recorded"
+  | "vault_feedback_cleared"
+  | "vault_logout"
 
 type TaskItem = {
   id: string
@@ -129,6 +138,7 @@ function workflowTableLabel(value: string) {
   if (value === "operator_task_history") return "Task history"
   if (value === "vault_pursuit_requests") return "Pursuit requests"
   if (value === "vault_partner_feedback") return "Partner feedback"
+  if (value === "vault_activity_events") return "Vault activity"
   return "Validation records"
 }
 
@@ -226,6 +236,33 @@ function toneClasses(tone: FeedItem["tone"]) {
   return "border-white/10 bg-white/[0.035]"
 }
 
+function vaultActivityTitle(value: VaultActivityEventType) {
+  if (value === "vault_login_verified") return "Vault login"
+  if (value === "vault_listing_viewed") return "Listing viewed"
+  if (value === "vault_packet_viewed") return "Packet viewed"
+  if (value === "vault_acceptance_recorded") return "Agreement signed"
+  if (value === "vault_pursuit_requested") return "Pursuit requested"
+  if (value === "vault_feedback_recorded") return "Feedback saved"
+  if (value === "vault_feedback_cleared") return "Feedback cleared"
+  return "Vault logout"
+}
+
+function vaultActivityTone(value: VaultActivityEventType): FeedItem["tone"] {
+  if (
+    value === "vault_acceptance_recorded" ||
+    value === "vault_pursuit_requested" ||
+    value === "vault_feedback_recorded"
+  ) {
+    return "good"
+  }
+
+  if (value === "vault_feedback_cleared" || value === "vault_logout") {
+    return "warn"
+  }
+
+  return "neutral"
+}
+
 function StatCard(props: { label: string; value: string | number; sublabel?: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -294,6 +331,7 @@ export default function OperatorPage() {
   )
 
   const liveVaultListings = useMemo(() => workspace?.liveListings ?? [], [workspace])
+  const vaultActivity = useMemo(() => workspace?.vaultActivity ?? [], [workspace])
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -597,11 +635,94 @@ export default function OperatorPage() {
       })
     }
 
+    for (const row of vaultActivity ?? []) {
+      items.push({
+        id: `vault-activity:${row.id}`,
+        at: row.createdAt,
+        title: vaultActivityTitle(row.eventType),
+        detail: row.detail || row.listingSlug || row.email,
+        tone: vaultActivityTone(row.eventType),
+      })
+    }
+
     return items
       .filter((row) => row.at)
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
       .slice(0, 12)
-  }, [history, workspace])
+  }, [history, vaultActivity, workspace])
+
+  const vaultActivityRollup = useMemo(() => {
+    const byPartner = new Map<
+      string,
+      {
+        email: string
+        partnerName: string
+        lastActivityAt: string
+        lastActivityTitle: string
+        listingViews: number
+        packetViews: number
+        agreements: number
+        pursuits: number
+      }
+    >()
+
+    for (const row of vaultActivity ?? []) {
+      const key = String(row.email ?? "").trim().toLowerCase()
+      if (!key) continue
+
+      const current = byPartner.get(key) ?? {
+        email: key,
+        partnerName: row.partnerName || key,
+        lastActivityAt: row.createdAt,
+        lastActivityTitle: vaultActivityTitle(row.eventType),
+        listingViews: 0,
+        packetViews: 0,
+        agreements: 0,
+        pursuits: 0,
+      }
+
+      if (
+        !current.lastActivityAt ||
+        new Date(row.createdAt).getTime() > new Date(current.lastActivityAt).getTime()
+      ) {
+        current.lastActivityAt = row.createdAt
+        current.lastActivityTitle = vaultActivityTitle(row.eventType)
+      }
+
+      if (row.eventType === "vault_listing_viewed") current.listingViews += 1
+      if (row.eventType === "vault_packet_viewed") current.packetViews += 1
+      if (row.eventType === "vault_acceptance_recorded") current.agreements += 1
+      if (row.eventType === "vault_pursuit_requested") current.pursuits += 1
+
+      byPartner.set(key, current)
+    }
+
+    return [...byPartner.values()]
+      .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
+      .slice(0, 10)
+  }, [vaultActivity])
+
+  const vaultActivityCounts = useMemo(() => {
+    let listingViews = 0
+    let packetViews = 0
+    let agreements = 0
+    let pursuits = 0
+
+    for (const row of vaultActivity ?? []) {
+      if (row.eventType === "vault_listing_viewed") listingViews += 1
+      if (row.eventType === "vault_packet_viewed") packetViews += 1
+      if (row.eventType === "vault_acceptance_recorded") agreements += 1
+      if (row.eventType === "vault_pursuit_requested") pursuits += 1
+    }
+
+    return {
+      listingViews,
+      packetViews,
+      agreements,
+      pursuits,
+      activePartners: vaultActivityRollup.length,
+    }
+  }, [vaultActivity, vaultActivityRollup.length])
 
   async function loadWorkspace(currentSecret?: string) {
     const secretToUse = (currentSecret ?? secret).trim()
@@ -1025,6 +1146,7 @@ export default function OperatorPage() {
                 <TabButton active={activeTab === "priority"} onClick={() => setActiveTab("priority")} label="Priority" count={activeTasks.length} />
                 <TabButton active={activeTab === "pre_foreclosure"} onClick={() => setActiveTab("pre_foreclosure")} label="Pre-Foreclosure" count={readyPreForeclosures.length} />
                 <TabButton active={activeTab === "vault"} onClick={() => openVaultDesk(selectedVaultListing?.slug)} label="Vault" count={liveVaultListings.length} />
+                <TabButton active={activeTab === "activity"} onClick={() => setActiveTab("activity")} label="Activity" count={vaultActivity.length} />
                 <TabButton active={activeTab === "updates"} onClick={() => setActiveTab("updates")} label="Updates" count={updateFeed.length} />
                 <TabButton
                   active={activeTab === "admin"}
@@ -1639,6 +1761,105 @@ export default function OperatorPage() {
                     <EmptyState title="Select a live vault listing to review it and open its packet here." />
                   )}
                 </article>
+              </section>
+            ) : null}
+
+            {activeTab === "activity" ? (
+              <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Vault Activity</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Who is opening what</div>
+                    </div>
+                    <button
+                      onClick={() => loadWorkspace(secret)}
+                      disabled={loading}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/72 transition hover:border-white/20 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <StatCard label="Active Partners" value={vaultActivityCounts.activePartners} sublabel="Seen in recent vault activity" />
+                    <StatCard label="Listing Views" value={vaultActivityCounts.listingViews} sublabel="Recent listing opens" />
+                    <StatCard label="Packet Views" value={vaultActivityCounts.packetViews} sublabel="Recent packet opens" />
+                    <StatCard label="Signatures" value={vaultActivityCounts.agreements} sublabel="NDA / non-circ accepted" />
+                  </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {vaultActivity.length ? (
+                      vaultActivity.slice(0, 16).map((item: any) => (
+                        <div key={item.id} className={`rounded-2xl border p-4 ${toneClasses(vaultActivityTone(item.eventType))}`}>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-base font-semibold text-white">
+                                {vaultActivityTitle(item.eventType)}
+                              </div>
+                              <div className="mt-1 text-sm text-white/60">
+                                {item.partnerName || item.email} • {item.detail || item.listingSlug || item.email}
+                              </div>
+                              {item.listingSlug ? (
+                                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/42">
+                                  {item.listingSlug}
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="text-xs uppercase tracking-[0.18em] text-white/45">
+                              {formatDateTime(item.createdAt)}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyState title="No vault activity is recorded yet." />
+                    )}
+                  </div>
+                </article>
+
+                <div className="grid gap-6">
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Partner Rollup</div>
+                    <div className="mt-2 text-xl font-semibold text-white">Recent partner behavior</div>
+                    <div className="mt-5 grid gap-3">
+                      {vaultActivityRollup.length ? (
+                        vaultActivityRollup.map((row) => (
+                          <div key={row.email} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.partnerName || row.email}</div>
+                                <div className="mt-1 text-sm text-white/58">{row.email}</div>
+                              </div>
+                              <div className="text-xs uppercase tracking-[0.18em] text-white/42">
+                                {formatDateTime(row.lastActivityAt)}
+                              </div>
+                            </div>
+                            <div className="mt-3 text-sm text-white/60">
+                              Last activity: {row.lastActivityTitle}
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-white/55">
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                                {row.listingViews} listing views
+                              </span>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                                {row.packetViews} packet views
+                              </span>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                                {row.agreements} signed
+                              </span>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                                {row.pursuits} pursuits
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyState title="No recent partner activity yet." />
+                      )}
+                    </div>
+                  </article>
+                </div>
               </section>
             ) : null}
 

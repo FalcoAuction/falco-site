@@ -82,3 +82,34 @@ create table if not exists public.vault_partner_feedback (
 
 create index if not exists vault_partner_feedback_listing_slug_idx
   on public.vault_partner_feedback (listing_slug);
+
+create table if not exists public.vault_activity_events (
+  id uuid primary key default gen_random_uuid(),
+  event_type text not null check (
+    event_type in (
+      'vault_login_verified',
+      'vault_listing_viewed',
+      'vault_packet_viewed',
+      'vault_acceptance_recorded',
+      'vault_pursuit_requested',
+      'vault_feedback_recorded',
+      'vault_feedback_cleared',
+      'vault_logout'
+    )
+  ),
+  email text not null,
+  partner_name text not null default '',
+  listing_slug text not null default '',
+  detail text not null default '',
+  ip_address text not null default '',
+  user_agent text not null default '',
+  acted_by text not null default '',
+  context jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists vault_activity_events_email_idx
+  on public.vault_activity_events (email);
+
+create index if not exists vault_activity_events_listing_slug_idx
+  on public.vault_activity_events (listing_slug);

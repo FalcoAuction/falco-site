@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { findVaultAcceptance } from "@/lib/vault-agreements"
 import { getVaultApprovalSession } from "@/lib/vault-access-session"
+import { recordVaultActivity } from "@/lib/vault-activity"
 import { findVaultListing } from "@/lib/vault-listings"
 import {
   createVaultPursuitRequest,
@@ -127,6 +128,22 @@ export async function POST(req: NextRequest) {
       email: approvedEmail,
       fullName: fullName || approvedEmail,
       message,
+    })
+    const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
+    const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
+    const userAgent = req.headers.get("user-agent") ?? "unknown"
+    await recordVaultActivity({
+      eventType: "vault_pursuit_requested",
+      email: approvedEmail,
+      partnerName: fullName || approvedEmail,
+      listingSlug,
+      detail: `Requested pursuit path for ${listing.title || listing.slug}.`,
+      ipAddress,
+      userAgent,
+      actedBy: approvedEmail,
+      context: {
+        message: message || "",
+      },
     })
 
     return NextResponse.json({

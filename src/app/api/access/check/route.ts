@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { findApprovalByEmail } from "@/lib/access-workflow"
 import { sendVaultLoginLinkEmail } from "@/lib/partner-login-link"
+import { recordVaultActivity } from "@/lib/vault-activity"
 import {
   clearVaultApprovalSession,
   setVaultApprovalSession,
@@ -48,6 +49,9 @@ export async function POST(req: NextRequest) {
       })
     } catch (mailError) {
       console.error("access_check mail_send_failed", mailError)
+      const forwardedFor = req.headers.get("x-forwarded-for") ?? ""
+      const ipAddress = forwardedFor.split(",")[0]?.trim() || "unknown"
+      const userAgent = req.headers.get("user-agent") ?? "unknown"
       const res = NextResponse.json({
         ok: true,
         approved: true,
@@ -56,6 +60,18 @@ export async function POST(req: NextRequest) {
         fallbackDirectLogin: true,
       })
       setVaultApprovalSession(res, approval.approvalToken, approval.email)
+      await recordVaultActivity({
+        eventType: "vault_login_verified",
+        email: approval.email,
+        partnerName: approval.email,
+        detail: "Approved email verified through direct fallback login.",
+        ipAddress,
+        userAgent,
+        actedBy: approval.email,
+        context: {
+          method: "direct_fallback",
+        },
+      })
       return res
     }
   } catch (error) {

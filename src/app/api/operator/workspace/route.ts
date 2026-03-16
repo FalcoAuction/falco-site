@@ -6,6 +6,7 @@ import { listOperatorEnrichmentRequests } from "@/lib/operator-enrichment"
 import { listOperatorIntakeDecisions } from "@/lib/operator-intake"
 import { getOperatorReport } from "@/lib/operator-report"
 import { listOperatorTaskHistory } from "@/lib/operator-tasks"
+import { listVaultActivityRecords } from "@/lib/vault-activity"
 import { listActiveVaultListings } from "@/lib/vault-listings"
 import { listVaultPursuitRequests, listVaultValidationRecords } from "@/lib/vault-pursuit"
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
       return res
     }
 
-    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords, enrichmentRequests] = await Promise.all([
+    const [report, accessRequests, vaultPursuitRequests, liveListings, taskHistory, intakeDecisions, validationRecords, enrichmentRequests, vaultActivity] = await Promise.all([
       getOperatorReport(),
       listAccessRequests(),
       listVaultPursuitRequests(),
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
       listOperatorIntakeDecisions(),
       listVaultValidationRecords(),
       listOperatorEnrichmentRequests(),
+      listVaultActivityRecords(),
     ])
 
     const res = NextResponse.json({
@@ -76,6 +78,7 @@ export async function POST(req: NextRequest) {
         intakeDecisions,
         validationRecords,
         enrichmentRequests,
+        vaultActivity,
       },
     })
     setOperatorSession(res)

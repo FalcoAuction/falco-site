@@ -5,6 +5,7 @@ import {
   NON_CIRC_VERSION,
 } from "@/lib/vault-agreements"
 import { getVaultApprovalSession } from "@/lib/vault-access-session"
+import { recordVaultActivity } from "@/lib/vault-activity"
 import { findVaultListing } from "@/lib/vault-listings"
 
 export async function POST(req: NextRequest) {
@@ -76,6 +77,20 @@ export async function POST(req: NextRequest) {
       acceptedAt: new Date().toISOString(),
       ipAddress,
       userAgent,
+    })
+    await recordVaultActivity({
+      eventType: "vault_acceptance_recorded",
+      email: approvedEmail,
+      partnerName: fullName,
+      listingSlug,
+      detail: `Signed NDA and non-circ for ${listing.title || listing.slug}.`,
+      ipAddress,
+      userAgent,
+      actedBy: approvedEmail,
+      context: {
+        ndaVersion: NDA_VERSION,
+        nonCircVersion: NON_CIRC_VERSION,
+      },
     })
 
     console.info("vault_accept recorded", { listingSlug, email: approvedEmail })
