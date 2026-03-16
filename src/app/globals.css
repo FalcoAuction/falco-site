@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --falco-accent-rgb: 16 185 129;
+  --falco-accent-strong-rgb: 52 211 153;
+  --falco-accent-ink: #03110b;
 }
 
 @theme inline {
@@ -23,4 +26,45 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.falco-accent-pill {
+  border-color: rgb(var(--falco-accent-rgb) / 0.18);
+  background: rgb(var(--falco-accent-rgb) / 0.08);
+  color: rgb(209 250 229 / 0.88);
+  box-shadow: 0 12px 40px rgb(var(--falco-accent-rgb) / 0.08);
+}
+
+.falco-accent-button {
+  background: rgb(var(--falco-accent-rgb) / 0.96);
+  color: var(--falco-accent-ink);
+  box-shadow: 0 18px 55px rgb(var(--falco-accent-rgb) / 0.16);
+}
+
+.falco-accent-button:hover {
+  background: rgb(var(--falco-accent-strong-rgb) / 0.96);
+}
+
+.falco-accent-button-secondary {
+  border-color: rgb(var(--falco-accent-rgb) / 0.18);
+  background: rgb(var(--falco-accent-rgb) / 0.08);
+  color: rgb(209 250 229 / 0.88);
+}
+
+.falco-accent-button-secondary:hover {
+  border-color: rgb(var(--falco-accent-strong-rgb) / 0.28);
+  background: rgb(var(--falco-accent-rgb) / 0.14);
+  color: rgb(236 253 245 / 0.96);
+}
+
+.falco-accent-surface {
+  border-color: rgb(var(--falco-accent-rgb) / 0.16);
+  background: rgb(var(--falco-accent-rgb) / 0.08);
+  color: rgb(236 253 245 / 0.9);
+}
+
+.falco-accent-tab-active {
+  border-color: rgb(var(--falco-accent-rgb) / 0.2);
+  background: rgb(var(--falco-accent-rgb) / 0.94);
+  color: var(--falco-accent-ink);
 }

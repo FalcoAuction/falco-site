@@ -92,7 +92,7 @@ export default function RequestAccessPage() {
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-16 md:px-10 md:pb-28 md:pt-24">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Request Access
             </div>
 
@@ -244,7 +244,7 @@ export default function RequestAccessPage() {
               ) : null}
 
               {success ? (
-                <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                <div className="falco-accent-surface mt-6 rounded-xl border px-4 py-3 text-sm">
                   {success}
                   {requestId ? (
                     <div className="mt-2 text-xs text-white/45">Request ID: {requestId}</div>
@@ -256,14 +256,14 @@ export default function RequestAccessPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Submitting..." : "Submit Access Request"}
                 </button>
 
                 <a
                   href="mailto:access@falco.llc?subject=Falco%20Partner%20Inquiry"
-                  className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                  className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
                 >
                   Partner Inquiry
                 </a>

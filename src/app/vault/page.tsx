@@ -179,7 +179,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
           <div
             className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${
               segment === "top"
-                ? "border-white/20 bg-white text-black"
+                ? "falco-accent-tab-active"
                 : "border-white/10 bg-white/5 text-white/65"
             }`}
           >
@@ -332,7 +332,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
       <div className="mt-auto pt-8">
         <Link
           href={`/vault/${listing.slug}`}
-          className="flex w-full items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+          className="falco-accent-button flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition"
         >
           View Listing
         </Link>
@@ -532,7 +532,7 @@ export default function VaultPage() {
       {!approved ? (
         <section className="mx-auto max-w-4xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Partner Login
             </div>
 
@@ -569,14 +569,14 @@ export default function VaultPage() {
               <button
                 onClick={handleApprovalCheck}
                 disabled={approvalSubmitting}
-                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {approvalSubmitting ? "Verifying..." : "Enter Vault"}
               </button>
 
               <Link
                 href="/request-access"
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
               >
                 Request Access
               </Link>
@@ -589,7 +589,7 @@ export default function VaultPage() {
       <section className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Closed Access Vault
             </div>
 
@@ -666,7 +666,7 @@ export default function VaultPage() {
               onClick={() => setFilter(value as "all" | "active" | "claimed" | "expired")}
               className={`rounded-full border px-4 py-2 text-sm transition ${
                 filter === value
-                  ? "border-white/20 bg-white text-black"
+                  ? "falco-accent-tab-active"
                   : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
               }`}
             >
@@ -692,7 +692,7 @@ export default function VaultPage() {
                   onClick={() => setSegmentFilter(value as "all" | VaultSegment)}
                   className={`rounded-full border px-3 py-2 text-sm transition ${
                     segmentFilter === value
-                      ? "border-white/20 bg-white text-black"
+                      ? "falco-accent-tab-active"
                       : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
                   }`}
                 >
@@ -718,7 +718,7 @@ export default function VaultPage() {
                   onClick={() => setStageFilter(value as VaultStage)}
                   className={`rounded-full border px-3 py-2 text-sm transition ${
                     stageFilter === value
-                      ? "border-white/20 bg-white text-black"
+                      ? "falco-accent-tab-active"
                       : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
                   }`}
                 >

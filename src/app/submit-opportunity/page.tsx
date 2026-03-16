@@ -28,7 +28,7 @@ export default function SubmitOpportunityPage() {
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-16 md:px-10 md:pb-28 md:pt-24">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Submit Opportunity
             </div>
 
@@ -73,10 +73,10 @@ export default function SubmitOpportunityPage() {
               <div className="mt-8 space-y-4">
                 <a
                   href="mailto:access@falco.llc?subject=Falco%20Opportunity%20Submission"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/82 transition hover:border-white/25 hover:bg-white/[0.06]"
+                  className="falco-accent-button-secondary flex items-center justify-between rounded-2xl border px-5 py-4 text-sm font-semibold transition"
                 >
                   <span>Email Opportunity Submission</span>
-                  <span className="text-white/40">→</span>
+                  <span className="text-emerald-100/70">→</span>
                 </a>
               </div>
 

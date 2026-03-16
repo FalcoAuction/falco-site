@@ -767,7 +767,7 @@ export default function VaultListingPage() {
       {!approved ? (
         <section className="mx-auto max-w-4xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Approved Access Required
             </div>
 
@@ -804,14 +804,14 @@ export default function VaultListingPage() {
               <button
                 onClick={handleApprovalCheck}
                 disabled={approvalSubmitting}
-                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {approvalSubmitting ? "Verifying..." : "Verify Approved Access"}
               </button>
 
               <Link
                 href="/request-access"
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
               >
                 Request Access
               </Link>
@@ -821,7 +821,7 @@ export default function VaultListingPage() {
       ) : !accepted ? (
         <section className="mx-auto max-w-5xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
-            <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+            <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
               Restricted Listing
             </div>
 
@@ -964,7 +964,7 @@ export default function VaultListingPage() {
             ) : null}
 
             {success ? (
-              <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+              <div className="falco-accent-surface mt-6 rounded-xl border px-4 py-3 text-sm">
                 {success}
               </div>
             ) : null}
@@ -973,14 +973,14 @@ export default function VaultListingPage() {
               <button
                 onClick={handleAccept}
                 disabled={submitting}
-                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Recording Acceptance..." : "Accept and Enter Listing"}
               </button>
 
               <Link
                 href="/request-access"
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
               >
                 Request Formal Access
               </Link>
@@ -991,7 +991,7 @@ export default function VaultListingPage() {
         <section className="mx-auto max-w-[1500px] px-6 pb-24 pt-16 md:px-10 md:pt-24">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.02fr]">
             <div>
-              <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+              <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
                 Confidential Operator Review
               </div>
 
@@ -1147,19 +1147,19 @@ export default function VaultListingPage() {
                     href={listing.packetUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white px-5 py-4 text-sm font-semibold text-black transition hover:bg-white/90"
+                    className="falco-accent-button flex items-center justify-between rounded-2xl border px-5 py-4 text-sm font-semibold transition"
                   >
                     <span>Open Packet</span>
-                    <span className="text-black/45">&gt;</span>
+                    <span className="text-emerald-950/55">&gt;</span>
                   </a>
                 )}
 
                 <a
                   href="mailto:falco@falco.llc?subject=Falco%20Vault%20Listing%20Inquiry"
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 text-sm font-semibold text-white/88 transition hover:border-white/20 hover:bg-white/[0.09]"
+                  className="falco-accent-button-secondary flex items-center justify-between rounded-2xl border px-5 py-4 text-sm font-semibold transition"
                 >
                   <span>Email FALCO</span>
-                  <span className="text-white/40">&gt;</span>
+                  <span className="text-emerald-100/70">&gt;</span>
                 </a>
               </div>
 
@@ -1184,7 +1184,7 @@ export default function VaultListingPage() {
                 ) : null}
 
                 {pursuitSuccess ? (
-                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                  <div className="falco-accent-surface mt-4 rounded-xl border px-4 py-3 text-sm">
                     {pursuitSuccess}
                   </div>
                 ) : null}
@@ -1193,7 +1193,7 @@ export default function VaultListingPage() {
                   <button
                     onClick={handlePursuitRequest}
                     disabled={pursuitLoading || pursuitSubmitting || packetBlockedByRouting || pursuitState.hasRequestedByCurrentUser}
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white px-5 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/40"
+                    className="falco-accent-button inline-flex w-full items-center justify-center rounded-xl border px-5 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/40"
                   >
                     {pursuitState.hasRequestedByCurrentUser
                       ? "Pursuit Requested"
@@ -1212,7 +1212,7 @@ export default function VaultListingPage() {
                       </p>
                     </div>
                     {feedbackRecord ? (
-                      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
+                      <div className="falco-accent-pill rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em]">
                         Saved: {feedbackOutcomeActionCopy(feedbackRecord.outcome)}
                       </div>
                     ) : null}
@@ -1303,7 +1303,7 @@ export default function VaultListingPage() {
                             disabled={feedbackLoading || feedbackSubmitting}
                             className={`rounded-full border px-3 py-1 text-xs transition ${
                               active
-                                ? "border-white/18 bg-white text-black"
+                                ? "falco-accent-tab-active"
                                 : "border-white/10 bg-white/5 text-white/68 hover:border-white/20 hover:bg-white/10"
                             } disabled:cursor-not-allowed disabled:opacity-60`}
                           >
@@ -1352,7 +1352,7 @@ export default function VaultListingPage() {
                   ) : null}
 
                   {feedbackSuccess ? (
-                    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                    <div className="falco-accent-surface mt-4 rounded-xl border px-4 py-3 text-sm">
                       {feedbackSuccess}
                     </div>
                   ) : null}

@@ -87,7 +87,7 @@ export default function PartnerLoginPage() {
 
       <section className="mx-auto max-w-4xl px-6 pb-24 pt-16 md:px-10 md:pt-24">
         <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)] md:p-10">
-          <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/55">
+          <div className="falco-accent-pill inline-flex rounded-full border px-4 py-2 text-xs uppercase tracking-[0.22em]">
             Partner Login
           </div>
 
@@ -102,24 +102,24 @@ export default function PartnerLoginPage() {
           </p>
 
           {loadingSession ? (
-            <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/60">
+            <div className="falco-accent-surface mt-8 rounded-xl border px-4 py-3 text-sm">
               Checking current session...
             </div>
           ) : approved ? (
-            <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.035] p-6">
+            <div className="mt-8 rounded-[24px] border border-emerald-400/18 bg-emerald-400/[0.06] p-6">
               <div className="text-sm text-white/68">
                 Verified as <span className="text-white">{approvedEmail}</span>
               </div>
               <div className="mt-6 flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/vault"
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90"
+                  className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition"
                 >
                   Continue to Vault
                 </Link>
                 <Link
                   href="/request-access"
-                  className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                  className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
                 >
                   Request Access for Another Email
                 </Link>
@@ -150,14 +150,14 @@ export default function PartnerLoginPage() {
                 <button
                   onClick={handleLogin}
                   disabled={submitting}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Verifying..." : "Enter Vault"}
                 </button>
 
                 <Link
                   href="/request-access"
-                  className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:bg-white/10"
+                  className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition"
                 >
                   Request Access
                 </Link>
