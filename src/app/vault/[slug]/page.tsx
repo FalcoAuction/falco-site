@@ -246,6 +246,73 @@ function saleWindowDetail(listing: VaultListing) {
   return parts.join(" • ") || "Timeline refreshes automatically"
 }
 
+function parseSaleDate(value?: string) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return null
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  const parsed = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(raw)
+
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
+}
+
+function liveDtsDays(listing: VaultListing) {
+  const saleDate = parseSaleDate(listing.currentSaleDate)
+  if (!saleDate) return listing.dtsDays
+
+  const now = new Date()
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const saleDay = Date.UTC(saleDate.getUTCFullYear(), saleDate.getUTCMonth(), saleDate.getUTCDate())
+
+  return Math.round((saleDay - today) / 86400000)
+}
+
+function refreshedSaleWindowHeadline(listing: VaultListing) {
+  const daysToSale = liveDtsDays(listing)
+
+  if (listing.currentSaleDate) {
+    if (typeof daysToSale === "number") {
+      if (daysToSale < 0) return "Expired"
+      if (daysToSale === 0) return "Sale Today"
+      return `${daysToSale} Day${daysToSale === 1 ? "" : "s"}`
+    }
+
+    return formatDisplayDate(listing.currentSaleDate)
+  }
+
+  return listing.auctionWindow || "Unavailable"
+}
+
+function refreshedSaleWindowDetail(listing: VaultListing) {
+  const parts: string[] = []
+  const daysToSale = liveDtsDays(listing)
+
+  if (typeof daysToSale === "number" && listing.currentSaleDate) {
+    if (daysToSale < 0) {
+      parts.push(`Expired ${formatDisplayDate(listing.currentSaleDate)}`)
+    } else if (daysToSale === 0) {
+      parts.push(`Sale Today | ${formatDisplayDate(listing.currentSaleDate)}`)
+    } else {
+      parts.push(`${daysToSale} day${daysToSale === 1 ? "" : "s"} | ${formatDisplayDate(listing.currentSaleDate)}`)
+    }
+  } else if (listing.currentSaleDate) {
+    parts.push(`Sale ${formatDisplayDate(listing.currentSaleDate)}`)
+  } else if (listing.auctionWindow) {
+    parts.push(listing.auctionWindow)
+  }
+
+  if (listing.distressRecordedAt) {
+    parts.push(`Recorded ${formatDisplayDate(listing.distressRecordedAt)}`)
+  } else if (listing.originalSaleDate && listing.originalSaleDate !== listing.currentSaleDate) {
+    parts.push(`Originally ${formatDisplayDate(listing.originalSaleDate)}`)
+  }
+
+  return parts.join(" | ") || "Timeline refreshes automatically"
+}
+
 function distressChipClasses(type?: string) {
   const normalized = String(type ?? "").toLowerCase()
   if (normalized.includes("pre-foreclosure")) {
@@ -918,7 +985,7 @@ export default function VaultListingPage() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Days Until Scheduled Sale</div>
-                <div className="mt-2 text-sm font-medium text-white/82">{listing.dtsDays ?? "-"}</div>
+                <div className="mt-2 text-sm font-medium text-white/82">{liveDtsDays(listing) ?? "-"}</div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -1074,8 +1141,8 @@ export default function VaultListingPage() {
                 <div className={`rounded-full border px-4 py-2 ${distressChipClasses(listing.distressType)}`}>
                   {listing.distressType}
                 </div>
-                <div className={`rounded-full border px-4 py-2 ${dtsChipClasses(listing.dtsDays)}`}>
-                  {detailValue(listing.dtsDays)} Days To Sale
+                <div className={`rounded-full border px-4 py-2 ${dtsChipClasses(liveDtsDays(listing))}`}>
+                  {detailValue(liveDtsDays(listing))} Days To Sale
                 </div>
                 <div className={`rounded-full border px-4 py-2 ${validationChipClasses(listing.validationOutcome)}`}>
                   {validationOutcomeCopy(listing.validationOutcome)}
@@ -1091,12 +1158,12 @@ export default function VaultListingPage() {
                   <div className="text-xs uppercase tracking-[0.18em] text-white/35">Fast operator read</div>
                 </div>
                 <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                  <div className={`rounded-2xl border p-5 ${dtsChipClasses(listing.dtsDays)}`}>
+                  <div className={`rounded-2xl border p-5 ${dtsChipClasses(liveDtsDays(listing))}`}>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">Sale Window</div>
                     <div className="mt-2 text-2xl font-semibold text-current">
-                      {saleWindowHeadline(listing)}
+                      {refreshedSaleWindowHeadline(listing)}
                     </div>
-                    <div className="mt-2 text-sm text-current/80">{saleWindowDetail(listing)}</div>
+                    <div className="mt-2 text-sm text-current/80">{refreshedSaleWindowDetail(listing)}</div>
                   </div>
                   <div
                     className={`rounded-2xl border p-5 ${

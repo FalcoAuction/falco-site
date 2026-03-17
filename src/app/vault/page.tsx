@@ -81,14 +81,58 @@ function formatDisplayDate(value?: string) {
 }
 
 function saleTimingCopy(listing: VaultListing) {
+  const daysToSale = liveDtsDays(listing)
+
   if (listing.currentSaleDate) {
-    if (typeof listing.dtsDays === "number") {
-      if (listing.dtsDays < 0) return `Expired ${formatDisplayDate(listing.currentSaleDate)}`
+    if (typeof daysToSale === "number") {
+      if (daysToSale < 0) return `Expired ${formatDisplayDate(listing.currentSaleDate)}`
       if (listing.dtsDays === 0) return `Sale Today • ${formatDisplayDate(listing.currentSaleDate)}`
       return `${listing.dtsDays} day${listing.dtsDays === 1 ? "" : "s"} • ${formatDisplayDate(
         listing.currentSaleDate
       )}`
     }
+    return formatDisplayDate(listing.currentSaleDate)
+  }
+
+  return listing.auctionWindow
+}
+
+function parseSaleDate(value?: string) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return null
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  const parsed = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(raw)
+
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
+}
+
+function liveDtsDays(listing: VaultListing) {
+  const saleDate = parseSaleDate(listing.currentSaleDate)
+  if (!saleDate) return listing.dtsDays
+
+  const now = new Date()
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const saleDay = Date.UTC(saleDate.getUTCFullYear(), saleDate.getUTCMonth(), saleDate.getUTCDate())
+
+  return Math.round((saleDay - today) / 86400000)
+}
+
+function refreshedSaleTimingCopy(listing: VaultListing) {
+  const daysToSale = liveDtsDays(listing)
+
+  if (listing.currentSaleDate) {
+    if (typeof daysToSale === "number") {
+      if (daysToSale < 0) return `Expired ${formatDisplayDate(listing.currentSaleDate)}`
+      if (daysToSale === 0) return `Sale Today | ${formatDisplayDate(listing.currentSaleDate)}`
+      return `${daysToSale} day${daysToSale === 1 ? "" : "s"} | ${formatDisplayDate(
+        listing.currentSaleDate
+      )}`
+    }
+
     return formatDisplayDate(listing.currentSaleDate)
   }
 
@@ -216,9 +260,9 @@ function ListingCard({ listing }: { listing: VaultListing }) {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Sale Timing</div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {saleTimingCopy(listing)}
-          </div>
+            <div className="mt-2 text-sm font-medium text-white/82">
+              {refreshedSaleTimingCopy(listing)}
+            </div>
           <div className="mt-2 text-xs text-white/50">
             {listing.distressRecordedAt
               ? `Recorded ${formatDisplayDate(listing.distressRecordedAt)}`
