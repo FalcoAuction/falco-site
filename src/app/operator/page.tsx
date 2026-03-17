@@ -202,6 +202,15 @@ function bestContactLine(row: any) {
   return row.ownerPhonePrimary || row.ownerPhoneSecondary || row.trusteePhonePublic || row.noticePhone || "Unavailable"
 }
 
+function debtRecordRefs(row: any) {
+  const parts = [
+    row.mortgageRecordBook ? `Book ${row.mortgageRecordBook}` : "",
+    row.mortgageRecordPage ? `Page ${row.mortgageRecordPage}` : "",
+    row.mortgageRecordInstrument ? `Instrument ${row.mortgageRecordInstrument}` : "",
+  ].filter(Boolean)
+  return parts.length ? parts.join(" • ") : "No record refs"
+}
+
 function debtConfidenceCopy(value?: string | null) {
   if (value === "FULL") return "Full Debt"
   if (value === "PARTIAL") return "Partial Debt"
@@ -221,6 +230,7 @@ function autonomyDirectiveCopy(value?: string | null) {
 
 function autonomyActionCopy(value?: string | null) {
   if (value === "publish") return "Publish"
+  if (value === "county_record_lookup") return "County Record Lookup"
   if (value === "reconstruct_debt") return "Reconstruct Debt"
   if (value === "reconstruct_transfer") return "Reconstruct Transfer"
   if (value === "enrich_contact") return "Enrich Contact"
@@ -1667,6 +1677,17 @@ export default function OperatorPage() {
                               <div>Contact: <span className="text-white/82">{bestContactLine(row)}</span></div>
                               <div>Agency: <span className="text-white/82">{executionRealityCopy(row.ownerAgency)}</span></div>
                             </div>
+
+                            {row.debtReconstructionMissingReason || row.debtReconstructionSourceMix || row.mortgageRecordBook || row.mortgageRecordPage || row.mortgageRecordInstrument ? (
+                              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65">
+                                <div className="text-[11px] uppercase tracking-[0.22em] text-white/42">Debt Reconstruction</div>
+                                <div className="mt-2 text-white/80">
+                                  {row.debtReconstructionMissingReason || row.debtReconstructionSummary || "No explicit debt blocker recorded"}
+                                </div>
+                                <div className="mt-2 text-white/58">Sources: <span className="text-white/76">{row.debtReconstructionSourceMix || "Unavailable"}</span></div>
+                                <div className="mt-1 text-white/58">Record refs: <span className="text-white/76">{debtRecordRefs(row)}</span></div>
+                              </div>
+                            ) : null}
 
                             <textarea
                               value={intakeNotes[row.lead_key] ?? ""}

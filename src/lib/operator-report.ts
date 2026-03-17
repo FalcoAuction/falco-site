@@ -53,6 +53,9 @@ export type OperatorLeadRow = {
   debtReconstructionSourceMix?: string | null
   debtReconstructionMissingReason?: string | null
   debtReconstructionSummary?: string | null
+  mortgageRecordBook?: string | null
+  mortgageRecordPage?: string | null
+  mortgageRecordInstrument?: string | null
   propertyIdentifier?: string | null
   ownerPhonePrimary?: string | null
   ownerPhoneSecondary?: string | null
