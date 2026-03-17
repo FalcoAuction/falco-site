@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-17T20:51:59.901145+00:00",
+  "generatedAt": "2026-03-17T20:57:10.445385+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -1735,6 +1735,68 @@
         "noticePhone": null
       },
       {
+        "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
+        "address": "15456 Old Hickory Blvd, Nashville, TN 37211",
+        "county": "Davidson County",
+        "distress_type": "SOT",
+        "sale_status": "pre_foreclosure",
+        "falco_score_internal": 81,
+        "auction_readiness": "RED",
+        "equity_band": "UNKNOWN",
+        "dts_days": null,
+        "uw_ready": 0,
+        "first_seen_at": "2026-03-12T01:41:58.887154Z",
+        "last_seen_at": "2026-03-13T04:03:02.516134Z",
+        "score_updated_at": "2026-03-17T18:21:04+00:00",
+        "current_sale_date": null,
+        "original_sale_date": null,
+        "vaultLive": false,
+        "vaultSlug": null,
+        "preForeclosureReviewReady": false,
+        "vaultPublishReady": false,
+        "topTierReady": false,
+        "prefcDebtProxyReady": false,
+        "debtConfidence": "THIN",
+        "prefcLiveQuality": false,
+        "prefcLiveReviewReasons": [
+          "Debt confidence is below full",
+          "Equity band is too weak for live pre-foreclosure",
+          "Influenceability is not high enough",
+          "Workability is too limited"
+        ],
+        "packetCompletenessPct": 67,
+        "executionBlockers": [
+          "Original loan amount missing"
+        ],
+        "overlapSignals": [],
+        "specialSituation": false,
+        "sourceMix": [
+          "SUBSTITUTION_OF_TRUSTEE"
+        ],
+        "suggestedExecutionLane": "borrower_side",
+        "suggestedLaneConfidence": "LOW",
+        "prefcCountyTier": "SECONDARY",
+        "prefcSourcePriority": 0,
+        "contactPathQuality": "GOOD",
+        "controlParty": "OWNER",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "LOW",
+        "executionPosture": "OWNER ACTIONABLE",
+        "workabilityBand": "LIMITED",
+        "ownerName": "PLAZA RTL TRUST; US BANK NATIONAL ASSOCIATION",
+        "ownerMail": "1601 Lyndon B Johnson Fwy Ste 150, Dallas TX 75234",
+        "mortgageDate": "2023-08-03",
+        "mortgageLender": "Conventus LLC, which the aforementioned Deed of Trust was subsequently assigned to U",
+        "mortgageAmount": null,
+        "propertyIdentifier": "161-14-0-017-00",
+        "ownerPhonePrimary": "6183974952",
+        "ownerPhoneSecondary": "6182369904",
+        "trusteePhonePublic": null,
+        "noticePhone": null
+      },
+      {
         "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
         "address": "4209 Van Dyke Dr, Knoxville, TN 37919",
         "county": "Knox County",
@@ -1791,68 +1853,6 @@
         "mortgageLender": "CV3 Financial Services, LLC, which the aforementioned Deed of Trust was subsequently assigned to U",
         "mortgageAmount": null,
         "propertyIdentifier": "107FC020",
-        "ownerPhonePrimary": "6183974952",
-        "ownerPhoneSecondary": "6182369904",
-        "trusteePhonePublic": null,
-        "noticePhone": null
-      },
-      {
-        "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
-        "address": "15456 Old Hickory Blvd, Nashville, TN 37211",
-        "county": "Davidson County",
-        "distress_type": "SOT",
-        "sale_status": "pre_foreclosure",
-        "falco_score_internal": 81,
-        "auction_readiness": "RED",
-        "equity_band": "UNKNOWN",
-        "dts_days": null,
-        "uw_ready": 0,
-        "first_seen_at": "2026-03-12T01:41:58.887154Z",
-        "last_seen_at": "2026-03-13T04:03:02.516134Z",
-        "score_updated_at": "2026-03-17T18:21:04+00:00",
-        "current_sale_date": null,
-        "original_sale_date": null,
-        "vaultLive": false,
-        "vaultSlug": null,
-        "preForeclosureReviewReady": false,
-        "vaultPublishReady": false,
-        "topTierReady": false,
-        "prefcDebtProxyReady": false,
-        "debtConfidence": "THIN",
-        "prefcLiveQuality": false,
-        "prefcLiveReviewReasons": [
-          "Debt confidence is below full",
-          "Equity band is too weak for live pre-foreclosure",
-          "Influenceability is not high enough",
-          "Workability is too limited"
-        ],
-        "packetCompletenessPct": 67,
-        "executionBlockers": [
-          "Original loan amount missing"
-        ],
-        "overlapSignals": [],
-        "specialSituation": false,
-        "sourceMix": [
-          "SUBSTITUTION_OF_TRUSTEE"
-        ],
-        "suggestedExecutionLane": "borrower_side",
-        "suggestedLaneConfidence": "LOW",
-        "prefcCountyTier": "WATCH",
-        "prefcSourcePriority": 0,
-        "contactPathQuality": "GOOD",
-        "controlParty": "OWNER",
-        "ownerAgency": "HIGH",
-        "interventionWindow": "WIDE",
-        "lenderControlIntensity": "LOW",
-        "influenceability": "LOW",
-        "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "LIMITED",
-        "ownerName": "PLAZA RTL TRUST; US BANK NATIONAL ASSOCIATION",
-        "ownerMail": "1601 Lyndon B Johnson Fwy Ste 150, Dallas TX 75234",
-        "mortgageDate": "2023-08-03",
-        "mortgageLender": "Conventus LLC, which the aforementioned Deed of Trust was subsequently assigned to U",
-        "mortgageAmount": null,
-        "propertyIdentifier": "161-14-0-017-00",
         "ownerPhonePrimary": "6183974952",
         "ownerPhoneSecondary": "6182369904",
         "trusteePhonePublic": null,
@@ -2789,11 +2789,11 @@
   },
   "autonomy": {
     "agent": "falco_autonomy",
-    "generated_at": "2026-03-17T20:08:26+00:00",
-    "run_id": "manual_autonomy_refresh_2",
+    "generated_at": "2026-03-17T20:56:33+00:00",
+    "run_id": "manual_county_expand_refresh",
     "objective": "Increase strong live opportunities while keeping the vault limited to commercially credible files.",
     "marketAllocation": {
-      "generated_at": "2026-03-17T20:08:26+00:00",
+      "generated_at": "2026-03-17T20:56:32+00:00",
       "counties": [
         {
           "county": "Rutherford County",
@@ -2815,31 +2815,12 @@
           "reason": "Already producing strong live pre-foreclosure. Increase effort here first."
         },
         {
-          "county": "Hamilton County",
-          "activeLane": true,
-          "tracked": 10,
-          "preForeclosureTracked": 3,
-          "packeted": 7,
-          "live": 3,
-          "strongLivePrefc": 0,
-          "sourceMix": {
-            "LIS_PENDENS": 3,
-            "FORECLOSURE": 3,
-            "SOT": 4
-          },
-          "packetRate": 70.0,
-          "liveRate": 30.0,
-          "countyTier": "PRIMARY",
-          "directive": "hold_steady",
-          "reason": "Still productive, but quality needs reconstruction work more than volume."
-        },
-        {
           "county": "Montgomery County",
           "activeLane": true,
           "tracked": 18,
           "preForeclosureTracked": 3,
           "packeted": 3,
-          "live": 2,
+          "live": 1,
           "strongLivePrefc": 1,
           "sourceMix": {
             "LIS_PENDENS": 3,
@@ -2847,14 +2828,33 @@
             "SOT": 3
           },
           "packetRate": 16.7,
-          "liveRate": 11.1,
+          "liveRate": 5.6,
           "countyTier": "SECONDARY",
           "directive": "push_harder",
           "reason": "Already producing strong live pre-foreclosure. Increase effort here first."
         },
         {
+          "county": "Hamilton County",
+          "activeLane": true,
+          "tracked": 10,
+          "preForeclosureTracked": 3,
+          "packeted": 7,
+          "live": 1,
+          "strongLivePrefc": 0,
+          "sourceMix": {
+            "LIS_PENDENS": 3,
+            "FORECLOSURE": 3,
+            "SOT": 4
+          },
+          "packetRate": 70.0,
+          "liveRate": 10.0,
+          "countyTier": "PRIMARY",
+          "directive": "hold_steady",
+          "reason": "Still productive, but quality needs reconstruction work more than volume."
+        },
+        {
           "county": "Davidson County",
-          "activeLane": false,
+          "activeLane": true,
           "tracked": 33,
           "preForeclosureTracked": 1,
           "packeted": 8,
@@ -2869,9 +2869,9 @@
           },
           "packetRate": 24.2,
           "liveRate": 6.1,
-          "countyTier": "WATCH",
-          "directive": "watch",
-          "reason": "Watch lane only. Keep limited coverage until conversion improves."
+          "countyTier": "SECONDARY",
+          "directive": "hold_steady",
+          "reason": "Active lane, but not yet proving enough strong-live conversion to widen aggressively."
         },
         {
           "county": "Knox County",
@@ -2893,6 +2893,40 @@
           "reason": "Watch lane only. Keep limited coverage until conversion improves."
         },
         {
+          "county": "Sumner County",
+          "activeLane": true,
+          "tracked": 3,
+          "preForeclosureTracked": 0,
+          "packeted": 0,
+          "live": 0,
+          "strongLivePrefc": 0,
+          "sourceMix": {
+            "FORECLOSURE": 3
+          },
+          "packetRate": 0.0,
+          "liveRate": 0.0,
+          "countyTier": "SECONDARY",
+          "directive": "hold_steady",
+          "reason": "Active lane, but not yet proving enough strong-live conversion to widen aggressively."
+        },
+        {
+          "county": "Wilson County",
+          "activeLane": true,
+          "tracked": 1,
+          "preForeclosureTracked": 0,
+          "packeted": 0,
+          "live": 0,
+          "strongLivePrefc": 0,
+          "sourceMix": {
+            "FORECLOSURE": 1
+          },
+          "packetRate": 0.0,
+          "liveRate": 0.0,
+          "countyTier": "SECONDARY",
+          "directive": "hold_steady",
+          "reason": "Active lane, but not yet proving enough strong-live conversion to widen aggressively."
+        },
+        {
           "county": "Williamson County",
           "activeLane": false,
           "tracked": 3,
@@ -2904,40 +2938,6 @@
             "FORECLOSURE": 3
           },
           "packetRate": 33.3,
-          "liveRate": 0.0,
-          "countyTier": "OTHER",
-          "directive": "deprioritize",
-          "reason": "Low current evidence of strong output."
-        },
-        {
-          "county": "Sumner County",
-          "activeLane": false,
-          "tracked": 3,
-          "preForeclosureTracked": 0,
-          "packeted": 0,
-          "live": 0,
-          "strongLivePrefc": 0,
-          "sourceMix": {
-            "FORECLOSURE": 3
-          },
-          "packetRate": 0.0,
-          "liveRate": 0.0,
-          "countyTier": "OTHER",
-          "directive": "deprioritize",
-          "reason": "Low current evidence of strong output."
-        },
-        {
-          "county": "Wilson County",
-          "activeLane": false,
-          "tracked": 1,
-          "preForeclosureTracked": 0,
-          "packeted": 0,
-          "live": 0,
-          "strongLivePrefc": 0,
-          "sourceMix": {
-            "FORECLOSURE": 1
-          },
-          "packetRate": 0.0,
           "liveRate": 0.0,
           "countyTier": "OTHER",
           "directive": "deprioritize",
@@ -2968,8 +2968,31 @@
       ]
     },
     "leadActions": {
-      "generated_at": "2026-03-17T20:08:26+00:00",
+      "generated_at": "2026-03-17T20:56:33+00:00",
       "actions": [
+        {
+          "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
+          "address": "378 Treeland Drive, Clarksville, TN 37040",
+          "county": "Montgomery County",
+          "distress_type": "SOT",
+          "sale_status": "pre_foreclosure",
+          "falco_score_internal": 100,
+          "equity_band": "LOW",
+          "debt_confidence": "PROXY",
+          "prefc_live_quality": false,
+          "contact_path_quality": "GOOD",
+          "owner_agency": "HIGH",
+          "intervention_window": "WIDE",
+          "lender_control_intensity": "LOW",
+          "influenceability": "HIGH",
+          "workability_band": "MODERATE",
+          "overlap_signals": [],
+          "next_action": "reconstruct_debt",
+          "priority": "high",
+          "reasons": [
+            "Debt picture is still incomplete"
+          ]
+        },
         {
           "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
           "address": "1129 Cotillion Dr., Murfreesboro, TN 37158-1681",
@@ -2991,52 +3014,6 @@
           "priority": "high",
           "reasons": [
             "Clears strong live pre-foreclosure bar"
-          ]
-        },
-        {
-          "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
-          "address": "208 N Saint Marks Ave, Chattanooga, TN 37411",
-          "county": "Hamilton County",
-          "distress_type": "SOT",
-          "sale_status": "pre_foreclosure",
-          "falco_score_internal": 100,
-          "equity_band": "LOW",
-          "debt_confidence": "FULL",
-          "prefc_live_quality": false,
-          "contact_path_quality": "GOOD",
-          "owner_agency": "HIGH",
-          "intervention_window": "WIDE",
-          "lender_control_intensity": "LOW",
-          "influenceability": "HIGH",
-          "workability_band": "MODERATE",
-          "overlap_signals": [],
-          "next_action": "remove_from_vault",
-          "priority": "high",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
-          ]
-        },
-        {
-          "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
-          "address": "2106 Ivy St., Chattanooga, TN 37404",
-          "county": "Hamilton County",
-          "distress_type": "SOT",
-          "sale_status": "pre_foreclosure",
-          "falco_score_internal": 100,
-          "equity_band": "LOW",
-          "debt_confidence": "FULL",
-          "prefc_live_quality": false,
-          "contact_path_quality": "GOOD",
-          "owner_agency": "HIGH",
-          "intervention_window": "WIDE",
-          "lender_control_intensity": "LOW",
-          "influenceability": "HIGH",
-          "workability_band": "MODERATE",
-          "overlap_signals": [],
-          "next_action": "remove_from_vault",
-          "priority": "high",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
           ]
         },
         {
@@ -3063,29 +3040,6 @@
           ]
         },
         {
-          "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
-          "address": "378 Treeland Drive, Clarksville, TN 37040",
-          "county": "Montgomery County",
-          "distress_type": "SOT",
-          "sale_status": "pre_foreclosure",
-          "falco_score_internal": 100,
-          "equity_band": "LOW",
-          "debt_confidence": "PROXY",
-          "prefc_live_quality": false,
-          "contact_path_quality": "GOOD",
-          "owner_agency": "HIGH",
-          "intervention_window": "WIDE",
-          "lender_control_intensity": "LOW",
-          "influenceability": "HIGH",
-          "workability_band": "MODERATE",
-          "overlap_signals": [],
-          "next_action": "reconstruct_debt",
-          "priority": "high",
-          "reasons": [
-            "Debt picture is still incomplete"
-          ]
-        },
-        {
           "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
           "address": "639 Riversbend Road, Indian Mound, TN 37079",
           "county": "Montgomery County",
@@ -3109,32 +3063,9 @@
           ]
         },
         {
-          "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
-          "address": "2724 Ann Drive, Clarksville, TN 37040",
-          "county": "Montgomery County",
-          "distress_type": "SOT",
-          "sale_status": "pre_foreclosure",
-          "falco_score_internal": 100,
-          "equity_band": "LOW",
-          "debt_confidence": "FULL",
-          "prefc_live_quality": false,
-          "contact_path_quality": "GOOD",
-          "owner_agency": "HIGH",
-          "intervention_window": "WIDE",
-          "lender_control_intensity": "LOW",
-          "influenceability": "HIGH",
-          "workability_band": "MODERATE",
-          "overlap_signals": [],
-          "next_action": "remove_from_vault",
-          "priority": "high",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
-          ]
-        },
-        {
-          "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
-          "address": "4209 Van Dyke Dr, Knoxville, TN 37919",
-          "county": "Knox County",
+          "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
+          "address": "15456 Old Hickory Blvd, Nashville, TN 37211",
+          "county": "Davidson County",
           "distress_type": "SOT",
           "sale_status": "pre_foreclosure",
           "falco_score_internal": 81,
@@ -3155,9 +3086,9 @@
           ]
         },
         {
-          "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
-          "address": "15456 Old Hickory Blvd, Nashville, TN 37211",
-          "county": "Davidson County",
+          "lead_key": "31ca494b906b36fbd7454896f3fac5a4fd575589",
+          "address": "4209 Van Dyke Dr, Knoxville, TN 37919",
+          "county": "Knox County",
           "distress_type": "SOT",
           "sale_status": "pre_foreclosure",
           "falco_score_internal": 81,
@@ -3222,57 +3153,84 @@
           "reasons": [
             "Control or equity makes the file weak for live vault"
           ]
+        },
+        {
+          "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
+          "address": "208 N Saint Marks Ave, Chattanooga, TN 37411",
+          "county": "Hamilton County",
+          "distress_type": "SOT",
+          "sale_status": "pre_foreclosure",
+          "falco_score_internal": 100,
+          "equity_band": "LOW",
+          "debt_confidence": "FULL",
+          "prefc_live_quality": false,
+          "contact_path_quality": "GOOD",
+          "owner_agency": "HIGH",
+          "intervention_window": "WIDE",
+          "lender_control_intensity": "LOW",
+          "influenceability": "HIGH",
+          "workability_band": "MODERATE",
+          "overlap_signals": [],
+          "next_action": "hold_or_suppress",
+          "priority": "medium",
+          "reasons": [
+            "Control or equity makes the file weak for live vault"
+          ]
+        },
+        {
+          "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
+          "address": "2106 Ivy St., Chattanooga, TN 37404",
+          "county": "Hamilton County",
+          "distress_type": "SOT",
+          "sale_status": "pre_foreclosure",
+          "falco_score_internal": 100,
+          "equity_band": "LOW",
+          "debt_confidence": "FULL",
+          "prefc_live_quality": false,
+          "contact_path_quality": "GOOD",
+          "owner_agency": "HIGH",
+          "intervention_window": "WIDE",
+          "lender_control_intensity": "LOW",
+          "influenceability": "HIGH",
+          "workability_band": "MODERATE",
+          "overlap_signals": [],
+          "next_action": "hold_or_suppress",
+          "priority": "medium",
+          "reasons": [
+            "Control or equity makes the file weak for live vault"
+          ]
+        },
+        {
+          "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
+          "address": "2724 Ann Drive, Clarksville, TN 37040",
+          "county": "Montgomery County",
+          "distress_type": "SOT",
+          "sale_status": "pre_foreclosure",
+          "falco_score_internal": 100,
+          "equity_band": "LOW",
+          "debt_confidence": "FULL",
+          "prefc_live_quality": false,
+          "contact_path_quality": "GOOD",
+          "owner_agency": "HIGH",
+          "intervention_window": "WIDE",
+          "lender_control_intensity": "LOW",
+          "influenceability": "HIGH",
+          "workability_band": "MODERATE",
+          "overlap_signals": [],
+          "next_action": "hold_or_suppress",
+          "priority": "medium",
+          "reasons": [
+            "Control or equity makes the file weak for live vault"
+          ]
         }
       ]
     },
     "vaultQuality": {
-      "generated_at": "2026-03-17T20:08:26+00:00",
-      "keepCount": 2,
+      "generated_at": "2026-03-17T20:56:33+00:00",
+      "keepCount": 3,
       "watchCount": 0,
-      "removeCount": 3,
+      "removeCount": 0,
       "liveReview": [
-        {
-          "slug": "hamilton-county-pre-foreclosure-review-e7cdfff4",
-          "lead_key": "e7cdfff43914ee205f995522b4656f83be4dc5c0",
-          "title": "Hamilton County Pre-Foreclosure Review",
-          "county": "Hamilton County",
-          "equityBand": "LOW",
-          "debtConfidence": "FULL",
-          "prefcLiveQuality": false,
-          "workabilityBand": "MODERATE",
-          "decision": "remove_from_vault",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
-          ]
-        },
-        {
-          "slug": "hamilton-county-pre-foreclosure-review-84d90642",
-          "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
-          "title": "Hamilton County Pre-Foreclosure Review",
-          "county": "Hamilton County",
-          "equityBand": "LOW",
-          "debtConfidence": "FULL",
-          "prefcLiveQuality": false,
-          "workabilityBand": "MODERATE",
-          "decision": "remove_from_vault",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
-          ]
-        },
-        {
-          "slug": "montgomery-county-pre-foreclosure-review-6c6531a4",
-          "lead_key": "6c6531a4fc749b0c159adef0a95f39d03fc6fa35",
-          "title": "Montgomery County Pre-Foreclosure Review",
-          "county": "Montgomery County",
-          "equityBand": "LOW",
-          "debtConfidence": "FULL",
-          "prefcLiveQuality": false,
-          "workabilityBand": "MODERATE",
-          "decision": "remove_from_vault",
-          "reasons": [
-            "Equity band is too weak for live pre-foreclosure"
-          ]
-        },
         {
           "slug": "rutherford-county-pre-foreclosure-review-28a3ea99",
           "lead_key": "28a3ea99c6936735a19fb2d44e724041cc45e327",
@@ -3290,6 +3248,18 @@
           "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
           "title": "Montgomery County Pre-Foreclosure Review",
           "county": "Montgomery County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": true,
+          "workabilityBand": "MODERATE",
+          "decision": "keep_live",
+          "reasons": []
+        },
+        {
+          "slug": "rutherford-county-pre-foreclosure-review-5bc4575b",
+          "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
+          "title": "Rutherford County Pre-Foreclosure Review",
+          "county": "Rutherford County",
           "equityBand": "MED",
           "debtConfidence": "FULL",
           "prefcLiveQuality": true,
