@@ -45,6 +45,9 @@ export type VaultListing = {
   auctionReadiness?: string
   equityBand?: string
   dtsDays?: number | null
+  currentSaleDate?: string
+  originalSaleDate?: string
+  distressRecordedAt?: string
   contactReady?: boolean
   propertyIdentifier?: string
   ownerName?: string
@@ -117,6 +120,78 @@ type LearningFeedbackRecord = Pick<
 const LOCAL_VAULT_LISTINGS_FILE = path.join(process.cwd(), "data", "vault_listings.ndjson")
 const VAULT_CANDIDATE_FILE = path.join(process.cwd(), "data", "operator", "vault_candidates.json")
 
+function parseVaultDate(value?: string | null) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return null
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12))
+  }
+
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
+}
+
+function calculateDynamicDts(currentSaleDate?: string | null, fallback?: number | null) {
+  const saleDate = parseVaultDate(currentSaleDate)
+  if (!saleDate) return fallback ?? null
+
+  const now = new Date()
+  const todayAnchor = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12)
+  )
+  return Math.round((saleDate.getTime() - todayAnchor.getTime()) / 86_400_000)
+}
+
+function formatSaleWindow(
+  distressType?: string | null,
+  currentSaleDate?: string | null,
+  dtsDays?: number | null,
+  fallback?: string | null
+) {
+  const saleDate = parseVaultDate(currentSaleDate)
+  if (saleDate) {
+    return `Sale ${saleDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    })}`
+  }
+
+  if (String(distressType ?? "").toLowerCase().includes("pre-foreclosure")) {
+    return "Pre-Foreclosure"
+  }
+
+  if (typeof dtsDays === "number") {
+    return dtsDays < 0 ? "Expired" : `${dtsDays} Days`
+  }
+
+  return fallback ?? "Confidential"
+}
+
+function deriveListingStatus(
+  row: VaultListingRow,
+  currentSaleDate?: string | null,
+  dtsDays?: number | null
+): VaultListingStatus {
+  if (row.is_active === false) return "expired"
+  if (typeof dtsDays === "number" && dtsDays < 0) return "expired"
+  if (parseVaultDate(currentSaleDate) && (calculateDynamicDts(currentSaleDate, dtsDays) ?? 0) < 0) {
+    return "expired"
+  }
+  return "active"
+}
+
+function hasRequiredDebtContext(overlay?: LocalVaultListingOverlay) {
+  const lender = String(overlay?.mortgageLender ?? "").trim()
+  const amount = overlay?.mortgageAmount
+  return Boolean(lender) && typeof amount === "number" && Number.isFinite(amount)
+}
+
 function loadLocalVaultListingOverlay() {
   const overlays = new Map<string, LocalVaultListingOverlay>()
 
@@ -188,22 +263,33 @@ function mapRowToVaultListing(
   const stateBase = row.state ?? "TN"
   const titleBase = overlay?.title ?? row.title ?? row.slug
   const auctionReadiness = overlay?.auctionReadiness ?? row.auction_readiness ?? undefined
-  const dtsDays = overlay?.dtsDays ?? row.dts_days
+  const currentSaleDate = overlay?.currentSaleDate
+  const originalSaleDate = overlay?.originalSaleDate
+  const distressRecordedAt = overlay?.distressRecordedAt
+  const dtsDays = calculateDynamicDts(currentSaleDate, overlay?.dtsDays ?? row.dts_days)
   const contactReady =
     typeof overlay?.contactReady === "boolean"
       ? overlay.contactReady
       : typeof auctionReadiness === "string"
       ? auctionReadiness.toUpperCase() === "GREEN"
       : false
+  const status = hasRequiredDebtContext(overlay)
+    ? deriveListingStatus(row, currentSaleDate, dtsDays)
+    : "expired"
 
   return {
     slug: row.slug,
     title: titleBase,
     market: overlay?.market ?? `${countyBase}, ${stateBase}`,
     county: countyBase,
-    status: row.is_active === false ? "expired" : "active",
+    status,
     distressType: overlay?.distressType ?? "Distress Opportunity",
-    auctionWindow: overlay?.auctionWindow ?? "Confidential",
+    auctionWindow: formatSaleWindow(
+      overlay?.distressType,
+      currentSaleDate,
+      dtsDays,
+      overlay?.auctionWindow
+    ),
     summary:
       overlay?.summary ??
       "Auction-timed opportunity currently inside the FALCO pipeline with packet-level underwriting and restricted routing.",
@@ -219,6 +305,9 @@ function mapRowToVaultListing(
     auctionReadiness,
     equityBand: overlay?.equityBand ?? row.equity_band ?? undefined,
     dtsDays,
+    currentSaleDate,
+    originalSaleDate,
+    distressRecordedAt,
     contactReady,
     propertyIdentifier: overlay?.propertyIdentifier,
     ownerName: overlay?.ownerName,
@@ -622,6 +711,9 @@ export async function findVaultListing(slug: string) {
     data as VaultListingRow,
     overlayBySlug.get((data as VaultListingRow).slug)
   )
+  if (mapped.status !== "active") {
+    return null
+  }
   const [snapshot, validation, validationHistory, partnerFeedbackHistory] = await Promise.all([
     getVaultRoutingSnapshot(mapped.slug, mapped.status !== "active"),
     getVaultValidationRecordByListing(mapped.slug),

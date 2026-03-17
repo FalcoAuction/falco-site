@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-17T18:42:42.578596+00:00",
+  "generatedAt": "2026-03-17T19:01:10.695962+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -9,7 +9,7 @@
     "uwReady": 20,
     "packeted": 31,
     "contactReady": 61,
-    "vaultLive": 19,
+    "vaultLive": 13,
     "vaultQueue": 1,
     "pendingApprovals": 0
   },
@@ -367,11 +367,25 @@
       "dts_days": 35,
       "uw_ready": 1,
       "latest_packet_at": "2026-03-17T18:21:18+00:00",
-      "vaultLive": true,
-      "vaultSlug": "rutherford-county-foreclosure-e1acd26d"
+      "vaultLive": false,
+      "vaultSlug": null
     }
   ],
   "recentPackets": [
+    {
+      "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
+      "run_id": "unknown_run",
+      "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\unknown_run\\0990badb73054abad3609ad76082a65e9976b438.pdf",
+      "bytes": 133952,
+      "created_at": "2026-03-17T18:57:55+00:00",
+      "address": "639 Riversbend Road, Indian Mound, TN 37079",
+      "county": "Montgomery County",
+      "falco_score_internal": 100,
+      "auction_readiness": "PARTIAL",
+      "dts_days": null,
+      "vaultLive": false,
+      "vaultSlug": null
+    },
     {
       "lead_key": "84d906420532202c65d47c223f02a4a5a6392d7e",
       "run_id": "ed28991f-0c8c-4597-afe6-1c9ae29dfa7c",
@@ -453,8 +467,8 @@
       "falco_score_internal": 100,
       "auction_readiness": "PARTIAL",
       "dts_days": null,
-      "vaultLive": true,
-      "vaultSlug": "montgomery-county-pre-foreclosure-review-0990badb"
+      "vaultLive": false,
+      "vaultSlug": null
     },
     {
       "lead_key": "28a3ea99c6936735a19fb2d44e724041cc45e327",
@@ -522,20 +536,6 @@
       "county": "Montgomery County",
       "falco_score_internal": 100,
       "auction_readiness": "PARTIAL",
-      "dts_days": null,
-      "vaultLive": true,
-      "vaultSlug": "montgomery-county-pre-foreclosure-review-0990badb"
-    },
-    {
-      "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
-      "run_id": "b5cfcf58-14d3-4f5b-8a79-cfabb2acbf94",
-      "pdf_path": "C:\\code\\falco-distress-bots\\out\\packets\\b5cfcf58-14d3-4f5b-8a79-cfabb2acbf94\\6cca5e5507f33b04bc9460120ebee0482e304016.pdf",
-      "bytes": 227945,
-      "created_at": "2026-03-17T18:37:23+00:00",
-      "address": "378 Treeland Drive, Clarksville, TN 37040",
-      "county": "Montgomery County",
-      "falco_score_internal": 93,
-      "auction_readiness": "RED",
       "dts_days": null,
       "vaultLive": false,
       "vaultSlug": null
@@ -659,8 +659,8 @@
         "current_sale_date": null,
         "original_sale_date": null,
         "sale_status": "pre_foreclosure",
-        "vaultLive": true,
-        "vaultSlug": "montgomery-county-pre-foreclosure-review-0990badb"
+        "vaultLive": false,
+        "vaultSlug": null
       },
       {
         "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
@@ -870,8 +870,8 @@
         "current_sale_date": "2026-04-23",
         "original_sale_date": "2026-04-23",
         "sale_status": "scheduled",
-        "vaultLive": true,
-        "vaultSlug": "davidson-county-foreclosure-96f145db"
+        "vaultLive": false,
+        "vaultSlug": null
       },
       {
         "lead_key": "f07efd9f3071c2f84f5f6fc39cd339c90ff4d216",
@@ -927,8 +927,8 @@
         "current_sale_date": "2026-04-21",
         "original_sale_date": "2026-04-21",
         "sale_status": "scheduled",
-        "vaultLive": true,
-        "vaultSlug": "rutherford-county-foreclosure-e1acd26d"
+        "vaultLive": false,
+        "vaultSlug": null
       },
       {
         "lead_key": "fb86c79e084cbb6fdeb3f51c411e22f2e187036e",
@@ -946,8 +946,8 @@
         "current_sale_date": "2026-05-07",
         "original_sale_date": "2026-05-07",
         "sale_status": "scheduled",
-        "vaultLive": true,
-        "vaultSlug": "rutherford-county-foreclosure-fb86c79e"
+        "vaultLive": false,
+        "vaultSlug": null
       },
       {
         "lead_key": "5b9d9f7c64495045081a4204c72b3160dfcbf618",
@@ -1024,8 +1024,8 @@
         "current_sale_date": null,
         "original_sale_date": null,
         "sale_status": "pre_foreclosure",
-        "vaultLive": true,
-        "vaultSlug": "montgomery-county-pre-foreclosure-review-0990badb"
+        "vaultLive": false,
+        "vaultSlug": null
       },
       {
         "event_key": "8319849e9381d30511b2db72990f02619584a703",
@@ -1277,8 +1277,8 @@
     ]
   },
   "preForeclosurePromotion": {
-    "readyCount": 1,
-    "blockedCount": 10,
+    "readyCount": 2,
+    "blockedCount": 9,
     "readyForReview": [
       {
         "lead_key": "2e6d37b40f1002bc485d2dbafe320f86ab386621",
@@ -1323,6 +1323,54 @@
         "propertyIdentifier": "157B H 027",
         "ownerPhonePrimary": "4233108004",
         "ownerPhoneSecondary": "4233100090",
+        "trusteePhonePublic": null,
+        "noticePhone": null
+      },
+      {
+        "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
+        "address": "639 Riversbend Road, Indian Mound, TN 37079",
+        "county": "Montgomery County",
+        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
+        "sale_status": "pre_foreclosure",
+        "falco_score_internal": 100,
+        "auction_readiness": "PARTIAL",
+        "equity_band": "MED",
+        "dts_days": null,
+        "uw_ready": 0,
+        "first_seen_at": "2026-03-12T01:41:47.484771Z",
+        "last_seen_at": "2026-03-17T18:41:56.282728Z",
+        "score_updated_at": "2026-03-17T18:42:39+00:00",
+        "current_sale_date": null,
+        "original_sale_date": null,
+        "vaultLive": false,
+        "vaultSlug": null,
+        "preForeclosureReviewReady": true,
+        "vaultPublishReady": false,
+        "topTierReady": false,
+        "prefcDebtProxyReady": true,
+        "packetCompletenessPct": 94,
+        "executionBlockers": [
+          "Original loan amount missing"
+        ],
+        "suggestedExecutionLane": "borrower_side",
+        "suggestedLaneConfidence": "HIGH",
+        "prefcCountyTier": "SECONDARY",
+        "prefcSourcePriority": 0,
+        "contactPathQuality": "GOOD",
+        "controlParty": "OWNER",
+        "ownerAgency": "HIGH",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "HIGH",
+        "executionPosture": "OWNER ACTIONABLE",
+        "workabilityBand": "MODERATE",
+        "ownerName": "Eddie Lee Golliday; Sabine P Golliday",
+        "ownerMail": "639 Riversbend Rd, Indian Mound TN 37079",
+        "mortgageLender": "Verde Capital, LLC",
+        "mortgageAmount": null,
+        "propertyIdentifier": "120    01103",
+        "ownerPhonePrimary": "9312327983",
+        "ownerPhoneSecondary": "9312492846",
         "trusteePhonePublic": null,
         "noticePhone": null
       }
@@ -1559,54 +1607,6 @@
         "noticePhone": null
       },
       {
-        "lead_key": "0990badb73054abad3609ad76082a65e9976b438",
-        "address": "639 Riversbend Road, Indian Mound, TN 37079",
-        "county": "Montgomery County",
-        "distress_type": "SUBSTITUTION_OF_TRUSTEE",
-        "sale_status": "pre_foreclosure",
-        "falco_score_internal": 100,
-        "auction_readiness": "PARTIAL",
-        "equity_band": "MED",
-        "dts_days": null,
-        "uw_ready": 0,
-        "first_seen_at": "2026-03-12T01:41:47.484771Z",
-        "last_seen_at": "2026-03-17T18:41:56.282728Z",
-        "score_updated_at": "2026-03-17T18:42:39+00:00",
-        "current_sale_date": null,
-        "original_sale_date": null,
-        "vaultLive": true,
-        "vaultSlug": "montgomery-county-pre-foreclosure-review-0990badb",
-        "preForeclosureReviewReady": true,
-        "vaultPublishReady": false,
-        "topTierReady": false,
-        "prefcDebtProxyReady": true,
-        "packetCompletenessPct": 94,
-        "executionBlockers": [
-          "Original loan amount missing"
-        ],
-        "suggestedExecutionLane": "borrower_side",
-        "suggestedLaneConfidence": "HIGH",
-        "prefcCountyTier": "SECONDARY",
-        "prefcSourcePriority": 0,
-        "contactPathQuality": "GOOD",
-        "controlParty": "OWNER",
-        "ownerAgency": "HIGH",
-        "interventionWindow": "WIDE",
-        "lenderControlIntensity": "LOW",
-        "influenceability": "HIGH",
-        "executionPosture": "OWNER ACTIONABLE",
-        "workabilityBand": "MODERATE",
-        "ownerName": "Eddie Lee Golliday; Sabine P Golliday",
-        "ownerMail": "639 Riversbend Rd, Indian Mound TN 37079",
-        "mortgageLender": "Verde Capital, LLC",
-        "mortgageAmount": null,
-        "propertyIdentifier": "120    01103",
-        "ownerPhonePrimary": "9312327983",
-        "ownerPhoneSecondary": "9312492846",
-        "trusteePhonePublic": null,
-        "noticePhone": null
-      },
-      {
         "lead_key": "6cca5e5507f33b04bc9460120ebee0482e304016",
         "address": "378 Treeland Drive, Clarksville, TN 37040",
         "county": "Montgomery County",
@@ -1806,7 +1806,7 @@
     "blockerCounts": [
       {
         "label": "Original loan amount missing",
-        "count": 5
+        "count": 4
       },
       {
         "label": "Last transfer date missing",

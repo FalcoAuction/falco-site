@@ -5,15 +5,10 @@ function candidatePublishIssues(payload: Record<string, unknown>) {
   const issues: string[] = []
   const saleStatus = String(payload.saleStatus ?? "").trim().toLowerCase()
   const equityBand = String(payload.equityBand ?? "").trim().toUpperCase()
-  const debtProxyReady = Boolean(payload.prefcDebtProxyReady)
-
   if (!String(payload.ownerName ?? "").trim()) issues.push("owner")
   if (!String(payload.ownerMail ?? "").trim()) issues.push("mailing")
   if (!String(payload.mortgageLender ?? "").trim()) issues.push("lender")
-  if (
-    (typeof payload.mortgageAmount !== "number" || !Number.isFinite(payload.mortgageAmount)) &&
-    !(saleStatus === "pre_foreclosure" && debtProxyReady)
-  ) {
+  if (typeof payload.mortgageAmount !== "number" || !Number.isFinite(payload.mortgageAmount)) {
     issues.push("loan amount")
   }
 
