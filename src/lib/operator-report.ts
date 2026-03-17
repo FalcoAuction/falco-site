@@ -40,11 +40,15 @@ export type OperatorLeadRow = {
   influenceability?: string | null
   executionPosture?: string | null
   workabilityBand?: string | null
+  debtConfidence?: string | null
+  prefcLiveQuality?: boolean
+  prefcLiveReviewReasons?: string[]
   recommendedAction?: string | null
   ownerName?: string | null
   ownerMail?: string | null
   mortgageLender?: string | null
   mortgageAmount?: number | null
+  mortgageDate?: string | null
   propertyIdentifier?: string | null
   ownerPhonePrimary?: string | null
   ownerPhoneSecondary?: string | null
@@ -173,6 +177,8 @@ export type OperatorReport = {
     blockedCount: number
     readyForReview: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     blocked: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    strongestCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    weakLiveReview?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     blockerCounts: Array<{ label: string; count: number }>
   }
   analyst?: OperatorAnalystReport | null

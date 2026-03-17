@@ -202,6 +202,14 @@ function bestContactLine(row: any) {
   return row.ownerPhonePrimary || row.ownerPhoneSecondary || row.trusteePhonePublic || row.noticePhone || "Unavailable"
 }
 
+function debtConfidenceCopy(value?: string | null) {
+  if (value === "FULL") return "Full Debt"
+  if (value === "PARTIAL") return "Partial Debt"
+  if (value === "PROXY") return "Debt Proxy"
+  if (value === "THIN") return "Thin Debt"
+  return "No Debt"
+}
+
 function hasMeaningfulEnrichment(row: any) {
   return Boolean(
     row?.ownerName ||
@@ -370,6 +378,18 @@ export default function OperatorPage() {
     [liveListingByLeadKey, workspace]
   )
 
+  const strongestPreForeclosures = useMemo(() => {
+    const snapshotRows = (workspace?.report?.preForeclosurePromotion?.strongestCandidates ?? []).filter(
+      (row: any) => !liveListingByLeadKey.has(row.lead_key)
+    )
+    if (snapshotRows.length) return snapshotRows
+    return readyPreForeclosures.filter(
+      (row: any) =>
+        row.prefcLiveQuality &&
+        String(row.debtConfidence ?? "").toUpperCase() === "FULL"
+    )
+  }, [liveListingByLeadKey, readyPreForeclosures, workspace])
+
   const livePreForeclosureListings = useMemo(
     () =>
       liveVaultListings.filter((listing: any) =>
@@ -377,6 +397,16 @@ export default function OperatorPage() {
       ),
     [liveVaultListings]
   )
+
+  const weakLivePreForeclosures = useMemo(() => {
+    const snapshotRows = workspace?.report?.preForeclosurePromotion?.weakLiveReview ?? []
+    if (snapshotRows.length) return snapshotRows
+    return livePreForeclosureListings.filter(
+      (listing: any) =>
+        !listing.prefcLiveQuality ||
+        String(listing.debtConfidence ?? "").toUpperCase() !== "FULL"
+    )
+  }, [livePreForeclosureListings, workspace])
 
   const trackedPreForeclosureRows = useMemo(() => {
     const rows = new Map<string, any>()
@@ -417,22 +447,22 @@ export default function OperatorPage() {
 
   const autoRunningPreForeclosures = useMemo(
     () =>
-      readyPreForeclosures.filter((row: any) => {
+      strongestPreForeclosures.filter((row: any) => {
         const enrichment = enrichmentRequestMap.get(row.lead_key) as any
         const status = enrichment?.status
         return status === "requested" || status === "processing"
       }),
-    [enrichmentRequestMap, readyPreForeclosures]
+    [enrichmentRequestMap, strongestPreForeclosures]
   )
 
   const stagedPreForeclosures = useMemo(
     () =>
-      readyPreForeclosures.filter((row: any) => {
+      strongestPreForeclosures.filter((row: any) => {
         const enrichment = enrichmentRequestMap.get(row.lead_key) as any
         const status = enrichment?.status
         return status !== "requested" && status !== "processing"
       }),
-    [enrichmentRequestMap, readyPreForeclosures]
+    [enrichmentRequestMap, strongestPreForeclosures]
   )
 
   const failedPreForeclosures = useMemo(
@@ -532,6 +562,7 @@ export default function OperatorPage() {
     const items: TaskItem[] = []
     const decisionMap = new Map((workspace.intakeDecisions ?? []).map((row: any) => [row.leadKey, row] as const))
     const intakeRows = [
+      ...(weakLivePreForeclosures ?? []).map((row: any) => ({ ...row, weakLiveReview: true })),
       ...(blockedPreForeclosures ?? []),
       ...(workspace.report.preForeclosurePromotion?.readyForReview ?? []).filter((row: any) => {
         if (liveListingByLeadKey.has(row.lead_key)) return false
@@ -548,7 +579,7 @@ export default function OperatorPage() {
         title: row.address || row.lead_key,
         detail: `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${executionLaneCopy(row.suggestedExecutionLane)}`,
         section: "intake",
-        priority: row.preForeclosureReviewReady ? "high" : "medium",
+        priority: row.weakLiveReview || row.preForeclosureReviewReady ? "high" : "medium",
       })
     }
 
@@ -584,7 +615,7 @@ export default function OperatorPage() {
     }
 
     return items.sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]))
-  }, [blockedPreForeclosures, enrichmentRequestMap, liveListingByLeadKey, openRoutingQueue, readyPreForeclosures, validationQueue, workspace])
+  }, [blockedPreForeclosures, enrichmentRequestMap, liveListingByLeadKey, openRoutingQueue, readyPreForeclosures, validationQueue, weakLivePreForeclosures, workspace])
 
   const activeTasks = useMemo(() => {
     const doneIds = new Set(history.map((item: any) => item.id))
@@ -1131,7 +1162,7 @@ export default function OperatorPage() {
         {workspace ? (
           <>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard label="Priority Tasks" value={activeTasks.length} sublabel={`${readyPreForeclosures.length} ready to push`} />
+                <StatCard label="Priority Tasks" value={activeTasks.length} sublabel={`${strongestPreForeclosures.length} strongest ready`} />
               <StatCard label="Pre-Foreclosure Tracked" value={trackedPreForeclosureRows.length} sublabel={`${livePreForeclosureCount} live in vault`} />
               <StatCard label="Vault Live" value={liveVaultListings.length} sublabel={`${validationQueue.length} validation items`} />
               <StatCard
@@ -1144,7 +1175,7 @@ export default function OperatorPage() {
             <div className="sticky top-4 z-30 mt-6 rounded-2xl border border-white/10 bg-black/75 p-3 backdrop-blur-xl">
               <div className="flex flex-wrap gap-2">
                 <TabButton active={activeTab === "priority"} onClick={() => setActiveTab("priority")} label="Priority" count={activeTasks.length} />
-                <TabButton active={activeTab === "pre_foreclosure"} onClick={() => setActiveTab("pre_foreclosure")} label="Pre-Foreclosure" count={readyPreForeclosures.length} />
+                  <TabButton active={activeTab === "pre_foreclosure"} onClick={() => setActiveTab("pre_foreclosure")} label="Pre-Foreclosure" count={strongestPreForeclosures.length} />
                 <TabButton active={activeTab === "vault"} onClick={() => openVaultDesk(selectedVaultListing?.slug)} label="Vault" count={liveVaultListings.length} />
                 <TabButton active={activeTab === "activity"} onClick={() => setActiveTab("activity")} label="Activity" count={vaultActivity.length} />
                 <TabButton active={activeTab === "updates"} onClick={() => setActiveTab("updates")} label="Updates" count={updateFeed.length} />
@@ -1215,14 +1246,14 @@ export default function OperatorPage() {
                     <div className="text-xs uppercase tracking-[0.22em] text-white/45">Today&apos;s Focus</div>
                     <div className="mt-2 text-2xl font-semibold text-white">Simple daily run order</div>
                     <div className="mt-5 grid gap-3">
-                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
-                      <div className="font-semibold text-white">1. Let autopilot clear the easy wins</div>
-                        <div className="mt-1">{autoRunningPreForeclosures.length} files are running or queued. {stagedPreForeclosures.length} are already system-cleared for vault path.</div>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
-                        <div className="font-semibold text-white">2. Review only the exceptions</div>
-                        <div className="mt-1">{blockedPreForeclosures.length} pre-foreclosures still need a human call. {failedPreForeclosures.length} have failed automation and need attention first.</div>
-                      </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
+                          <div className="font-semibold text-white">1. Push the strongest first</div>
+                          <div className="mt-1">{strongestPreForeclosures.length} pre-foreclosures currently clear the stronger live bar. {autoRunningPreForeclosures.length} are still refreshing.</div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
+                          <div className="font-semibold text-white">2. Review the weak or unclear files</div>
+                          <div className="mt-1">{weakLivePreForeclosures.length} live pre-foreclosures need a quality review. {blockedPreForeclosures.length} non-live files still need a human call.</div>
+                        </div>
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
                         <div className="font-semibold text-white">3. Handle partner-facing work</div>
                         <div className="mt-1">{livePreForeclosureCount} pre-foreclosures are live in vault. {(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length} approvals and {openRoutingQueue.length} routing groups are waiting.</div>
@@ -1288,12 +1319,12 @@ export default function OperatorPage() {
                   </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-4">
-                  <StatCard label="Live In Vault" value={preForeclosureStatusSummary.live} sublabel="Already partner-facing" />
-                  <StatCard label="Ready To Push" value={stagedPreForeclosures.length} sublabel="Packeted and not live yet" />
-                  <StatCard label="Refreshing" value={preForeclosureStatusSummary.refreshing} sublabel="Queued or processing now" />
-                  <StatCard label="Needs Human" value={blockedPreForeclosures.length} sublabel="Still blocked or incomplete" />
-                </div>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <StatCard label="Live In Vault" value={preForeclosureStatusSummary.live} sublabel="Already partner-facing" />
+                    <StatCard label="Strongest Ready" value={stagedPreForeclosures.length} sublabel={`${Math.max(readyPreForeclosures.length - stagedPreForeclosures.length, 0)} lower-confidence still staged`} />
+                    <StatCard label="Refreshing" value={preForeclosureStatusSummary.refreshing} sublabel="Queued or processing now" />
+                    <StatCard label="Weak Live Review" value={weakLivePreForeclosures.length} sublabel={`${blockedPreForeclosures.length} non-live still blocked`} />
+                  </div>
 
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
@@ -1338,17 +1369,17 @@ export default function OperatorPage() {
                 <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Ready To Push</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">Packeted, enriched, and not live yet</div>
-                      <div className="mt-2 text-sm text-white/58">These are the non-live pre-foreclosure files that already have enough data and a fresh packet. Use this section for real push decisions.</div>
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Strongest Ready</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">Best non-live pre-foreclosures first</div>
+                        <div className="mt-2 text-sm text-white/58">These clear the stronger live bar now: full debt, better equity, good contact, and a fresh packet. Push from here first.</div>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{stagedPreForeclosures.length} strongest</span>
                     </div>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{stagedPreForeclosures.length} staged</span>
-                  </div>
 
-                  {autoRunningPreForeclosures.length ? (
-                    <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-                      <div className="text-xs uppercase tracking-[0.18em] text-emerald-100/75">Automation Running</div>
+                    {autoRunningPreForeclosures.length ? (
+                      <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-emerald-100/75">Automation Running</div>
                       <div className="mt-2 text-sm text-emerald-50/85">
                         {autoRunningPreForeclosures.length} pre-foreclosure file{autoRunningPreForeclosures.length === 1 ? "" : "s"} are still being enriched or finalized.
                       </div>
@@ -1372,6 +1403,7 @@ export default function OperatorPage() {
                               <div className="flex flex-wrap gap-2">
                                 <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${preForeclosureLifecycleClasses(preForeclosureState(row))}`}>{preForeclosureLifecycleLabel(preForeclosureState(row))}</span>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">{executionLaneCopy(row.suggestedExecutionLane)} • {executionRealityCopy(row.ownerAgency)}</span>
+                                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-emerald-100">{debtConfidenceCopy(row.debtConfidence)}</span>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">{enrichmentStatusCopy(enrichment?.status)}</span>
                               </div>
                             </div>
@@ -1386,6 +1418,7 @@ export default function OperatorPage() {
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Debt Picture</div>
                                 <div className="mt-2 text-sm text-white/78">{row.mortgageLender || "Unavailable"}</div>
                                 <div className="mt-1 text-sm text-white/55">{formatMoney(row.mortgageAmount)}</div>
+                                <div className="mt-1 text-sm text-white/45">{formatDisplayDate(row.mortgageDate)}</div>
                               </div>
                               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Best Contact</div>
@@ -1456,7 +1489,7 @@ export default function OperatorPage() {
                         )
                       })
                     ) : (
-                      <EmptyState title="No pre-foreclosure files are currently auto-staged for vault path." />
+                      <EmptyState title="No pre-foreclosure files currently clear the stronger live bar." />
                     )}
                   </div>
                 </article>
@@ -1568,9 +1601,81 @@ export default function OperatorPage() {
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Weak Live Review</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Live pre-foreclosures that need a harder look</div>
+                      <div className="mt-2 text-sm text-white/58">These are already in the vault, but they do not fully clear the stronger live bar. Review them here before they keep taking partner attention.</div>
+                    </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{weakLivePreForeclosures.length} weak live</span>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    {weakLivePreForeclosures.length ? (
+                      weakLivePreForeclosures.map((row: any) => {
+                        const slug = row.vaultSlug || row.slug
+                        const reasons = row.prefcLiveReviewReasons ?? []
+                        return (
+                          <div key={`weak-live-${slug || row.lead_key}`} className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.address || row.title || row.lead_key || slug}</div>
+                                <div className="mt-1 text-sm text-white/60">{row.county || "Unknown county"} • {saleStatusCopy(row.sale_status || row.saleStatus)} • {executionRealityCopy(row.equity_band || row.equityBand)}</div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-amber-100">Review Live</span>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">{debtConfidenceCopy(row.debtConfidence)}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 grid gap-2 text-sm text-white/68">
+                              <div>Lender: <span className="text-white/82">{row.mortgageLender || "Unavailable"}</span></div>
+                              <div>Loan: <span className="text-white/82">{formatMoney(row.mortgageAmount)}</span></div>
+                              <div>Contact: <span className="text-white/82">{bestContactLine(row)}</span></div>
+                            </div>
+
+                            {reasons.length ? (
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {reasons.map((reason: string) => (
+                                  <span key={`${slug || row.lead_key}-${reason}`} className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-white/72">
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              {slug ? (
+                                <button
+                                  onClick={() => openVaultDesk(slug)}
+                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                                >
+                                  View In Desk
+                                </button>
+                              ) : null}
+                              {slug ? (
+                                <button
+                                  onClick={() => handleVaultAction(slug, "remove")}
+                                  disabled={processingId === `vault:${slug}:remove`}
+                                  className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/30 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {processingId === `vault:${slug}:remove` ? "Removing..." : "Remove From Vault"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <EmptyState title="No live pre-foreclosures are currently flagged for quality review." />
+                    )}
+                  </div>
+                </article>
+
+                <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-white/45">Live Pre-Foreclosure</div>
                       <div className="mt-2 text-2xl font-semibold text-white">Already pushed to vault</div>
-                      <div className="mt-2 text-sm text-white/58">These are live now. They should not still feel like queued or staged leads.</div>
+                      <div className="mt-2 text-sm text-white/58">These are live now. Use the weak-live shelf above to find the ones that should be tightened or removed.</div>
                     </div>
                     <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{livePreForeclosureListings.length} live</span>
                   </div>
@@ -1579,13 +1684,16 @@ export default function OperatorPage() {
                     {livePreForeclosureListings.length ? (
                       livePreForeclosureListings.map((listing: any) => (
                         <div key={listing.slug} className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <div className="text-base font-semibold text-white">{listing.title || listing.slug}</div>
-                              <div className="mt-1 text-sm text-white/58">{listing.county || "Unknown county"} • {listing.distressType || "Unknown type"}</div>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{listing.title || listing.slug}</div>
+                                <div className="mt-1 text-sm text-white/58">{listing.county || "Unknown county"} • {listing.distressType || "Unknown type"}</div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${preForeclosureLifecycleClasses("live")}`}>Live In Vault</span>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">{debtConfidenceCopy(listing.debtConfidence)}</span>
+                              </div>
                             </div>
-                            <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${preForeclosureLifecycleClasses("live")}`}>Live In Vault</span>
-                          </div>
 
                           <div className="mt-4 grid gap-2 text-sm text-white/65">
                             <div>Owner: <span className="text-white/82">{listing.ownerName || "Unavailable"}</span></div>

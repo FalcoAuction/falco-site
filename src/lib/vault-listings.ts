@@ -53,6 +53,7 @@ export type VaultListing = {
   ownerName?: string
   ownerMail?: string
   lastSaleDate?: string
+  mortgageDate?: string
   mortgageLender?: string
   mortgageAmount?: number | null
   yearBuilt?: number | null
@@ -67,6 +68,9 @@ export type VaultListing = {
   influenceability?: string
   executionPosture?: string
   workabilityBand?: string
+  debtConfidence?: string
+  prefcLiveQuality?: boolean
+  prefcLiveReviewReasons?: string[]
   suggestedExecutionLane?: VaultExecutionLane
   suggestedLaneConfidence?: string
   suggestedLaneReasons?: string[]
@@ -313,6 +317,7 @@ function mapRowToVaultListing(
     ownerName: overlay?.ownerName,
     ownerMail: overlay?.ownerMail,
     lastSaleDate: overlay?.lastSaleDate,
+    mortgageDate: overlay?.mortgageDate,
     mortgageLender: overlay?.mortgageLender,
     mortgageAmount: typeof overlay?.mortgageAmount === "number" ? overlay.mortgageAmount : null,
     yearBuilt: overlay?.yearBuilt,
@@ -327,6 +332,9 @@ function mapRowToVaultListing(
     influenceability: overlay?.influenceability,
     executionPosture: overlay?.executionPosture,
     workabilityBand: overlay?.workabilityBand,
+    debtConfidence: overlay?.debtConfidence,
+    prefcLiveQuality: overlay?.prefcLiveQuality,
+    prefcLiveReviewReasons: overlay?.prefcLiveReviewReasons,
     suggestedExecutionLane: overlay?.suggestedExecutionLane,
     suggestedLaneConfidence: overlay?.suggestedLaneConfidence,
     suggestedLaneReasons: overlay?.suggestedLaneReasons,
