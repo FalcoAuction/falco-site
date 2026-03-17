@@ -210,6 +210,34 @@ function debtConfidenceCopy(value?: string | null) {
   return "No Debt"
 }
 
+function autonomyDirectiveCopy(value?: string | null) {
+  if (value === "push_harder") return "Push Harder"
+  if (value === "hold_steady") return "Hold Steady"
+  if (value === "expand_selectively") return "Expand Selectively"
+  if (value === "watch") return "Watch"
+  if (value === "deprioritize") return "Deprioritize"
+  return "Unclear"
+}
+
+function autonomyActionCopy(value?: string | null) {
+  if (value === "publish") return "Publish"
+  if (value === "reconstruct_debt") return "Reconstruct Debt"
+  if (value === "reconstruct_transfer") return "Reconstruct Transfer"
+  if (value === "enrich_contact") return "Enrich Contact"
+  if (value === "special_situations_review") return "Special Situations"
+  if (value === "hold_or_suppress") return "Hold / Suppress"
+  if (value === "remove_from_vault") return "Remove From Vault"
+  if (value === "hold_for_review") return "Hold For Review"
+  return "Review"
+}
+
+function autonomyDecisionCopy(value?: string | null) {
+  if (value === "keep_live") return "Keep Live"
+  if (value === "watch_live") return "Watch Live"
+  if (value === "remove_from_vault") return "Remove"
+  return "Review"
+}
+
 function hasMeaningfulEnrichment(row: any) {
   return Boolean(
     row?.ownerName ||
@@ -340,6 +368,19 @@ export default function OperatorPage() {
 
   const liveVaultListings = useMemo(() => workspace?.liveListings ?? [], [workspace])
   const vaultActivity = useMemo(() => workspace?.vaultActivity ?? [], [workspace])
+  const autonomy = useMemo(() => workspace?.report?.autonomy ?? null, [workspace])
+  const autonomyCountyFocus = useMemo(
+    () => (autonomy?.marketAllocation?.counties ?? []).slice(0, 4),
+    [autonomy]
+  )
+  const autonomyLeadActions = useMemo(
+    () => (autonomy?.leadActions?.actions ?? []).slice(0, 6),
+    [autonomy]
+  )
+  const autonomyVaultQuality = useMemo(
+    () => (autonomy?.vaultQuality?.liveReview ?? []).slice(0, 4),
+    [autonomy]
+  )
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -1243,6 +1284,58 @@ export default function OperatorPage() {
 
                 <div className="grid gap-6">
                   <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Machine Focus</div>
+                    <div className="mt-2 text-2xl font-semibold text-white">Where the agent wants effort next</div>
+                    <div className="mt-2 text-sm text-white/58">
+                      {autonomy?.objective ?? "Autonomy guidance will appear after the next bots run completes."}
+                    </div>
+
+                    <div className="mt-5 grid gap-3">
+                      {autonomyCountyFocus.length ? (
+                        autonomyCountyFocus.map((row: any) => (
+                          <div key={row.county} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.county}</div>
+                                <div className="mt-1 text-sm text-white/58">
+                                  {autonomyDirectiveCopy(row.directive)} • {row.strongLivePrefc} strong live • {row.preForeclosureTracked} tracked
+                                </div>
+                              </div>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/70">
+                                {row.countyTier}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-sm text-white/68">{row.reason}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyState title="No market allocation guidance is available yet." />
+                      )}
+                    </div>
+
+                    <div className="mt-5 grid gap-3">
+                      {autonomyLeadActions.length ? (
+                        autonomyLeadActions.slice(0, 3).map((row: any) => (
+                          <div key={row.lead_key} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.address || row.lead_key}</div>
+                                <div className="mt-1 text-sm text-white/58">
+                                  {autonomyActionCopy(row.next_action)} • {debtConfidenceCopy(row.debt_confidence)} • {row.county || "Unknown county"}
+                                </div>
+                              </div>
+                              <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${priorityClasses(row.priority === "high" ? "high" : row.priority === "medium" ? "medium" : "low")}`}>
+                                {row.priority}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-sm text-white/68">{(row.reasons ?? []).join(" • ")}</div>
+                          </div>
+                        ))
+                      ) : null}
+                    </div>
+                  </article>
+
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                     <div className="text-xs uppercase tracking-[0.22em] text-white/45">Today&apos;s Focus</div>
                     <div className="mt-2 text-2xl font-semibold text-white">Simple daily run order</div>
                     <div className="mt-5 grid gap-3">
@@ -1258,6 +1351,40 @@ export default function OperatorPage() {
                         <div className="font-semibold text-white">3. Handle partner-facing work</div>
                         <div className="mt-1">{livePreForeclosureCount} pre-foreclosures are live in vault. {(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length} approvals and {openRoutingQueue.length} routing groups are waiting.</div>
                       </div>
+                    </div>
+                  </article>
+
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Vault Quality Agent</div>
+                        <div className="mt-2 text-xl font-semibold text-white">Live pre-foreclosure protection</div>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">
+                        {autonomy?.vaultQuality?.removeCount ?? 0} remove
+                      </span>
+                    </div>
+                    <div className="mt-5 grid gap-3">
+                      {autonomyVaultQuality.length ? (
+                        autonomyVaultQuality.map((row: any) => (
+                          <div key={row.slug} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.title || row.slug}</div>
+                                <div className="mt-1 text-sm text-white/58">
+                                  {autonomyDecisionCopy(row.decision)} • {row.county || "Unknown county"} • {debtConfidenceCopy(row.debtConfidence)}
+                                </div>
+                              </div>
+                              <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${row.decision === "remove_from_vault" ? "border-amber-300/20 bg-amber-300/10 text-amber-100" : row.decision === "watch_live" ? "border-white/12 bg-white/10 text-white/82" : "border-emerald-400/25 bg-emerald-400/10 text-emerald-100"}`}>
+                                {autonomyDecisionCopy(row.decision)}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-sm text-white/68">{(row.reasons ?? []).join(" • ")}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyState title="No live quality actions are queued right now." />
+                      )}
                     </div>
                   </article>
 

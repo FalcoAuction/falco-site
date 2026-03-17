@@ -126,6 +126,78 @@ export type OperatorAnalystReport = {
   }>
 }
 
+export type OperatorAutonomyReport = {
+  agent: "falco_autonomy"
+  generated_at: string
+  run_id?: string | null
+  objective: string
+  marketAllocation: {
+    generated_at: string
+    counties: Array<{
+      county: string
+      countyTier: string
+      activeLane: boolean
+      tracked: number
+      preForeclosureTracked: number
+      packeted: number
+      live: number
+      strongLivePrefc: number
+      packetRate: number
+      liveRate: number
+      sourceMix: Record<string, number>
+      directive: string
+      reason: string
+    }>
+    sources: Array<{
+      source: string
+      directive: string
+      reason: string
+    }>
+  }
+  leadActions: {
+    generated_at: string
+    actions: Array<{
+      lead_key: string
+      address: string | null
+      county: string | null
+      distress_type: string | null
+      sale_status?: string | null
+      falco_score_internal?: number | null
+      equity_band?: string | null
+      debt_confidence?: string | null
+      prefc_live_quality?: boolean
+      contact_path_quality?: string | null
+      owner_agency?: string | null
+      intervention_window?: string | null
+      lender_control_intensity?: string | null
+      influenceability?: string | null
+      workability_band?: string | null
+      overlap_signals?: string[]
+      next_action: string
+      priority: string
+      reasons: string[]
+    }>
+  }
+  vaultQuality: {
+    generated_at: string
+    keepCount: number
+    watchCount: number
+    removeCount: number
+    liveReview: Array<{
+      slug: string
+      lead_key: string
+      title: string
+      county: string | null
+      equityBand?: string | null
+      debtConfidence?: string | null
+      prefcLiveQuality?: boolean
+      workabilityBand?: string | null
+      decision: string
+      reasons: string[]
+    }>
+  }
+}
+
 export type OperatorReport = {
   generatedAt: string
   dbPath: string
@@ -182,6 +254,7 @@ export type OperatorReport = {
     blockerCounts: Array<{ label: string; count: number }>
   }
   analyst?: OperatorAnalystReport | null
+  autonomy?: OperatorAutonomyReport | null
 }
 
 async function readSnapshotOperatorReport(): Promise<OperatorReport | null> {
