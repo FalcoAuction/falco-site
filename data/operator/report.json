@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-19T23:33:41.380231+00:00",
+  "generatedAt": "2026-03-19T23:39:54.983180+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -1997,7 +1997,7 @@
         "debtReconstructionBlockerType": "missing_amount_with_refs",
         "debtReconstructionMissingReason": "No loan amount in BatchData debt fields",
         "debtReconstructionSummary": "Current holder: U.S. BANK TRUST NATIONAL ASSOCIATION, AS TRUSTEE FOR LB-RANCH SERIES V TRUST | Original lender: CitiFinancial, Inc | Recording support: 1979-11-04 | Transfer support: 1979-02-21 | Book 1004 Page 1463 Instrument 638511 | Blocker: No loan amount in BatchData debt fields",
-        "countyRecordLookupStatus": "queued",
+        "countyRecordLookupStatus": "auth_required",
         "countyRecordLookupProvider": "Montgomery Register Of Deeds",
         "countyRecordLookupUrl": "https://www.ustitlesearch.net/",
         "countyRecordLookupHint": "Search instrument first, then book/page",
@@ -3778,11 +3778,11 @@
   },
   "autonomy": {
     "agent": "falco_autonomy",
-    "generated_at": "2026-03-19T23:33:40+00:00",
+    "generated_at": "2026-03-19T23:39:54+00:00",
     "run_id": null,
     "objective": "Increase strong live opportunities while keeping the vault limited to commercially credible files.",
     "marketAllocation": {
-      "generated_at": "2026-03-19T23:33:40+00:00",
+      "generated_at": "2026-03-19T23:39:54+00:00",
       "counties": [
         {
           "county": "Rutherford County",
@@ -3962,7 +3962,7 @@
       ]
     },
     "leadActions": {
-      "generated_at": "2026-03-19T23:33:40+00:00",
+      "generated_at": "2026-03-19T23:39:54+00:00",
       "actions": [
         {
           "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
@@ -4189,7 +4189,7 @@
           "recoverable_partial": true,
           "recoverable_partial_next_step": "county_record_lookup",
           "suppress_early": false,
-          "county_record_lookup_status": "queued",
+          "county_record_lookup_status": "auth_required",
           "county_record_lookup_provider": "Montgomery Register Of Deeds",
           "county_record_lookup_url": "https://www.ustitlesearch.net/",
           "county_record_lookup_hint": "Search instrument first, then book/page",
@@ -4543,7 +4543,7 @@
       ]
     },
     "vaultQuality": {
-      "generated_at": "2026-03-19T23:33:40+00:00",
+      "generated_at": "2026-03-19T23:39:54+00:00",
       "keepCount": 1,
       "watchCount": 0,
       "removeCount": 0,
