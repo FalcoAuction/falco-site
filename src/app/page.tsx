@@ -51,7 +51,7 @@ export default async function HomePage() {
 
   const liveMetrics = [
     {
-      label: "Active Counties",
+      label: "Sourced Counties",
       value: String(metrics.activeCounties),
       note: "Targeted coverage",
     },

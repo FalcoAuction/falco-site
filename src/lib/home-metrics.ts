@@ -34,7 +34,23 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     getOperatorReport().catch(() => null),
   ])
 
-  const activeCounties = uniqueCount(vaultListings.map((listing) => listing.county))
+  const sourcedCountiesFromAutonomy =
+    operatorReport?.autonomy?.marketAllocation?.counties
+      ?.map((row) => row.county)
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []
+
+  const sourcedCountiesFromRecentLeads =
+    operatorReport?.recentLeads
+      ?.map((lead) => lead.county)
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []
+
+  const activeCounties = uniqueCount(
+    sourcedCountiesFromAutonomy.length > 0
+      ? sourcedCountiesFromAutonomy
+      : sourcedCountiesFromRecentLeads.length > 0
+      ? sourcedCountiesFromRecentLeads
+      : vaultListings.map((listing) => listing.county)
+  )
   const trackedLeads = operatorReport?.overview.totalLeads ?? vaultListings.length
 
   const uwReady = vaultListings.filter((listing) => {
