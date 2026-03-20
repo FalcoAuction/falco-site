@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-20T19:35:59.140467+00:00",
+  "generatedAt": "2026-03-20T19:45:27.791799+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -1837,9 +1837,11 @@
         "packetabilityScore": 5,
         "packetabilityBand": "LOW",
         "packetabilityReasons": [],
-        "recoverablePartial": false,
-        "recoverablePartialNextStep": "",
-        "recoverablePartialReasons": [],
+        "recoverablePartial": true,
+        "recoverablePartialNextStep": "county_record_lookup",
+        "recoverablePartialReasons": [
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
+        ],
         "suppressEarly": false,
         "earlyNoiseReasons": [],
         "prefcLiveQuality": false,
@@ -1899,10 +1901,9 @@
         "noticePhone": null,
         "recommendedAction": "county_record_lookup",
         "recommendedActionReasons": [
-          "County record refs are present but the debt amount is still missing",
-          "No loan amount in BatchData debt fields"
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
         ],
-        "recommendedActionPriority": "high"
+        "recommendedActionPriority": "medium"
       }
     ],
     "blocked": [
@@ -2813,9 +2814,11 @@
         "packetabilityScore": 5,
         "packetabilityBand": "LOW",
         "packetabilityReasons": [],
-        "recoverablePartial": false,
-        "recoverablePartialNextStep": "",
-        "recoverablePartialReasons": [],
+        "recoverablePartial": true,
+        "recoverablePartialNextStep": "county_record_lookup",
+        "recoverablePartialReasons": [
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
+        ],
         "suppressEarly": false,
         "earlyNoiseReasons": [],
         "prefcLiveQuality": false,
@@ -2875,10 +2878,9 @@
         "noticePhone": null,
         "recommendedAction": "county_record_lookup",
         "recommendedActionReasons": [
-          "County record refs are present but the debt amount is still missing",
-          "No loan amount in BatchData debt fields"
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
         ],
-        "recommendedActionPriority": "high"
+        "recommendedActionPriority": "medium"
       }
     ],
     "monitorCandidates": [],
@@ -3414,6 +3416,100 @@
           "Pre-foreclosure is close enough to keep in the active recovery lane"
         ],
         "recommendedActionPriority": "high"
+      },
+      {
+        "lead_key": "98be102343cc281539efd8113dc95c1d458559f7",
+        "address": "3500 Dockery Drive, Mascot, TN 37806",
+        "county": "Knox County",
+        "distress_type": "SOT",
+        "sale_status": "pre_foreclosure",
+        "falco_score_internal": 16,
+        "auction_readiness": "RED",
+        "equity_band": "UNKNOWN",
+        "dts_days": null,
+        "uw_ready": 0,
+        "first_seen_at": "2026-03-12T01:41:42.819120Z",
+        "last_seen_at": "2026-03-13T04:02:47.298475Z",
+        "score_updated_at": "2026-03-13T04:03:38+00:00",
+        "current_sale_date": null,
+        "original_sale_date": null,
+        "vaultLive": false,
+        "vaultSlug": null,
+        "preForeclosureReviewReady": false,
+        "vaultPublishReady": false,
+        "topTierReady": false,
+        "prefcDebtProxyReady": false,
+        "debtConfidence": "THIN",
+        "packetabilityScore": 5,
+        "packetabilityBand": "LOW",
+        "packetabilityReasons": [],
+        "recoverablePartial": true,
+        "recoverablePartialNextStep": "county_record_lookup",
+        "recoverablePartialReasons": [
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
+        ],
+        "suppressEarly": false,
+        "earlyNoiseReasons": [],
+        "prefcLiveQuality": false,
+        "prefcLiveReviewReasons": [
+          "Debt confidence is below full",
+          "Equity band is too weak for live pre-foreclosure",
+          "Contact path is not strong enough",
+          "Influenceability is not high enough",
+          "Execution posture is not strong enough"
+        ],
+        "packetCompletenessPct": 22,
+        "executionBlockers": [
+          "Owner name missing",
+          "Owner mailing address missing",
+          "Last transfer date missing",
+          "Original loan amount missing"
+        ],
+        "overlapSignals": [],
+        "specialSituation": false,
+        "sourceMix": [
+          "SUBSTITUTION_OF_TRUSTEE"
+        ],
+        "suggestedExecutionLane": "borrower_side",
+        "suggestedLaneConfidence": "LOW",
+        "prefcCountyTier": "WATCH",
+        "prefcSourcePriority": 0,
+        "contactPathQuality": "PARTIAL",
+        "controlParty": "OWNER",
+        "ownerAgency": "MEDIUM",
+        "interventionWindow": "WIDE",
+        "lenderControlIntensity": "LOW",
+        "influenceability": "LOW",
+        "executionPosture": "NEEDS MORE CONTROL CLARITY",
+        "workabilityBand": "LIMITED",
+        "ownerName": null,
+        "ownerMail": null,
+        "mortgageDate": "2002-01-28",
+        "mortgageLender": "U.S. BANK TRUST NATIONAL ASSOCIATION, AS TRUSTEE OF FW-BKPL SERIES I TRUST",
+        "mortgageAmount": null,
+        "mortgageRecordBook": "1603",
+        "mortgageRecordPage": "38",
+        "mortgageRecordInstrument": "200604310100366",
+        "debtReconstructionConfidence": "PARTIAL",
+        "debtReconstructionSourceMix": "NOTICE, BATCHDATA, CHAIN",
+        "debtReconstructionBlockerType": "missing_amount_with_refs",
+        "debtReconstructionMissingReason": "No loan amount in BatchData debt fields",
+        "debtReconstructionSummary": "Current holder: U.S. BANK TRUST NATIONAL ASSOCIATION, AS TRUSTEE OF FW-BKPL SERIES I TRUST | Recording support: 2002-01-28 | Book 1603 Page 38 Instrument 200604310100366 | Blocker: No loan amount in BatchData debt fields",
+        "countyRecordLookupStatus": "queued",
+        "countyRecordLookupProvider": "County Register Of Deeds",
+        "countyRecordLookupUrl": null,
+        "countyRecordLookupHint": "Search instrument first, then book/page",
+        "countyRecordLookupRefs": "Instrument 200604310100366 | Book 1603 Page 38",
+        "propertyIdentifier": null,
+        "ownerPhonePrimary": "8657193198",
+        "ownerPhoneSecondary": "8654653459",
+        "trusteePhonePublic": null,
+        "noticePhone": null,
+        "recommendedAction": "county_record_lookup",
+        "recommendedActionReasons": [
+          "Recorded debt refs exist, so the remaining debt gap may still be recoverable"
+        ],
+        "recommendedActionPriority": "medium"
       }
     ],
     "weakLiveReview": [],
