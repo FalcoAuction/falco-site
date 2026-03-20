@@ -61,6 +61,18 @@ export type OperatorLeadRow = {
   ownerPhoneSecondary?: string | null
   trusteePhonePublic?: string | null
   noticePhone?: string | null
+  listPrice?: number | null
+  fsboListingTitle?: string | null
+  fsboListingDescription?: string | null
+  fsboSignalScore?: number | null
+  fsboSignalLabels?: string[]
+  fsboActionabilityBand?: string | null
+  fsboActionabilityReasons?: string[]
+  fsboReviewReady?: boolean
+  fsboVaultReady?: boolean
+  fsboPriceGapPct?: number | null
+  fsboDaysTracked?: number | null
+  fsboListingSource?: string | null
 }
 
 export type OperatorPacketRow = {
@@ -256,9 +268,24 @@ export type OperatorReport = {
     blockedCount: number
     readyForReview: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     blocked: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    autoPublishCount?: number
+    autoEnrichCount?: number
+    monitorCount?: number
+    autoPublishCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    autoEnrichCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    monitorCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     strongestCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     weakLiveReview?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     blockerCounts: Array<{ label: string; count: number }>
+  }
+  fsboLane?: {
+    trackedCount: number
+    reviewReadyCount: number
+    vaultReadyCount: number
+    tracked: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    reviewReady: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    vaultReady: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
+    blocked: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
   }
   analyst?: OperatorAnalystReport | null
   autonomy?: OperatorAutonomyReport | null
@@ -538,7 +565,16 @@ function buildPreForeclosurePromotion(
         blockedCount: number
         readyForReview: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
         blocked: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        autoPublishCount?: number
+        autoEnrichCount?: number
+        monitorCount?: number
+        autoPublishCandidates?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        autoEnrichCandidates?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        monitorCandidates?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
         blockerCounts?: Array<{ label: string; count: number }>
+        strongestCandidates?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        recoverableCandidates?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
+        weakLiveReview?: (OperatorLeadRow & { vaultLive?: boolean; vaultSlug?: string | null })[]
       }
     | undefined,
   liveListings: { slug: string }[]
@@ -552,6 +588,25 @@ function buildPreForeclosurePromotion(
       blockedCount: snapshotSection.blockedCount ?? 0,
       readyForReview,
       blocked: attachVaultState(snapshotSection.blocked ?? [], liveListings),
+      autoPublishCount: snapshotSection.autoPublishCount ?? 0,
+      autoEnrichCount: snapshotSection.autoEnrichCount ?? 0,
+      monitorCount: snapshotSection.monitorCount ?? 0,
+      autoPublishCandidates: attachVaultState(snapshotSection.autoPublishCandidates ?? [], liveListings).filter(
+        (row) => !row.vaultLive
+      ),
+      autoEnrichCandidates: attachVaultState(snapshotSection.autoEnrichCandidates ?? [], liveListings).filter(
+        (row) => !row.vaultLive
+      ),
+      monitorCandidates: attachVaultState(snapshotSection.monitorCandidates ?? [], liveListings).filter(
+        (row) => !row.vaultLive
+      ),
+      strongestCandidates: attachVaultState(snapshotSection.strongestCandidates ?? [], liveListings).filter(
+        (row) => !row.vaultLive
+      ),
+      recoverableCandidates: attachVaultState(snapshotSection.recoverableCandidates ?? [], liveListings).filter(
+        (row) => !row.vaultLive
+      ),
+      weakLiveReview: attachVaultState(snapshotSection.weakLiveReview ?? [], liveListings),
       blockerCounts: snapshotSection.blockerCounts ?? [],
     }
   }
@@ -561,6 +616,15 @@ function buildPreForeclosurePromotion(
     blockedCount: 0,
     readyForReview: [],
     blocked: [],
+    autoPublishCount: 0,
+    autoEnrichCount: 0,
+    monitorCount: 0,
+    autoPublishCandidates: [],
+    autoEnrichCandidates: [],
+    monitorCandidates: [],
+    strongestCandidates: [],
+    recoverableCandidates: [],
+    weakLiveReview: [],
     blockerCounts: [],
   }
 }

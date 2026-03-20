@@ -62,6 +62,7 @@ function executionLaneCopy(value?: VaultExecutionLane | string | null) {
   if (value === "lender_trustee") return "Lender / Trustee"
   if (value === "auction_only") return "Auction Only"
   if (value === "mixed") return "Mixed"
+  if (value === "seller_direct") return "Seller Direct"
   return "Unclear"
 }
 
@@ -151,6 +152,11 @@ function formatMoney(value?: number | null) {
   }).format(value)
 }
 
+function formatPct(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "N/A"
+  return `${(value * 100).toFixed(1)}%`
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) return "Unknown"
   const date = new Date(value)
@@ -235,9 +241,9 @@ function autonomyActionCopy(value?: string | null) {
   if (value === "reconstruct_transfer") return "Reconstruct Transfer"
   if (value === "enrich_contact") return "Enrich Contact"
   if (value === "special_situations_review") return "Special Situations"
-  if (value === "hold_or_suppress") return "Hold / Suppress"
+  if (value === "monitor") return "Monitor"
+  if (value === "suppress") return "Suppress"
   if (value === "remove_from_vault") return "Remove From Vault"
-  if (value === "hold_for_review") return "Hold For Review"
   return "Review"
 }
 
@@ -391,6 +397,10 @@ export default function OperatorPage() {
     () => (autonomy?.vaultQuality?.liveReview ?? []).slice(0, 4),
     [autonomy]
   )
+  const fsboLane = useMemo(() => workspace?.report?.fsboLane ?? null, [workspace])
+  const fsboReady = useMemo(() => fsboLane?.reviewReady ?? [], [fsboLane])
+  const fsboVaultReady = useMemo(() => fsboLane?.vaultReady ?? [], [fsboLane])
+  const fsboBlocked = useMemo(() => fsboLane?.blocked ?? [], [fsboLane])
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -421,6 +431,30 @@ export default function OperatorPage() {
     )
   }, [liveListingByLeadKey, workspace])
 
+  const autoPublishPreForeclosures = useMemo(
+    () =>
+      (workspace?.report.preForeclosurePromotion?.autoPublishCandidates ?? []).filter(
+        (row: any) => !liveListingByLeadKey.has(row.lead_key)
+      ),
+    [liveListingByLeadKey, workspace]
+  )
+
+  const autoEnrichPreForeclosures = useMemo(
+    () =>
+      (workspace?.report.preForeclosurePromotion?.autoEnrichCandidates ?? []).filter(
+        (row: any) => !liveListingByLeadKey.has(row.lead_key)
+      ),
+    [liveListingByLeadKey, workspace]
+  )
+
+  const monitorPreForeclosures = useMemo(
+    () =>
+      (workspace?.report.preForeclosurePromotion?.monitorCandidates ?? []).filter(
+        (row: any) => !liveListingByLeadKey.has(row.lead_key)
+      ),
+    [liveListingByLeadKey, workspace]
+  )
+
   const blockedPreForeclosures = useMemo(
     () =>
       (workspace?.report.preForeclosurePromotion?.blocked ?? []).filter(
@@ -434,12 +468,12 @@ export default function OperatorPage() {
       (row: any) => !liveListingByLeadKey.has(row.lead_key)
     )
     if (snapshotRows.length) return snapshotRows
-    return readyPreForeclosures.filter(
+    return autoPublishPreForeclosures.filter(
       (row: any) =>
         row.prefcLiveQuality &&
         String(row.debtConfidence ?? "").toUpperCase() === "FULL"
     )
-  }, [liveListingByLeadKey, readyPreForeclosures, workspace])
+  }, [autoPublishPreForeclosures, liveListingByLeadKey, workspace])
 
   const livePreForeclosureListings = useMemo(
     () =>
@@ -614,13 +648,6 @@ export default function OperatorPage() {
     const decisionMap = new Map((workspace.intakeDecisions ?? []).map((row: any) => [row.leadKey, row] as const))
     const intakeRows = [
       ...(weakLivePreForeclosures ?? []).map((row: any) => ({ ...row, weakLiveReview: true })),
-      ...(blockedPreForeclosures ?? []),
-      ...(workspace.report.preForeclosurePromotion?.readyForReview ?? []).filter((row: any) => {
-        if (liveListingByLeadKey.has(row.lead_key)) return false
-        const enrichment = enrichmentRequestMap.get(row.lead_key) as any
-        const status = enrichment?.status
-        return status === "failed"
-      }),
     ]
 
     for (const row of intakeRows) {
@@ -666,7 +693,7 @@ export default function OperatorPage() {
     }
 
     return items.sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]))
-  }, [blockedPreForeclosures, enrichmentRequestMap, liveListingByLeadKey, openRoutingQueue, readyPreForeclosures, validationQueue, weakLivePreForeclosures, workspace])
+  }, [openRoutingQueue, validationQueue, weakLivePreForeclosures, workspace])
 
   const activeTasks = useMemo(() => {
     const doneIds = new Set(history.map((item: any) => item.id))
@@ -1355,12 +1382,63 @@ export default function OperatorPage() {
                         </div>
                         <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
                           <div className="font-semibold text-white">2. Review the weak or unclear files</div>
-                          <div className="mt-1">{weakLivePreForeclosures.length} live pre-foreclosures need a quality review. {blockedPreForeclosures.length} non-live files still need a human call.</div>
+                          <div className="mt-1">{weakLivePreForeclosures.length} live pre-foreclosures are on the removal watch. {blockedPreForeclosures.length} non-live files are machine exceptions, not manual calls.</div>
                         </div>
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/72">
                         <div className="font-semibold text-white">3. Handle partner-facing work</div>
                         <div className="mt-1">{livePreForeclosureCount} pre-foreclosures are live in vault. {(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length} approvals and {openRoutingQueue.length} routing groups are waiting.</div>
                       </div>
+                    </div>
+                  </article>
+
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Seller-Direct Lane</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">FSBO opportunities worth a real look</div>
+                        <div className="mt-2 text-sm text-white/58">
+                          These are scored on direct contact, pricing gap, tracked age, and seller-direct signals instead of auction timing.
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">
+                        {fsboLane?.trackedCount ?? 0} tracked
+                      </span>
+                    </div>
+                    <div className="mt-5 grid gap-4 md:grid-cols-3">
+                      <StatCard label="Review Ready" value={fsboLane?.reviewReadyCount ?? 0} sublabel="Worth a seller-direct call" />
+                      <StatCard label="Vault Ready" value={fsboLane?.vaultReadyCount ?? 0} sublabel="Strong enough for private review" />
+                      <StatCard label="Blocked" value={fsboBlocked.length} sublabel="Needs better facts or economics" />
+                    </div>
+                    <div className="mt-5 grid gap-3">
+                      {fsboVaultReady.length || fsboReady.length ? (
+                        [...fsboVaultReady, ...fsboReady].slice(0, 4).map((row: any) => (
+                          <div key={row.lead_key} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.address || row.fsboListingTitle || row.lead_key}</div>
+                                <div className="mt-1 text-sm text-white/58">
+                                  {row.county || "Unknown county"} • {formatMoney(row.listPrice)} • {row.fsboActionabilityBand || "Review"}
+                                </div>
+                              </div>
+                              <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] ${row.fsboVaultReady ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-100" : "border-white/12 bg-white/10 text-white/82"}`}>
+                                {row.fsboVaultReady ? "Vault Ready" : "Review Ready"}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-sm text-white/68">
+                              {(row.fsboActionabilityReasons ?? []).slice(0, 2).join(" • ") || "Seller-direct lane with limited explanatory data."}
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/55">
+                              <span>{row.fsboDaysTracked ?? 0} days tracked</span>
+                              <span>•</span>
+                              <span>{formatPct(row.fsboPriceGapPct)}</span>
+                              <span>•</span>
+                              <span>{executionLaneCopy(row.suggestedExecutionLane)}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyState title="No FSBO opportunities are review-ready yet." />
+                      )}
                     </div>
                   </article>
 
@@ -1458,9 +1536,9 @@ export default function OperatorPage() {
 
                   <div className="grid gap-4 md:grid-cols-4">
                     <StatCard label="Live In Vault" value={preForeclosureStatusSummary.live} sublabel="Already partner-facing" />
-                    <StatCard label="Strongest Ready" value={stagedPreForeclosures.length} sublabel={`${Math.max(readyPreForeclosures.length - stagedPreForeclosures.length, 0)} lower-confidence still staged`} />
-                    <StatCard label="Refreshing" value={preForeclosureStatusSummary.refreshing} sublabel="Queued or processing now" />
-                    <StatCard label="Weak Live Review" value={weakLivePreForeclosures.length} sublabel={`${blockedPreForeclosures.length} non-live still blocked`} />
+                    <StatCard label="Auto-Publish" value={autoPublishPreForeclosures.length} sublabel="Agent can push these now" />
+                    <StatCard label="Auto-Enrich" value={autoEnrichPreForeclosures.length} sublabel="Machine is working these now" />
+                    <StatCard label="Machine Exceptions" value={blockedPreForeclosures.length} sublabel={`${monitorPreForeclosures.length} tracked on monitor`} />
                   </div>
 
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
@@ -1507,11 +1585,11 @@ export default function OperatorPage() {
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
                       <div>
-                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Strongest Ready</div>
-                        <div className="mt-2 text-2xl font-semibold text-white">Best non-live pre-foreclosures first</div>
-                        <div className="mt-2 text-sm text-white/58">These clear the stronger live bar now: full debt, better equity, good contact, and a fresh packet. Push from here first.</div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Auto-Publish Queue</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">Best non-live pre-foreclosures the agent can push</div>
+                        <div className="mt-2 text-sm text-white/58">These already clear the stronger live bar. The machine owns publish timing, so this is visibility into what it is pushing rather than a manual staging shelf.</div>
                       </div>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{stagedPreForeclosures.length} strongest</span>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{stagedPreForeclosures.length} ready now</span>
                     </div>
 
                     {autoRunningPreForeclosures.length ? (
@@ -1526,10 +1604,7 @@ export default function OperatorPage() {
                   <div className="mt-5 grid gap-4">
                     {stagedPreForeclosures.length ? (
                       stagedPreForeclosures.map((row: any) => {
-                        const intake = intakeDecisionMap.get(row.lead_key) as any
                         const enrichment = enrichmentRequestMap.get(row.lead_key) as any
-                        const taskTitle = row.address || row.lead_key
-                        const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
                         return (
                           <div key={row.lead_key} className="rounded-2xl border border-white/10 bg-black/25 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1576,43 +1651,9 @@ export default function OperatorPage() {
                             ) : null}
 
                             <div className="mt-4 flex flex-wrap gap-3">
-                              <button
-                                onClick={() => handleIntakeDecision(row.lead_key, "promote", taskTitle, taskDetail)}
-                                disabled={processingId === `intake:${row.lead_key}:promote`}
-                                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:promote` ? "Saving..." : "Promote"}
-                              </button>
-                              <button
-                                onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
-                                disabled={processingId === `intake:${row.lead_key}:hold`}
-                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
-                              </button>
-                              <button
-                                onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
-                                disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
-                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
-                              </button>
-                              {intake ? (
-                                <button
-                                  onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
-                                  disabled={processingId === `intake:${row.lead_key}:clear`}
-                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
-                                </button>
-                              ) : null}
-                              <button
-                                onClick={() => handleEnrichmentRequest(row.lead_key)}
-                                disabled={processingId === `intake:${row.lead_key}:refresh_enrichment` || enrichment?.status === "requested" || enrichment?.status === "processing"}
-                                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:refresh_enrichment` ? "Queueing..." : enrichment?.status === "processing" ? "Running" : enrichment?.status === "requested" ? "Queued" : "Refresh Data"}
-                              </button>
+                              <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-100">
+                                Agent Action: {autonomyActionCopy(row.recommendedAction || "publish")}
+                              </div>
                               {row.vaultSlug ? (
                                 <button
                                   onClick={() => openVaultDesk(row.vaultSlug)}
@@ -1633,21 +1674,18 @@ export default function OperatorPage() {
 
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.22em] text-white/45">Needs Human Review</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">Blocked, incomplete, or unclear</div>
-                      <div className="mt-2 text-sm text-white/58">This is the exception queue. These are tracked files that are not yet live and still need more data or a human call.</div>
-                    </div>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{blockedPreForeclosures.length} blocked</span>
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Machine Exceptions</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Suppressed or still incomplete</div>
+                      <div className="mt-2 text-sm text-white/58">These are not waiting on you. The agent has either suppressed them for now or marked them as genuinely incomplete enough that they cannot advance yet.</div>
+                      </div>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{blockedPreForeclosures.length} exceptions</span>
                   </div>
 
                   <div className="mt-5 grid gap-4">
                     {blockedPreForeclosures.length ? (
                       blockedPreForeclosures.slice(0, 8).map((row: any) => {
-                        const intake = intakeDecisionMap.get(row.lead_key) as any
                         const enrichment = enrichmentRequestMap.get(row.lead_key) as any
-                        const taskTitle = row.address || row.lead_key
-                        const taskDetail = `${row.county || "Unknown county"} • ${saleStatusCopy(row.sale_status)} • ${row.distress_type || "Unknown type"}`
                         return (
                           <div key={`blocked-${row.lead_key}`} className="rounded-2xl border border-white/10 bg-black/25 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1689,35 +1727,10 @@ export default function OperatorPage() {
                               </div>
                             ) : null}
 
-                            <textarea
-                              value={intakeNotes[row.lead_key] ?? ""}
-                              onChange={(event) => setIntakeNotes((current) => ({ ...current, [row.lead_key]: event.target.value }))}
-                              className="mt-4 min-h-[72px] w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
-                              placeholder="Why hold, enrich, or request more info."
-                            />
-
                             <div className="mt-4 flex flex-wrap gap-3">
-                              <button
-                                onClick={() => handleEnrichmentRequest(row.lead_key)}
-                                disabled={processingId === `intake:${row.lead_key}:refresh_enrichment` || enrichment?.status === "requested" || enrichment?.status === "processing"}
-                                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:refresh_enrichment` ? "Queueing..." : enrichment?.status === "processing" ? "Running" : enrichment?.status === "requested" ? "Queued" : "Refresh Data"}
-                              </button>
-                              <button
-                                onClick={() => handleIntakeDecision(row.lead_key, "hold", taskTitle, taskDetail)}
-                                disabled={processingId === `intake:${row.lead_key}:hold`}
-                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:hold` ? "Saving..." : "Hold"}
-                              </button>
-                              <button
-                                onClick={() => handleIntakeDecision(row.lead_key, "needs_more_info", taskTitle, taskDetail)}
-                                disabled={processingId === `intake:${row.lead_key}:needs_more_info`}
-                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {processingId === `intake:${row.lead_key}:needs_more_info` ? "Saving..." : "Needs Info"}
-                              </button>
+                              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/76">
+                                Agent Action: {autonomyActionCopy(row.recommendedAction)}
+                              </div>
                               {row.vaultSlug ? (
                                 <button
                                   onClick={() => openVaultDesk(row.vaultSlug)}
@@ -1726,21 +1739,12 @@ export default function OperatorPage() {
                                   View In Desk
                                 </button>
                               ) : null}
-                              {intake ? (
-                                <button
-                                  onClick={() => handleIntakeDecision(row.lead_key, "clear", taskTitle, taskDetail)}
-                                  disabled={processingId === `intake:${row.lead_key}:clear`}
-                                  className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {processingId === `intake:${row.lead_key}:clear` ? "Saving..." : "Clear"}
-                                </button>
-                              ) : null}
                             </div>
                           </div>
                         )
                       })
                     ) : (
-                      <EmptyState title="No blocked pre-foreclosure files are visible right now." />
+                      <EmptyState title="No machine exceptions are visible right now." />
                     )}
                   </div>
                 </article>
@@ -1750,8 +1754,8 @@ export default function OperatorPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-white/45">Weak Live Review</div>
-                      <div className="mt-2 text-2xl font-semibold text-white">Live pre-foreclosures that need a harder look</div>
-                      <div className="mt-2 text-sm text-white/58">These are already in the vault, but they do not fully clear the stronger live bar. Review them here before they keep taking partner attention.</div>
+                      <div className="mt-2 text-2xl font-semibold text-white">Live pre-foreclosures on machine removal watch</div>
+                      <div className="mt-2 text-sm text-white/58">These are already in the vault, but they do not fully clear the stronger live bar. The agent should prune them if they stay weak.</div>
                     </div>
                     <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">{weakLivePreForeclosures.length} weak live</span>
                   </div>
