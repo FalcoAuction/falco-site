@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-19T23:39:54.983180+00:00",
+  "generatedAt": "2026-03-20T02:19:07.053011+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -3778,11 +3778,11 @@
   },
   "autonomy": {
     "agent": "falco_autonomy",
-    "generated_at": "2026-03-19T23:39:54+00:00",
+    "generated_at": "2026-03-20T02:19:06+00:00",
     "run_id": null,
     "objective": "Increase strong live opportunities while keeping the vault limited to commercially credible files.",
     "marketAllocation": {
-      "generated_at": "2026-03-19T23:39:54+00:00",
+      "generated_at": "2026-03-20T02:19:06+00:00",
       "counties": [
         {
           "county": "Rutherford County",
@@ -3962,7 +3962,7 @@
       ]
     },
     "leadActions": {
-      "generated_at": "2026-03-19T23:39:54+00:00",
+      "generated_at": "2026-03-20T02:19:06+00:00",
       "actions": [
         {
           "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
@@ -4543,11 +4543,119 @@
       ]
     },
     "vaultQuality": {
-      "generated_at": "2026-03-19T23:39:54+00:00",
-      "keepCount": 1,
-      "watchCount": 0,
-      "removeCount": 0,
+      "generated_at": "2026-03-20T02:19:06+00:00",
+      "keepCount": 3,
+      "watchCount": 2,
+      "removeCount": 4,
       "liveReview": [
+        {
+          "slug": "davidson-county-foreclosure-408587fa",
+          "lead_key": "408587fa390f65481cd0b4d617185f6fc2432584",
+          "title": "Davidson County FORECLOSURE",
+          "county": "Davidson County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "MODERATE",
+          "decision": "remove_from_vault",
+          "reasons": [
+            "Live foreclosure no longer clears the stronger vault bar"
+          ]
+        },
+        {
+          "slug": "hamilton-county-foreclosure-24954f6e",
+          "lead_key": "24954f6e7d797fcd62c71888e2a7ba29ed96e081",
+          "title": "Hamilton County FORECLOSURE",
+          "county": "Hamilton County",
+          "equityBand": "LOW",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "MODERATE",
+          "decision": "remove_from_vault",
+          "reasons": [
+            "Live foreclosure no longer clears the stronger vault bar"
+          ]
+        },
+        {
+          "slug": "knox-county-foreclosure-94b7fb7a",
+          "lead_key": "94b7fb7a376e26dbabae4bbd31fe6635820fab99",
+          "title": "Knox County FORECLOSURE",
+          "county": "Knox County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "MODERATE",
+          "decision": "remove_from_vault",
+          "reasons": [
+            "Live foreclosure no longer clears the stronger vault bar"
+          ]
+        },
+        {
+          "slug": "knox-county-foreclosure-e84c244d",
+          "lead_key": "e84c244d6d1b7df03bd47bb89807510bbb683dc8",
+          "title": "Knox County FORECLOSURE",
+          "county": "Knox County",
+          "equityBand": "LOW",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "MODERATE",
+          "decision": "remove_from_vault",
+          "reasons": [
+            "Live foreclosure no longer clears the stronger vault bar"
+          ]
+        },
+        {
+          "slug": "rutherford-county-foreclosure-26f721d9",
+          "lead_key": "26f721d976e5645e4830896301c063f8875e076f",
+          "title": "Rutherford County FORECLOSURE",
+          "county": "Rutherford County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "watch_live",
+          "reasons": [
+            "Scheduled foreclosure is usable, but not strong enough to be treated as top shelf"
+          ]
+        },
+        {
+          "slug": "rutherford-county-foreclosure-5b9d9f7c",
+          "lead_key": "5b9d9f7c64495045081a4204c72b3160dfcbf618",
+          "title": "Rutherford County FORECLOSURE",
+          "county": "Rutherford County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "watch_live",
+          "reasons": [
+            "Scheduled foreclosure is usable, but not strong enough to be treated as top shelf"
+          ]
+        },
+        {
+          "slug": "rutherford-county-foreclosure-626f8ee6",
+          "lead_key": "626f8ee67510c7ee4ca6415f7491b41851cc16a9",
+          "title": "Rutherford County FORECLOSURE",
+          "county": "Rutherford County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "keep_live",
+          "reasons": []
+        },
+        {
+          "slug": "davidson-county-foreclosure-b664bdae",
+          "lead_key": "b664bdae8d547d9254052024afdf57da0d968b55",
+          "title": "Davidson County FORECLOSURE",
+          "county": "Davidson County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "keep_live",
+          "reasons": []
+        },
         {
           "slug": "davidson-county-pre-foreclosure-review-32c4ba30",
           "lead_key": "32c4ba30bf07ec15f21e1485b78ed2877dd580ac",
