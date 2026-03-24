@@ -222,6 +222,24 @@ export type OperatorReport = {
   dbPath: string
   sourceMode: "full" | "snapshot" | "site_fallback"
   sourceNote: string
+  runStatus?: {
+    runId?: string | null
+    status?: string | null
+    startedAt?: string | null
+    finishedAt?: string | null
+    runner?: string | null
+    workflow?: string | null
+    githubRunId?: string | null
+    summaryPath?: string | null
+    summary?: {
+      ingestEvents?: number | null
+      packetsCreated?: number | null
+      vaultReadyCount?: number | null
+      topTierReadyCount?: number | null
+    } | null
+    error?: string | null
+    updated_at?: string | null
+  } | null
   workflowStorage: WorkflowStorageStatus
   overview: {
     totalLeads: number
@@ -378,6 +396,7 @@ async function mergeSnapshotOperatorReport(snapshot: OperatorReport): Promise<Op
     foreclosureIntake,
     preForeclosurePromotion,
     analyst: snapshot.analyst ?? null,
+    runStatus: snapshot.runStatus ?? null,
   }
 }
 
@@ -688,6 +707,7 @@ async function getFallbackOperatorReport(): Promise<OperatorReport> {
     sourceMode: "site_fallback",
     sourceNote:
       "Running in site fallback mode. Live vault and approval data are shown, but upstream bots DB detail is only available when the shared workspace or stored operator snapshots are available.",
+    runStatus: null,
     workflowStorage,
     overview: {
       totalLeads: vaultRows.length,
@@ -768,6 +788,7 @@ export async function getOperatorReport(): Promise<OperatorReport> {
       sourceMode: "full",
       sourceNote:
         "Full operator mode. Reading upstream bots database plus live vault and approval state.",
+      runStatus: snapshot?.runStatus ?? null,
       workflowStorage,
       overview: {
         ...parsed.overview,

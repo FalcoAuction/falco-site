@@ -134,6 +134,19 @@ function formatWorkflowStorageMode(mode?: string) {
   return "Unavailable"
 }
 
+function runStatusLabel(value?: string | null) {
+  if (value === "success") return "Success"
+  if (value === "running") return "Running"
+  if (value === "failed") return "Failed"
+  return "Unknown"
+}
+
+function runnerLabel(value?: string | null) {
+  if (value === "github_actions") return "GitHub Actions"
+  if (value === "local") return "Local"
+  return "Unknown runner"
+}
+
 function workflowTableLabel(value: string) {
   if (value === "operator_intake_reviews") return "Intake reviews"
   if (value === "operator_task_history") return "Task history"
@@ -2369,6 +2382,21 @@ export default function OperatorPage() {
                     <div className="text-xs uppercase tracking-[0.22em] text-white/45">System Status</div>
                     <div className="mt-2 text-2xl font-semibold text-white">Workflow health</div>
                     <div className="mt-2 text-sm text-white/58">{workspace.report?.sourceNote}</div>
+
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+                      <div className="text-sm font-semibold text-white">
+                        Last pipeline run: {runStatusLabel(workspace.report?.runStatus?.status)}
+                      </div>
+                      <div className="mt-1 text-sm text-white/58">
+                        {runnerLabel(workspace.report?.runStatus?.runner)}{workspace.report?.runStatus?.finishedAt ? ` â€¢ ${formatDateTime(workspace.report?.runStatus?.finishedAt)}` : ""}
+                      </div>
+                      <div className="mt-2 text-sm text-white/65">
+                        {(workspace.report?.runStatus?.summary?.ingestEvents ?? 0)} events â€¢ {(workspace.report?.runStatus?.summary?.packetsCreated ?? 0)} packets â€¢ {(workspace.report?.runStatus?.summary?.vaultReadyCount ?? 0)} vault-ready
+                      </div>
+                      {workspace.report?.runStatus?.error ? (
+                        <div className="mt-2 text-sm text-amber-100/80">{workspace.report?.runStatus?.error}</div>
+                      ) : null}
+                    </div>
 
                     <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
                       <div className="text-sm font-semibold text-white">{formatWorkflowStorageMode(workspace.report?.workflowStorage?.mode)}</div>
