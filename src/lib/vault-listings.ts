@@ -277,9 +277,9 @@ function mapRowToVaultListing(
       : typeof auctionReadiness === "string"
       ? auctionReadiness.toUpperCase() === "GREEN"
       : false
-  const status = hasRequiredDebtContext(overlay)
-    ? deriveListingStatus(row, currentSaleDate, dtsDays)
-    : "expired"
+  // Supabase is the source of truth for vault activeness; local overlays only
+  // enrich the row with packet metadata and underwriting detail.
+  const status = deriveListingStatus(row, currentSaleDate, dtsDays)
 
   return {
     slug: row.slug,

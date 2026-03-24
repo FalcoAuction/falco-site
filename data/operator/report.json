@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-21T20:34:39.665068+00:00",
+  "generatedAt": "2026-03-24T03:00:06.977672+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -4729,7 +4729,8 @@
       "debtConfidence": "FULL",
       "falcoScore": 100,
       "auctionReadiness": "YELLOW",
-      "nextAction": "reconstruct_debt",
+      "nextAction": "monitor",
+      "overlapSignals": [],
       "workabilityBand": "LIMITED",
       "contactPathQuality": "STRONG",
       "ownerAgency": "HIGH",
@@ -4749,7 +4750,8 @@
       "debtConfidence": "FULL",
       "falcoScore": 100,
       "auctionReadiness": "GREEN",
-      "nextAction": "reconstruct_debt",
+      "nextAction": "monitor",
+      "overlapSignals": [],
       "workabilityBand": "LIMITED",
       "contactPathQuality": "STRONG",
       "ownerAgency": "HIGH",
@@ -4769,7 +4771,8 @@
       "debtConfidence": "FULL",
       "falcoScore": 100,
       "auctionReadiness": "GREEN",
-      "nextAction": "reconstruct_debt",
+      "nextAction": "monitor",
+      "overlapSignals": [],
       "workabilityBand": "LIMITED",
       "contactPathQuality": "STRONG",
       "ownerAgency": "HIGH",
@@ -4789,7 +4792,8 @@
       "debtConfidence": "FULL",
       "falcoScore": 100,
       "auctionReadiness": "GREEN",
-      "nextAction": "reconstruct_debt",
+      "nextAction": "monitor",
+      "overlapSignals": [],
       "workabilityBand": "LIMITED",
       "contactPathQuality": "STRONG",
       "ownerAgency": "HIGH",
@@ -6082,11 +6086,11 @@
   },
   "autonomy": {
     "agent": "falco_autonomy",
-    "generated_at": "2026-03-21T20:18:10+00:00",
-    "run_id": "286f7a39-3257-48e5-95de-dcbfe8d0fe9e",
+    "generated_at": "2026-03-24T02:59:41+00:00",
+    "run_id": null,
     "objective": "Increase strong live opportunities while keeping the vault limited to commercially credible files.",
     "marketAllocation": {
-      "generated_at": "2026-03-21T20:18:10+00:00",
+      "generated_at": "2026-03-24T02:59:40+00:00",
       "counties": [
         {
           "county": "Rutherford County",
@@ -6303,7 +6307,7 @@
       ]
     },
     "leadActions": {
-      "generated_at": "2026-03-21T20:18:10+00:00",
+      "generated_at": "2026-03-24T02:59:41+00:00",
       "actions": [
         {
           "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
@@ -6887,9 +6891,9 @@
       ]
     },
     "vaultQuality": {
-      "generated_at": "2026-03-21T20:18:10+00:00",
-      "keepCount": 6,
-      "watchCount": 1,
+      "generated_at": "2026-03-24T02:59:41+00:00",
+      "keepCount": 7,
+      "watchCount": 2,
       "removeCount": 3,
       "liveReview": [
         {
@@ -6932,6 +6936,20 @@
           "decision": "remove_from_vault",
           "reasons": [
             "Live foreclosure no longer clears the stronger vault bar"
+          ]
+        },
+        {
+          "slug": "rutherford-county-foreclosure-bb566cf3",
+          "lead_key": "bb566cf3f71b084ac0d29c54776e137e1998280d",
+          "title": "Rutherford County FORECLOSURE",
+          "county": "Rutherford County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "watch_live",
+          "reasons": [
+            "Scheduled foreclosure is usable, but not strong enough to be treated as top shelf"
           ]
         },
         {
@@ -7013,6 +7031,18 @@
           "lead_key": "b664bdae8d547d9254052024afdf57da0d968b55",
           "title": "Davidson County FORECLOSURE",
           "county": "Davidson County",
+          "equityBand": "MED",
+          "debtConfidence": "FULL",
+          "prefcLiveQuality": false,
+          "workabilityBand": "STRONG",
+          "decision": "keep_live",
+          "reasons": []
+        },
+        {
+          "slug": "rutherford-county-foreclosure-e1acd26d",
+          "lead_key": "e1acd26d6ace91983665d7446579a31ea446bdaa",
+          "title": "Rutherford County FORECLOSURE",
+          "county": "Rutherford County",
           "equityBand": "MED",
           "debtConfidence": "FULL",
           "prefcLiveQuality": false,
