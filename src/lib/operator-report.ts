@@ -249,6 +249,7 @@ export type OperatorReport = {
     contactReady: number
     vaultLive: number
     vaultQueue: number
+    prefcDataTrustAlerts?: number
     pendingApprovals: number
   }
   recentLeads: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
@@ -295,6 +296,28 @@ export type OperatorReport = {
     strongestCandidates?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     weakLiveReview?: (OperatorLeadRow & { vaultLive: boolean; vaultSlug: string | null })[]
     blockerCounts: Array<{ label: string; count: number }>
+  }
+  prefcDataTrustAudit?: {
+    generatedAt: string
+    liveCount: number
+    cleanCount: number
+    flaggedCount: number
+    rows: Array<{
+      leadKey: string
+      address: string | null
+      county: string | null
+      status: string
+      issues: string[]
+      displayedMortgageLender?: string | null
+      displayedMortgageDate?: string | null
+      currentMortgageLender?: string | null
+      currentMortgageDate?: string | null
+      noticeHolder?: string | null
+      attomMortgageLender?: string | null
+      attomMortgageDate?: string | null
+      batchdataMortgageLender?: string | null
+      batchdataMortgageDate?: string | null
+    }>
   }
   fsboLane?: {
     trackedCount: number

@@ -414,6 +414,7 @@ export default function OperatorPage() {
   const fsboReady = useMemo(() => fsboLane?.reviewReady ?? [], [fsboLane])
   const fsboVaultReady = useMemo(() => fsboLane?.vaultReady ?? [], [fsboLane])
   const fsboBlocked = useMemo(() => fsboLane?.blocked ?? [], [fsboLane])
+  const prefcDataTrustAudit = useMemo(() => workspace?.report?.prefcDataTrustAudit ?? null, [workspace])
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -1252,10 +1253,15 @@ export default function OperatorPage() {
 
         {workspace ? (
           <>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard label="Priority Tasks" value={activeTasks.length} sublabel={`${strongestPreForeclosures.length} strongest ready`} />
               <StatCard label="Pre-Foreclosure Tracked" value={trackedPreForeclosureRows.length} sublabel={`${livePreForeclosureCount} live in vault`} />
               <StatCard label="Vault Live" value={liveVaultListings.length} sublabel={`${validationQueue.length} validation items`} />
+              <StatCard
+                label="Data Trust"
+                value={`${prefcDataTrustAudit?.cleanCount ?? 0}/${prefcDataTrustAudit?.liveCount ?? 0}`}
+                sublabel={`${prefcDataTrustAudit?.flaggedCount ?? 0} live pre-foreclosure alerts`}
+              />
               <StatCard
                 label="Admin Queue"
                 value={(workspace.accessRequests ?? []).filter((row: any) => row.status === "pending").length + openRoutingQueue.length}
