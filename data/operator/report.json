@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-24T17:03:35.284695+00:00",
+  "generatedAt": "2026-03-24T17:14:28.607083+00:00",
   "dbPath": "data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -1761,7 +1761,7 @@
         "debtReconstructionBlockerType": "missing_amount_with_refs",
         "debtReconstructionMissingReason": "No loan amount in BatchData debt fields",
         "debtReconstructionSummary": "Current holder: Citifinancial Inc | Original lender: CitiFinancial, Inc | Recording support: 1979-11-04 | Transfer support: 1979-02-21 | Book 1004 Page 1463 Instrument 638511 | Blocker: No loan amount in BatchData debt fields",
-        "countyRecordLookupStatus": "auth_required",
+        "countyRecordLookupStatus": "queued",
         "countyRecordLookupProvider": "Montgomery Register Of Deeds",
         "countyRecordLookupUrl": "https://www.ustitlesearch.net/",
         "countyRecordLookupHint": "Search instrument first, then book/page",
@@ -3321,7 +3321,7 @@
         "debtReconstructionBlockerType": "missing_amount_with_refs",
         "debtReconstructionMissingReason": "No loan amount in BatchData debt fields",
         "debtReconstructionSummary": "Current holder: Citifinancial Inc | Original lender: CitiFinancial, Inc | Recording support: 1979-11-04 | Transfer support: 1979-02-21 | Book 1004 Page 1463 Instrument 638511 | Blocker: No loan amount in BatchData debt fields",
-        "countyRecordLookupStatus": "auth_required",
+        "countyRecordLookupStatus": "queued",
         "countyRecordLookupProvider": "Montgomery Register Of Deeds",
         "countyRecordLookupUrl": "https://www.ustitlesearch.net/",
         "countyRecordLookupHint": "Search instrument first, then book/page",
@@ -4497,7 +4497,7 @@
         "debtReconstructionBlockerType": "missing_amount_with_refs",
         "debtReconstructionMissingReason": "No loan amount in BatchData debt fields",
         "debtReconstructionSummary": "Current holder: Citifinancial Inc | Original lender: CitiFinancial, Inc | Recording support: 1979-11-04 | Transfer support: 1979-02-21 | Book 1004 Page 1463 Instrument 638511 | Blocker: No loan amount in BatchData debt fields",
-        "countyRecordLookupStatus": "auth_required",
+        "countyRecordLookupStatus": "queued",
         "countyRecordLookupProvider": "Montgomery Register Of Deeds",
         "countyRecordLookupUrl": "https://www.ustitlesearch.net/",
         "countyRecordLookupHint": "Search instrument first, then book/page",
@@ -6061,11 +6061,11 @@
   },
   "autonomy": {
     "agent": "falco_autonomy",
-    "generated_at": "2026-03-24T17:03:34+00:00",
-    "run_id": "9e52ac3f-5487-4f02-97fb-d7f4f9f159c8",
+    "generated_at": "2026-03-24T17:14:28+00:00",
+    "run_id": null,
     "objective": "Increase strong live opportunities while keeping the vault limited to commercially credible files.",
     "marketAllocation": {
-      "generated_at": "2026-03-24T17:03:34+00:00",
+      "generated_at": "2026-03-24T17:14:28+00:00",
       "counties": [
         {
           "county": "Rutherford County",
@@ -6287,7 +6287,7 @@
       ]
     },
     "leadActions": {
-      "generated_at": "2026-03-24T17:03:34+00:00",
+      "generated_at": "2026-03-24T17:14:28+00:00",
       "actions": [
         {
           "lead_key": "5bc4575b35dbf25496cc361a5d6830b36d5951c8",
@@ -6805,7 +6805,7 @@
           "recoverable_partial": true,
           "recoverable_partial_next_step": "county_record_lookup",
           "suppress_early": false,
-          "county_record_lookup_status": "auth_required",
+          "county_record_lookup_status": "queued",
           "county_record_lookup_provider": "Montgomery Register Of Deeds",
           "county_record_lookup_url": "https://www.ustitlesearch.net/",
           "county_record_lookup_hint": "Search instrument first, then book/page",
@@ -6871,7 +6871,7 @@
       ]
     },
     "vaultQuality": {
-      "generated_at": "2026-03-24T17:03:34+00:00",
+      "generated_at": "2026-03-24T17:14:28+00:00",
       "keepCount": 7,
       "watchCount": 2,
       "removeCount": 3,
