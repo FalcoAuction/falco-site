@@ -319,6 +319,52 @@ export type OperatorReport = {
       batchdataMortgageDate?: string | null
     }>
   }
+  prefcPartnerDesk?: {
+    generatedAt: string
+    focus: string
+    coverageNote: string
+    safeForParks: Array<{
+      leadKey: string
+      slug: string
+      address: string | null
+      county: string | null
+      equityBand?: string | null
+      debtConfidence?: string | null
+      prefcLiveQuality?: boolean
+      mortgageLender?: string | null
+      mortgageDate?: string | null
+      lastSaleDate?: string | null
+      recordRefs?: string | null
+      contactPathQuality?: string | null
+      ownerPhonePrimary?: string | null
+      ownerPhoneSecondary?: string | null
+      noticePhone?: string | null
+      trusteePhonePublic?: string | null
+      dncStatus?: string | null
+      dncNote?: string | null
+      trustStatus?: string | null
+      trustIssues?: string[]
+    }>
+    needsCorrection: Array<{
+      leadKey: string
+      slug: string
+      address: string | null
+      county: string | null
+      dncStatus?: string | null
+      dncNote?: string | null
+      trustStatus?: string | null
+      trustIssues?: string[]
+    }>
+    conversionScoreboard: {
+      liveNow: number
+      safeToShow: number
+      autoPublishNow: number
+      conversionActive: number
+      blockedOnData: number
+      blockedOnEconomics: number
+      blockedOther: number
+    }
+  }
   fsboLane?: {
     trackedCount: number
     reviewReadyCount: number

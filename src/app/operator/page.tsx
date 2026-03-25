@@ -415,6 +415,22 @@ export default function OperatorPage() {
   const fsboVaultReady = useMemo(() => fsboLane?.vaultReady ?? [], [fsboLane])
   const fsboBlocked = useMemo(() => fsboLane?.blocked ?? [], [fsboLane])
   const prefcDataTrustAudit = useMemo(() => workspace?.report?.prefcDataTrustAudit ?? null, [workspace])
+  const prefcPartnerDesk = useMemo(() => workspace?.report?.prefcPartnerDesk ?? null, [workspace])
+  const parksSafeRows = useMemo(() => prefcPartnerDesk?.safeForParks ?? [], [prefcPartnerDesk])
+  const parksCorrectionRows = useMemo(() => prefcPartnerDesk?.needsCorrection ?? [], [prefcPartnerDesk])
+  const parksConversionScoreboard = useMemo(
+    () =>
+      prefcPartnerDesk?.conversionScoreboard ?? {
+        liveNow: 0,
+        safeToShow: 0,
+        autoPublishNow: 0,
+        conversionActive: 0,
+        blockedOnData: 0,
+        blockedOnEconomics: 0,
+        blockedOther: 0,
+      },
+    [prefcPartnerDesk]
+  )
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -1559,6 +1575,165 @@ export default function OperatorPage() {
                     <StatCard label="Auto-Enrich" value={autoEnrichPreForeclosures.length} sublabel="Machine is working these now" />
                     <StatCard label="Machine Exceptions" value={blockedPreForeclosures.length} sublabel={`${monitorPreForeclosures.length} tracked on monitor`} />
                   </div>
+
+                <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Parks Desk</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">Safe pre-foreclosures to review live</div>
+                        <div className="mt-2 text-sm text-white/58">
+                          {prefcPartnerDesk?.coverageNote || "Built for pre-foreclosure only. DNC is not yet scrubbed in-system."}
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/70">
+                        {parksSafeRows.length} safe now
+                      </span>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-4">
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Live Now</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.liveNow}</div>
+                        <div className="mt-1 text-sm text-white/58">Current live pre-foreclosures</div>
+                      </div>
+                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-emerald-100/75">Safe To Show</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.safeToShow}</div>
+                        <div className="mt-1 text-sm text-emerald-50/80">Trust-clean and live-quality</div>
+                      </div>
+                      <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-sky-100/75">Auto-Publish</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.autoPublishNow}</div>
+                        <div className="mt-1 text-sm text-sky-50/80">Non-live files machine can push</div>
+                      </div>
+                      <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-amber-100/75">Conversion Active</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.conversionActive}</div>
+                        <div className="mt-1 text-sm text-amber-50/80">Machine-owned near misses</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-4">
+                      {parksSafeRows.length ? (
+                        parksSafeRows.map((row: any) => (
+                          <div key={`parks-${row.leadKey}`} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-white">{row.address || row.leadKey}</div>
+                                <div className="mt-1 text-sm text-white/58">{row.county || "Unknown county"} • {executionRealityCopy(row.equityBand)} equity • {debtConfidenceCopy(row.debtConfidence)}</div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-emerald-100">
+                                  {String(row.trustStatus || "").toUpperCase() === "CLEAN" ? "Trust Clean" : "Review Trust"}
+                                </span>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
+                                  DNC: {String(row.dncStatus || "UNVERIFIED").replaceAll("_", " ")}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Current Lender</div>
+                                <div className="mt-2 text-sm text-white/78">{row.mortgageLender || "Unavailable"}</div>
+                                <div className="mt-1 text-sm text-white/55">{formatDisplayDate(row.mortgageDate)}</div>
+                              </div>
+                              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Transfer / Refs</div>
+                                <div className="mt-2 text-sm text-white/78">{formatDisplayDate(row.lastSaleDate)}</div>
+                                <div className="mt-1 text-sm text-white/55">{row.recordRefs || "No record refs"}</div>
+                              </div>
+                              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Best Contact</div>
+                                <div className="mt-2 text-sm text-white/78">
+                                  {row.ownerPhonePrimary || row.ownerPhoneSecondary || row.noticePhone || row.trusteePhonePublic || "Unavailable"}
+                                </div>
+                                <div className="mt-1 text-sm text-white/55">{row.contactPathQuality || "Unknown"}</div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              {row.slug ? (
+                                <button
+                                  onClick={() => openVaultDesk(row.slug)}
+                                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+                                >
+                                  View In Desk
+                                </button>
+                              ) : null}
+                              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/72">
+                                {row.dncNote || "No DNC note recorded"}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyState title="No trust-clean live pre-foreclosures are ready for a Parks review pass yet." />
+                      )}
+                    </div>
+                  </article>
+
+                  <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.22em] text-white/45">Conversion Scoreboard</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">What is actually blocking new pre-foreclosure additions</div>
+                        <div className="mt-2 text-sm text-white/58">Plain split between data gaps and weak economics. No operator triage required.</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Blocked On Data</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.blockedOnData}</div>
+                        <div className="mt-1 text-sm text-white/58">Debt, transfer, or county-record truth still missing</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Blocked On Economics</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.blockedOnEconomics}</div>
+                        <div className="mt-1 text-sm text-white/58">Mostly low or unknown equity</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Blocked Other</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.blockedOther}</div>
+                        <div className="mt-1 text-sm text-white/58">Workability, control, or special-situations issues</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Needs Correction Before Review</div>
+                      <div className="mt-3 grid gap-3">
+                        {parksCorrectionRows.length ? (
+                          parksCorrectionRows.map((row: any) => (
+                            <div key={`parks-fix-${row.leadKey}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-white">{row.address || row.leadKey}</div>
+                                  <div className="mt-1 text-xs text-white/58">{row.county || "Unknown county"} • DNC {String(row.dncStatus || "UNVERIFIED").replaceAll("_", " ")}</div>
+                                </div>
+                                <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-amber-100">
+                                  {String(row.trustStatus || "review").replaceAll("_", " ")}
+                                </span>
+                              </div>
+                              {row.trustIssues?.length ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {row.trustIssues.map((issue: string) => (
+                                    <span key={`${row.leadKey}-${issue}`} className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-white/72">
+                                      {issue}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-white/58">No live pre-foreclosure trust corrections are open right now.</div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                </div>
 
                 <article className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_35px_120px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-4">
