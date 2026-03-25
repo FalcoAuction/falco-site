@@ -458,6 +458,18 @@ export default function OperatorPage() {
     [prefcPartnerDesk]
   )
   const parksDataFixableRows = useMemo(() => prefcPartnerDesk?.dataFixableNearMisses ?? [], [prefcPartnerDesk])
+  const parksReviewBeforeCallRows = useMemo(
+    () => parksSafeRows.filter((row: any) => String(row.dncCallDisposition || "").toUpperCase() === "REVIEW_REQUIRED"),
+    [parksSafeRows]
+  )
+  const parksDoNotCallRows = useMemo(
+    () => parksSafeRows.filter((row: any) => String(row.dncCallDisposition || "").toUpperCase() === "DO_NOT_CALL"),
+    [parksSafeRows]
+  )
+  const parksNotScrubbedRows = useMemo(
+    () => parksSafeRows.filter((row: any) => String(row.dncCallDisposition || "").toUpperCase() === "NOT_SCRUBBED"),
+    [parksSafeRows]
+  )
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -1646,6 +1658,24 @@ export default function OperatorPage() {
                       </div>
                     </div>
 
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Review Before Call</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksReviewBeforeCallRows.length}</div>
+                        <div className="mt-1 text-sm text-white/58">Needs compliance review first.</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Do Not Call</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksDoNotCallRows.length}</div>
+                        <div className="mt-1 text-sm text-white/58">Skip-trace DNC hit.</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white/45">Not Scrubbed</div>
+                        <div className="mt-2 text-2xl font-semibold text-white">{parksNotScrubbedRows.length}</div>
+                        <div className="mt-1 text-sm text-white/58">No DNC signal persisted yet.</div>
+                      </div>
+                    </div>
+
                     <div className="mt-5 grid gap-4">
                       {parksSafeRows.length ? (
                         parksSafeRows.map((row: any) => (
@@ -1739,6 +1769,32 @@ export default function OperatorPage() {
 
                     <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/65">
                       {parksConversionScoreboard.readyNow} ready now • {parksConversionScoreboard.highPotential} high-potential data-fixable • {parksConversionScoreboard.mediumPotential} medium potential • {parksConversionScoreboard.lowPotential} low potential
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Review Before Call Queue</div>
+                      <div className="mt-3 grid gap-3">
+                        {parksReviewBeforeCallRows.length ? (
+                          parksReviewBeforeCallRows.map((row: any) => (
+                            <div key={`parks-review-${row.leadKey}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-white">{row.address || row.leadKey}</div>
+                                  <div className="mt-1 text-xs text-white/58">
+                                    {row.county || "Unknown county"} â€¢ {String(row.dncStatus || "UNVERIFIED").replaceAll("_", " ")} â€¢ {String(row.dncCallDisposition || "REVIEW_REQUIRED").replaceAll("_", " ")}
+                                  </div>
+                                </div>
+                                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/72">
+                                  {row.dncSource || "No source"}
+                                </span>
+                              </div>
+                              <div className="mt-2 text-sm text-white/68">{row.dncNote || "Review required before any call."}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-white/58">No review-before-call rows right now.</div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">

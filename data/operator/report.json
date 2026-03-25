@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-25T03:45:31.746566+00:00",
+  "generatedAt": "2026-03-25T05:01:28.282717+00:00",
   "dbPath": "C:\\code\\falco-distress-bots\\data\\falco.db",
   "sourceMode": "snapshot",
   "sourceNote": "Hosted operator snapshot generated from the upstream bots database and current site vault registry.",
@@ -4939,7 +4939,7 @@
     "blockerCounts": []
   },
   "prefcDataTrustAudit": {
-    "generatedAt": "2026-03-25T03:45:31.743283+00:00",
+    "generatedAt": "2026-03-25T05:01:28.278617+00:00",
     "liveCount": 4,
     "cleanCount": 4,
     "flaggedCount": 0,
@@ -5011,7 +5011,7 @@
     ]
   },
   "prefcPartnerDesk": {
-    "generatedAt": "2026-03-25T03:45:31.745266+00:00",
+    "generatedAt": "2026-03-25T05:01:28.281519+00:00",
     "focus": "Parks pre-foreclosure desk",
     "coverageNote": "Built for Nashville metro and surrounding counties. DNC status is vendor skip-trace only unless a separate registry scrub is recorded.",
     "safeForParks": [
