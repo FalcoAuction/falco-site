@@ -346,6 +346,9 @@ export type OperatorReport = {
       noticePhone?: string | null
       trusteePhonePublic?: string | null
       dncStatus?: string | null
+      dncSource?: string | null
+      dncCheckedAt?: string | null
+      dncCallDisposition?: string | null
       dncNote?: string | null
       trustStatus?: string | null
       trustIssues?: string[]
@@ -356,6 +359,9 @@ export type OperatorReport = {
       address: string | null
       county: string | null
       dncStatus?: string | null
+      dncSource?: string | null
+      dncCheckedAt?: string | null
+      dncCallDisposition?: string | null
       dncNote?: string | null
       trustStatus?: string | null
       trustIssues?: string[]
@@ -368,7 +374,29 @@ export type OperatorReport = {
       blockedOnData: number
       blockedOnEconomics: number
       blockedOther: number
+      readyNow?: number
+      highPotential?: number
+      mediumPotential?: number
+      lowPotential?: number
     }
+    dataFixableNearMisses?: Array<{
+      lead_key: string
+      address: string | null
+      county: string | null
+      disposition?: string | null
+      conversion_potential?: string | null
+      equity_band?: string | null
+      debt_confidence?: string | null
+    }>
+    economicsBlockedNearMisses?: Array<{
+      lead_key: string
+      address: string | null
+      county: string | null
+      disposition?: string | null
+      conversion_potential?: string | null
+      equity_band?: string | null
+      debt_confidence?: string | null
+    }>
   }
   fsboLane?: {
     trackedCount: number

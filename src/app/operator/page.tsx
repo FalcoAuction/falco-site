@@ -450,9 +450,14 @@ export default function OperatorPage() {
         blockedOnData: 0,
         blockedOnEconomics: 0,
         blockedOther: 0,
+        readyNow: 0,
+        highPotential: 0,
+        mediumPotential: 0,
+        lowPotential: 0,
       },
     [prefcPartnerDesk]
   )
+  const parksDataFixableRows = useMemo(() => prefcPartnerDesk?.dataFixableNearMisses ?? [], [prefcPartnerDesk])
 
   const liveListingByLeadKey = useMemo(() => {
     return new Map(
@@ -1657,6 +1662,9 @@ export default function OperatorPage() {
                                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
                                   DNC: {String(row.dncStatus || "UNVERIFIED").replaceAll("_", " ")}
                                 </span>
+                                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/72">
+                                  Call: {String(row.dncCallDisposition || "NOT_SCRUBBED").replaceAll("_", " ")}
+                                </span>
                               </div>
                             </div>
 
@@ -1675,6 +1683,9 @@ export default function OperatorPage() {
                                 <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Homeowner Contact</div>
                                 <div className="mt-2 text-sm text-white/78">{homeownerContactLine(row)}</div>
                                 <div className="mt-1 text-sm text-white/55">{row.contactPathQuality || "Unknown"}</div>
+                                <div className="mt-1 text-xs text-white/45">
+                                  {row.dncSource || "No source"}{row.dncCheckedAt ? ` • ${formatDateTime(row.dncCheckedAt)}` : ""}
+                                </div>
                               </div>
                             </div>
 
@@ -1723,6 +1734,36 @@ export default function OperatorPage() {
                         <div className="text-xs uppercase tracking-[0.18em] text-white/45">Blocked Other</div>
                         <div className="mt-2 text-2xl font-semibold text-white">{parksConversionScoreboard.blockedOther}</div>
                         <div className="mt-1 text-sm text-white/58">Workability, control, or special-situations issues</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/65">
+                      {parksConversionScoreboard.readyNow} ready now • {parksConversionScoreboard.highPotential} high-potential data-fixable • {parksConversionScoreboard.mediumPotential} medium potential • {parksConversionScoreboard.lowPotential} low potential
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+                      <div className="text-xs uppercase tracking-[0.18em] text-white/45">Data-Fixable Near Misses</div>
+                      <div className="mt-3 grid gap-3">
+                        {parksDataFixableRows.length ? (
+                          parksDataFixableRows.map((row: any) => (
+                            <div key={`parks-datafix-${row.lead_key}`} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-white">{row.address || row.lead_key}</div>
+                                  <div className="mt-1 text-xs text-white/58">
+                                    {row.county || "Unknown county"} • {String(row.equity_band || "UNKNOWN").replaceAll("_", " ")} equity • {String(row.debt_confidence || "UNKNOWN").replaceAll("_", " ")}
+                                  </div>
+                                </div>
+                                <span className="rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-sky-100">
+                                  {String(row.conversion_potential || "medium").replaceAll("_", " ")}
+                                </span>
+                              </div>
+                              <div className="mt-2 text-sm text-white/68">{String(row.disposition || "in_recovery").replaceAll("_", " ")}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-white/58">No current high-upside data-fixable near misses are recorded.</div>
+                        )}
                       </div>
                     </div>
 
