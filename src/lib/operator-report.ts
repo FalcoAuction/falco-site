@@ -343,6 +343,13 @@ export type OperatorReport = {
       contactPathQuality?: string | null
       ownerPhonePrimary?: string | null
       ownerPhoneSecondary?: string | null
+      ownerPhoneSource?: string | null
+      ownerPhoneCheckedAt?: string | null
+      contactAccuracyTier?: string | null
+      contactAccuracyNote?: string | null
+      contactAccuracySourceCount?: number | null
+      contactAccuracyRepeatCount?: number | null
+      contactEntityOwned?: boolean
       noticePhone?: string | null
       trusteePhonePublic?: string | null
       dncStatus?: string | null

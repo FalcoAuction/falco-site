@@ -1716,6 +1716,14 @@ export default function OperatorPage() {
                                 <div className="mt-1 text-xs text-white/45">
                                   {row.dncSource || "No source"}{row.dncCheckedAt ? ` • ${formatDateTime(row.dncCheckedAt)}` : ""}
                                 </div>
+                                <div className="mt-2 text-xs text-white/58">
+                                  Confidence: {String(row.contactAccuracyTier || "UNKNOWN").replaceAll("_", " ")}
+                                  {row.contactAccuracySourceCount ? ` • ${row.contactAccuracySourceCount} source${row.contactAccuracySourceCount === 1 ? "" : "s"}` : ""}
+                                  {row.contactAccuracyRepeatCount ? ` • ${row.contactAccuracyRepeatCount} pulls` : ""}
+                                </div>
+                                <div className="mt-1 text-xs text-white/45">
+                                  {row.contactAccuracyNote || "No contact-confidence note recorded."}
+                                </div>
                               </div>
                             </div>
 
@@ -1782,6 +1790,9 @@ export default function OperatorPage() {
                                   <div className="text-sm font-semibold text-white">{row.address || row.leadKey}</div>
                                   <div className="mt-1 text-xs text-white/58">
                                     {row.county || "Unknown county"} â€¢ {String(row.dncStatus || "UNVERIFIED").replaceAll("_", " ")} â€¢ {String(row.dncCallDisposition || "REVIEW_REQUIRED").replaceAll("_", " ")}
+                                  </div>
+                                  <div className="mt-1 text-xs text-white/45">
+                                    {String(row.contactAccuracyTier || "UNKNOWN").replaceAll("_", " ")}
                                   </div>
                                 </div>
                                 <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/72">
