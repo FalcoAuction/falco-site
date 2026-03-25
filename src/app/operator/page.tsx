@@ -217,8 +217,30 @@ function saleTimingCopy(listing: any) {
   return String(listing.auctionWindow ?? "").trim() || "Unavailable"
 }
 
-function bestContactLine(row: any) {
-  return row.ownerPhonePrimary || row.ownerPhoneSecondary || row.trusteePhonePublic || row.noticePhone || "Unavailable"
+function isPreForeclosureRow(row: any) {
+  return String(row?.sale_status ?? row?.saleStatus ?? "").trim().toLowerCase() === "pre_foreclosure"
+}
+
+function homeownerContactLine(row: any) {
+  return row.ownerPhonePrimary || row.ownerPhoneSecondary || "Unavailable"
+}
+
+function saleControllerContactLine(row: any) {
+  return (
+    row.saleControllerPhonePrimary ||
+    row.saleControllerPhoneSecondary ||
+    row.trusteePhonePublic ||
+    row.noticePhone ||
+    "Unavailable"
+  )
+}
+
+function primaryContactLabel(row: any) {
+  return isPreForeclosureRow(row) ? "Homeowner Contact" : "Sale Controller"
+}
+
+function primaryContactLine(row: any) {
+  return isPreForeclosureRow(row) ? homeownerContactLine(row) : saleControllerContactLine(row)
 }
 
 function debtRecordRefs(row: any) {
@@ -269,12 +291,12 @@ function autonomyDecisionCopy(value?: string | null) {
 
 function hasMeaningfulEnrichment(row: any) {
   return Boolean(
-    row?.ownerName ||
+      row?.ownerName ||
       row?.ownerMail ||
       row?.mortgageLender ||
       typeof row?.mortgageAmount === "number" ||
       row?.propertyIdentifier ||
-      bestContactLine(row) !== "Unavailable" ||
+      primaryContactLine(row) !== "Unavailable" ||
       (typeof row?.equity_band === "string" && row.equity_band.toUpperCase() !== "UNKNOWN")
   )
 }
@@ -551,6 +573,11 @@ export default function OperatorPage() {
         propertyIdentifier: listing.propertyIdentifier,
         ownerPhonePrimary: listing.ownerPhonePrimary,
         ownerPhoneSecondary: listing.ownerPhoneSecondary,
+        contactTargetRole: listing.contactTargetRole,
+        saleControllerName: listing.saleControllerName,
+        saleControllerPhonePrimary: listing.saleControllerPhonePrimary,
+        saleControllerPhoneSecondary: listing.saleControllerPhoneSecondary,
+        saleControllerContactSource: listing.saleControllerContactSource,
         noticePhone: listing.noticePhone,
         trusteePhonePublic: listing.trusteePhonePublic,
         equity_band: listing.equityBand,
@@ -1645,10 +1672,8 @@ export default function OperatorPage() {
                                 <div className="mt-1 text-sm text-white/55">{row.recordRefs || "No record refs"}</div>
                               </div>
                               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Best Contact</div>
-                                <div className="mt-2 text-sm text-white/78">
-                                  {row.ownerPhonePrimary || row.ownerPhoneSecondary || row.noticePhone || row.trusteePhonePublic || "Unavailable"}
-                                </div>
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Homeowner Contact</div>
+                                <div className="mt-2 text-sm text-white/78">{homeownerContactLine(row)}</div>
                                 <div className="mt-1 text-sm text-white/55">{row.contactPathQuality || "Unknown"}</div>
                               </div>
                             </div>
@@ -1827,8 +1852,8 @@ export default function OperatorPage() {
                                 <div className="mt-1 text-sm text-white/45">{formatDisplayDate(row.mortgageDate)}</div>
                               </div>
                               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Best Contact</div>
-                                <div className="mt-2 text-sm text-white/78">{bestContactLine(row)}</div>
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">{primaryContactLabel(row)}</div>
+                                <div className="mt-2 text-sm text-white/78">{primaryContactLine(row)}</div>
                                 <div className="mt-1 text-sm text-white/55">{row.propertyIdentifier || "No APN"}</div>
                               </div>
                             </div>
@@ -1906,7 +1931,7 @@ export default function OperatorPage() {
                             <div className="mt-4 grid gap-3 sm:grid-cols-2 text-sm text-white/65">
                               <div>Lender: <span className="text-white/82">{row.mortgageLender || "Unavailable"}</span></div>
                               <div>Loan: <span className="text-white/82">{formatMoney(row.mortgageAmount)}</span></div>
-                              <div>Contact: <span className="text-white/82">{bestContactLine(row)}</span></div>
+                              <div>{primaryContactLabel(row)}: <span className="text-white/82">{primaryContactLine(row)}</span></div>
                               <div>Agency: <span className="text-white/82">{executionRealityCopy(row.ownerAgency)}</span></div>
                             </div>
 
@@ -1975,7 +2000,7 @@ export default function OperatorPage() {
                             <div className="mt-4 grid gap-2 text-sm text-white/68">
                               <div>Lender: <span className="text-white/82">{row.mortgageLender || "Unavailable"}</span></div>
                               <div>Loan: <span className="text-white/82">{formatMoney(row.mortgageAmount)}</span></div>
-                              <div>Contact: <span className="text-white/82">{bestContactLine(row)}</span></div>
+                              <div>{primaryContactLabel(row)}: <span className="text-white/82">{primaryContactLine(row)}</span></div>
                             </div>
 
                             {reasons.length ? (
@@ -2045,7 +2070,7 @@ export default function OperatorPage() {
                             <div>Owner: <span className="text-white/82">{listing.ownerName || "Unavailable"}</span></div>
                             <div>Lender: <span className="text-white/82">{listing.mortgageLender || "Unavailable"}</span></div>
                             <div>Loan: <span className="text-white/82">{formatMoney(listing.mortgageAmount)}</span></div>
-                            <div>Contact: <span className="text-white/82">{bestContactLine(listing)}</span></div>
+                            <div>{primaryContactLabel(listing)}: <span className="text-white/82">{primaryContactLine(listing)}</span></div>
                           </div>
 
                             <div className="mt-4 flex flex-wrap gap-3">
@@ -2163,7 +2188,7 @@ export default function OperatorPage() {
                         <div>Sale: <span className="text-white/82">{saleTimingCopy(selectedVaultListing)}</span></div>
                         <div>Lender: <span className="text-white/82">{selectedVaultListing.mortgageLender || "Unavailable"}</span></div>
                         <div>Loan: <span className="text-white/82">{formatMoney(selectedVaultListing.mortgageAmount)}</span></div>
-                        <div>Contact: <span className="text-white/82">{bestContactLine(selectedVaultListing)}</span></div>
+                        <div>{primaryContactLabel(selectedVaultListing)}: <span className="text-white/82">{primaryContactLine(selectedVaultListing)}</span></div>
                         <div>Lane: <span className="text-white/82">{executionLaneCopy(selectedVaultListing.executionLane || selectedVaultListing.suggestedExecutionLane)}</span></div>
                         <div>Agency: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.ownerAgency)}</span></div>
                         <div>Control: <span className="text-white/82">{executionRealityCopy(selectedVaultListing.controlParty)}</span></div>

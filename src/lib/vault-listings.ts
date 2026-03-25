@@ -52,6 +52,15 @@ export type VaultListing = {
   propertyIdentifier?: string
   ownerName?: string
   ownerMail?: string
+  ownerPhonePrimary?: string
+  ownerPhoneSecondary?: string
+  contactTargetRole?: string
+  saleControllerName?: string
+  saleControllerPhonePrimary?: string
+  saleControllerPhoneSecondary?: string
+  saleControllerContactSource?: string
+  trusteePhonePublic?: string
+  noticePhone?: string
   lastSaleDate?: string
   mortgageDate?: string
   mortgageLender?: string
@@ -316,6 +325,15 @@ function mapRowToVaultListing(
     propertyIdentifier: overlay?.propertyIdentifier,
     ownerName: overlay?.ownerName,
     ownerMail: overlay?.ownerMail,
+    ownerPhonePrimary: overlay?.ownerPhonePrimary,
+    ownerPhoneSecondary: overlay?.ownerPhoneSecondary,
+    contactTargetRole: overlay?.contactTargetRole,
+    saleControllerName: overlay?.saleControllerName,
+    saleControllerPhonePrimary: overlay?.saleControllerPhonePrimary,
+    saleControllerPhoneSecondary: overlay?.saleControllerPhoneSecondary,
+    saleControllerContactSource: overlay?.saleControllerContactSource,
+    trusteePhonePublic: overlay?.trusteePhonePublic,
+    noticePhone: overlay?.noticePhone,
     lastSaleDate: overlay?.lastSaleDate,
     mortgageDate: overlay?.mortgageDate,
     mortgageLender: overlay?.mortgageLender,

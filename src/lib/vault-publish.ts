@@ -12,11 +12,16 @@ function candidatePublishIssues(payload: Record<string, unknown>) {
     issues.push("loan amount")
   }
 
-  const hasContact =
+  const hasHomeownerContact =
     Boolean(String(payload.ownerPhonePrimary ?? "").trim()) ||
-    Boolean(String(payload.ownerPhoneSecondary ?? "").trim()) ||
+    Boolean(String(payload.ownerPhoneSecondary ?? "").trim())
+  const hasSaleControllerContact =
+    Boolean(String(payload.saleControllerPhonePrimary ?? "").trim()) ||
+    Boolean(String(payload.saleControllerPhoneSecondary ?? "").trim()) ||
     Boolean(String(payload.trusteePhonePublic ?? "").trim()) ||
     Boolean(String(payload.noticePhone ?? "").trim())
+  const hasContact =
+    saleStatus === "pre_foreclosure" ? hasHomeownerContact : hasSaleControllerContact
 
   if (!hasContact) issues.push("contact path")
   if (saleStatus === "pre_foreclosure") {

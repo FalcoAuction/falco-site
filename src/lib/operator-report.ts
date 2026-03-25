@@ -59,6 +59,11 @@ export type OperatorLeadRow = {
   propertyIdentifier?: string | null
   ownerPhonePrimary?: string | null
   ownerPhoneSecondary?: string | null
+  contactTargetRole?: string | null
+  saleControllerName?: string | null
+  saleControllerPhonePrimary?: string | null
+  saleControllerPhoneSecondary?: string | null
+  saleControllerContactSource?: string | null
   trusteePhonePublic?: string | null
   noticePhone?: string | null
   listPrice?: number | null
@@ -544,6 +549,22 @@ async function getManifestVaultCandidates(liveListings: { slug: string }[]) {
         typeof payload.ownerPhonePrimary === "string" ? payload.ownerPhonePrimary : null,
       ownerPhoneSecondary:
         typeof payload.ownerPhoneSecondary === "string" ? payload.ownerPhoneSecondary : null,
+      contactTargetRole:
+        typeof payload.contactTargetRole === "string" ? payload.contactTargetRole : null,
+      saleControllerName:
+        typeof payload.saleControllerName === "string" ? payload.saleControllerName : null,
+      saleControllerPhonePrimary:
+        typeof payload.saleControllerPhonePrimary === "string"
+          ? payload.saleControllerPhonePrimary
+          : null,
+      saleControllerPhoneSecondary:
+        typeof payload.saleControllerPhoneSecondary === "string"
+          ? payload.saleControllerPhoneSecondary
+          : null,
+      saleControllerContactSource:
+        typeof payload.saleControllerContactSource === "string"
+          ? payload.saleControllerContactSource
+          : null,
       trusteePhonePublic:
         typeof payload.trusteePhonePublic === "string" ? payload.trusteePhonePublic : null,
       noticePhone: typeof payload.noticePhone === "string" ? payload.noticePhone : null,
