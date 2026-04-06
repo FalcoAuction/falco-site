@@ -334,3 +334,133 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.12), transparent);
 }
+
+/* ================================================================
+   SCROLL-TRIGGERED REVEAL — uses CSS-only intersection approach
+   Elements start hidden and animate in when they enter the viewport.
+   Requires JS to add .falco-visible class on scroll (or use
+   animation-timeline where supported).
+   ================================================================ */
+.falco-scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.falco-scroll-reveal.falco-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(1) { transition-delay: 0ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(2) { transition-delay: 80ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(3) { transition-delay: 160ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(4) { transition-delay: 240ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(5) { transition-delay: 320ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(6) { transition-delay: 400ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(7) { transition-delay: 480ms; }
+.falco-scroll-stagger > .falco-scroll-reveal:nth-child(8) { transition-delay: 560ms; }
+
+/* ================================================================
+   AMBIENT GLOW DRIFT — slow color shift on background accents
+   ================================================================ */
+@keyframes falcoAmbient {
+  0%, 100% {
+    opacity: 0.14;
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    opacity: 0.22;
+    transform: translate(12px, -8px) scale(1.05);
+  }
+  66% {
+    opacity: 0.16;
+    transform: translate(-8px, 6px) scale(0.98);
+  }
+}
+
+.falco-ambient {
+  animation: falcoAmbient 12s ease-in-out infinite;
+}
+
+/* ================================================================
+   CONNECTOR LINE — animated flow between sections
+   ================================================================ */
+@keyframes falcoFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.falco-flow-line {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgb(var(--falco-accent-rgb) / 0.5) 30%,
+    rgb(var(--falco-accent-rgb) / 0.08) 50%,
+    rgb(var(--falco-accent-rgb) / 0.5) 70%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: falcoFlow 4s linear infinite;
+}
+
+/* ================================================================
+   COUNT UP — for metric numbers that feel alive
+   ================================================================ */
+@keyframes falcoCountFade {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.falco-count-in {
+  animation: falcoCountFade 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.falco-count-in-1 { animation-delay: 100ms; }
+.falco-count-in-2 { animation-delay: 200ms; }
+.falco-count-in-3 { animation-delay: 300ms; }
+.falco-count-in-4 { animation-delay: 400ms; }
+
+/* ================================================================
+   GLOW BORDER — rotating emerald glow on card edges on hover
+   ================================================================ */
+@keyframes falcoBorderGlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+.falco-glow-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.falco-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--falco-accent-rgb) / 0.0) 20%,
+    rgb(var(--falco-accent-rgb) / 0.5) 35%,
+    rgb(var(--falco-accent-rgb) / 0.8) 50%,
+    rgb(var(--falco-accent-rgb) / 0.5) 65%,
+    rgb(var(--falco-accent-rgb) / 0.0) 80%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+}
+
+.falco-glow-border:hover::before {
+  opacity: 1;
+  animation: falcoBorderGlow 3s linear infinite;
+}
