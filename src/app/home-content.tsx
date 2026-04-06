@@ -170,9 +170,10 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               </h1>
 
               <p className="falco-reveal-3 mx-auto mt-10 max-w-2xl text-lg leading-8 text-white/45 md:text-xl">
-                A distress-asset sourcing engine that watches Tennessee counties daily
-                for foreclosure and pre-foreclosure opportunities. Every lead is enriched
-                with owner data, debt, valuation, and contact info.
+                FALCO watches distress signals across Tennessee daily, catches foreclosure
+                and pre-foreclosure opportunities before they surface publicly, and
+                assembles the full file — owner, debt, valuation, contact, and
+                a suggested execution path — so investors can decide in minutes, not days.
               </p>
 
               <div className="falco-reveal-4 mx-auto mt-8 flex items-center justify-center gap-4">
