@@ -34,23 +34,20 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     getOperatorReport().catch(() => null),
   ])
 
-  const sourcedCountiesFromAutonomy =
-    operatorReport?.autonomy?.marketAllocation?.counties
+  // Collect counties from all available sources to show true coverage
+  const allCountySources = [
+    ...(operatorReport?.autonomy?.marketAllocation?.counties
       ?.map((row) => row.county)
-      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []
-
-  const sourcedCountiesFromRecentLeads =
-    operatorReport?.recentLeads
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []),
+    ...(operatorReport?.recentLeads
       ?.map((lead) => lead.county)
-      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []),
+    ...vaultListings.map((listing) => listing.county),
+  ]
 
-  const activeCounties = uniqueCount(
-    sourcedCountiesFromAutonomy.length > 0
-      ? sourcedCountiesFromAutonomy
-      : sourcedCountiesFromRecentLeads.length > 0
-      ? sourcedCountiesFromRecentLeads
-      : vaultListings.map((listing) => listing.county)
-  )
+  const activeCounties = allCountySources.length > 0
+    ? uniqueCount(allCountySources)
+    : 0
   const trackedLeads = operatorReport?.overview.totalLeads ?? vaultListings.length
 
   const greenReady = operatorReport?.overview.greenReady ??
