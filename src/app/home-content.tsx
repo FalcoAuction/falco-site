@@ -111,7 +111,7 @@ function ScrambleText({ text, className }: { text: string; className?: string })
       className={className}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ fontFamily: "var(--font-geist-mono), monospace", letterSpacing: "0.02em" }}
+      style={{ display: "inline-block", minWidth: "fit-content" }}
     >
       {display}
     </span>
