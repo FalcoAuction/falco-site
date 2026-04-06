@@ -76,7 +76,7 @@ function CountUp({ target, duration = 1400 }: { target: number; duration?: numbe
 function ScrambleText({ text, className }: { text: string; className?: string }) {
   const [display, setDisplay] = useState(text)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
   const handleMouseEnter = () => {
     let iteration = 0
@@ -93,12 +93,12 @@ function ScrambleText({ text, className }: { text: string; className?: string })
           })
           .join("")
       )
-      iteration += 1 / 2
+      iteration += 1 / 3
       if (iteration >= text.length) {
         if (intervalRef.current) clearInterval(intervalRef.current)
         setDisplay(text)
       }
-    }, 30)
+    }, 50)
   }
 
   const handleMouseLeave = () => {
@@ -111,6 +111,7 @@ function ScrambleText({ text, className }: { text: string; className?: string })
       className={className}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      style={{ fontFamily: "var(--font-geist-mono), monospace", letterSpacing: "0.02em" }}
     >
       {display}
     </span>
@@ -163,17 +164,18 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             <div className="mx-auto max-w-4xl text-center">
               <h1 className="falco-reveal-1 text-5xl font-semibold leading-[0.90] tracking-[-0.04em] text-white md:text-[5.5rem]">
                 FALCO finds the file.
-                <br />
-                <span className="text-white/40">You control the deal.</span>
+              </h1>
+              <h1 className="falco-reveal-2 mt-1 text-5xl font-semibold leading-[0.90] tracking-[-0.04em] text-white/40 md:text-[5.5rem]">
+                You control the deal.
               </h1>
 
-              <p className="falco-reveal-2 mx-auto mt-10 max-w-2xl text-lg leading-8 text-white/45 md:text-xl">
+              <p className="falco-reveal-3 mx-auto mt-10 max-w-2xl text-lg leading-8 text-white/45 md:text-xl">
                 A distress-asset sourcing engine that watches Tennessee counties daily
                 for foreclosure and pre-foreclosure opportunities. Every lead is enriched
                 with owner data, debt, valuation, and contact info.
               </p>
 
-              <div className="falco-reveal-3 mx-auto mt-8 flex items-center justify-center gap-4">
+              <div className="falco-reveal-4 mx-auto mt-8 flex items-center justify-center gap-4">
                 <Link
                   href="/partner-login"
                   className="falco-accent-button inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
