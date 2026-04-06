@@ -34,7 +34,12 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     getOperatorReport().catch(() => null),
   ])
 
-  // Collect counties from all available sources to show true coverage
+  // Active vault listings are the source of truth for vault metrics
+  const activeListings = vaultListings.filter(
+    (listing) => listing.status === "active"
+  )
+
+  // Counties: merge all sources
   const allCountySources = [
     ...(operatorReport?.autonomy?.marketAllocation?.counties
       ?.map((row) => row.county)
@@ -42,23 +47,24 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     ...(operatorReport?.recentLeads
       ?.map((lead) => lead.county)
       .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []),
-    ...vaultListings.map((listing) => listing.county),
+    ...activeListings.map((listing) => listing.county),
   ]
 
   const activeCounties = allCountySources.length > 0
     ? uniqueCount(allCountySources)
     : 0
-  const trackedLeads = operatorReport?.overview.totalLeads ?? vaultListings.length
 
-  const greenReady = operatorReport?.overview.greenReady ??
-    vaultListings.filter((listing) => {
-      const r = String(listing.auctionReadiness ?? "").toUpperCase()
-      return r === "GREEN"
-    }).length
+  // Total leads from operator report (pipeline-wide), fallback to listing count
+  const trackedLeads = operatorReport?.overview.totalLeads ?? activeListings.length
 
-  const packetsInVault =
-    operatorReport?.overview.vaultLive ??
-    vaultListings.filter((listing) => Boolean(listing.slug)).length
+  // GREEN count from actual vault listings, not operator report
+  const greenReady = activeListings.filter((listing) => {
+    const r = String(listing.auctionReadiness ?? "").toUpperCase()
+    return r === "GREEN"
+  }).length
+
+  // Vault count from actual active listings
+  const packetsInVault = activeListings.length
 
   const approvedEmails = approvalsResult.error
     ? []
@@ -81,4 +87,3 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     approvedPartners,
   }
 }
-
