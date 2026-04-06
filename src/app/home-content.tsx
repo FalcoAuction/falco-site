@@ -162,34 +162,19 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
         <section className="mx-auto max-w-6xl px-6 pt-8 md:px-10">
           <div className="rounded-2xl border border-dashed border-white/[0.08] px-8 pb-28 pt-20 md:px-16 md:pt-28">
             <div className="mx-auto max-w-4xl text-center">
-              <h1 className="falco-reveal-1 text-5xl font-semibold leading-[0.90] tracking-[-0.04em] text-white md:text-[5.5rem]">
+              <h1 className="falco-reveal-1 text-5xl font-bold leading-[0.88] tracking-[-0.045em] text-white md:text-[6rem]">
                 FALCO finds the file.
               </h1>
-              <h1 className="falco-reveal-2 mt-1 text-5xl font-semibold leading-[0.90] tracking-[-0.04em] text-white/40 md:text-[5.5rem]">
+              <h1 className="falco-reveal-2 mt-2 text-5xl font-bold leading-[0.88] tracking-[-0.045em] text-white/30 md:text-[6rem]">
                 You control the deal.
               </h1>
 
-              <p className="falco-reveal-3 mx-auto mt-10 max-w-2xl text-lg leading-8 text-white/45 md:text-xl">
+              <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-base leading-7 text-white/40 md:text-lg md:leading-8">
                 FALCO watches distress signals across Tennessee daily, catches foreclosure
                 and pre-foreclosure opportunities before they surface publicly, and
                 assembles the full file — owner, debt, valuation, contact, and
                 a suggested execution path — so investors can decide in minutes, not days.
               </p>
-
-              <div className="falco-reveal-4 mx-auto mt-8 flex items-center justify-center gap-4">
-                <Link
-                  href="/partner-login"
-                  className="falco-accent-button inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
-                >
-                  <ScrambleText text="Enter the Vault" />
-                </Link>
-                <Link
-                  href="/request-access"
-                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[13px] font-medium text-white/70 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white"
-                >
-                  <ScrambleText text="Request Access" />
-                </Link>
-              </div>
             </div>
           </div>
         </section>
@@ -236,10 +221,8 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               </h2>
             </div>
 
-            <div className="relative mt-10">
-              <div className="falco-flow-line pointer-events-none absolute left-[16%] right-[16%] top-12 z-0 hidden lg:block" />
-
-              <div className="falco-scroll-stagger relative z-10 grid gap-5 lg:grid-cols-3">
+            <div className="mt-10">
+              <div className="falco-scroll-stagger grid gap-5 lg:grid-cols-3">
                 <div className="falco-scroll-reveal falco-glow-border rounded-xl border border-emerald-400/10 bg-emerald-400/[0.03] p-6">
                   <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-[11px] font-semibold text-emerald-300">01</div>
                   <div className="text-lg font-semibold text-white">FALCO</div>
