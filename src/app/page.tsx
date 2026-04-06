@@ -40,12 +40,6 @@ export default async function HomePage() {
 
         {/* Hero */}
         <section className="mx-auto max-w-5xl px-6 pb-20 pt-20 md:px-10 md:pt-28">
-          <div
-            className="falco-drift mb-6 inline-flex items-center rounded-full border border-emerald-400/16 bg-emerald-400/[0.07] px-4 py-2 text-xs uppercase tracking-[0.22em] text-emerald-100/78 shadow-[0_12px_40px_rgba(16,185,129,0.08)]"
-          >
-            Distress Asset Intelligence
-          </div>
-
           <h1 className="falco-reveal-1 max-w-4xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl">
             FALCO finds the file.
             <br />
