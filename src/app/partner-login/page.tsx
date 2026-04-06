@@ -170,8 +170,9 @@ export default function PartnerLoginPage() {
                   <input
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
+                    onKeyDown={(event) => { if (event.key === "Enter") handleLogin() }}
                     type="email"
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+                    className="falco-input w-full"
                     placeholder="you@firm.com"
                   />
                 </div>

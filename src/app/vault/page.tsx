@@ -59,6 +59,17 @@ type VaultListing = {
   routingReservedByEmail?: string
   routingReservedByName?: string
   pursuitRequestCount?: number
+  contactPathQuality?: string
+  controlParty?: string
+  ownerAgency?: string
+  workabilityBand?: string
+  debtConfidence?: string
+  suggestedExecutionLane?: string
+  suggestedLaneConfidence?: string
+  saleStatus?: string
+  ownerPhonePrimary?: string
+  avm_low?: number | null
+  avm_high?: number | null
 }
 
 function formatDisplayDate(value?: string) {
@@ -190,6 +201,22 @@ function formatMoney(value?: number | null) {
   }).format(value)
 }
 
+function equityProxy(listing: VaultListing): number | null {
+  const avm = listing.avm_low
+  const mortgage = listing.mortgageAmount
+  if (typeof avm === "number" && typeof mortgage === "number") return avm - mortgage
+  return null
+}
+
+function isNewThisWeek(listing: VaultListing): boolean {
+  const created = listing.createdAt
+  if (!created) return false
+  const createdDate = new Date(created)
+  if (Number.isNaN(createdDate.getTime())) return false
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  return createdDate.getTime() > sevenDaysAgo
+}
+
 function getVaultSegment(listing: VaultListing): VaultSegment {
   if (listing.topTierReady) {
     return "top"
@@ -210,170 +237,79 @@ function vaultStageLabel(stage: Exclude<VaultStage, "all">) {
 
 function ListingCard({ listing }: { listing: VaultListing }) {
   const segment = getVaultSegment(listing)
-  const criticalDataIssues = listing.dataNotes ?? []
+  const equity = equityProxy(listing)
+  const isNew = isNewThisWeek(listing)
+  const lane = listing.suggestedExecutionLane || listing.executionLane
 
   return (
-    <div className="flex h-full flex-col rounded-[28px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
+    <div className="flex h-full flex-col rounded-[28px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_35px_120px_rgba(0,0,0,0.6)] transition duration-300 hover:-translate-y-1 hover:border-emerald-400/20">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-            Vault Listing
-          </div>
-
-          <div
-            className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${
-              segment === "top"
-                ? "falco-accent-tab-active"
-                : "border-white/10 bg-white/5 text-white/65"
-            }`}
-          >
-            {segment === "top" ? "Priority Review" : "Screened Secondary"}
+          {isNew ? (
+            <div className="rounded-full border border-emerald-400/30 bg-emerald-400/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              New
+            </div>
+          ) : null}
+          <div className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${readinessClasses(listing.auctionReadiness)} border-white/10 bg-white/5`}>
+            {listing.auctionReadiness || "?"}
           </div>
         </div>
-
-        <div
-          className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em] ${statusClasses(
-            listing.status
-          )}`}
-        >
+        <div className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] ${statusClasses(listing.status)}`}>
           {listing.status}
         </div>
       </div>
 
-      <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-white">
+      <h2 className="mt-4 text-xl font-semibold tracking-[-0.03em] text-white">
         {listing.title}
       </h2>
 
-      <div className="mt-3 text-sm text-white/50">
-        {listing.market}
+      <div className="mt-2 text-sm text-white/50">{listing.market}</div>
+
+      {/* Key metrics row */}
+      <div className="mt-5 grid gap-3 grid-cols-3">
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-center">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Equity Est.</div>
+          <div className={`mt-1 text-base font-semibold ${equity !== null && equity >= 100000 ? "text-emerald-300" : equity !== null && equity >= 0 ? "text-white" : "text-amber-300"}`}>
+            {equity !== null ? formatMoney(equity) : "—"}
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-center">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Mortgage</div>
+          <div className="mt-1 text-base font-semibold text-white">{formatMoney(listing.mortgageAmount)}</div>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-center">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Timeline</div>
+          <div className="mt-1 text-base font-semibold text-white">
+            {liveDtsDays(listing) != null ? `${liveDtsDays(listing)}d` : "Pre-FC"}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Distress Type
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.distressType}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Sale Timing</div>
-            <div className="mt-2 text-sm font-medium text-white/82">
-              {refreshedSaleTimingCopy(listing)}
-            </div>
-          <div className="mt-2 text-xs text-white/50">
-            {listing.distressRecordedAt
-              ? `Recorded ${formatDisplayDate(listing.distressRecordedAt)}`
-              : listing.originalSaleDate
-              ? `Originally ${formatDisplayDate(listing.originalSaleDate)}`
-              : "Timeline refreshes automatically"}
+      {/* Info grid */}
+      <div className="mt-4 grid gap-3 grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Play</div>
+          <div className="mt-1 text-sm font-medium text-white/82">
+            {lane ? executionLaneCopy(lane as VaultListing["executionLane"]) : "TBD"}
           </div>
         </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Screening Status
-          </div>
-          <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-            {listing.validationOutcome
-              ? validationOutcomeCopy(listing.validationOutcome)
-              : listing.auctionReadiness || "-"}
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Contact</div>
+          <div className="mt-1 text-sm font-medium text-white/82">
+            {listing.contactPathQuality || (listing.contactReady ? "Ready" : "Thin")}
           </div>
         </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Equity Band
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.equityBand || "-"}
-          </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Lender</div>
+          <div className="mt-1 text-sm font-medium text-white/72 truncate">{listing.mortgageLender || "—"}</div>
         </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Direct Contact Path
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.contactReady ? "Available" : "Thin / Unclear"}
-          </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Debt Conf.</div>
+          <div className="mt-1 text-sm font-medium text-white/82">{listing.debtConfidence || "—"}</div>
         </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Mortgage Lender
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.mortgageLender || "Unavailable"}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Orig. Loan Amount
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {formatMoney(listing.mortgageAmount)}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-            Review Lane
-          </div>
-          <div className="mt-2 text-sm font-medium text-white/82">
-            {listing.executionLane ? executionLaneCopy(listing.executionLane) : routingStateCopy(listing.routingState)}
-          </div>
-        </div>
-
       </div>
 
-      <p className="mt-5 text-sm leading-7 text-white/68">
-        {listing.publicTeaser}
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
-        Validation: {validationOutcomeCopy(listing.validationOutcome)}. Final execution viability and auction-path fit remain subject to licensed/operator review.
-        {listing.validationNote ? ` Note: ${listing.validationNote}` : ""}
-      </div>
-
-      {listing.routingState === "in_discussion" && (listing.pursuitRequestCount ?? 0) > 0 ? (
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
-          Review note: {listing.pursuitRequestCount} active pursuit request{listing.pursuitRequestCount === 1 ? "" : "s"} in review.
-        </div>
-      ) : null}
-
-      {listing.routingState === "reserved" ? (
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/70">
-          Review note: currently reserved through an active FALCO routing path.
-        </div>
-      ) : null}
-
-      {criticalDataIssues.length > 0 ? (
-        <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
-          Data note: {criticalDataIssues.join(" + ")}.
-        </div>
-      ) : null}
-
-      <div className="mt-5 text-sm text-white/50">
-        Packet: {listing.packetLabel}
-      </div>
-
-      {listing.status === "claimed" && listing.claimedBy ? (
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
-          Claimed by: {listing.claimedBy}
-        </div>
-      ) : null}
-
-      {listing.status === "expired" && listing.expiresAt ? (
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 text-sm text-white/60">
-          Expired: {listing.expiresAt}
-        </div>
-      ) : null}
-
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-6">
         <Link
           href={`/vault/${listing.slug}`}
           className="falco-accent-button flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition"
@@ -549,12 +485,25 @@ export default function VaultPage() {
     })
   }, [contactFilter, countyFilter, filter, listings, readinessFilter, segmentFilter, stageFilter])
 
+  const rankedListings = useMemo(() => {
+    return [...filteredListings].sort((a, b) => {
+      // New this week first
+      const aNew = isNewThisWeek(a) ? 0 : 1
+      const bNew = isNewThisWeek(b) ? 0 : 1
+      if (aNew !== bNew) return aNew - bNew
+      // Then by equity proxy descending
+      const aEq = equityProxy(a) ?? -999999
+      const bEq = equityProxy(b) ?? -999999
+      return bEq - aEq
+    })
+  }, [filteredListings])
+
   const segmentedListings = useMemo(() => {
     return {
-      top: filteredListings.filter((listing) => getVaultSegment(listing) === "top"),
-      secondary: filteredListings.filter((listing) => getVaultSegment(listing) === "secondary"),
+      top: rankedListings.filter((listing) => getVaultSegment(listing) === "top"),
+      secondary: rankedListings.filter((listing) => getVaultSegment(listing) === "secondary"),
     }
-  }, [filteredListings])
+  }, [rankedListings])
 
   const counts = useMemo(() => {
     const activeListings = listings.filter((listing) => listing.status === "active")
@@ -690,22 +639,13 @@ export default function VaultPage() {
 
           <div className="rounded-[30px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.6)]">
             <div className="text-xs uppercase tracking-[0.24em] text-white/45">
-              Vault Feed
+              Vault Summary
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Total Listings
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-white">
-                  {counts.all}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Active
+                  Active Listings
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
                   {counts.active}
@@ -714,19 +654,28 @@ export default function VaultPage() {
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Priority Review
+                  New This Week
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-white">
-                  {counts.top}
+                <div className="mt-2 text-2xl font-semibold text-emerald-300">
+                  {listings.filter(isNewThisWeek).length}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-                  Screened Secondary
+                  $100k+ Equity
                 </div>
                 <div className="mt-2 text-2xl font-semibold text-white">
-                  {counts.secondary}
+                  {listings.filter((l) => { const e = equityProxy(l); return e !== null && e >= 100000 }).length}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
+                  Counties
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-white">
+                  {counties.length}
                 </div>
               </div>
             </div>

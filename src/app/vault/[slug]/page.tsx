@@ -81,6 +81,27 @@ type VaultListing = {
   influenceability?: string
   executionPosture?: string
   workabilityBand?: string
+  debtConfidence?: string
+  ownerPhonePrimary?: string
+  ownerPhoneSecondary?: string
+  ownerPhoneDncStatus?: string
+  contactTargetRole?: string
+  saleControllerName?: string | null
+  saleControllerPhonePrimary?: string | null
+  saleControllerPhoneSecondary?: string | null
+  trusteePhonePublic?: string | null
+  noticePhone?: string | null
+  mortgageDate?: string
+  mortgageCurrentDate?: string
+  mortgageCurrentLender?: string
+  mortgageOriginalLender?: string
+  mortgageNoticeHolder?: string
+  suggestedExecutionLane?: string
+  suggestedLaneConfidence?: string
+  suggestedLaneReasons?: string[]
+  saleStatus?: string
+  recommendedAction?: string
+  recommendedActionReasons?: string[]
 }
 
 type PursuitState = {
@@ -1152,10 +1173,11 @@ export default function VaultListingPage() {
                 </div>
               </div>
 
+              {/* ── TIMING + CONTACT + DEBT (the 3 things that matter most) ── */}
               <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.03] p-7">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Most Important</div>
-                  <div className="text-xs uppercase tracking-[0.18em] text-white/35">Fast operator read</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Decision Summary</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-white/35">Yes / No read</div>
                 </div>
                 <div className="mt-5 grid gap-4 lg:grid-cols-3">
                   <div className={`rounded-2xl border p-5 ${dtsChipClasses(liveDtsDays(listing))}`}>
@@ -1172,41 +1194,148 @@ export default function VaultListingPage() {
                         : emphasisCardClasses("watch")
                     }`}
                   >
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Owner Reach</div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Contact Path</div>
                     <div className="mt-2 text-lg font-semibold text-white">
-                      {listing.contactReady ? "Available" : "Thin / Unclear"}
+                      {listing.contactPathQuality || (listing.contactReady ? "Available" : "Thin")}
                     </div>
                     <div className="mt-2 text-sm text-white/62">
-                      {listing.ownerName?.trim() || listing.ownerMail?.trim() || "No strong owner detail yet"}
+                      {listing.controlParty ? `Control: ${listing.controlParty}` : ""}
                     </div>
                   </div>
                   <div className={`rounded-2xl border p-5 ${emphasisCardClasses("neutral")}`}>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Debt Picture</div>
-                    <div className="mt-2 text-lg font-semibold text-white">{detailValue(listing.mortgageLender)}</div>
-                    <div className="mt-2 text-sm text-white/62">{formatMoney(listing.mortgageAmount)}</div>
+                    <div className="mt-2 text-lg font-semibold text-white">{detailValue(listing.debtConfidence)}</div>
+                    <div className="mt-2 text-sm text-white/62">{detailValue(listing.mortgageLender)} &middot; {formatMoney(listing.mortgageAmount)}</div>
                   </div>
                 </div>
               </div>
 
+              {/* ── WHO TO CALL ── */}
               <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-7">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Property Snapshot</div>
-                  <div className="text-xs text-white/35">Secondary detail</div>
-                </div>
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Contact</div>
                 <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Name</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.ownerName)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Phone</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.ownerPhonePrimary)}</div>
+                    {listing.ownerPhoneSecondary ? (
+                      <div className="mt-1 text-sm text-white/60">Alt: {listing.ownerPhoneSecondary}</div>
+                    ) : null}
+                    {listing.ownerPhoneDncStatus ? (
+                      <div className={`mt-1 text-xs uppercase tracking-[0.14em] ${listing.ownerPhoneDncStatus === "CLEAR" ? "text-emerald-300" : listing.ownerPhoneDncStatus === "DNC" ? "text-red-300" : "text-amber-300"}`}>
+                        DNC: {listing.ownerPhoneDncStatus}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Mailing</div>
+                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerMail)}</div>
+                  </div>
+                  {listing.saleControllerName ? (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Sale Controller</div>
+                      <div className="mt-2 text-sm text-white/80">{listing.saleControllerName}</div>
+                      {listing.saleControllerPhonePrimary ? (
+                        <div className="mt-1 text-sm text-white/60">{listing.saleControllerPhonePrimary}</div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {listing.trusteePhonePublic ? (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Trustee Phone</div>
+                      <div className="mt-2 text-sm text-white/80">{listing.trusteePhonePublic}</div>
+                    </div>
+                  ) : null}
+                  {listing.noticePhone ? (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Notice Phone</div>
+                      <div className="mt-2 text-sm text-white/80">{listing.noticePhone}</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* ── WHAT'S THE PLAY ── */}
+              <div className="mt-8 rounded-[28px] border border-emerald-400/14 bg-[linear-gradient(180deg,rgba(16,185,129,0.04),rgba(255,255,255,0.02))] p-7">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs uppercase tracking-[0.22em] text-emerald-300/80">Suggested Play</div>
+                  {listing.suggestedLaneConfidence ? (
+                    <div className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.14em] ${listing.suggestedLaneConfidence === "HIGH" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200" : "border-amber-500/20 bg-amber-500/10 text-amber-200"}`}>
+                      {listing.suggestedLaneConfidence} confidence
+                    </div>
+                  ) : null}
+                </div>
+                <div className="mt-4 text-xl font-semibold text-white">
+                  {listing.suggestedExecutionLane ? executionLaneCopy(listing.suggestedExecutionLane as VaultExecutionLane) : "Not yet determined"}
+                </div>
+                <div className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Execution Posture</div>
+                    <div className="mt-1 text-sm text-white/80">{detailValue(listing.executionPosture)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Agency</div>
+                    <div className="mt-1 text-sm text-white/80">{detailValue(listing.ownerAgency)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Intervention Window</div>
+                    <div className="mt-1 text-sm text-white/80">{detailValue(listing.interventionWindow)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Lender Control</div>
+                    <div className="mt-1 text-sm text-white/80">{detailValue(listing.lenderControlIntensity)}</div>
+                  </div>
+                </div>
+                {listing.suggestedLaneReasons?.length ? (
+                  <ul className="mt-4 space-y-1 text-sm leading-6 text-white/62">
+                    {listing.suggestedLaneReasons.map((reason, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/50" />
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+
+              {/* ── PROPERTY ── */}
+              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-7">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Property</div>
+                <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Market</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.market)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Scheduled Sale</div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Year Built</div>
+                    <div className="mt-2 text-base font-medium text-white">{listing.yearBuilt ? String(listing.yearBuilt) : "Unavailable"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Sq Ft</div>
+                    <div className="mt-2 text-base font-medium text-white">{listing.buildingAreaSqft ? listing.buildingAreaSqft.toLocaleString() : "Unavailable"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Beds / Baths</div>
                     <div className="mt-2 text-base font-medium text-white">
-                      {listing.currentSaleDate ? formatDisplayDate(listing.currentSaleDate) : detailValue(listing.auctionWindow)}
+                      {listing.beds != null || listing.baths != null
+                        ? `${listing.beds ?? "?"} / ${listing.baths ?? "?"}`
+                        : "Unavailable"}
                     </div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Equity Band</div>
                     <div className="mt-2 text-base font-medium text-white">{detailValue(listing.equityBand)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Parcel / APN</div>
+                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.propertyIdentifier)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
+                    <div className="mt-2 text-sm text-white/80">{listing.lastSaleDate ? formatDisplayDate(listing.lastSaleDate) : "Unavailable"}</div>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Recorded Date</div>
@@ -1216,46 +1345,62 @@ export default function VaultListingPage() {
                         : detailValue(listing.originalSaleDate)}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Parcel / APN</div>
-                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.propertyIdentifier)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Mailing</div>
-                    <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerMail)}</div>
-                  </div>
                 </div>
+              </div>
 
-                <details className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-white/78">
-                    Full Record Detail
-                  </summary>
-                  <div className="mt-4 grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Owner Name</div>
-                      <div className="mt-2 text-sm text-white/80">{detailValue(listing.ownerName)}</div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Last Transfer</div>
-                      <div className="mt-2 text-sm text-white/80">{detailValue(listing.lastSaleDate)}</div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Source Lead</div>
-                      <div className="mt-2 break-all text-sm text-white/80">{detailValue(listing.sourceLeadKey)}</div>
-                    </div>
+              {/* ── DEBT DETAIL ── */}
+              <div className="mt-8 rounded-[28px] border border-white/10 bg-white/[0.035] p-7">
+                <div className="text-xs uppercase tracking-[0.22em] text-white/45">Debt Record</div>
+                <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Current Lender</div>
+                    <div className="mt-2 text-base font-medium text-white">{detailValue(listing.mortgageLender)}</div>
                   </div>
-                </details>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Original Loan</div>
+                    <div className="mt-2 text-base font-medium text-white">{formatMoney(listing.mortgageAmount)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Mortgage Date</div>
+                    <div className="mt-2 text-sm text-white/80">{listing.mortgageDate ? formatDisplayDate(listing.mortgageDate) : listing.mortgageCurrentDate ? formatDisplayDate(listing.mortgageCurrentDate) : "Unavailable"}</div>
+                  </div>
+                  {listing.mortgageOriginalLender && listing.mortgageOriginalLender !== listing.mortgageLender ? (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Original Lender</div>
+                      <div className="mt-2 text-sm text-white/80">{listing.mortgageOriginalLender}</div>
+                    </div>
+                  ) : null}
+                  {listing.mortgageNoticeHolder ? (
+                    <div className="sm:col-span-2">
+                      <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Notice Holder</div>
+                      <div className="mt-2 text-sm text-white/80">{listing.mortgageNoticeHolder}</div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
-              <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.03] p-6 text-sm leading-7 text-white/68">
-                Final execution viability, control path, and auction fit remain subject to licensed/operator review.
-                {listing.validationNote ? (
-                  <span> Current note: <span className="text-white/82">{listing.validationNote}</span>.</span>
-                ) : null}
-                {criticalDataIssues.length > 0 ? (
-                  <span> Data note: <span className="text-amber-100">{criticalDataIssues.join(" + ")}</span>.</span>
-                ) : null}
-              </div>
+              {/* ── FALCO ASSESSMENT ── */}
+              {criticalDataIssues.length > 0 || listing.dataNotes?.length ? (
+                <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
+                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">FALCO Assessment</div>
+                  {listing.dataNotes?.length ? (
+                    <ul className="mt-3 space-y-1 text-sm leading-6 text-white/68">
+                      {listing.dataNotes.map((note, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {criticalDataIssues.length > 0 ? (
+                    <div className="mt-3 text-sm text-amber-200">{criticalDataIssues.join(" + ")}</div>
+                  ) : null}
+                  {listing.validationNote ? (
+                    <div className="mt-3 text-sm text-white/82">Note: {listing.validationNote}</div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">

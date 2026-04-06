@@ -90,7 +90,7 @@ async function upsertAcceptanceAudit(record: VaultAcceptanceRecord) {
   const existing = await findAcceptanceAudit(record.listingSlug, record.email)
   const payload = {
     email: record.email.toLowerCase(),
-    full_name: record.listingSlug,
+    full_name: record.listingSlug, // NOTE: used as lookup key (see findAcceptanceAudit); real name is in notes JSON
     company: VAULT_ACCEPTANCE_AUDIT_COMPANY,
     notes: buildAuditNotes(record),
     status: "accepted",

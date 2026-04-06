@@ -10,7 +10,7 @@ function uniqueCount(values: (string | null | undefined)[]) {
 export type HomeMetrics = {
   activeCounties: number
   trackedLeads: number
-  uwReady: number
+  greenReady: number
   packetsInVault: number
   approvedPartners: number
 }
@@ -21,7 +21,7 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     return {
       activeCounties: 0,
       trackedLeads: 0,
-      uwReady: 0,
+      greenReady: 0,
       packetsInVault: 0,
       approvedPartners: 0,
     }
@@ -53,26 +53,11 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
   )
   const trackedLeads = operatorReport?.overview.totalLeads ?? vaultListings.length
 
-  const uwReady = vaultListings.filter((listing) => {
-    const val = listing.contactReady ?? listing.auctionReadiness
-
-    if (typeof val === "boolean") return val
-    if (typeof val === "number") return val > 0
-
-    if (typeof val === "string") {
-      const s = val.toLowerCase()
-      return (
-        s.includes("ready") ||
-        s === "true" ||
-        s === "yes" ||
-        s === "uw_ready" ||
-        s === "contact-ready" ||
-        s === "green"
-      )
-    }
-
-    return false
-  }).length
+  const greenReady = operatorReport?.overview.greenReady ??
+    vaultListings.filter((listing) => {
+      const r = String(listing.auctionReadiness ?? "").toUpperCase()
+      return r === "GREEN"
+    }).length
 
   const packetsInVault =
     operatorReport?.overview.vaultLive ??
@@ -94,7 +79,7 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
   return {
     activeCounties,
     trackedLeads,
-    uwReady,
+    greenReady,
     packetsInVault,
     approvedPartners,
   }
