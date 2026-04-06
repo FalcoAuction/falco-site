@@ -83,6 +83,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
         <div className="absolute inset-0 -z-30 bg-black" />
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.08),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(255,255,255,0.06),transparent_18%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px] opacity-[0.25]" />
 
         {/* Ambient glow orbs */}
         <div className="falco-ambient pointer-events-none absolute -left-32 top-20 -z-10 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.08),transparent_70%)]" />
@@ -91,21 +92,22 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
           className="falco-glow pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_52%)]"
         />
 
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-black/60 backdrop-blur-2xl backdrop-saturate-150">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
-            <Link href="/" className="flex items-center transition-opacity hover:opacity-90">
-              <span className="text-sm font-semibold tracking-[0.28em] text-white">
+            <Link href="/" className="group flex items-center gap-2.5 transition-opacity hover:opacity-90">
+              <span className="text-[13px] font-semibold tracking-[0.32em] text-white">
                 FALCO
               </span>
+              <span className="hidden h-px w-6 bg-gradient-to-r from-white/20 to-transparent transition-all group-hover:w-10 md:block" />
             </Link>
 
             <nav className="flex items-center gap-6 text-sm">
-              <Link href="/request-access" className="hidden text-white/70 transition hover:text-white md:block">
+              <Link href="/request-access" className="hidden text-[13px] text-white/50 transition hover:text-white/90 md:block">
                 Request Access
               </Link>
               <Link
                 href="/partner-login"
-                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold transition"
+                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
               >
                 Partner Login
               </Link>
@@ -114,26 +116,33 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
         </header>
 
         {/* Hero */}
-        <section className="mx-auto max-w-5xl px-6 pb-20 pt-20 md:px-10 md:pt-28">
-          <h1 className="falco-reveal-1 max-w-4xl text-5xl font-semibold leading-[0.93] tracking-[-0.05em] text-white md:text-7xl">
+        <section className="mx-auto max-w-5xl px-6 pb-24 pt-20 md:px-10 md:pt-32">
+          <h1 className="falco-reveal-1 max-w-4xl text-5xl font-semibold leading-[0.90] tracking-[-0.04em] text-white md:text-[5.5rem]">
             FALCO finds the file.
             <br />
-            You control the deal.
+            <span className="text-white/50">You control the deal.</span>
           </h1>
 
-          <p className="falco-reveal-2 mt-8 max-w-2xl text-lg leading-8 text-white/68 md:text-xl">
-            FALCO is a distress-asset sourcing engine that watches 56 Tennessee counties
-            for foreclosure and pre-foreclosure opportunities. It enriches every lead with
-            owner data, debt, valuation, and contact info, then surfaces the ones that are
-            realistically controllable.
-          </p>
+          <div className="falco-reveal-2 mt-10 max-w-2xl">
+            <p className="text-lg leading-8 text-white/55 md:text-xl">
+              FALCO is a distress-asset sourcing engine that watches Tennessee counties daily
+              for foreclosure and pre-foreclosure opportunities. It enriches every lead with
+              owner data, debt, valuation, and contact info, then surfaces the ones that are
+              realistically controllable.
+            </p>
+            <div className="mt-6 h-px w-24 bg-gradient-to-r from-emerald-400/40 to-transparent" />
+          </div>
         </section>
 
         {/* 3-player model */}
         <section className="mx-auto max-w-5xl px-6 pb-24 md:px-10">
           <div className="falco-scroll-reveal rounded-[30px] border border-white/10 bg-white/[0.035] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.55)] md:p-12">
-            <div className="text-xs uppercase tracking-[0.26em] text-white/45">The Model</div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <div className="text-xs uppercase tracking-[0.26em] text-white/45">The Model</div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            </div>
+            <h2 className="mt-5 text-center text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
               Three players. One pipeline.
             </h2>
 
@@ -264,6 +273,20 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             </div>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="border-t border-white/[0.06] px-6 py-10 md:px-10">
+          <div className="mx-auto flex max-w-5xl items-center justify-between">
+            <div className="text-[12px] tracking-[0.18em] text-white/25">
+              FALCO
+            </div>
+            <div className="flex items-center gap-6 text-[12px] text-white/30">
+              <Link href="/partner-login" className="transition hover:text-white/60">Vault</Link>
+              <Link href="/request-access" className="transition hover:text-white/60">Access</Link>
+              <span className="text-white/15">falco.llc</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   )
