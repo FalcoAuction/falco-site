@@ -23,6 +23,7 @@ export type VaultListingStatus = "active" | "claimed" | "expired"
 export type VaultListing = {
   slug: string
   title: string
+  address?: string
   market: string
   county: string
   status: VaultListingStatus
@@ -54,6 +55,7 @@ export type VaultListing = {
   ownerMail?: string
   ownerPhonePrimary?: string
   ownerPhoneSecondary?: string
+  ownerPhoneDncStatus?: string
   contactTargetRole?: string
   saleControllerName?: string
   saleControllerPhonePrimary?: string
@@ -293,6 +295,7 @@ function mapRowToVaultListing(
   return {
     slug: row.slug,
     title: titleBase,
+    address: overlay?.address ?? titleBase,
     market: overlay?.market ?? `${countyBase}, ${stateBase}`,
     county: countyBase,
     status,
@@ -327,6 +330,7 @@ function mapRowToVaultListing(
     ownerMail: overlay?.ownerMail,
     ownerPhonePrimary: overlay?.ownerPhonePrimary,
     ownerPhoneSecondary: overlay?.ownerPhoneSecondary,
+    ownerPhoneDncStatus: overlay?.ownerPhoneDncStatus,
     contactTargetRole: overlay?.contactTargetRole,
     saleControllerName: overlay?.saleControllerName,
     saleControllerPhonePrimary: overlay?.saleControllerPhonePrimary,
@@ -656,9 +660,30 @@ export async function listVaultListings() {
   }
 
   const overlayBySlug = loadVaultListingOverlay()
+  const supabaseSlugs = new Set((data ?? []).map((row) => (row as VaultListingRow).slug))
   const mappedRows = (data ?? []).map((row) =>
     mapRowToVaultListing(row as VaultListingRow, overlayBySlug.get((row as VaultListingRow).slug))
   )
+
+  // Include overlay-only listings (in NDJSON but not yet in Supabase)
+  for (const [slug, overlay] of overlayBySlug.entries()) {
+    if (supabaseSlugs.has(slug)) continue
+    if (!overlay.slug) continue
+    const syntheticRow: VaultListingRow = {
+      slug: overlay.slug,
+      title: overlay.title ?? overlay.slug,
+      county: overlay.county ?? "Unknown County",
+      state: (overlay as Record<string, unknown>).state as string ?? "TN",
+      is_active: overlay.status !== "expired",
+      created_at: overlay.createdAt ?? new Date().toISOString(),
+      auction_readiness: overlay.auctionReadiness ?? null,
+      equity_band: overlay.equityBand ?? null,
+      dts_days: overlay.dtsDays ?? null,
+      falco_score: overlay.falcoScore ?? null,
+      packet_path: overlay.packetFileName ?? null,
+    }
+    mappedRows.push(mapRowToVaultListing(syntheticRow, overlay))
+  }
   const [routingSnapshots, validationSnapshots, validationHistory, partnerFeedbackHistory] =
     await Promise.all([
     getVaultRoutingSnapshotsForListings(
