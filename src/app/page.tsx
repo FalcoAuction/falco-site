@@ -53,20 +53,6 @@ export default async function HomePage() {
             realistically controllable.
           </p>
 
-          <div className="falco-reveal-3 mt-10 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/partner-login"
-              className="falco-accent-button inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition"
-            >
-              Enter the Vault
-            </Link>
-            <Link
-              href="/request-access"
-              className="inline-flex items-center justify-center rounded-xl border border-white/15 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.06]"
-            >
-              Request Access
-            </Link>
-          </div>
         </section>
 
         {/* 3-player model */}
