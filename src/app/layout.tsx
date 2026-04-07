@@ -59,7 +59,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <div className="falco-preloader" aria-hidden="true">
+          <div className="falco-preloader-ring" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/falco-mark-transparent.png"
+            alt=""
+            width={56}
+            height={56}
+            className="falco-preloader-logo"
+          />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }
