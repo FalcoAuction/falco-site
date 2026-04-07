@@ -5,6 +5,37 @@ import { useEffect, useRef, useState } from "react"
 import type { HomeMetrics } from "@/lib/home-metrics"
 import { DotOrbit } from "./dot-orbit"
 
+function useRadiusOnScroll() {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const targets = el.querySelectorAll<HTMLElement>(".falco-radius-scroll")
+    if (!targets.length) return
+
+    function onScroll() {
+      for (const target of targets) {
+        const rect = target.getBoundingClientRect()
+        const viewH = window.innerHeight
+        // 0 = fully below viewport, 1 = fully above
+        const progress = Math.min(Math.max((viewH - rect.top) / (viewH + rect.height), 0), 1)
+        // Radius: starts at 40px, goes to 0 as you scroll past center
+        const radius = Math.round(40 * (1 - Math.min(progress * 2, 1)))
+        target.style.borderRadius = `${radius}px`
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  return ref
+}
+
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -121,9 +152,13 @@ function ScrambleText({ text, className }: { text: string; className?: string })
 
 export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
   const scrollRef = useScrollReveal()
+  const radiusRef = useRadiusOnScroll()
 
   return (
-    <main className="falco-mobile-calm min-h-screen bg-[#060606] text-white" ref={scrollRef}>
+    <main className="falco-mobile-calm min-h-screen bg-[#060606] text-white" ref={(el) => {
+      (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el as HTMLDivElement | null;
+      (radiusRef as React.MutableRefObject<HTMLDivElement | null>).current = el as HTMLDivElement | null;
+    }}>
       <div className="relative isolate overflow-hidden">
         {/* Background layers */}
         <div className="absolute inset-0 -z-30 bg-[#060606]" />
@@ -170,7 +205,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
 
         {/* Hero — inside dashed container like Jet */}
         <section className="mx-auto max-w-6xl px-6 pt-8 md:px-10">
-          <div className="rounded-2xl border border-dashed border-white/[0.08] px-8 pb-28 pt-20 md:px-16 md:pt-28">
+          <div className="falco-radius-scroll rounded-2xl border border-dashed border-white/[0.08] px-8 pb-28 pt-20 md:px-16 md:pt-28">
             <div className="mx-auto max-w-4xl text-center">
               <h1 className="falco-reveal-1 text-5xl font-bold leading-[0.88] tracking-[-0.045em] text-white md:text-[6rem]">
                 FALCO finds the file.
@@ -196,7 +231,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             </div>
           </div>
 
-          <div className="falco-scroll-reveal rounded-2xl border border-dashed border-white/[0.08] p-6">
+          <div className="falco-scroll-reveal falco-radius-scroll rounded-2xl border border-dashed border-white/[0.08] p-6">
             <div className="falco-scroll-stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { label: "Counties Sourced", value: metrics.activeCounties, note: "Active coverage" },
@@ -221,7 +256,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
 
         {/* 3-player model — dashed container */}
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-10">
-          <div className="falco-scroll-reveal rounded-2xl border border-dashed border-white/[0.08] p-8 md:p-12">
+          <div className="falco-scroll-reveal falco-radius-scroll rounded-2xl border border-dashed border-white/[0.08] p-8 md:p-12">
             <div className="text-center">
               <div className="text-[11px] uppercase tracking-[0.26em] text-white/35">The Model</div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
@@ -267,7 +302,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
 
         {/* What each listing contains — 2x4 grid inside dashed container */}
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-10">
-          <div className="falco-scroll-reveal rounded-2xl border border-dashed border-white/[0.08] p-8 md:p-12">
+          <div className="falco-scroll-reveal falco-radius-scroll rounded-2xl border border-dashed border-white/[0.08] p-8 md:p-12">
             <div className="text-center">
               <div className="text-[11px] uppercase tracking-[0.26em] text-white/35">What You Get</div>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
@@ -297,7 +332,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
 
         {/* CTA */}
         <section className="mx-auto max-w-6xl px-6 pb-20 md:px-10">
-          <div className="falco-scroll-reveal falco-glow-border rounded-2xl border border-dashed border-emerald-400/12 bg-[linear-gradient(180deg,rgba(16,185,129,0.04),rgba(16,185,129,0.01))] p-8 text-center md:p-14">
+          <div className="falco-scroll-reveal falco-radius-scroll falco-glow-border rounded-2xl border border-dashed border-emerald-400/12 bg-[linear-gradient(180deg,rgba(16,185,129,0.04),rgba(16,185,129,0.01))] p-8 text-center md:p-14">
             <h2 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
               See what the pipeline is surfacing.
             </h2>
