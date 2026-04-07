@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import type { HomeMetrics } from "@/lib/home-metrics"
+import { DotOrbit } from "./dot-orbit"
 
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null)
@@ -131,9 +132,18 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
         {/* Dotted grid (Jet-style) */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.35]" />
 
-        {/* Ambient glow */}
-        <div className="falco-ambient pointer-events-none absolute -left-48 top-0 -z-10 h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.06),transparent_65%)]" />
-        <div className="falco-ambient pointer-events-none absolute -right-48 top-40 -z-10 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.04),transparent_65%)]" style={{ animationDelay: "-5s" }} />
+        {/* Orbiting dot field */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <DotOrbit
+            dotColor="rgba(16, 185, 129, 0.5)"
+            lineColor="rgba(16, 185, 129, 0.07)"
+            density={0.6}
+            speed={0.3}
+            dotSize={1.2}
+            linkDistance={110}
+            opacity={0.7}
+          />
+        </div>
 
         <header className="sticky top-0 z-40 border-b border-dashed border-white/[0.08] bg-[#060606]/80 backdrop-blur-2xl backdrop-saturate-150">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 md:px-10">
