@@ -193,9 +193,10 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
                 <span className="falco-shimmer-accent">You</span> control the deal.
               </h1>
 
-              <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-base leading-7 text-white/40 md:text-lg md:leading-8">
-                FALCO monitors real estate distress signals across Tennessee and
-                assembles the full file so you can act on opportunities in minutes, not days.
+              <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-xl font-light leading-8 tracking-[-0.01em] text-white/50 md:text-2xl md:leading-10">
+                FALCO monitors real estate distress signals across Tennessee
+                and assembles the full file so you can act on opportunities
+                in minutes, not days.
               </p>
             </div>
           </div>
