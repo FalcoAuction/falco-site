@@ -170,10 +170,8 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               </h1>
 
               <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-base leading-7 text-white/40 md:text-lg md:leading-8">
-                FALCO watches distress signals across Tennessee daily, catches foreclosure
-                and pre-foreclosure opportunities before they surface publicly, and
-                assembles the full file — owner, debt, valuation, contact, and
-                a suggested execution path — so investors can decide in minutes, not days.
+                Public distress data is fragmented and slow. FALCO assembles it daily
+                into one clear file per opportunity so you can act in minutes, not days.
               </p>
             </div>
           </div>
