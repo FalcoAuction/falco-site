@@ -194,8 +194,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               </h1>
 
               <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-[15px] uppercase leading-7 tracking-[0.15em] text-white/35 md:text-[16px] md:leading-8">
-                FALCO monitors real estate distress signals across Tennessee daily
-                and assembles the full file so you can act on opportunities in minutes, not days.
+                FALCO handles the sourcing and file assembly. Investors handle the control and exit. More deals, less legwork.
               </p>
             </div>
           </div>
