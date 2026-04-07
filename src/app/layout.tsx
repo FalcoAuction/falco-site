@@ -15,21 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FALCO",
+  title: "FALCO | Find the File. Control the Deal.",
   description:
-    "FALCO - Distress asset intelligence, underwriting, and controlled execution routing.",
+    "FALCO monitors real estate distress signals across Tennessee daily and assembles the full file so you can act on opportunities in minutes, not days.",
   icons: {
     icon: [
-      { url: "/falco-mark-transparent.png", type: "image/png" },
+      { url: "/falco-logo.png", type: "image/png" },
     ],
-    shortcut: "/falco-mark-transparent.png",
-    apple: "/falco-mark-transparent.png",
+    shortcut: "/falco-logo.png",
+    apple: "/falco-logo.png",
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
-    title: "FALCO | Distress Asset Intelligence",
+    title: "FALCO | Find the File. Control the Deal.",
     description:
-      "Controlled distress lead origination, underwriting, and partner-ready opportunity routing.",
+      "Real estate distress intelligence across Tennessee. Sourced daily. Assembled automatically.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FALCO | Distress Asset Intelligence",
+    title: "FALCO | Find the File. Control the Deal.",
     description:
-      "Controlled distress lead origination, underwriting, and partner-ready opportunity routing.",
+      "Real estate distress intelligence across Tennessee. Sourced daily. Assembled automatically.",
     images: ["/opengraph-image"],
   },
 };

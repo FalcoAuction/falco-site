@@ -17,116 +17,153 @@ export default function OpenGraphImage() {
           display: "flex",
           width: "100%",
           height: "100%",
-          background: "#000",
+          background: "#060606",
           color: "#fff",
-          padding: "56px 64px",
-          fontFamily: "Arial, sans-serif",
-          justifyContent: "space-between",
-          alignItems: "stretch",
+          fontFamily: "Inter, system-ui, sans-serif",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Subtle radial glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: -100,
+            left: "50%",
+            width: 800,
+            height: 500,
+            marginLeft: -400,
+            background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Content */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            width: "68%",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              fontSize: 24,
-              letterSpacing: 6,
-              textTransform: "uppercase",
-              opacity: 0.72,
-            }}
-          >
-            Falco
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 82,
-                fontWeight: 700,
-                lineHeight: 1,
-                letterSpacing: -3,
-                maxWidth: 720,
-              }}
-            >
-              Distress Asset Intelligence
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 32,
-                lineHeight: 1.35,
-                color: "rgba(255,255,255,0.76)",
-                maxWidth: 700,
-              }}
-            >
-              Controlled lead origination, underwriting, and partner-ready
-              opportunity routing.
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              flexWrap: "wrap",
-            }}
-          >
-            {["Underwritten Leads", "Private Vault", "Execution Routing"].map((label) => (
-              <div
-                key={label}
-                style={{
-                  display: "flex",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  borderRadius: 999,
-                  padding: "12px 18px",
-                  fontSize: 20,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.72)",
-                }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            width: "26%",
-            alignItems: "center",
             justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            height: "100%",
+            padding: "60px 80px",
+            textAlign: "center",
           }}
         >
+          {/* FALCO wordmark */}
           <div
             style={{
               display: "flex",
-              width: 280,
-              height: 280,
-              borderRadius: "50%",
-              overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "#fff",
-              alignItems: "center",
-              justifyContent: "center",
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: 8,
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.4)",
+              marginBottom: 40,
             }}
           >
-            <img
-              src="https://falco.llc/falco-logo.jpg"
-              alt="FALCO logo"
-              width="220"
-              height="220"
-              style={{ objectFit: "contain" }}
-            />
+            FALCO
+          </div>
+
+          {/* Headline */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                fontSize: 72,
+                fontWeight: 700,
+                lineHeight: 0.9,
+                letterSpacing: -3,
+                color: "#ffffff",
+              }}
+            >
+              FALCO finds the file.
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 72,
+                fontWeight: 700,
+                lineHeight: 0.9,
+                letterSpacing: -3,
+                color: "rgba(16,185,129,0.5)",
+              }}
+            >
+              You control the deal.
+            </div>
+          </div>
+
+          {/* Sub-hero */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: 14,
+              fontWeight: 400,
+              letterSpacing: 4,
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
+              marginTop: 40,
+              maxWidth: 600,
+              textAlign: "center",
+              lineHeight: 1.6,
+            }}
+          >
+            Real estate distress intelligence across Tennessee
+          </div>
+
+          {/* Bottom bar */}
+          <div
+            style={{
+              display: "flex",
+              position: "absolute",
+              bottom: 40,
+              left: 80,
+              right: 80,
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 12,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                color: "rgba(16,185,129,0.5)",
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "rgb(16,185,129)",
+                  display: "flex",
+                }}
+              />
+              Live Pipeline
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 12,
+                letterSpacing: 2,
+                color: "rgba(255,255,255,0.15)",
+              }}
+            >
+              falco.llc
+            </div>
           </div>
         </div>
       </div>
