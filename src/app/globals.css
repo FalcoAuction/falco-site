@@ -294,6 +294,22 @@ body {
 .falco-trace { animation: falcoTrace 4.2s ease-in-out infinite; }
 .falco-signal { animation: falcoSignal 3.8s ease-in-out infinite; }
 
+.falco-shimmer-accent {
+  background-image: linear-gradient(
+    90deg,
+    rgb(var(--falco-accent-rgb)) 0%,
+    rgb(var(--falco-accent-strong-rgb)) 40%,
+    rgb(255 255 255 / 0.9) 50%,
+    rgb(var(--falco-accent-strong-rgb)) 60%,
+    rgb(var(--falco-accent-rgb)) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: falcoShimmer 5s linear infinite;
+}
+
 .falco-shimmer-text {
   background-image: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(52,211,153,0.95) 50%, rgba(255,255,255,1) 100%);
   background-size: 200% 100%;

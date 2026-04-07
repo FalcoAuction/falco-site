@@ -166,7 +166,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
                 FALCO finds the file.
               </h1>
               <h1 className="falco-reveal-2 mt-2 text-5xl font-bold leading-[0.88] tracking-[-0.045em] text-white/30 md:text-[6rem]">
-                You control the deal.
+                <span className="falco-shimmer-accent">You</span> control the deal.
               </h1>
 
               <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-base leading-7 text-white/40 md:text-lg md:leading-8">
