@@ -180,7 +180,7 @@ body {
     transparent 90%,
     transparent 100%
   );
-  animation: falcoOrbitLight 3s linear infinite;
+  animation: falcoOrbitLight 4s linear infinite;
   z-index: -2;
 }
 
@@ -207,13 +207,17 @@ body {
   transition-duration: 100ms;
 }
 
-/* Orbit timing: left starts at 0, right offset by half so the light
-   exits the right edge of left button and enters left edge of right */
+/* Orbit timing: right button offset so light exits right edge of left
+   button and enters left edge of right button seamlessly.
+   3s cycle. Right edge = ~90° = 0.75s. Left edge = ~270° = 2.25s.
+   Offset = 2.25 - 0.75 = 1.5s, but adjusted for visual sync. */
 .falco-orbit-left.falco-accent-button-secondary::before {
+  animation-duration: 4s;
   animation-delay: 0s;
 }
 .falco-orbit-right.falco-accent-button-secondary::before {
-  animation-delay: -1.5s;
+  animation-duration: 4s;
+  animation-delay: -2s;
 }
 
 .falco-accent-surface {

@@ -168,13 +168,13 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             <nav className="flex items-center gap-6 text-sm">
               <Link
                 href="/request-access"
-                className="falco-accent-button-secondary hidden items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition md:inline-flex"
+                className="falco-orbit-left falco-accent-button-secondary hidden items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition md:inline-flex"
               >
                 Request Access
               </Link>
               <Link
                 href="/partner-login"
-                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
+                className="falco-orbit-right falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
               >
                 Partner Login
               </Link>
