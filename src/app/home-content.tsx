@@ -68,6 +68,26 @@ function useScrollReveal() {
   return ref
 }
 
+function LiveClock() {
+  const [time, setTime] = useState("")
+
+  useEffect(() => {
+    function tick() {
+      const now = new Date()
+      setTime(
+        now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
+        "  " +
+        now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })
+      )
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return <span>{time}</span>
+}
+
 function CountUp({ target, duration = 1400 }: { target: number; duration?: number }) {
   const [value, setValue] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
@@ -224,10 +244,13 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
 
         {/* Live pipeline — dashed container */}
         <section className="mx-auto max-w-6xl px-6 py-16 md:px-10">
-          <div className="falco-scroll-reveal text-center">
-            <div className="mb-6 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300/70">
+          <div className="falco-scroll-reveal flex items-center justify-between px-1">
+            <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300/70">
               <span className="falco-pulse inline-block h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
               Live Pipeline
+            </div>
+            <div className="text-[11px] tabular-nums tracking-wide text-white/25">
+              <LiveClock />
             </div>
           </div>
 
