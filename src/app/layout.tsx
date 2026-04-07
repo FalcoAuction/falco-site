@@ -61,13 +61,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <div className="falco-preloader" aria-hidden="true">
-          <div className="falco-preloader-ring" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/falco-logo.png"
             alt=""
-            width={64}
-            height={64}
+            width={120}
+            height={120}
             className="falco-preloader-logo"
           />
         </div>

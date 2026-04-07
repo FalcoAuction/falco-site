@@ -66,14 +66,8 @@ body {
 
 .falco-preloader-logo {
   animation: falcoLogoPulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.falco-preloader-ring {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  animation: falcoLogoGlow 2s ease-in-out forwards;
+  filter: drop-shadow(0 0 40px rgb(var(--falco-accent-rgb) / 0.6))
+          drop-shadow(0 0 80px rgb(var(--falco-accent-rgb) / 0.3));
 }
 
 /* ================================================================
