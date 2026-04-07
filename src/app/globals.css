@@ -207,6 +207,15 @@ body {
   transition-duration: 100ms;
 }
 
+/* Orbit timing: left starts at 0, right offset by half so the light
+   exits the right edge of left button and enters left edge of right */
+.falco-orbit-left.falco-accent-button-secondary::before {
+  animation-delay: 0s;
+}
+.falco-orbit-right.falco-accent-button-secondary::before {
+  animation-delay: -1.5s;
+}
+
 .falco-accent-surface {
   border-color: rgb(var(--falco-accent-rgb) / 0.16);
   background: rgb(var(--falco-accent-rgb) / 0.08);

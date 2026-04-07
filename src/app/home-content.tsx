@@ -327,13 +327,13 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             <div className="mt-8 flex items-center justify-center gap-4">
               <Link
                 href="/partner-login"
-                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
+                className="falco-orbit-left falco-accent-button-secondary inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
               >
                 Enter the Vault
               </Link>
               <Link
                 href="/request-access"
-                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
+                className="falco-orbit-right falco-accent-button-secondary inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
               >
                 Request Access
               </Link>
