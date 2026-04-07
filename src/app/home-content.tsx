@@ -125,50 +125,6 @@ function CountUp({ target, duration = 1400 }: { target: number; duration?: numbe
   return <span ref={ref}>{value}</span>
 }
 
-function ScrambleText({ text, className }: { text: string; className?: string }) {
-  const [display, setDisplay] = useState(text)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
-  const handleMouseEnter = () => {
-    let iteration = 0
-    if (intervalRef.current) clearInterval(intervalRef.current)
-
-    intervalRef.current = setInterval(() => {
-      setDisplay(
-        text
-          .split("")
-          .map((char, i) => {
-            if (char === " ") return " "
-            if (i < iteration) return text[i]
-            return chars[Math.floor(Math.random() * chars.length)]
-          })
-          .join("")
-      )
-      iteration += 1 / 3
-      if (iteration >= text.length) {
-        if (intervalRef.current) clearInterval(intervalRef.current)
-        setDisplay(text)
-      }
-    }, 50)
-  }
-
-  const handleMouseLeave = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setDisplay(text)
-  }
-
-  return (
-    <span
-      className={className}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{ display: "inline-block", minWidth: "fit-content" }}
-    >
-      {display}
-    </span>
-  )
-}
 
 export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
   const scrollRef = useScrollReveal()
@@ -210,14 +166,17 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             </Link>
 
             <nav className="flex items-center gap-6 text-sm">
-              <Link href="/request-access" className="hidden text-[13px] text-white/40 transition hover:text-white/80 md:block">
-                <ScrambleText text="Request Access" />
+              <Link
+                href="/request-access"
+                className="falco-accent-button hidden items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition md:inline-flex"
+              >
+                Request Access
               </Link>
               <Link
                 href="/partner-login"
-                className="falco-accent-button inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
+                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
               >
-                <ScrambleText text="Partner Login" />
+                Partner Login
               </Link>
             </nav>
           </div>
@@ -367,15 +326,15 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
             <div className="mt-8 flex items-center justify-center gap-4">
               <Link
                 href="/partner-login"
-                className="falco-accent-button inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
+                className="falco-accent-button-secondary inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
               >
-                <ScrambleText text="Enter the Vault" />
+                Enter the Vault
               </Link>
               <Link
                 href="/request-access"
-                className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[13px] font-medium text-white/70 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white"
+                className="falco-accent-button inline-flex items-center justify-center rounded-full px-7 py-3 text-[13px] font-semibold transition"
               >
-                <ScrambleText text="Request Access" />
+                Request Access
               </Link>
             </div>
           </div>
@@ -388,8 +347,8 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               FALCO
             </div>
             <div className="flex items-center gap-6 text-[11px] text-white/25">
-              <Link href="/partner-login" className="transition hover:text-white/50"><ScrambleText text="Vault" /></Link>
-              <Link href="/request-access" className="transition hover:text-white/50"><ScrambleText text="Access" /></Link>
+              <Link href="/partner-login" className="transition hover:text-white/50">Vault</Link>
+              <Link href="/request-access" className="transition hover:text-white/50">Access</Link>
               <span className="text-white/12">falco.llc</span>
             </div>
           </div>

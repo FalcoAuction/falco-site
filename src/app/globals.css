@@ -121,115 +121,85 @@ body {
   box-shadow: 0 12px 40px rgb(var(--falco-accent-rgb) / 0.08);
 }
 
-/* ── Primary: emerald with sweeping light beam on hover ── */
-@keyframes falcoLightSweep {
-  0% { transform: translateX(-100%) skewX(-20deg); }
-  100% { transform: translateX(250%) skewX(-20deg); }
-}
-
+/* ── Primary (Request Access): clean solid button ── */
 .falco-accent-button {
   position: relative;
-  background: rgb(var(--falco-accent-rgb) / 0.96);
-  color: var(--falco-accent-ink);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 18px 55px rgb(var(--falco-accent-rgb) / 0.16);
-  transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(255 255 255 / 0.92);
+  color: #0a0a0a;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
-.falco-accent-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(255 255 255 / 0.35) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%) skewX(-20deg);
-  pointer-events: none;
-}
-
 .falco-accent-button:hover {
-  background: rgb(var(--falco-accent-strong-rgb) / 0.96);
+  background: rgb(255 255 255 / 1);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 22px 65px rgb(var(--falco-accent-rgb) / 0.28);
-  transform: translateY(-2px);
-}
-
-.falco-accent-button:hover::before {
-  animation: falcoLightSweep 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    0 1px 3px rgb(0 0 0 / 0.2),
+    0 12px 40px rgb(255 255 255 / 0.08);
+  transform: translateY(-1px);
 }
 
 .falco-accent-button:active {
   transform: translateY(0) scale(0.98);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 8px 30px rgb(var(--falco-accent-rgb) / 0.12);
   transition-duration: 100ms;
 }
 
-/* ── Secondary: dark with emerald glow bloom on hover ── */
-@keyframes falcoGlowPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+/* ── Secondary (Partner Login): orbiting emerald light on border ── */
+@keyframes falcoOrbitLight {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .falco-accent-button-secondary {
   position: relative;
-  border-color: rgb(255 255 255 / 0.10);
-  background: rgb(255 255 255 / 0.04);
-  color: rgb(255 255 255 / 0.70);
-  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  background: rgb(255 255 255 / 0.03);
+  color: rgb(255 255 255 / 0.80);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  isolation: isolate;
 }
 
+/* Orbiting light — sits behind content via z-index */
 .falco-accent-button-secondary::before {
   content: "";
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgb(var(--falco-accent-rgb) / 0.15) 0%,
-    transparent 70%
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  margin-top: -100%;
+  margin-left: -100%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 70%,
+    rgb(var(--falco-accent-rgb)) 78%,
+    rgb(var(--falco-accent-strong-rgb)) 82%,
+    transparent 90%,
+    transparent 100%
   );
-  opacity: 0;
-  transition: opacity 400ms ease;
-  pointer-events: none;
+  animation: falcoOrbitLight 3s linear infinite;
+  z-index: -2;
 }
 
+/* Inner fill to mask the conic gradient — only border edge shows */
 .falco-accent-button-secondary::after {
   content: "";
   position: absolute;
-  inset: -1px;
+  inset: 1px;
   border-radius: inherit;
-  border: 1px solid rgb(var(--falco-accent-rgb) / 0.3);
-  opacity: 0;
-  transition: opacity 400ms ease;
-  pointer-events: none;
+  background: #0a0a0a;
+  z-index: -1;
 }
 
 .falco-accent-button-secondary:hover {
-  border-color: transparent;
-  color: rgb(var(--falco-accent-strong-rgb));
-  transform: translateY(-2px);
+  color: rgb(255 255 255 / 1);
   box-shadow:
-    0 0 40px rgb(var(--falco-accent-rgb) / 0.12),
-    0 0 80px rgb(var(--falco-accent-rgb) / 0.06);
-}
-
-.falco-accent-button-secondary:hover::before {
-  opacity: 1;
-}
-
-.falco-accent-button-secondary:hover::after {
-  opacity: 1;
-  animation: falcoGlowPulse 2s ease-in-out infinite;
+    0 0 30px rgb(var(--falco-accent-rgb) / 0.15),
+    0 0 60px rgb(var(--falco-accent-rgb) / 0.06);
+  transform: translateY(-1px);
 }
 
 .falco-accent-button-secondary:active {

@@ -64,10 +64,10 @@ export default function RootLayout({
           <div className="falco-preloader-ring" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/falco-mark-transparent.png"
+            src="/falco-logo.png"
             alt=""
-            width={56}
-            height={56}
+            width={64}
+            height={64}
             className="falco-preloader-logo"
           />
         </div>
