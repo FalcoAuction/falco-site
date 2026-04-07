@@ -318,8 +318,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               See what the pipeline is surfacing.
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-white/45 leading-7">
-              {metrics.packetsInVault} live listings across Tennessee.
-              Owner contact, debt data, valuation, and a suggested execution lane on every file.
+              Full files ready for investor review. Gated access. Controlled routing.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-4">
