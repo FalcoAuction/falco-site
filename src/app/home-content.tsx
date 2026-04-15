@@ -218,7 +218,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
                 { label: "Counties Sourced", value: metrics.activeCounties, note: "Active coverage" },
                 { label: "Leads Tracked", value: metrics.trackedLeads, note: "In pipeline now" },
                 { label: "Vault Listings", value: metrics.packetsInVault, note: "Packeted and live" },
-                { label: "Auction Ready", value: metrics.greenReady, note: "Fully qualified" },
+                { label: "Ready to Call", value: metrics.greenReady, note: "Full file, dial now" },
               ].map((m) => (
                 <div key={m.label} className="falco-scroll-reveal falco-glow-border rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-5 transition duration-300 hover:-translate-y-1">
                   <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.22em] text-white/35">

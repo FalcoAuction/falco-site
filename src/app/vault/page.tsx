@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react"
 type VaultListingStatus = "active" | "claimed" | "expired"
 type VaultSegment = "top" | "secondary"
 type VaultStage = "all" | "foreclosure" | "pre_foreclosure"
-type VaultReadinessFilter = "all" | "GREEN" | "YELLOW" | "OTHER"
+type VaultReadinessFilter = "all" | "READY_TO_CALL" | "REVIEW_FIRST" | "OTHER"
 type VaultContactFilter = "all" | "ready" | "not_ready"
 
 type VaultListing = {
@@ -163,9 +163,22 @@ function statusClasses(status: VaultListingStatus) {
 }
 
 function readinessClasses(readiness?: string) {
-  if (readiness === "GREEN") return "text-emerald-200"
-  if (readiness === "YELLOW" || readiness === "PARTIAL") return "text-amber-200"
+  if (readiness === "READY_TO_CALL" || readiness === "GREEN") return "text-emerald-200"
+  if (readiness === "REVIEW_FIRST" || readiness === "EARLY_STAGE" || readiness === "YELLOW" || readiness === "PARTIAL") return "text-amber-200"
   return "text-white/70"
+}
+
+function readinessLabel(readiness?: string) {
+  if (readiness === "READY_TO_CALL") return "Ready to Call"
+  if (readiness === "REVIEW_FIRST") return "Review First"
+  if (readiness === "EARLY_STAGE") return "Early Stage"
+  if (readiness === "MONITOR") return "Monitor"
+  // Legacy fallbacks
+  if (readiness === "GREEN") return "Ready to Call"
+  if (readiness === "YELLOW") return "Review First"
+  if (readiness === "PARTIAL") return "Early Stage"
+  if (readiness === "RED") return "Monitor"
+  return readiness || "Unknown"
 }
 
 function routingStateCopy(state?: VaultListing["routingState"]) {
@@ -251,7 +264,7 @@ function ListingCard({ listing }: { listing: VaultListing }) {
             </div>
           ) : null}
           <div className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${readinessClasses(listing.auctionReadiness)} border-white/10 bg-white/5`}>
-            {listing.auctionReadiness || "?"}
+            {readinessLabel(listing.auctionReadiness)}
           </div>
         </div>
         <div className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] ${statusClasses(listing.status)}`}>
@@ -470,7 +483,7 @@ export default function VaultPage() {
         const readiness = listing.auctionReadiness?.toUpperCase()
 
         if (readinessFilter === "OTHER") {
-          if (readiness === "GREEN" || readiness === "YELLOW") return false
+          if (readiness === "GREEN" || readiness === "YELLOW" || readiness === "READY_TO_CALL" || readiness === "REVIEW_FIRST") return false
         } else if (readiness !== readinessFilter) {
           return false
         }
@@ -769,8 +782,8 @@ export default function VaultPage() {
                 className="rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
               >
                 <option value="all">All Readiness</option>
-                <option value="GREEN">GREEN</option>
-                <option value="YELLOW">YELLOW</option>
+                <option value="READY_TO_CALL">Ready to Call</option>
+                <option value="REVIEW_FIRST">Review First</option>
                 <option value="OTHER">Other</option>
               </select>
 

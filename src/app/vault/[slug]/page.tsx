@@ -162,9 +162,21 @@ async function loadApprovalSession() {
 }
 
 function readinessClasses(readiness?: string) {
-  if (readiness === "GREEN") return "text-emerald-200"
-  if (readiness === "YELLOW" || readiness === "PARTIAL") return "text-amber-200"
+  if (readiness === "READY_TO_CALL" || readiness === "GREEN") return "text-emerald-200"
+  if (readiness === "REVIEW_FIRST" || readiness === "EARLY_STAGE" || readiness === "YELLOW" || readiness === "PARTIAL") return "text-amber-200"
   return "text-white/70"
+}
+
+function readinessLabel(readiness?: string) {
+  if (readiness === "READY_TO_CALL") return "Ready to Call"
+  if (readiness === "REVIEW_FIRST") return "Review First"
+  if (readiness === "EARLY_STAGE") return "Early Stage"
+  if (readiness === "MONITOR") return "Monitor"
+  if (readiness === "GREEN") return "Ready to Call"
+  if (readiness === "YELLOW") return "Review First"
+  if (readiness === "PARTIAL") return "Early Stage"
+  if (readiness === "RED") return "Monitor"
+  return readiness || "Unknown"
 }
 
 function routingStateCopy(state: VaultRoutingState) {
@@ -995,7 +1007,7 @@ export default function VaultListingPage() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">Screening Status</div>
                 <div className={`mt-2 text-sm font-medium ${readinessClasses(listing.auctionReadiness)}`}>
-                  {listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : listing.auctionReadiness || "-"}
+                  {listing.validationOutcome ? validationOutcomeCopy(listing.validationOutcome) : readinessLabel(listing.auctionReadiness)}
                 </div>
               </div>
 
