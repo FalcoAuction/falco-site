@@ -286,7 +286,7 @@ function mapRowToVaultListing(
     typeof overlay?.contactReady === "boolean"
       ? overlay.contactReady
       : typeof auctionReadiness === "string"
-      ? auctionReadiness.toUpperCase() === "GREEN"
+      ? auctionReadiness.toUpperCase() === "GREEN" || auctionReadiness.toUpperCase() === "READY_TO_CALL"
       : false
   // Supabase is the source of truth for vault activeness; local overlays only
   // enrich the row with packet metadata and underwriting detail.

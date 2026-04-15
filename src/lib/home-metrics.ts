@@ -60,7 +60,7 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
   // GREEN count from actual vault listings, not operator report
   const greenReady = activeListings.filter((listing) => {
     const r = String(listing.auctionReadiness ?? "").toUpperCase()
-    return r === "GREEN"
+    return r === "READY_TO_CALL" || r === "GREEN"
   }).length
 
   // Vault count from actual active listings
