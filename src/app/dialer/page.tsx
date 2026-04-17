@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { requireDialerSession } from "./require-session"
 import { listDialerLeads, STATUS_LABELS, type DialerLead } from "@/lib/dialer-data"
+import { PhoneLink } from "./phone-link"
 
 export const dynamic = "force-dynamic"
 
@@ -172,13 +173,11 @@ export default async function DialerQueuePage({
                     </div>
                     <div className="text-xs text-white/75 sm:self-center">
                       {phone ? (
-                        <a
-                          href={`tel:${phone.replace(/\D/g, "")}`}
-                          onClick={(e) => e.stopPropagation()}
+                        <PhoneLink
+                          number={phone}
+                          display={fmtPhone(phone)}
                           className="text-emerald-300 hover:underline"
-                        >
-                          {fmtPhone(phone)}
-                        </a>
+                        />
                       ) : (
                         <span className="text-white/35">no phone</span>
                       )}
