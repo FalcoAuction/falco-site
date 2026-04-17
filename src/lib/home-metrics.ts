@@ -34,37 +34,40 @@ export async function getHomeMetrics(): Promise<HomeMetrics> {
     getOperatorReport().catch(() => null),
   ])
 
-  // Active vault listings are the source of truth for vault metrics
+  // Active vault listings (used as a fallback / floor for vault count)
   const activeListings = vaultListings.filter(
     (listing) => listing.status === "active"
   )
 
-  // Counties: merge all sources
-  const allCountySources = [
-    ...(operatorReport?.autonomy?.marketAllocation?.counties
-      ?.map((row) => row.county)
-      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []),
-    ...(operatorReport?.recentLeads
-      ?.map((lead) => lead.county)
-      .filter((value): value is string => typeof value === "string" && value.trim().length > 0) ?? []),
-    ...activeListings.map((listing) => listing.county),
-  ]
+  // Counties: FALCO monitors all 95 TN counties continuously. Show that —
+  // not just the subset that produced leads in the last report window.
+  // This can be overridden via FALCO_MONITORED_COUNTIES env var if we
+  // expand outside TN.
+  const monitoredCountiesEnv = Number(process.env.FALCO_MONITORED_COUNTIES ?? "")
+  const activeCounties = Number.isFinite(monitoredCountiesEnv) && monitoredCountiesEnv > 0
+    ? Math.floor(monitoredCountiesEnv)
+    : 95
 
-  const activeCounties = allCountySources.length > 0
-    ? uniqueCount(allCountySources)
-    : 0
-
-  // Total leads from operator report (pipeline-wide), fallback to listing count
+  // Total leads — operator_report.overview is the authoritative pipeline-wide
+  // count. Fall back to the vault listing count if the report is missing.
   const trackedLeads = operatorReport?.overview.totalLeads ?? activeListings.length
 
-  // GREEN count from actual vault listings, not operator report
-  const greenReady = activeListings.filter((listing) => {
+  // Ready-to-call: prefer the bot-side count (which sees every lead in the DB
+  // BEFORE the vault sync's top-tier-ready demotion). Fall back to the vault
+  // count tagged READY_TO_CALL (post-demotion). The bot-side number is the
+  // honest "leads operationally ready to dial today" metric.
+  const reportGreenReady = operatorReport?.overview.greenReady ?? 0
+  const vaultGreenReady = activeListings.filter((listing) => {
     const r = String(listing.auctionReadiness ?? "").toUpperCase()
     return r === "READY_TO_CALL" || r === "GREEN"
   }).length
+  const greenReady = Math.max(reportGreenReady, vaultGreenReady)
 
-  // Vault count from actual active listings
-  const packetsInVault = activeListings.length
+  // Vault count — prefer the report's vaultLive count (which reflects everything
+  // the bot pushed, before any Supabase-side filtering). Fall back to active
+  // Supabase listings.
+  const reportVaultLive = operatorReport?.overview.vaultLive ?? 0
+  const packetsInVault = Math.max(reportVaultLive, activeListings.length)
 
   const approvedEmails = approvalsResult.error
     ? []
