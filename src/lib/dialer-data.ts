@@ -1,0 +1,423 @@
+import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
+import {
+  listActiveVaultListings,
+  findVaultListing,
+  type VaultListing,
+} from "@/lib/vault-listings"
+
+export type DialerStatus =
+  | "new"
+  | "attempting_contact"
+  | "rpc_made"
+  | "parkes_booked"
+  | "listing_signed"
+  | "auction_live"
+  | "closed_won"
+  | "closed_lost"
+
+export type DialerNextAction =
+  | "call"
+  | "text"
+  | "wait_callback"
+  | "hand_to_parkes"
+  | "drop"
+  | "none"
+
+export type DialerChannel = "call" | "text" | "voicemail" | "email" | "note"
+
+export type DialerOutcome =
+  | "connected"
+  | "voicemail_left"
+  | "no_answer"
+  | "wrong_number"
+  | "hung_up"
+  | "booked"
+  | "callback_requested"
+  | "not_interested"
+  | "do_not_call"
+  | "note_only"
+
+export type DialerWorkflow = {
+  listingSlug: string
+  status: DialerStatus
+  nextAction: DialerNextAction
+  nextActionAt?: string | null
+  parkesCallAt?: string | null
+  closedLostReason?: string | null
+  summaryNotes: string
+  lastContactAt?: string | null
+  attemptCount: number
+  rpcCount: number
+  updatedBy: string
+  updatedAt: string
+  createdAt: string
+}
+
+export type DialerActivity = {
+  id: string
+  listingSlug: string
+  occurredAt: string
+  channel: DialerChannel
+  outcome: DialerOutcome
+  notes: string
+  nextAction?: DialerNextAction | null
+  nextActionAt?: string | null
+  createdBy: string
+  createdAt: string
+}
+
+export type DialerLead = VaultListing & {
+  workflow: DialerWorkflow
+  recentActivities: DialerActivity[]
+}
+
+const DEFAULT_WORKFLOW = (slug: string): DialerWorkflow => ({
+  listingSlug: slug,
+  status: "new",
+  nextAction: "call",
+  nextActionAt: null,
+  parkesCallAt: null,
+  closedLostReason: null,
+  summaryNotes: "",
+  lastContactAt: null,
+  attemptCount: 0,
+  rpcCount: 0,
+  updatedBy: "",
+  updatedAt: new Date(0).toISOString(),
+  createdAt: new Date(0).toISOString(),
+})
+
+type WorkflowRow = {
+  listing_slug: string
+  status: DialerStatus
+  next_action: DialerNextAction
+  next_action_at: string | null
+  parkes_call_at: string | null
+  closed_lost_reason: string | null
+  summary_notes: string
+  last_contact_at: string | null
+  attempt_count: number
+  rpc_count: number
+  updated_by: string
+  updated_at: string
+  created_at: string
+}
+
+type ActivityRow = {
+  id: string
+  listing_slug: string
+  occurred_at: string
+  channel: DialerChannel
+  outcome: DialerOutcome
+  notes: string
+  next_action: DialerNextAction | null
+  next_action_at: string | null
+  created_by: string
+  created_at: string
+}
+
+function rowToWorkflow(row: WorkflowRow): DialerWorkflow {
+  return {
+    listingSlug: row.listing_slug,
+    status: row.status,
+    nextAction: row.next_action,
+    nextActionAt: row.next_action_at,
+    parkesCallAt: row.parkes_call_at,
+    closedLostReason: row.closed_lost_reason,
+    summaryNotes: row.summary_notes ?? "",
+    lastContactAt: row.last_contact_at,
+    attemptCount: row.attempt_count ?? 0,
+    rpcCount: row.rpc_count ?? 0,
+    updatedBy: row.updated_by ?? "",
+    updatedAt: row.updated_at,
+    createdAt: row.created_at,
+  }
+}
+
+function rowToActivity(row: ActivityRow): DialerActivity {
+  return {
+    id: row.id,
+    listingSlug: row.listing_slug,
+    occurredAt: row.occurred_at,
+    channel: row.channel,
+    outcome: row.outcome,
+    notes: row.notes ?? "",
+    nextAction: row.next_action,
+    nextActionAt: row.next_action_at,
+    createdBy: row.created_by ?? "",
+    createdAt: row.created_at,
+  }
+}
+
+export async function listAllWorkflows(): Promise<Map<string, DialerWorkflow>> {
+  const map = new Map<string, DialerWorkflow>()
+  if (!supabaseAdmin) {
+    console.error("listAllWorkflows:", supabaseAdminConfigError)
+    return map
+  }
+  const { data, error } = await supabaseAdmin
+    .from("dialer_lead_workflow")
+    .select("*")
+  if (error) {
+    if (error.code === "42P01") return map // table missing — empty state
+    console.error("listAllWorkflows error:", error.message)
+    return map
+  }
+  for (const row of (data ?? []) as WorkflowRow[]) {
+    map.set(row.listing_slug, rowToWorkflow(row))
+  }
+  return map
+}
+
+export async function getWorkflow(slug: string): Promise<DialerWorkflow> {
+  if (!supabaseAdmin) return DEFAULT_WORKFLOW(slug)
+  const { data, error } = await supabaseAdmin
+    .from("dialer_lead_workflow")
+    .select("*")
+    .eq("listing_slug", slug)
+    .maybeSingle()
+  if (error && error.code !== "PGRST116" && error.code !== "42P01") {
+    console.error("getWorkflow error:", error.message)
+  }
+  if (!data) return DEFAULT_WORKFLOW(slug)
+  return rowToWorkflow(data as WorkflowRow)
+}
+
+export async function listActivities(
+  slug: string,
+  limit = 100
+): Promise<DialerActivity[]> {
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from("dialer_activities")
+    .select("*")
+    .eq("listing_slug", slug)
+    .order("occurred_at", { ascending: false })
+    .limit(limit)
+  if (error) {
+    if (error.code === "42P01") return []
+    console.error("listActivities error:", error.message)
+    return []
+  }
+  return ((data ?? []) as ActivityRow[]).map(rowToActivity)
+}
+
+export async function listAllRecentActivities(limit = 200): Promise<DialerActivity[]> {
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from("dialer_activities")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  if (error) {
+    if (error.code === "42P01") return []
+    console.error("listAllRecentActivities error:", error.message)
+    return []
+  }
+  return ((data ?? []) as ActivityRow[]).map(rowToActivity)
+}
+
+export type WorkflowUpdate = {
+  status?: DialerStatus
+  nextAction?: DialerNextAction
+  nextActionAt?: string | null
+  parkesCallAt?: string | null
+  closedLostReason?: string | null
+  summaryNotes?: string
+  updatedBy: string
+  // counters managed by activity inserts, not directly settable from update endpoint
+}
+
+export async function upsertWorkflow(
+  slug: string,
+  patch: WorkflowUpdate
+): Promise<DialerWorkflow | null> {
+  if (!supabaseAdmin) return null
+  const existing = await getWorkflow(slug)
+  const merged = {
+    listing_slug: slug,
+    status: patch.status ?? existing.status,
+    next_action: patch.nextAction ?? existing.nextAction,
+    next_action_at:
+      patch.nextActionAt !== undefined ? patch.nextActionAt : existing.nextActionAt ?? null,
+    parkes_call_at:
+      patch.parkesCallAt !== undefined ? patch.parkesCallAt : existing.parkesCallAt ?? null,
+    closed_lost_reason:
+      patch.closedLostReason !== undefined
+        ? patch.closedLostReason
+        : existing.closedLostReason ?? null,
+    summary_notes:
+      patch.summaryNotes !== undefined ? patch.summaryNotes : existing.summaryNotes ?? "",
+    last_contact_at: existing.lastContactAt ?? null,
+    attempt_count: existing.attemptCount ?? 0,
+    rpc_count: existing.rpcCount ?? 0,
+    updated_by: patch.updatedBy || existing.updatedBy || "",
+    updated_at: new Date().toISOString(),
+  }
+  const { data, error } = await supabaseAdmin
+    .from("dialer_lead_workflow")
+    .upsert(merged, { onConflict: "listing_slug" })
+    .select("*")
+    .single()
+  if (error) {
+    console.error("upsertWorkflow error:", error.message)
+    return null
+  }
+  return rowToWorkflow(data as WorkflowRow)
+}
+
+export type ActivityInput = {
+  listingSlug: string
+  channel: DialerChannel
+  outcome: DialerOutcome
+  notes?: string
+  nextAction?: DialerNextAction | null
+  nextActionAt?: string | null
+  createdBy: string
+  occurredAt?: string
+}
+
+/** Insert an activity AND update workflow rollups (last_contact_at, attempt_count, rpc_count). */
+export async function recordActivity(input: ActivityInput): Promise<DialerActivity | null> {
+  if (!supabaseAdmin) return null
+  const occurredAt = input.occurredAt ?? new Date().toISOString()
+  const insert = {
+    listing_slug: input.listingSlug,
+    occurred_at: occurredAt,
+    channel: input.channel,
+    outcome: input.outcome,
+    notes: input.notes ?? "",
+    next_action: input.nextAction ?? null,
+    next_action_at: input.nextActionAt ?? null,
+    created_by: input.createdBy ?? "",
+  }
+  const { data, error } = await supabaseAdmin
+    .from("dialer_activities")
+    .insert(insert)
+    .select("*")
+    .single()
+  if (error) {
+    console.error("recordActivity error:", error.message)
+    return null
+  }
+  const row = data as ActivityRow
+
+  // Roll up onto workflow row
+  const existing = await getWorkflow(input.listingSlug)
+  const isAttempt = input.channel !== "note"
+  const isRpc = input.outcome === "connected" || input.outcome === "booked"
+  const newStatus: DialerStatus = (() => {
+    if (input.outcome === "do_not_call" || input.outcome === "not_interested") {
+      return "closed_lost"
+    }
+    if (input.outcome === "booked") return "parkes_booked"
+    if (existing.status === "new" && isAttempt) return "attempting_contact"
+    if (existing.status === "attempting_contact" && isRpc) return "rpc_made"
+    return existing.status
+  })()
+  const newAttempt = existing.attemptCount + (isAttempt ? 1 : 0)
+  const newRpc = existing.rpcCount + (isRpc ? 1 : 0)
+  const merged = {
+    listing_slug: input.listingSlug,
+    status: newStatus,
+    next_action: input.nextAction ?? existing.nextAction,
+    next_action_at:
+      input.nextActionAt !== undefined ? input.nextActionAt : existing.nextActionAt ?? null,
+    parkes_call_at:
+      input.outcome === "booked" && input.nextActionAt
+        ? input.nextActionAt
+        : existing.parkesCallAt ?? null,
+    closed_lost_reason: existing.closedLostReason ?? null,
+    summary_notes: existing.summaryNotes ?? "",
+    last_contact_at: occurredAt,
+    attempt_count: newAttempt,
+    rpc_count: newRpc,
+    updated_by: input.createdBy ?? existing.updatedBy ?? "",
+    updated_at: new Date().toISOString(),
+  }
+  await supabaseAdmin
+    .from("dialer_lead_workflow")
+    .upsert(merged, { onConflict: "listing_slug" })
+
+  return rowToActivity(row)
+}
+
+/** Fetch all active leads with their workflow joined. Sorted by sale-date proximity. */
+export async function listDialerLeads(): Promise<DialerLead[]> {
+  const [listings, workflows] = await Promise.all([
+    listActiveVaultListings(),
+    listAllWorkflows(),
+  ])
+  const enriched: DialerLead[] = listings.map((listing) => {
+    const workflow = workflows.get(listing.slug) ?? DEFAULT_WORKFLOW(listing.slug)
+    return {
+      ...listing,
+      workflow,
+      recentActivities: [],
+    }
+  })
+  enriched.sort((a, b) => {
+    const aSale = a.currentSaleDate || ""
+    const bSale = b.currentSaleDate || ""
+    if (aSale && bSale) return aSale.localeCompare(bSale)
+    if (aSale) return -1
+    if (bSale) return 1
+    return a.title.localeCompare(b.title)
+  })
+  return enriched
+}
+
+export async function getDialerLead(slug: string): Promise<DialerLead | null> {
+  const [listing, workflow, activities] = await Promise.all([
+    findVaultListing(slug),
+    getWorkflow(slug),
+    listActivities(slug, 200),
+  ])
+  if (!listing) return null
+  return {
+    ...listing,
+    workflow,
+    recentActivities: activities,
+  }
+}
+
+export const STATUS_LABELS: Record<DialerStatus, string> = {
+  new: "New",
+  attempting_contact: "Attempting Contact",
+  rpc_made: "Right-Party Contact",
+  parkes_booked: "Booked w/ Parkes",
+  listing_signed: "Listing Signed",
+  auction_live: "Auction Live",
+  closed_won: "Closed — Won",
+  closed_lost: "Closed — Lost",
+}
+
+export const NEXT_ACTION_LABELS: Record<DialerNextAction, string> = {
+  call: "Call",
+  text: "Text",
+  wait_callback: "Wait for Callback",
+  hand_to_parkes: "Hand to Parkes",
+  drop: "Drop",
+  none: "None",
+}
+
+export const CHANNEL_LABELS: Record<DialerChannel, string> = {
+  call: "Call",
+  text: "Text",
+  voicemail: "Voicemail",
+  email: "Email",
+  note: "Note",
+}
+
+export const OUTCOME_LABELS: Record<DialerOutcome, string> = {
+  connected: "Connected (live conversation)",
+  voicemail_left: "Voicemail left",
+  no_answer: "No answer",
+  wrong_number: "Wrong number",
+  hung_up: "Hung up",
+  booked: "Booked Parkes call",
+  callback_requested: "Callback requested",
+  not_interested: "Not interested",
+  do_not_call: "Do not call",
+  note_only: "Internal note (no contact attempt)",
+}
