@@ -126,6 +126,32 @@ export const CHANNEL_LABELS: Record<DialerChannel, string> = {
   note: "Note",
 }
 
+/** Friendly label + category for a raw distress_type value. Pure function, client-safe. */
+export function distressTypeLabel(raw: string | null | undefined): {
+  label: string
+  category: "lis_pendens" | "pre_foreclosure" | "foreclosure" | "fsbo" | "other"
+} {
+  const v = String(raw ?? "").trim().toUpperCase()
+  if (v === "LIS_PENDENS") return { label: "Lis Pendens", category: "lis_pendens" }
+  if (v === "SOT" || v === "SUBSTITUTION_OF_TRUSTEE") {
+    return { label: "Pre-Foreclosure (SOT)", category: "pre_foreclosure" }
+  }
+  if (v === "NOD" || v === "NOTICE_OF_DEFAULT") {
+    return { label: "Pre-Foreclosure (NOD)", category: "pre_foreclosure" }
+  }
+  if (v === "PREFORECLOSURE" || v === "PRE_FORECLOSURE") {
+    return { label: "Pre-Foreclosure", category: "pre_foreclosure" }
+  }
+  if (v === "FORECLOSURE") return { label: "Foreclosure", category: "foreclosure" }
+  if (v === "FSBO") return { label: "FSBO", category: "fsbo" }
+  return {
+    label: v
+      ? v.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+      : "—",
+    category: "other",
+  }
+}
+
 export const OUTCOME_LABELS: Record<DialerOutcome, string> = {
   connected: "Connected (live conversation)",
   voicemail_left: "Voicemail left",

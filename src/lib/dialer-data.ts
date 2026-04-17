@@ -4,6 +4,11 @@ import {
   findVaultListing,
   type VaultListing,
 } from "@/lib/vault-listings"
+import {
+  loadDialerInventory,
+  findDialerInventoryLead,
+  type DialerInventoryLead,
+} from "@/lib/dialer-inventory"
 import type {
   DialerStatus,
   DialerNextAction,
@@ -305,12 +310,75 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
   return rowToActivity(row)
 }
 
-/** Fetch all active leads with their workflow joined. Sorted by sale-date proximity. */
+/** Convert an inventory lead to the VaultListing-shaped object the UI expects. */
+function inventoryToListing(inv: DialerInventoryLead): VaultListing {
+  const auctionWindow =
+    inv.dtsDays !== null && inv.dtsDays !== undefined
+      ? `${Math.max(0, Math.round(inv.dtsDays))} Days`
+      : inv.distressType === "PREFORECLOSURE" || inv.distressType === "LIS_PENDENS"
+      ? "Pre-Foreclosure"
+      : "Confidential"
+
+  return {
+    slug: inv.key,
+    title: inv.address || `${inv.county || "Lead"}`,
+    address: inv.address || undefined,
+    market: `${inv.county || "Unknown County"}, ${inv.state || "TN"}`,
+    county: inv.county || "",
+    status: "active",
+    distressType: inv.distressType || "",
+    auctionWindow,
+    summary: "",
+    publicTeaser: "",
+    packetUrl: inv.packetUrl || "",
+    packetLabel: inv.packetLabel || "",
+    sourceLeadKey: inv.leadKey,
+    createdAt: inv.firstSeenAt || new Date().toISOString(),
+    falcoScore: inv.falcoScore ?? null,
+    auctionReadiness: inv.auctionReadiness || undefined,
+    equityBand: inv.equityBand || undefined,
+    dtsDays: inv.dtsDays ?? null,
+    currentSaleDate: inv.currentSaleDate || undefined,
+    originalSaleDate: inv.originalSaleDate || undefined,
+    contactReady: Boolean(inv.ownerPhonePrimary || inv.ownerPhoneSecondary),
+    ownerName: inv.ownerName || undefined,
+    ownerMail: inv.ownerMail || undefined,
+    ownerPhonePrimary: inv.ownerPhonePrimary || undefined,
+    ownerPhoneSecondary: inv.ownerPhoneSecondary || undefined,
+    ownerPhoneDncStatus: inv.ownerPhoneDncStatus || undefined,
+    saleControllerName: inv.saleControllerName || undefined,
+    saleControllerPhonePrimary: inv.saleControllerPhonePrimary || undefined,
+    trusteePhonePublic: inv.trusteePhonePublic || undefined,
+    noticePhone: inv.noticePhone || undefined,
+    lastSaleDate: inv.lastSaleDate || undefined,
+    mortgageDate: inv.mortgageDate || undefined,
+    mortgageLender: inv.mortgageLender || undefined,
+    mortgageAmount: inv.mortgageAmount ?? null,
+    yearBuilt: inv.yearBuilt ?? null,
+    buildingAreaSqft: inv.buildingAreaSqft ?? null,
+    beds: inv.beds ?? null,
+    baths: inv.baths ?? null,
+  }
+}
+
+/** Fetch all actionable leads with their workflow joined. Sorted by sale-date proximity. */
 export async function listDialerLeads(): Promise<DialerLead[]> {
-  const [listings, workflows] = await Promise.all([
+  // Try the dialer inventory snapshot first — this is the full set of actionable
+  // leads from the bot's DB (including those without packets). Falls back to the
+  // vault listings if the snapshot isn't available.
+  const [snapshot, vaultListings, workflows] = await Promise.all([
+    loadDialerInventory(),
     listActiveVaultListings(),
     listAllWorkflows(),
   ])
+
+  let listings: VaultListing[]
+  if (snapshot && snapshot.leads.length > 0) {
+    listings = snapshot.leads.map(inventoryToListing)
+  } else {
+    listings = vaultListings
+  }
+
   const enriched: DialerLead[] = listings.map((listing) => {
     const workflow = workflows.get(listing.slug) ?? DEFAULT_WORKFLOW(listing.slug)
     return {
@@ -319,22 +387,38 @@ export async function listDialerLeads(): Promise<DialerLead[]> {
       recentActivities: [],
     }
   })
+
   enriched.sort((a, b) => {
     const aSale = a.currentSaleDate || ""
     const bSale = b.currentSaleDate || ""
     if (aSale && bSale) return aSale.localeCompare(bSale)
     if (aSale) return -1
     if (bSale) return 1
-    return a.title.localeCompare(b.title)
+    return (a.title || "").localeCompare(b.title || "")
   })
   return enriched
 }
 
-export async function getDialerLead(slug: string): Promise<DialerLead | null> {
+export async function getDialerLead(key: string): Promise<DialerLead | null> {
+  // Try inventory first (covers full actionable set), then fall back to vault.
+  const invLead = await findDialerInventoryLead(key)
+  if (invLead) {
+    const [workflow, activities] = await Promise.all([
+      getWorkflow(invLead.key),
+      listActivities(invLead.key, 200),
+    ])
+    return {
+      ...inventoryToListing(invLead),
+      workflow,
+      recentActivities: activities,
+    }
+  }
+
+  // Fallback: classic vault lookup
   const [listing, workflow, activities] = await Promise.all([
-    findVaultListing(slug),
-    getWorkflow(slug),
-    listActivities(slug, 200),
+    findVaultListing(key),
+    getWorkflow(key),
+    listActivities(key, 200),
   ])
   if (!listing) return null
   return {

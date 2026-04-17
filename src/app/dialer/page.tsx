@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { requireDialerSession } from "./require-session"
 import { listDialerLeads, STATUS_LABELS, type DialerLead } from "@/lib/dialer-data"
+import { distressTypeLabel } from "@/lib/dialer-inventory"
 import { PhoneLink } from "./phone-link"
 
 export const dynamic = "force-dynamic"
@@ -48,6 +49,17 @@ function statusPill(status: DialerLead["workflow"]["status"]) {
     closed_lost: "bg-red-400/15 text-red-200 border-red-400/30",
   }
   return map[status] ?? "bg-white/10 text-white/70 border-white/15"
+}
+
+function distressPill(category: ReturnType<typeof distressTypeLabel>["category"]) {
+  const map: Record<string, string> = {
+    lis_pendens: "bg-violet-400/15 text-violet-200 border-violet-400/30",
+    pre_foreclosure: "bg-amber-400/15 text-amber-200 border-amber-400/30",
+    foreclosure: "bg-red-400/15 text-red-200 border-red-400/30",
+    fsbo: "bg-blue-400/15 text-blue-200 border-blue-400/30",
+    other: "bg-white/8 text-white/60 border-white/12",
+  }
+  return map[category] ?? map.other
 }
 
 function dtsClass(dts: number | null): string {
@@ -138,9 +150,10 @@ export default async function DialerQueuePage({
       </div>
 
       <div className="mt-6 rounded-2xl border border-white/10 overflow-hidden">
-        <div className="hidden sm:grid grid-cols-[1fr_130px_130px_120px_150px_110px] gap-4 border-b border-white/10 bg-white/[0.03] px-4 py-2.5 text-[10px] uppercase tracking-wider text-white/45">
+        <div className="hidden sm:grid grid-cols-[1fr_130px_140px_130px_120px_150px_110px] gap-4 border-b border-white/10 bg-white/[0.03] px-4 py-2.5 text-[10px] uppercase tracking-wider text-white/45">
           <div>Property / Owner</div>
           <div>Phone</div>
+          <div>Type</div>
           <div>Sale Date</div>
           <div>Mortgage</div>
           <div>Status</div>
@@ -156,13 +169,14 @@ export default async function DialerQueuePage({
             const dts = daysToSale(lead.currentSaleDate)
             const phone = lead.ownerPhonePrimary ?? lead.saleControllerPhonePrimary
             const mortgage = lead.mortgageAmount
+            const dt = distressTypeLabel(lead.distressType)
             return (
               <li key={lead.slug}>
                 <Link
                   href={`/dialer/${lead.slug}`}
                   className="block hover:bg-white/[0.04] transition-colors"
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px_130px_120px_150px_110px] gap-2 sm:gap-4 px-4 py-3 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px_140px_130px_120px_150px_110px] gap-2 sm:gap-4 px-4 py-3 text-sm">
                     <div className="min-w-0">
                       <div className="font-medium text-white truncate">
                         {lead.address ?? lead.title}
@@ -181,6 +195,15 @@ export default async function DialerQueuePage({
                       ) : (
                         <span className="text-white/35">no phone</span>
                       )}
+                    </div>
+                    <div className="sm:self-center">
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${distressPill(
+                          dt.category
+                        )}`}
+                      >
+                        {dt.label}
+                      </span>
                     </div>
                     <div className={`text-xs sm:self-center ${dtsClass(dts)}`}>
                       {fmtDate(lead.currentSaleDate)}

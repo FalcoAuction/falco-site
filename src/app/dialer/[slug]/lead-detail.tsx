@@ -7,6 +7,7 @@ import {
   NEXT_ACTION_LABELS,
   CHANNEL_LABELS,
   OUTCOME_LABELS,
+  distressTypeLabel,
   type DialerLeadView,
   type DialerStatus,
   type DialerNextAction,
@@ -110,8 +111,35 @@ export default function LeadDetail({
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
           {lead.address ?? lead.title}
         </h1>
-        <div className="mt-1 text-sm text-white/60">
-          {lead.ownerName ?? "Unknown owner"} · {lead.county}
+        <div className="mt-1 text-sm text-white/60 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>{lead.ownerName ?? "Unknown owner"}</span>
+          <span className="text-white/30">·</span>
+          <span>{lead.county}</span>
+          {lead.distressType && (
+            <>
+              <span className="text-white/30">·</span>
+              {(() => {
+                const dt = distressTypeLabel(lead.distressType)
+                const tone =
+                  dt.category === "lis_pendens"
+                    ? "border-violet-400/30 bg-violet-400/10 text-violet-200"
+                    : dt.category === "pre_foreclosure"
+                    ? "border-amber-400/30 bg-amber-400/10 text-amber-100"
+                    : dt.category === "foreclosure"
+                    ? "border-red-400/30 bg-red-400/10 text-red-100"
+                    : dt.category === "fsbo"
+                    ? "border-blue-400/30 bg-blue-400/10 text-blue-100"
+                    : "border-white/12 bg-white/5 text-white/60"
+                return (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${tone}`}
+                  >
+                    {dt.label}
+                  </span>
+                )
+              })()}
+            </>
+          )}
         </div>
       </header>
 
@@ -164,8 +192,8 @@ export default function LeadDetail({
       {/* All FALCO context */}
       <DetailsSection lead={lead} />
 
-      {/* Packet link */}
-      {lead.packetUrl && (
+      {/* Packet link or no-packet note */}
+      {lead.packetUrl ? (
         <a
           href={lead.packetUrl}
           target="_blank"
@@ -180,6 +208,16 @@ export default function LeadDetail({
             Includes AVM range, equity math, suggested play
           </div>
         </a>
+      ) : (
+        <div className="mt-6 mb-12 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-4 text-center">
+          <div className="text-[10px] uppercase tracking-wider text-white/45">
+            Packet pending
+          </div>
+          <div className="text-xs text-white/55 mt-1">
+            No PDF generated yet for this lead. Use the data above for the call —
+            packet will be available on next sync.
+          </div>
+        </div>
       )}
     </>
   )
