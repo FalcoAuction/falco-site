@@ -7,13 +7,13 @@ import {
   NEXT_ACTION_LABELS,
   CHANNEL_LABELS,
   OUTCOME_LABELS,
-  type DialerLead,
+  type DialerLeadView,
   type DialerStatus,
   type DialerNextAction,
   type DialerChannel,
   type DialerOutcome,
   type DialerActivity,
-} from "@/lib/dialer-data"
+} from "@/lib/dialer-types"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -90,7 +90,7 @@ export default function LeadDetail({
   lead,
   caller,
 }: {
-  lead: DialerLead
+  lead: DialerLeadView
   caller: string
 }) {
   const router = useRouter()
@@ -218,7 +218,7 @@ function WorkflowSection({
   caller,
   onChange,
 }: {
-  lead: DialerLead
+  lead: DialerLeadView
   caller: string
   onChange: () => void
 }) {
@@ -347,7 +347,7 @@ function ActivitySection({
   caller,
   onAdded,
 }: {
-  lead: DialerLead
+  lead: DialerLeadView
   caller: string
   onAdded: () => void
 }) {
@@ -514,7 +514,7 @@ function ActivityRow({ a }: { a: DialerActivity }) {
   )
 }
 
-function DetailsSection({ lead }: { lead: DialerLead }) {
+function DetailsSection({ lead }: { lead: DialerLeadView }) {
   const rows: Array<[string, string]> = [
     ["Address", lead.address ?? "—"],
     ["County", lead.county ?? "—"],
