@@ -194,7 +194,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               </h1>
 
               <p className="falco-reveal-3 mx-auto mt-12 max-w-2xl text-[15px] uppercase leading-7 tracking-[0.15em] text-white/35 md:text-[16px] md:leading-8">
-                Distressed residential real estate, sourced daily and assembled into full files. Owner contact, debt, valuation, timing, play. Built for investors who want to skip the research and get straight to the phone call.
+                Distressed residential real estate, sourced daily and assembled into full files. Owner contact, debt, valuation, timing. Built for partners who want to reach the homeowner before the courthouse takes the deal.
               </p>
             </div>
           </div>
@@ -253,27 +253,27 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
                   <div className="mt-1 text-[12px] font-medium text-emerald-300/60">Source + Screen + Route</div>
                   <p className="mt-3 text-[13px] leading-6 text-white/45">
                     Watches distress signals daily. Enriches with owner data, debt, valuation,
-                    contact info. Packages the strongest files with a suggested execution lane.
+                    timing. Packages the files where the seller still has room to act.
                   </p>
                 </div>
 
                 <div className="falco-scroll-reveal falco-glow-border rounded-xl border border-white/[0.06] bg-white/[0.03] p-6">
                   <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-[11px] font-semibold text-white/60">02</div>
-                  <div className="text-lg font-semibold text-white">Investor</div>
-                  <div className="mt-1 text-[12px] font-medium text-white/40">Control + Outreach + Decide</div>
+                  <div className="text-lg font-semibold text-white">Operator</div>
+                  <div className="mt-1 text-[12px] font-medium text-white/40">Reach + Qualify + Route</div>
                   <p className="mt-3 text-[13px] leading-6 text-white/45">
-                    Reviews vault listings. Picks files that fit their model. Calls the owner.
-                    Negotiates sub-to, arrears cure, short sale, or direct purchase.
+                    Reaches the homeowner. Walks them through the math on what their equity is
+                    worth. Qualifies the situation and routes the file to the right path.
                   </p>
                 </div>
 
                 <div className="falco-scroll-reveal falco-glow-border rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
                   <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-[11px] font-semibold text-white/60">03</div>
-                  <div className="text-lg font-semibold text-white">Auction Co.</div>
-                  <div className="mt-1 text-[12px] font-medium text-white/40">Execute + Dispose + Exit</div>
+                  <div className="text-lg font-semibold text-white">Auction Partner</div>
+                  <div className="mt-1 text-[12px] font-medium text-white/40">Market + Sell + Close</div>
                   <p className="mt-3 text-[13px] leading-6 text-white/45">
-                    When the investor needs a fast exit, controlled assets route to an auction
-                    partner for disposition or direct buyer placement.
+                    Takes the file to a marketed sale. Drives competitive bidding and closes at
+                    real value, so the equity stays with the homeowner instead of the trustee.
                   </p>
                 </div>
               </div>
@@ -296,11 +296,11 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
                 { title: "Owner Contact", detail: "Name, mailing, skip-traced phones, DNC status" },
                 { title: "Debt Record", detail: "Lender, amount, date, notice holder, confidence" },
                 { title: "Valuation", detail: "AVM low/mid/high, spread, confidence class" },
-                { title: "Suggested Play", detail: "Execution lane with confidence and reasoning" },
-                { title: "Execution Read", detail: "Control party, owner agency, lender control" },
+                { title: "Equity Read", detail: "What the seller stands to keep — or lose — at sale" },
+                { title: "Execution Read", detail: "Control party, owner agency, lender posture" },
                 { title: "Property", detail: "Beds, baths, sqft, year built, parcel, transfer" },
                 { title: "Timeline", detail: "Sale date, DTS, recorded date, verification" },
-                { title: "PDF Packet", detail: "5-page review brief for a yes/no decision" },
+                { title: "PDF Packet", detail: "Review brief built for a yes / no decision" },
               ].map((item) => (
                 <div key={item.title} className="falco-scroll-reveal falco-glow-border rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 transition duration-300 hover:-translate-y-1">
                   <div className="text-[13px] font-semibold text-white">{item.title}</div>
@@ -318,7 +318,7 @@ export function HomeContent({ metrics }: { metrics: HomeMetrics }) {
               See what the pipeline is surfacing.
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-white/45 leading-7">
-              Full files ready for investor review. Gated access. Controlled routing.
+              Full files ready for partner review. Gated access. Controlled routing.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-4">
