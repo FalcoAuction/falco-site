@@ -12,6 +12,7 @@ export default function LoginForm({
 }) {
   const router = useRouter()
   const [callerName, setCallerName] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(initialError)
   const [pending, start] = useTransition()
@@ -23,14 +24,19 @@ export default function LoginForm({
       const res = await fetch("/api/dialer/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caller: callerName, password }),
+        body: JSON.stringify({ caller: callerName, email, password }),
       })
+      const body = await res.json().catch(() => null)
       if (res.ok) {
-        router.push(redirectTo || "/dialer")
+        // First-time sign-in routes to the agreement page; subsequent logins
+        // go straight through to the redirect target (or /dialer).
+        const next: string = body?.requiresAgreement
+          ? `/dialer/agreement?next=${encodeURIComponent(redirectTo || "/dialer")}`
+          : (redirectTo || "/dialer")
+        router.push(next)
         router.refresh()
         return
       }
-      const body = await res.json().catch(() => null)
       setError(body?.error ?? "Login failed.")
     })
   }
@@ -53,6 +59,21 @@ export default function LoginForm({
         className="w-full rounded-md bg-black/40 border border-white/12 px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40"
         placeholder="First name"
       />
+      <label className="block text-xs uppercase tracking-wider text-white/55 mt-4 mb-2">
+        Email
+      </label>
+      <input
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full rounded-md bg-black/40 border border-white/12 px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40"
+        placeholder="you@example.com"
+      />
+      <p className="mt-1 text-[10px] text-white/35">
+        Used for the one-time NDA on first login.
+      </p>
       <label className="block text-xs uppercase tracking-wider text-white/55 mt-4 mb-2">
         Dialer password
       </label>

@@ -87,6 +87,10 @@ export type DialerLeadView = {
   mortgageLender?: string
   mortgageDate?: string
   lastSaleDate?: string
+  avmLow?: number | null
+  avmMid?: number | null
+  avmHigh?: number | null
+  saleStatus?: string
   yearBuilt?: number | null
   buildingAreaSqft?: number | null
   beds?: number | null

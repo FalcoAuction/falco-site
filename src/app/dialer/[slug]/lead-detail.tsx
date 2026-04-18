@@ -175,13 +175,33 @@ export default function LeadDetail({
           tone={dts !== null && dts <= 14 ? "danger" : dts !== null && dts <= 30 ? "warn" : "default"}
           subtitle={dts !== null ? `${dts}d to sale` : ""}
         />
-        <Card label="Mortgage" value={fmtCurrency(lead.mortgageAmount)} subtitle={lead.mortgageLender ?? ""} />
         <Card
-          label="Equity Band"
-          value={lead.equityBand ?? "—"}
-          tone={lead.equityBand === "MED" || lead.equityBand === "HIGH" ? "good" : "default"}
+          label="Market Value"
+          value={lead.avmMid ? fmtCurrency(lead.avmMid) : "—"}
+          subtitle={
+            lead.avmLow && lead.avmHigh
+              ? `${fmtCurrency(lead.avmLow)} – ${fmtCurrency(lead.avmHigh)}`
+              : "AVM pending"
+          }
+          tone={lead.avmMid ? "good" : "default"}
+        />
+        <Card
+          label="Loan Amount"
+          value={fmtCurrency(lead.mortgageAmount)}
+          subtitle={lead.mortgageLender ?? ""}
         />
       </section>
+
+      {/* Equity Math — the centerpiece for the seller pitch */}
+      <EquityWorkup lead={lead} />
+
+      {/* Tactical callouts (absentee, urgency, owned-since) */}
+      <Tactical lead={lead} />
+
+      {/* Sale notice details */}
+      {(lead.saleControllerName || lead.trusteePhonePublic) && (
+        <SaleNoticeSection lead={lead} />
+      )}
 
       {/* Workflow controls */}
       <WorkflowSection lead={lead} caller={caller} onChange={() => router.refresh()} />
@@ -220,6 +240,265 @@ export default function LeadDetail({
         </div>
       )}
     </>
+  )
+}
+
+/** Estimate current loan payoff from original amount + age, simple amortization at 4%. */
+function estimatePayoff(
+  originalAmount: number | null | undefined,
+  mortgageDateIso: string | null | undefined
+): number | null {
+  if (!originalAmount || originalAmount <= 0) return null
+  if (!mortgageDateIso) return Math.round(originalAmount * 0.93) // unknown age, assume light paydown
+  const start = new Date(mortgageDateIso).getTime()
+  if (Number.isNaN(start)) return Math.round(originalAmount * 0.93)
+  const yearsHeld = Math.max(0, (Date.now() - start) / (1000 * 60 * 60 * 24 * 365.25))
+  // Simple amortization: 30-year, 4% rate. Returns remaining principal as fraction.
+  const r = 0.04 / 12
+  const n = 30 * 12
+  const totalPayments = Math.min(yearsHeld * 12, n)
+  const remainingFactor =
+    (Math.pow(1 + r, n) - Math.pow(1 + r, totalPayments)) / (Math.pow(1 + r, n) - 1)
+  return Math.round(originalAmount * remainingFactor)
+}
+
+function EquityWorkup({ lead }: { lead: DialerLeadView }) {
+  const avmLow = lead.avmLow ?? null
+  const avmMid = lead.avmMid ?? null
+  const avmHigh = lead.avmHigh ?? null
+  const loan = lead.mortgageAmount ?? null
+  const payoffEst = estimatePayoff(loan, lead.mortgageDate ?? null)
+
+  if (!avmMid && !loan) {
+    return (
+      <section className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-4">
+        <div className="text-[10px] uppercase tracking-wider text-white/45">Equity Math</div>
+        <div className="mt-1 text-xs text-white/55">
+          Insufficient data to compute equity. Lead is missing valuation and/or mortgage info.
+        </div>
+      </section>
+    )
+  }
+
+  const auctionCommissionPct = 0.09
+  // Conservative equity range: low AVM minus payoff and commission, vs high AVM.
+  const equityLow = avmLow && payoffEst !== null
+    ? Math.max(0, Math.round(avmLow * (1 - auctionCommissionPct) - payoffEst))
+    : null
+  const equityHigh = avmHigh && payoffEst !== null
+    ? Math.max(0, Math.round(avmHigh * (1 - auctionCommissionPct) - payoffEst))
+    : null
+  const equityMid = avmMid && payoffEst !== null
+    ? Math.max(0, Math.round(avmMid * (1 - auctionCommissionPct) - payoffEst))
+    : null
+
+  // Wholesaler comparison — typical 65% offer
+  const wholesalerOffer = avmMid ? Math.round(avmMid * 0.65) : null
+  const wholesalerNet = wholesalerOffer && payoffEst !== null
+    ? Math.max(0, wholesalerOffer - payoffEst)
+    : null
+
+  return (
+    <section className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.04] p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] uppercase tracking-wider text-emerald-300/85 font-semibold">
+          Equity Math — what to walk the seller through
+        </div>
+        <div className="text-[10px] uppercase tracking-wider text-white/35">
+          assumes 9% auction commission
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+        <div className="rounded-lg bg-black/20 border border-white/8 p-3">
+          <div className="text-[10px] uppercase tracking-wider text-white/55">Market Value (AVM)</div>
+          <div className="mt-1 text-base font-semibold text-white">
+            {avmMid ? fmtCurrency(avmMid) : "—"}
+          </div>
+          {avmLow && avmHigh && (
+            <div className="text-[11px] text-white/45 mt-0.5">
+              {fmtCurrency(avmLow)} – {fmtCurrency(avmHigh)}
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg bg-black/20 border border-white/8 p-3">
+          <div className="text-[10px] uppercase tracking-wider text-white/55">Est. Loan Payoff</div>
+          <div className="mt-1 text-base font-semibold text-white">
+            {payoffEst !== null ? fmtCurrency(payoffEst) : "—"}
+          </div>
+          {loan && (
+            <div className="text-[11px] text-white/45 mt-0.5">
+              orig {fmtCurrency(loan)} · {lead.mortgageDate ? `mortgaged ${fmtDate(lead.mortgageDate)}` : "date unknown"}
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 p-3">
+          <div className="text-[10px] uppercase tracking-wider text-emerald-300">Est. Seller Take-Home</div>
+          <div className="mt-1 text-base font-semibold text-emerald-100">
+            {equityLow !== null && equityHigh !== null
+              ? `${fmtCurrency(equityLow)} – ${fmtCurrency(equityHigh)}`
+              : equityMid !== null
+              ? fmtCurrency(equityMid)
+              : "—"}
+          </div>
+          <div className="text-[11px] text-emerald-200/70 mt-0.5">
+            after payoff & commission
+          </div>
+        </div>
+      </div>
+
+      {/* Three-path comparison — what to actually say on the call */}
+      <div className="mt-4 rounded-lg border border-white/10 bg-black/30 p-3">
+        <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2">
+          Three paths · use this on the call
+        </div>
+        <div className="space-y-1.5 text-xs">
+          <div className="flex justify-between gap-3">
+            <span className="text-white/65">1. Trustee sale (do nothing)</span>
+            <span className="text-red-300 font-semibold">$0 – $5K</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-white/65">2. Wholesaler at 65% of value</span>
+            <span className="text-amber-200">{wholesalerNet !== null ? fmtCurrency(wholesalerNet) : "—"}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-emerald-200 font-semibold">3. Auction listing (us)</span>
+            <span className="text-emerald-200 font-bold">
+              {equityLow !== null && equityHigh !== null
+                ? `${fmtCurrency(equityLow)} – ${fmtCurrency(equityHigh)}`
+                : "—"}
+            </span>
+          </div>
+        </div>
+        {equityLow !== null && wholesalerNet !== null && equityLow > wholesalerNet && (
+          <div className="mt-2 text-[11px] text-emerald-300/85">
+            Difference: <span className="font-semibold">{fmtCurrency(equityLow - wholesalerNet)}+</span> more
+            in the seller's pocket vs. the wholesaler offer.
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function Tactical({ lead }: { lead: DialerLeadView }) {
+  const flags: Array<{ tone: "warn" | "info" | "good"; label: string; detail: string }> = []
+
+  // Absentee owner check
+  if (lead.ownerMail && lead.address) {
+    const mailNorm = lead.ownerMail.toLowerCase().replace(/\s+/g, "")
+    const propNorm = lead.address.toLowerCase().replace(/\s+/g, "")
+    // Absentee if mailing zip / city differs significantly
+    const mailFirst20 = mailNorm.slice(0, 20)
+    const propFirst20 = propNorm.slice(0, 20)
+    if (!mailNorm.includes(propNorm.slice(0, 12)) && mailFirst20 !== propFirst20) {
+      flags.push({
+        tone: "info",
+        label: "Absentee owner",
+        detail: `Mail goes to ${lead.ownerMail}. They likely don't live there — easier "just want it gone" conversation.`,
+      })
+    }
+  }
+
+  // Owned-since
+  if (lead.lastSaleDate) {
+    const years = Math.floor((Date.now() - new Date(lead.lastSaleDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+    if (years >= 0) {
+      flags.push({
+        tone: "info",
+        label: `Owned ${years}+ years`,
+        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Long tenure usually means more equity built up.`,
+      })
+    }
+  }
+
+  // Urgency
+  const dts = (() => {
+    if (!lead.currentSaleDate) return null
+    const ms = new Date(lead.currentSaleDate).getTime() - Date.now()
+    return Number.isNaN(ms) ? null : Math.ceil(ms / (1000 * 60 * 60 * 24))
+  })()
+  if (dts !== null && dts <= 14 && dts >= 0) {
+    flags.push({
+      tone: "warn",
+      label: `Sale in ${dts} days`,
+      detail: "Tight window. Lead with urgency. Auction co. will need to push for fast lender postponement.",
+    })
+  }
+
+  // DNC
+  if (lead.ownerPhoneDncStatus && lead.ownerPhoneDncStatus !== "CLEAR") {
+    flags.push({
+      tone: "warn",
+      label: `Phone DNC: ${lead.ownerPhoneDncStatus}`,
+      detail: "Use text or secondary number first if available.",
+    })
+  }
+
+  if (flags.length === 0) return null
+
+  return (
+    <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2">
+        Tactical notes
+      </div>
+      <div className="space-y-2">
+        {flags.map((f, i) => {
+          const tone =
+            f.tone === "warn"
+              ? "border-amber-400/30 bg-amber-400/10 text-amber-100"
+              : f.tone === "good"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-blue-400/25 bg-blue-400/8 text-blue-100"
+          return (
+            <div key={i} className={`rounded-lg border p-2.5 text-xs ${tone}`}>
+              <span className="font-semibold">{f.label}</span>
+              <span className="ml-2 opacity-90">{f.detail}</span>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function SaleNoticeSection({ lead }: { lead: DialerLeadView }) {
+  return (
+    <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2">Sale Notice</div>
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+        {lead.saleControllerName && (
+          <div className="flex gap-2">
+            <dt className="text-white/45 w-28 shrink-0">Trustee / Atty</dt>
+            <dd className="text-white/85">{lead.saleControllerName}</dd>
+          </div>
+        )}
+        {lead.trusteePhonePublic && (
+          <div className="flex gap-2">
+            <dt className="text-white/45 w-28 shrink-0">Trustee phone</dt>
+            <dd className="text-white/85">{fmtPhone(lead.trusteePhonePublic)}</dd>
+          </div>
+        )}
+        {lead.currentSaleDate && (
+          <div className="flex gap-2">
+            <dt className="text-white/45 w-28 shrink-0">Sale date</dt>
+            <dd className="text-white/85">{fmtDate(lead.currentSaleDate)}</dd>
+          </div>
+        )}
+        {lead.originalSaleDate && lead.originalSaleDate !== lead.currentSaleDate && (
+          <div className="flex gap-2">
+            <dt className="text-white/45 w-28 shrink-0">Originally</dt>
+            <dd className="text-white/85">{fmtDate(lead.originalSaleDate)}</dd>
+          </div>
+        )}
+        {lead.saleStatus && (
+          <div className="flex gap-2">
+            <dt className="text-white/45 w-28 shrink-0">Status</dt>
+            <dd className="text-white/85">{lead.saleStatus}</dd>
+          </div>
+        )}
+      </dl>
+    </section>
   )
 }
 

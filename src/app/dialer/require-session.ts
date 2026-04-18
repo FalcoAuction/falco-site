@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { readDialerSessionFromCookies } from "@/lib/dialer-session"
 import { OPERATOR_SESSION_COOKIE } from "@/lib/operator-access-session"
 import { verifySessionPayload } from "@/lib/session-signing"
+import { findDialerAcceptance } from "@/lib/dialer-acceptance"
 
 type OperatorSessionPayload = { kind: "operator"; nonce: string; exp: number }
 
@@ -21,17 +22,35 @@ async function readOperatorSession(): Promise<OperatorSessionPayload | null> {
 
 /**
  * Allow either a dialer session OR a logged-in operator. Operator sees the
- * dialer as read-write (same as the caller). The returned session always
- * looks like a dialer session — for operator viewers we synthesize a
- * "caller" name of "operator" so activity attribution stays sane.
+ * dialer as read-write (same as the caller, no agreement gate). For dialer
+ * (caller) sessions, the email must have a recorded NDA + non-circ
+ * acceptance, otherwise the user is bounced to /dialer/agreement.
  */
 export async function requireDialerSession(redirectFromPath: string) {
   const dialer = await readDialerSessionFromCookies()
-  if (dialer) return dialer
+  if (dialer) {
+    if (dialer.email) {
+      const acc = await findDialerAcceptance(dialer.email)
+      if (!acc) {
+        const params = new URLSearchParams({ next: redirectFromPath })
+        redirect(`/dialer/agreement?${params.toString()}`)
+      }
+    } else {
+      // Old session without an email — force them to log in again to capture it.
+      redirect("/dialer/login?redirect=" + encodeURIComponent(redirectFromPath))
+    }
+    return dialer
+  }
 
   const operator = await readOperatorSession()
   if (operator) {
-    return { kind: "dialer" as const, caller: "operator", nonce: operator.nonce, exp: operator.exp }
+    return {
+      kind: "dialer" as const,
+      caller: "operator",
+      email: undefined,
+      nonce: operator.nonce,
+      exp: operator.exp,
+    }
   }
 
   const params = new URLSearchParams({ redirect: redirectFromPath })

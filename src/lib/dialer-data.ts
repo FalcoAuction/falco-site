@@ -321,7 +321,17 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
       ? "Pre-Foreclosure"
       : "Confidential"
 
+  // Stash AVM + sale-status fields on the resulting object via a small extension.
+  // VaultListing doesn't define them, but the UI casts down to DialerLeadView
+  // which does — so they survive the assign.
+  const extras: Record<string, unknown> = {
+    avmLow: inv.avmLow ?? null,
+    avmMid: inv.avmMid ?? null,
+    avmHigh: inv.avmHigh ?? null,
+    saleStatus: inv.saleStatus || undefined,
+  }
   return {
+    ...(extras as Partial<VaultListing>),
     slug: inv.key,
     title: inv.address || `${inv.county || "Lead"}`,
     address: inv.address || undefined,

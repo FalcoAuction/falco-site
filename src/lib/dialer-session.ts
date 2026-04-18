@@ -9,14 +9,20 @@ export const DIALER_SESSION_COOKIE = "falco_dialer_session"
 type DialerSessionPayload = {
   kind: "dialer"
   caller: string
+  email?: string
   nonce: string
   exp: number
 }
 
-export function setDialerSession(res: NextResponse, callerName: string) {
+export function setDialerSession(
+  res: NextResponse,
+  callerName: string,
+  email?: string
+) {
   const digest = signSessionPayload({
     kind: "dialer",
     caller: callerName.trim() || "caller",
+    email: email ? email.trim().toLowerCase() : undefined,
     nonce: crypto.randomBytes(16).toString("hex"),
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24h
   })
