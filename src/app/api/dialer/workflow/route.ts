@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDialerSession } from "@/lib/dialer-session"
+import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import {
   upsertWorkflow,
   type DialerStatus,
@@ -10,7 +10,7 @@ const STATUSES: DialerStatus[] = [
   "new",
   "attempting_contact",
   "rpc_made",
-  "parkes_booked",
+  "auction_booked",
   "listing_signed",
   "auction_live",
   "closed_won",
@@ -20,13 +20,13 @@ const NEXT_ACTIONS: DialerNextAction[] = [
   "call",
   "text",
   "wait_callback",
-  "hand_to_parkes",
+  "hand_to_auction",
   "drop",
   "none",
 ]
 
 export async function POST(req: NextRequest) {
-  const session = getDialerSession(req)
+  const session = getDialerOrOperatorSession(req)
   if (!session) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
   }
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     status?: string
     nextAction?: string
     nextActionAt?: string | null
-    parkesCallAt?: string | null
+    auctionCallAt?: string | null
     closedLostReason?: string | null
     summaryNotes?: string
     updatedBy?: string
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     status: body.status as DialerStatus | undefined,
     nextAction: body.nextAction as DialerNextAction | undefined,
     nextActionAt: body.nextActionAt ?? undefined,
-    parkesCallAt: body.parkesCallAt ?? undefined,
+    auctionCallAt: body.auctionCallAt ?? undefined,
     closedLostReason: body.closedLostReason ?? undefined,
     summaryNotes: body.summaryNotes,
     updatedBy: body.updatedBy?.trim() || session.caller,

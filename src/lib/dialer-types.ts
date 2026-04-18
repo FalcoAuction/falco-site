@@ -5,7 +5,7 @@ export type DialerStatus =
   | "new"
   | "attempting_contact"
   | "rpc_made"
-  | "parkes_booked"
+  | "auction_booked"
   | "listing_signed"
   | "auction_live"
   | "closed_won"
@@ -15,7 +15,7 @@ export type DialerNextAction =
   | "call"
   | "text"
   | "wait_callback"
-  | "hand_to_parkes"
+  | "hand_to_auction"
   | "drop"
   | "none"
 
@@ -38,7 +38,7 @@ export type DialerWorkflow = {
   status: DialerStatus
   nextAction: DialerNextAction
   nextActionAt?: string | null
-  parkesCallAt?: string | null
+  auctionCallAt?: string | null
   closedLostReason?: string | null
   summaryNotes: string
   lastContactAt?: string | null
@@ -94,6 +94,8 @@ export type DialerLeadView = {
   propertyIdentifier?: string
   packetUrl?: string
   packetLabel?: string
+  dataCompleteness?: "full" | "solid" | "thin"
+  missingFields?: string[]
   workflow: DialerWorkflow
   recentActivities: DialerActivity[]
 }
@@ -102,7 +104,7 @@ export const STATUS_LABELS: Record<DialerStatus, string> = {
   new: "New",
   attempting_contact: "Attempting Contact",
   rpc_made: "Right-Party Contact",
-  parkes_booked: "Booked w/ Parkes",
+  auction_booked: "Booked w/ Auction Co.",
   listing_signed: "Listing Signed",
   auction_live: "Auction Live",
   closed_won: "Closed — Won",
@@ -113,7 +115,7 @@ export const NEXT_ACTION_LABELS: Record<DialerNextAction, string> = {
   call: "Call",
   text: "Text",
   wait_callback: "Wait for Callback",
-  hand_to_parkes: "Hand to Parkes",
+  hand_to_auction: "Hand to Auction Co.",
   drop: "Drop",
   none: "None",
 }
@@ -158,7 +160,7 @@ export const OUTCOME_LABELS: Record<DialerOutcome, string> = {
   no_answer: "No answer",
   wrong_number: "Wrong number",
   hung_up: "Hung up",
-  booked: "Booked Parkes call",
+  booked: "Booked auction call",
   callback_requested: "Callback requested",
   not_interested: "Not interested",
   do_not_call: "Do not call",

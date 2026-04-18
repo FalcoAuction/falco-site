@@ -42,7 +42,7 @@ function statusPill(status: DialerLead["workflow"]["status"]) {
     new: "bg-white/10 text-white/70 border-white/15",
     attempting_contact: "bg-amber-400/15 text-amber-200 border-amber-400/30",
     rpc_made: "bg-blue-400/15 text-blue-200 border-blue-400/30",
-    parkes_booked: "bg-emerald-400/20 text-emerald-200 border-emerald-400/40",
+    auction_booked: "bg-emerald-400/20 text-emerald-200 border-emerald-400/40",
     listing_signed: "bg-emerald-400/30 text-emerald-100 border-emerald-400/50",
     auction_live: "bg-emerald-500/30 text-emerald-50 border-emerald-500/50",
     closed_won: "bg-emerald-600/40 text-white border-emerald-600/60",
@@ -73,21 +73,32 @@ function dtsClass(dts: number | null): string {
 export default async function DialerQueuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; data?: string }>
 }) {
   await requireDialerSession("/dialer")
   const params = await searchParams
   const filter = params.filter ?? "open"
+  const dataFilter = params.data ?? "ready"  // "ready" | "needs" | "all"
   const leads = await listDialerLeads()
 
-  const filtered = leads.filter((l) => {
+  // Status-based filter
+  const byStatus = leads.filter((l) => {
     const s = l.workflow.status
     if (filter === "all") return true
     if (filter === "open") return s !== "closed_lost" && s !== "closed_won"
     if (filter === "new") return s === "new"
     if (filter === "in_progress") return s === "attempting_contact" || s === "rpc_made"
-    if (filter === "booked") return s === "parkes_booked" || s === "listing_signed" || s === "auction_live"
+    if (filter === "booked") return s === "auction_booked" || s === "listing_signed" || s === "auction_live"
     if (filter === "closed") return s === "closed_won" || s === "closed_lost"
+    return true
+  })
+
+  // Data-completeness filter (the new split)
+  const filtered = byStatus.filter((l) => {
+    const c = l.dataCompleteness ?? "thin"
+    if (dataFilter === "all") return true
+    if (dataFilter === "ready") return c === "full" || c === "solid"
+    if (dataFilter === "needs") return c === "thin"
     return true
   })
 
@@ -100,11 +111,17 @@ export default async function DialerQueuePage({
     ).length,
     booked: leads.filter(
       (l) =>
-        l.workflow.status === "parkes_booked" ||
+        l.workflow.status === "auction_booked" ||
         l.workflow.status === "listing_signed" ||
         l.workflow.status === "auction_live"
     ).length,
     closed: leads.filter((l) => l.workflow.status === "closed_won" || l.workflow.status === "closed_lost").length,
+  }
+
+  const dataCounts = {
+    ready: leads.filter((l) => (l.dataCompleteness ?? "thin") !== "thin").length,
+    needs: leads.filter((l) => (l.dataCompleteness ?? "thin") === "thin").length,
+    all: leads.length,
   }
 
   const tabs: Array<{ key: string; label: string; count: number }> = [
@@ -114,6 +131,12 @@ export default async function DialerQueuePage({
     { key: "booked", label: "Booked / Listed", count: counts.booked },
     { key: "closed", label: "Closed", count: counts.closed },
     { key: "all", label: "All", count: counts.all },
+  ]
+
+  const dataTabs: Array<{ key: string; label: string; count: number; tone: string }> = [
+    { key: "ready", label: "Ready to Dial", count: dataCounts.ready, tone: "emerald" },
+    { key: "needs", label: "Needs Data", count: dataCounts.needs, tone: "amber" },
+    { key: "all", label: "All Leads", count: dataCounts.all, tone: "neutral" },
   ]
 
   return (
@@ -127,21 +150,46 @@ export default async function DialerQueuePage({
         </div>
       </div>
 
+      {/* Primary split — data completeness */}
       <div className="mt-5 flex flex-wrap gap-2">
+        {dataTabs.map((tab) => {
+          const active = dataFilter === tab.key
+          const toneActive = tab.tone === "emerald"
+            ? "border-emerald-400/55 bg-emerald-400/15 text-emerald-100"
+            : tab.tone === "amber"
+            ? "border-amber-400/55 bg-amber-400/15 text-amber-100"
+            : "border-white/30 bg-white/[0.08] text-white"
+          return (
+            <Link
+              key={tab.key}
+              href={`/dialer?filter=${filter}&data=${tab.key}`}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                active ? toneActive : "border-white/12 bg-white/[0.03] text-white/60 hover:bg-white/[0.06]"
+              }`}
+            >
+              {tab.label}{" "}
+              <span className={active ? "opacity-80" : "text-white/35"}>{tab.count}</span>
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Secondary filter — workflow status */}
+      <div className="mt-3 flex flex-wrap gap-2">
         {tabs.map((tab) => {
           const active = filter === tab.key
           return (
             <Link
               key={tab.key}
-              href={`/dialer?filter=${tab.key}`}
-              className={`rounded-full border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors ${
+              href={`/dialer?filter=${tab.key}&data=${dataFilter}`}
+              className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-wider transition-colors ${
                 active
-                  ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-100"
-                  : "border-white/12 bg-white/[0.04] text-white/65 hover:bg-white/[0.08]"
+                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
+                  : "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06]"
               }`}
             >
               {tab.label}{" "}
-              <span className={active ? "text-emerald-200/80" : "text-white/40"}>
+              <span className={active ? "text-emerald-200/70" : "text-white/35"}>
                 {tab.count}
               </span>
             </Link>
@@ -178,11 +226,32 @@ export default async function DialerQueuePage({
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px_140px_130px_120px_150px_110px] gap-2 sm:gap-4 px-4 py-3 text-sm">
                     <div className="min-w-0">
-                      <div className="font-medium text-white truncate">
-                        {lead.address ?? lead.title}
+                      <div className="font-medium text-white truncate flex items-center gap-2">
+                        <span className="truncate">{lead.address ?? lead.title}</span>
+                        {(lead.dataCompleteness ?? "thin") === "thin" && (
+                          <span
+                            title={`Missing: ${(lead.missingFields ?? []).join(", ") || "data"}`}
+                            className="shrink-0 inline-flex items-center rounded-full border border-amber-400/35 bg-amber-400/10 text-amber-200 text-[9px] uppercase tracking-wider px-1.5 py-0.5"
+                          >
+                            Thin
+                          </span>
+                        )}
+                        {(lead.dataCompleteness ?? "thin") === "solid" && (
+                          <span
+                            title="Has phone + valuation or mortgage"
+                            className="shrink-0 inline-flex items-center rounded-full border border-blue-400/30 bg-blue-400/10 text-blue-200 text-[9px] uppercase tracking-wider px-1.5 py-0.5"
+                          >
+                            Solid
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-white/55 truncate">
-                        {lead.ownerName ?? "Unknown owner"} · {lead.county}
+                        {lead.ownerName || "Owner unknown"} · {lead.county}
+                        {(lead.dataCompleteness ?? "thin") === "thin" && lead.missingFields && lead.missingFields.length > 0 && (
+                          <span className="ml-2 text-amber-300/70 text-[10px]">
+                            (missing: {lead.missingFields.slice(0, 2).join(", ")})
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-xs text-white/75 sm:self-center">

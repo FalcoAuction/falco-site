@@ -57,7 +57,7 @@ const STATUS_OPTIONS: DialerStatus[] = [
   "new",
   "attempting_contact",
   "rpc_made",
-  "parkes_booked",
+  "auction_booked",
   "listing_signed",
   "auction_live",
   "closed_won",
@@ -68,7 +68,7 @@ const NEXT_ACTION_OPTIONS: DialerNextAction[] = [
   "call",
   "text",
   "wait_callback",
-  "hand_to_parkes",
+  "hand_to_auction",
   "drop",
   "none",
 ]
@@ -265,8 +265,8 @@ function WorkflowSection({
   const [nextActionAt, setNextActionAt] = useState<string>(
     lead.workflow.nextActionAt ? toLocalInput(lead.workflow.nextActionAt) : ""
   )
-  const [parkesCallAt, setParkesCallAt] = useState<string>(
-    lead.workflow.parkesCallAt ? toLocalInput(lead.workflow.parkesCallAt) : ""
+  const [auctionCallAt, setAuctionCallAt] = useState<string>(
+    lead.workflow.auctionCallAt ? toLocalInput(lead.workflow.auctionCallAt) : ""
   )
   const [summary, setSummary] = useState<string>(lead.workflow.summaryNotes ?? "")
   const [closedReason, setClosedReason] = useState<string>(lead.workflow.closedLostReason ?? "")
@@ -284,7 +284,7 @@ function WorkflowSection({
           status,
           nextAction,
           nextActionAt: nextActionAt ? new Date(nextActionAt).toISOString() : null,
-          parkesCallAt: parkesCallAt ? new Date(parkesCallAt).toISOString() : null,
+          auctionCallAt: auctionCallAt ? new Date(auctionCallAt).toISOString() : null,
           summaryNotes: summary,
           closedLostReason: status === "closed_lost" ? closedReason : null,
           updatedBy: caller,
@@ -340,11 +340,11 @@ function WorkflowSection({
             className="w-full rounded-md bg-black/40 border border-white/12 px-2.5 py-2 text-sm text-white outline-none focus:border-emerald-400/60"
           />
         </Field>
-        <Field label="Parkes call at">
+        <Field label="Auction co. call at">
           <input
             type="datetime-local"
-            value={parkesCallAt}
-            onChange={(e) => setParkesCallAt(e.target.value)}
+            value={auctionCallAt}
+            onChange={(e) => setAuctionCallAt(e.target.value)}
             className="w-full rounded-md bg-black/40 border border-white/12 px-2.5 py-2 text-sm text-white outline-none focus:border-emerald-400/60"
           />
         </Field>
@@ -463,7 +463,7 @@ function ActivitySection({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            placeholder="What was said. Context. Anything Parkes needs to know."
+            placeholder="What was said. Context. Anything the auction co. needs to know."
             className="w-full rounded-md bg-black/40 border border-white/12 px-2.5 py-2 text-sm text-white outline-none focus:border-emerald-400/60 resize-y"
           />
         </Field>

@@ -43,6 +43,8 @@ export type DialerInventoryLead = {
   vaultSlug: string | null
   packetUrl: string | null
   packetLabel: string | null
+  dataCompleteness?: "full" | "solid" | "thin"
+  missingFields?: string[]
 }
 
 export type DialerInventorySnapshot = {

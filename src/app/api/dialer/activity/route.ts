@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDialerSession } from "@/lib/dialer-session"
+import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import {
   recordActivity,
   type DialerChannel,
@@ -24,13 +24,13 @@ const NEXT_ACTIONS: DialerNextAction[] = [
   "call",
   "text",
   "wait_callback",
-  "hand_to_parkes",
+  "hand_to_auction",
   "drop",
   "none",
 ]
 
 export async function POST(req: NextRequest) {
-  const session = getDialerSession(req)
+  const session = getDialerOrOperatorSession(req)
   if (!session) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
   }

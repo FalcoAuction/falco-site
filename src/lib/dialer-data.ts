@@ -37,6 +37,8 @@ export {
 export type DialerLead = VaultListing & {
   workflow: DialerWorkflow
   recentActivities: DialerActivity[]
+  dataCompleteness?: "full" | "solid" | "thin"
+  missingFields?: string[]
 }
 
 const DEFAULT_WORKFLOW = (slug: string): DialerWorkflow => ({
@@ -44,7 +46,7 @@ const DEFAULT_WORKFLOW = (slug: string): DialerWorkflow => ({
   status: "new",
   nextAction: "call",
   nextActionAt: null,
-  parkesCallAt: null,
+  auctionCallAt: null,
   closedLostReason: null,
   summaryNotes: "",
   lastContactAt: null,
@@ -60,7 +62,7 @@ type WorkflowRow = {
   status: DialerStatus
   next_action: DialerNextAction
   next_action_at: string | null
-  parkes_call_at: string | null
+  auction_call_at: string | null
   closed_lost_reason: string | null
   summary_notes: string
   last_contact_at: string | null
@@ -90,7 +92,7 @@ function rowToWorkflow(row: WorkflowRow): DialerWorkflow {
     status: row.status,
     nextAction: row.next_action,
     nextActionAt: row.next_action_at,
-    parkesCallAt: row.parkes_call_at,
+    auctionCallAt: row.auction_call_at,
     closedLostReason: row.closed_lost_reason,
     summaryNotes: row.summary_notes ?? "",
     lastContactAt: row.last_contact_at,
@@ -189,7 +191,7 @@ export type WorkflowUpdate = {
   status?: DialerStatus
   nextAction?: DialerNextAction
   nextActionAt?: string | null
-  parkesCallAt?: string | null
+  auctionCallAt?: string | null
   closedLostReason?: string | null
   summaryNotes?: string
   updatedBy: string
@@ -208,8 +210,8 @@ export async function upsertWorkflow(
     next_action: patch.nextAction ?? existing.nextAction,
     next_action_at:
       patch.nextActionAt !== undefined ? patch.nextActionAt : existing.nextActionAt ?? null,
-    parkes_call_at:
-      patch.parkesCallAt !== undefined ? patch.parkesCallAt : existing.parkesCallAt ?? null,
+    auction_call_at:
+      patch.auctionCallAt !== undefined ? patch.auctionCallAt : existing.auctionCallAt ?? null,
     closed_lost_reason:
       patch.closedLostReason !== undefined
         ? patch.closedLostReason
@@ -278,7 +280,7 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
     if (input.outcome === "do_not_call" || input.outcome === "not_interested") {
       return "closed_lost"
     }
-    if (input.outcome === "booked") return "parkes_booked"
+    if (input.outcome === "booked") return "auction_booked"
     if (existing.status === "new" && isAttempt) return "attempting_contact"
     if (existing.status === "attempting_contact" && isRpc) return "rpc_made"
     return existing.status
@@ -291,10 +293,10 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
     next_action: input.nextAction ?? existing.nextAction,
     next_action_at:
       input.nextActionAt !== undefined ? input.nextActionAt : existing.nextActionAt ?? null,
-    parkes_call_at:
+    auction_call_at:
       input.outcome === "booked" && input.nextActionAt
         ? input.nextActionAt
-        : existing.parkesCallAt ?? null,
+        : existing.auctionCallAt ?? null,
     closed_lost_reason: existing.closedLostReason ?? null,
     summary_notes: existing.summaryNotes ?? "",
     last_contact_at: occurredAt,
@@ -373,18 +375,32 @@ export async function listDialerLeads(): Promise<DialerLead[]> {
   ])
 
   let listings: VaultListing[]
+  let completenessByKey: Map<string, { level: "full" | "solid" | "thin"; missing: string[] }>
   if (snapshot && snapshot.leads.length > 0) {
     listings = snapshot.leads.map(inventoryToListing)
+    completenessByKey = new Map(
+      snapshot.leads.map((l) => [
+        l.key,
+        {
+          level: (l.dataCompleteness ?? "thin") as "full" | "solid" | "thin",
+          missing: l.missingFields ?? [],
+        },
+      ])
+    )
   } else {
     listings = vaultListings
+    completenessByKey = new Map()
   }
 
   const enriched: DialerLead[] = listings.map((listing) => {
     const workflow = workflows.get(listing.slug) ?? DEFAULT_WORKFLOW(listing.slug)
+    const completeness = completenessByKey.get(listing.slug)
     return {
       ...listing,
       workflow,
       recentActivities: [],
+      dataCompleteness: completeness?.level,
+      missingFields: completeness?.missing,
     }
   })
 
@@ -411,6 +427,8 @@ export async function getDialerLead(key: string): Promise<DialerLead | null> {
       ...inventoryToListing(invLead),
       workflow,
       recentActivities: activities,
+      dataCompleteness: invLead.dataCompleteness,
+      missingFields: invLead.missingFields,
     }
   }
 

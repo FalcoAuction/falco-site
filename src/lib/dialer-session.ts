@@ -64,6 +64,18 @@ export async function readDialerSessionFromCookies(): Promise<DialerSessionPaylo
   return payload
 }
 
+/** Get either a dialer or operator session as a dialer-shaped session. */
+export function getDialerOrOperatorSession(req: NextRequest): DialerSessionPayload | null {
+  const dialer = getDialerSession(req)
+  if (dialer) return dialer
+  // fall back to operator cookie
+  const opCookie = req.cookies.get("falco_operator_session")?.value?.trim()
+  if (!opCookie) return null
+  const opPayload = verifySessionPayload<{ kind: string; nonce: string; exp: number }>(opCookie)
+  if (!opPayload || opPayload.kind !== "operator") return null
+  return { kind: "dialer", caller: "operator", nonce: opPayload.nonce, exp: opPayload.exp }
+}
+
 /** Validate the password from env. Constant-time comparison. */
 export function isValidDialerPassword(supplied: string): boolean {
   const expected =
