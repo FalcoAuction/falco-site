@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
-import { readDialerSessionFromCookies } from "@/lib/dialer-session"
+import { readDialerSessionFromCookies, DIALER_SESSION_COOKIE } from "@/lib/dialer-session"
 import { OPERATOR_SESSION_COOKIE } from "@/lib/operator-access-session"
 import { verifySessionPayload } from "@/lib/session-signing"
 import { findDialerAcceptance } from "@/lib/dialer-acceptance"
@@ -36,7 +36,14 @@ export async function requireDialerSession(redirectFromPath: string) {
         redirect(`/dialer/agreement?${params.toString()}`)
       }
     } else {
-      // Old session without an email — force them to log in again to capture it.
+      // Old session without an email — clear it and send them to login fresh.
+      // Without the cookie clear, /dialer/login will keep redirecting back here.
+      try {
+        const store = await cookies()
+        store.delete(DIALER_SESSION_COOKIE)
+      } catch {
+        // ignore — best effort
+      }
       redirect("/dialer/login?redirect=" + encodeURIComponent(redirectFromPath))
     }
     return dialer
