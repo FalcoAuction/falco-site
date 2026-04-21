@@ -400,14 +400,32 @@ function Tactical({ lead }: { lead: DialerLeadView }) {
     }
   }
 
-  // Owned-since
+  // Owned-since — tiered by tenure. Long tenure = bigger equity story to lead with on the call.
   if (lead.lastSaleDate) {
     const years = Math.floor((Date.now() - new Date(lead.lastSaleDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
-    if (years >= 0) {
+    if (years >= 25) {
+      flags.push({
+        tone: "good",
+        label: `Owned ${years} years — deep equity`,
+        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Likely near-paid-off. Lead with: "You've built serious equity in this home over ${years} years — don't lose it at the courthouse."`,
+      })
+    } else if (years >= 18) {
+      flags.push({
+        tone: "good",
+        label: `Owned ${years} years — long tenure`,
+        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Owners at this tenure often have 60%+ equity. Anchor the call on what they stand to preserve.`,
+      })
+    } else if (years >= 10) {
       flags.push({
         tone: "info",
-        label: `Owned ${years}+ years`,
-        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Long tenure usually means more equity built up.`,
+        label: `Owned ${years} years`,
+        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Meaningful equity built up — emphasize keeping it vs. losing it to the trustee.`,
+      })
+    } else if (years >= 0) {
+      flags.push({
+        tone: "info",
+        label: `Owned ${years} years`,
+        detail: `Bought ${fmtDate(lead.lastSaleDate)}. Shorter tenure — check if they owe close to market; equity may be thin.`,
       })
     }
   }
