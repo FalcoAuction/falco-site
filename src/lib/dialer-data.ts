@@ -309,6 +309,26 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
     .from("dialer_lead_workflow")
     .upsert(merged, { onConflict: "listing_slug" })
 
+  // Fire-and-forget notification to the auction partner when a call is booked.
+  // Non-blocking — errors log but never fail the activity write.
+  if (input.outcome === "booked") {
+    // Import lazily to avoid pulling nodemailer into every request that touches
+    // dialer-data (only loaded when a booking actually fires).
+    import("@/lib/dialer-notify")
+      .then(({ notifyAuctionPartnerOnBooking }) =>
+        notifyAuctionPartnerOnBooking({
+          listingSlug: input.listingSlug,
+          createdBy: input.createdBy ?? "",
+          notes: input.notes,
+          channel: input.channel,
+          outcome: input.outcome,
+          nextActionAt: input.nextActionAt ?? null,
+          occurredAt,
+        })
+      )
+      .catch((err) => console.error("notify hook failed:", err))
+  }
+
   return rowToActivity(row)
 }
 

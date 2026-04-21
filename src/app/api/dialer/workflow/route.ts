@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import {
   upsertWorkflow,
+  getWorkflow,
   type DialerStatus,
   type DialerNextAction,
 } from "@/lib/dialer-data"
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid nextAction." }, { status: 400 })
   }
 
+  // Capture the BEFORE status so we can detect an auction_booked transition
+  const prior = await getWorkflow(slug)
+
   const updated = await upsertWorkflow(slug, {
     status: body.status as DialerStatus | undefined,
     nextAction: body.nextAction as DialerNextAction | undefined,
@@ -70,5 +74,25 @@ export async function POST(req: NextRequest) {
   if (!updated) {
     return NextResponse.json({ error: "Failed to update workflow." }, { status: 500 })
   }
+
+  // If this update is what flipped status → auction_booked, fire the
+  // auction-partner notification (non-blocking).
+  const justBooked =
+    updated.status === "auction_booked" && prior.status !== "auction_booked"
+  if (justBooked) {
+    import("@/lib/dialer-notify")
+      .then(({ notifyAuctionPartnerOnBooking }) =>
+        notifyAuctionPartnerOnBooking({
+          listingSlug: slug,
+          createdBy: updated.updatedBy || session.caller || "",
+          notes: updated.summaryNotes,
+          channel: "note", // no call channel on pure workflow update
+          outcome: "booked",
+          nextActionAt: updated.auctionCallAt ?? updated.nextActionAt ?? null,
+        })
+      )
+      .catch((err) => console.error("workflow notify hook failed:", err))
+  }
+
   return NextResponse.json({ ok: true, workflow: updated })
 }
