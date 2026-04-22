@@ -6,12 +6,13 @@ import path from "node:path"
 // embed it as a data URI. Edge runtime can't touch the filesystem.
 export const runtime = "nodejs"
 
-export const alt = "FALCO routes distressed Tennessee homes to auction"
+export const alt =
+  "FALCO routes distressed Tennessee homes to local auction companies, not wholesalers"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
 // Read the same poster the hero <video> uses, so the share preview is a
-// frozen still of the v2 hero. Loaded once at module init — Vercel reuses
+// frozen still of the hero. Loaded once at module init — Vercel reuses
 // the same lambda for cached invocations.
 function loadPosterDataUri(): string | null {
   try {
@@ -40,7 +41,8 @@ export default function OpenGraphImage() {
         }}
       >
         {/* Hero video poster as the background — same image the live hero
-            paints behind the autoplaying loop. */}
+            paints. Slightly darker than before so the text reads cleanly
+            even on small share-preview sizes. */}
         {POSTER ? (
           <img
             src={POSTER}
@@ -54,18 +56,18 @@ export default function OpenGraphImage() {
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              filter: "grayscale(100%) brightness(0.55)",
+              filter: "grayscale(100%) brightness(0.45)",
             }}
           />
         ) : null}
 
-        {/* Vignette + emerald glow stack — mirrors the live hero overlays */}
+        {/* Vignette + emerald glow stack — bumped up a notch for readability. */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(ellipse at center, rgba(6,6,6,0.45) 0%, rgba(6,6,6,0.85) 70%, #060606 100%)",
+              "radial-gradient(ellipse at center, rgba(6,6,6,0.55) 0%, rgba(6,6,6,0.92) 70%, #060606 100%)",
             display: "flex",
           }}
         />
@@ -79,81 +81,72 @@ export default function OpenGraphImage() {
           }}
         />
 
-        {/* Content */}
+        {/* Content — three-row column: FALCO (top, centered) /
+            headline (middle, centered) / falco.llc (bottom, centered). */}
         <div
           style={{
             position: "relative",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
+            justifyContent: "space-between",
+            alignItems: "center",
             width: "100%",
             height: "100%",
-            padding: "70px 88px",
+            padding: "56px 60px",
           }}
         >
-          {/* Wordmark */}
+          {/* Centered FALCO wordmark */}
           <div
             style={{
               display: "flex",
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 700,
-              letterSpacing: 10,
+              letterSpacing: 14,
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.9)",
-              marginBottom: 36,
+              color: "rgba(255,255,255,0.95)",
             }}
           >
             FALCO
           </div>
 
-          {/* Hero headline — same wording as the v2 hero, sized up to fill
-              the canvas now that the sub-hero is gone. */}
+          {/* Hero headline — three explicit lines mirroring the live hero
+              (white / emerald / faded), centered, sized to be legible at
+              small preview dimensions. */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              fontSize: 96,
+              alignItems: "center",
+              fontSize: 62,
               fontWeight: 600,
-              lineHeight: 1.0,
-              letterSpacing: -3.5,
-              color: "#ffffff",
-              maxWidth: 1040,
+              lineHeight: 1.1,
+              letterSpacing: -2,
+              textAlign: "center",
             }}
           >
-            <div style={{ display: "flex", flexWrap: "wrap" }}>
-              <span>We route distressed Tennessee&nbsp;homes&nbsp;</span>
-              <span style={{ color: "rgb(52,211,153)" }}>to auction</span>
-              <span style={{ color: "rgba(255,255,255,0.55)" }}>
-                . Not to wholesalers.
-              </span>
+            <div style={{ color: "#ffffff" }}>
+              We route distressed Tennessee homes
+            </div>
+            <div style={{ color: "rgb(52,211,153)" }}>
+              to local auction companies.
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.55)" }}>
+              Not to wholesalers.
             </div>
           </div>
 
-          {/* Bottom bar — wordmark only */}
+          {/* Centered falco.llc */}
           <div
             style={{
               display: "flex",
-              position: "absolute",
-              bottom: 56,
-              left: 88,
-              right: 88,
-              justifyContent: "flex-end",
-              alignItems: "center",
+              fontSize: 14,
+              letterSpacing: 5,
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.55)",
+              fontWeight: 500,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                fontSize: 14,
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.45)",
-                fontWeight: 500,
-              }}
-            >
-              falco.llc
-            </div>
+            falco.llc
           </div>
         </div>
       </div>
