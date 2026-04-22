@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FALCO · Tennessee Distressed Real Estate",
   description:
-    "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity. Buyers get first look at TN inventory.",
+    "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
   icons: {
     icon: [
       { url: "/falco-logo.png", type: "image/png" },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity. Buyers get first look.",
+      "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity.",
+      "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
     images: ["/opengraph-image"],
   },
 };

@@ -107,17 +107,18 @@ export default function OpenGraphImage() {
             FALCO
           </div>
 
-          {/* Hero headline — same wording as the v2 hero */}
+          {/* Hero headline — same wording as the v2 hero, sized up to fill
+              the canvas now that the sub-hero is gone. */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              fontSize: 68,
+              fontSize: 96,
               fontWeight: 600,
-              lineHeight: 1.04,
-              letterSpacing: -2.5,
+              lineHeight: 1.0,
+              letterSpacing: -3.5,
               color: "#ffffff",
-              maxWidth: 1020,
+              maxWidth: 1040,
             }}
           >
             <div style={{ display: "flex", flexWrap: "wrap" }}>
@@ -129,23 +130,7 @@ export default function OpenGraphImage() {
             </div>
           </div>
 
-          {/* Subcopy — condensed v2 hero supporting line */}
-          <div
-            style={{
-              display: "flex",
-              fontSize: 24,
-              fontWeight: 400,
-              lineHeight: 1.45,
-              color: "rgba(255,255,255,0.78)",
-              marginTop: 32,
-              maxWidth: 880,
-            }}
-          >
-            Homeowners keep their equity. Buyers get first look at Tennessee
-            inventory before it hits the broader market.
-          </div>
-
-          {/* Bottom bar */}
+          {/* Bottom bar — wordmark only */}
           <div
             style={{
               display: "flex",
@@ -153,35 +138,10 @@ export default function OpenGraphImage() {
               bottom: 56,
               left: 88,
               right: 88,
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               alignItems: "center",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                fontSize: 14,
-                letterSpacing: 4,
-                textTransform: "uppercase",
-                color: "rgba(16,185,129,0.85)",
-                fontWeight: 600,
-              }}
-            >
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "rgb(16,185,129)",
-                  boxShadow: "0 0 14px rgba(16,185,129,0.7)",
-                  display: "flex",
-                }}
-              />
-              Tennessee · Live Pipeline
-            </div>
-
             <div
               style={{
                 display: "flex",
