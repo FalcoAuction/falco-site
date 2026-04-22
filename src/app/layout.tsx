@@ -75,9 +75,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Warm cache for the hero video so it's ready by the time the loading screen finishes */}
-        <link rel="preload" as="video" href="/video/hero-loop.mp4" type="video/mp4" />
+        {/* Always preload the lightweight hero poster — it's what the loading
+            screen waits on and the painted background on mobile. */}
         <link rel="preload" as="image" href="/video/hero-poster.jpg" type="image/jpeg" />
+        {/* Only pre-fetch the heavy hero video on desktop. Mobile renders the
+            poster only (see HeroVideoBg) so pre-fetching ~4.7MB on cell would
+            waste data and slow first paint. */}
+        <link
+          rel="preload"
+          as="video"
+          href="/video/hero-loop.mp4"
+          type="video/mp4"
+          media="(min-width: 768px)"
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <LoadingScreen />

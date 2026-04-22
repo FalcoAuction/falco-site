@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect, useRef } from "react"
 import { DotOrbit } from "../dot-orbit"
 import FaqSection from "./faq-section"
-import { SectionVideoBg } from "./section-video-bg"
+import { SectionVideoBg, HeroVideoBg } from "./section-video-bg"
 import { RequestDropdown } from "./request-dropdown"
 
 /**
@@ -100,19 +100,11 @@ export default function V2Content() {
             On mobile we force min-h-[88vh] so the video has room to breathe
             even though we removed snap fit-to-viewport on small screens. */}
         <SnapSection mobileMinH="min-h-[88vh]">
-          <video
-            className="absolute inset-0 -z-30 h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
+          <HeroVideoBg
+            src="/video/hero-loop.mp4"
             poster="/video/hero-poster.jpg"
-            aria-hidden="true"
-            style={{ opacity: 0.62 }}
-          >
-            <source src="/video/hero-loop.mp4" type="video/mp4" />
-          </video>
+            opacity={0.62}
+          />
 
           <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
           <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
@@ -540,7 +532,14 @@ function SnapSection({
     >
       {videoSrc && (
         <>
-          <SectionVideoBg src={videoSrc} opacity={0.32} />
+          <SectionVideoBg
+            src={videoSrc}
+            // Convention: /video/foo.mp4 has a sibling /video/foo-poster.jpg.
+            // Generated via ffmpeg in public/video. Used for fast-paint and
+            // as the fallback on mobile / slow connections.
+            poster={videoSrc.replace(/\.mp4$/, "-poster.jpg")}
+            opacity={0.32}
+          />
           <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_75%,#060606_100%)]" />
           <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
         </>
