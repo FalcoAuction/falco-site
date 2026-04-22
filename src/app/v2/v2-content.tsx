@@ -136,7 +136,7 @@ export default function V2Content() {
                 their home would actually clear at a marketed auction. Then we list it
                 with our auction partners. The equity goes home with them.
                 <br />
-                <span className="text-red-300/90 font-medium">Not a wholesaler.</span>
+                <span className="text-rose-300/55">Not a wholesaler.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
