@@ -337,8 +337,6 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     .filter(Boolean)
     .join("\n")
 
-  sendNotificationEmail(subject, html, text).catch(() => {})
-
   // Confirmation back to the homeowner
   const homeownerConfirm = confirmationTemplate({
     greeting: `${firstName(row.full_name)}, we got your request.`,
@@ -357,12 +355,18 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     closer:
       "When we come back, we'll show you what your home would clear at a marketed auction (run by a state-licensed Tennessee auction firm), what you'd walk away with after the loan is paid, and how that compares to letting the trustee sale go through. If the auction route doesn't fit your situation, we'll tell you that plainly.",
   })
-  sendConfirmationEmail(
-    email,
-    "We got your FALCO request — math coming within one business day",
-    homeownerConfirm.html,
-    homeownerConfirm.text
-  ).catch(() => {})
+  // Send notification + confirmation in parallel, but AWAIT both so the
+  // serverless function doesn't tear down before the HTTP requests to
+  // Resend complete. Fire-and-forget on Vercel is a race we lose.
+  await Promise.allSettled([
+    sendNotificationEmail(subject, html, text),
+    sendConfirmationEmail(
+      email,
+      "We got your FALCO request — math coming within one business day",
+      homeownerConfirm.html,
+      homeownerConfirm.text
+    ),
+  ])
 
   return {
     ok: true,
@@ -453,8 +457,6 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
     .filter(Boolean)
     .join("\n")
 
-  sendNotificationEmail(subject, html, text).catch(() => {})
-
   const inquiryConfirm = confirmationTemplate({
     greeting: `${firstName(row.full_name)}, message received.`,
     intro:
@@ -468,12 +470,15 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
     closer:
       "If anything's time-sensitive, just hit reply — it lands directly in our inbox.",
   })
-  sendConfirmationEmail(
-    email,
-    "We got your message — replying within one business day",
-    inquiryConfirm.html,
-    inquiryConfirm.text
-  ).catch(() => {})
+  await Promise.allSettled([
+    sendNotificationEmail(subject, html, text),
+    sendConfirmationEmail(
+      email,
+      "We got your message — replying within one business day",
+      inquiryConfirm.html,
+      inquiryConfirm.text
+    ),
+  ])
 
   return {
     ok: true,
@@ -577,8 +582,6 @@ ${row.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
     .filter(Boolean)
     .join("\n")
 
-  sendNotificationEmail(subject, html, text).catch(() => {})
-
   const partnerConfirm = confirmationTemplate({
     greeting: `${firstName(row.full_name)}, thanks for reaching out.`,
     intro: row.company
@@ -599,12 +602,15 @@ ${row.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
     closer:
       "On the call we'll walk you through how the inventory pipeline works, what we'd send your way, and how the partnership fee structure lays out. No surprises, no contract pressure.",
   })
-  sendConfirmationEmail(
-    email,
-    "FALCO got your partner inquiry — call within one business day",
-    partnerConfirm.html,
-    partnerConfirm.text
-  ).catch(() => {})
+  await Promise.allSettled([
+    sendNotificationEmail(subject, html, text),
+    sendConfirmationEmail(
+      email,
+      "FALCO got your partner inquiry — call within one business day",
+      partnerConfirm.html,
+      partnerConfirm.text
+    ),
+  ])
 
   return {
     ok: true,

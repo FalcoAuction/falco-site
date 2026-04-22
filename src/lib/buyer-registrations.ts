@@ -97,15 +97,13 @@ export async function registerBuyer(input: BuyerRegistrationInput): Promise<Regi
     email,
   }
 
-  // Fire-and-forget notify email to FALCO ops
-  notifyBuyerSignup(registration, alreadyExisted).catch((err) =>
-    console.error("notifyBuyerSignup failed:", err)
-  )
-
-  // Fire-and-forget confirmation back to the buyer
-  sendBuyerConfirmation(registration, alreadyExisted).catch((err) =>
-    console.error("sendBuyerConfirmation failed:", err)
-  )
+  // Await both sends so the serverless function doesn't tear down before
+  // the HTTP requests to Resend complete. Allowing fire-and-forget here
+  // means Vercel kills the lambda mid-flight and we lose emails.
+  await Promise.allSettled([
+    notifyBuyerSignup(registration, alreadyExisted),
+    sendBuyerConfirmation(registration, alreadyExisted),
+  ])
 
   return { ok: true, registration, alreadyExisted }
 }
