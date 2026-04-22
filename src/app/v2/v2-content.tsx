@@ -140,10 +140,9 @@ export default function V2Content() {
               </h1>
 
               <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
-                We find homeowners facing foreclosure across Tennessee. We show them
-                what their home is actually worth. Then we list it through our auction
-                pipeline so they walk away with their equity intact, instead of losing
-                it to a wholesaler or the courthouse.
+                We find Tennessee homeowners before the trustee sale. We show them what
+                their home would actually clear at auction. Then we list it with our
+                auction partners. The equity goes home with them, not a wholesaler.
               </p>
 
               <div className="falco-scroll-reveal mt-7 md:mt-10 flex flex-wrap items-center gap-3">
@@ -187,13 +186,14 @@ export default function V2Content() {
                   keeps it in their pocket.
                 </p>
                 <p className="falco-scroll-reveal mt-7 text-[17px] leading-[1.7] text-white/75">
-                  We get to them first. We show them what their home is actually worth
-                  at auction. Then we list it through our auction pipeline so the sale
-                  price gets set by the market, not by a flipper's margin.
+                  We try to reach them before the wholesaler call. We show them what
+                  their home would actually clear at auction. Then we list it with our
+                  auction partners and let the market set the price, not a flipper's
+                  margin.
                 </p>
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
                   We don't buy your house. We don't take a commission. The buyer pays a
-                  standard auction premium and you keep the equity that's yours.
+                  standard 8% auction premium and you keep the equity that's yours.
                 </p>
               </div>
             </div>
@@ -221,12 +221,12 @@ export default function V2Content() {
               <Step
                 num="02"
                 title="We make the call"
-                body="Our team reaches the homeowner directly. Not with a lowball cash offer. With the actual math on what they'd walk away with through a marketed sale. For most homeowners, it's the first time anyone has told them the option exists."
+                body="Our team reaches the homeowner directly. Not with a lowball cash offer, but with real numbers on what a marketed sale would yield. Most homeowners have never had anyone explain that an alternative existed. We're often the first."
               />
               <Step
                 num="03"
                 title="We list with auction"
-                body="Property goes to marketed auction with one of our Tennessee auction partners. Buyers compete. Property sells at market value. Seller pays zero. Buyer pays a standard premium. Everyone knows the terms up front."
+                body="Property goes to marketed auction with one of our Tennessee auction partners. Buyers compete openly. Properties typically clear at 85–95% of retail. Seller pays zero. Buyer pays an 8% premium on the winning bid. Everyone sees the terms up front."
               />
             </div>
           </div>
@@ -247,14 +247,17 @@ export default function V2Content() {
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  You'll get a lot of calls. Wholesalers offering 60–70% of your home's
-                  value, in cash, fast. Most homeowners take those offers because nobody
-                  told them there was a third path. There is one. And it's built around
-                  what you keep, not what someone else takes.
+                  You'll get a lot of calls. Wholesalers offering 60–75% of your home's
+                  value, in cash, fast. Many homeowners sign because nobody told them
+                  there was a third path. There is. It's built around what you keep,
+                  not what someone else takes.
                 </p>
 
                 <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60">
+                  <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
+                    Example: $500K home, $300K loan balance
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
                     <div>Your option</div>
                     <div>You walk away with</div>
                   </div>
@@ -263,12 +266,12 @@ export default function V2Content() {
                     <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Sell to a wholesaler at 60–70%</div>
-                    <div className="text-[15px] text-amber-200 font-semibold tabular-nums">$25K – $50K</div>
+                    <div className="text-[15px] text-white/85">Sell to a wholesaler at 65%</div>
+                    <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
                     <div className="text-[15px] text-emerald-100 font-medium">List with us → marketed auction</div>
-                    <div className="text-[15px] text-emerald-300 font-bold tabular-nums">$100K+</div>
+                    <div className="text-[15px] text-emerald-300 font-bold tabular-nums">~$130K</div>
                   </div>
                 </div>
 
@@ -311,7 +314,7 @@ export default function V2Content() {
 
                 <ul className="falco-scroll-reveal mt-7 space-y-3 text-[15px] text-white/85">
                   <BuyerBullet text="First-look notifications on Tennessee inventory" />
-                  <BuyerBullet text="Equity-positive deals only — no underwater junk" />
+                  <BuyerBullet text="Equity-positive deals only. No underwater junk." />
                   <BuyerBullet text="Standard 8% buyer's premium, no surprises" />
                   <BuyerBullet text="Clean title, delivered at close by our auction partners" />
                 </ul>
@@ -321,7 +324,7 @@ export default function V2Content() {
                     href="/buyers"
                     className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
                   >
-                    Register for buyer access →
+                    Get notified when TN inventory lists →
                   </Link>
                   <div className="text-[13px] text-white/55 self-center">
                     90 seconds. No spam.
@@ -353,7 +356,7 @@ export default function V2Content() {
                 </p>
 
                 <ul className="falco-scroll-reveal mt-7 space-y-3 text-[15px] text-white/85">
-                  <BuyerBullet text="Pre-qualified, equity-positive inventory delivered weekly" />
+                  <BuyerBullet text="Pre-qualified, equity-positive inventory delivered as it surfaces" />
                   <BuyerBullet text="Sellers educated on the auction option before handoff" />
                   <BuyerBullet text="No sourcing cost. Your team sees only ready listings" />
                   <BuyerBullet text="Long-term partnership, not one-off referrals" />
@@ -401,6 +404,49 @@ export default function V2Content() {
           </div>
         </SnapSection>
 
+        {/* === ABOUT === */}
+        <SnapSection>
+          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+            <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
+              <div className="falco-scroll-reveal">
+                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
+                  About FALCO
+                </div>
+              </div>
+              <div className="max-w-2xl">
+                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+                  Built in Tennessee. For Tennessee.
+                </h2>
+
+                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
+                  FALCO is a Tennessee operation built on top of a distress-data
+                  pipeline that monitors trustee notices, lis pendens filings, tax
+                  records, and probate courts across all 95 TN counties, every day.
+                </p>
+
+                <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
+                  We work with state-licensed Tennessee auction firms to give homeowners
+                  a real disposition path that doesn't end in a wholesaler discount or
+                  the courthouse steps. We don't buy houses. We don't broker mortgages.
+                  We don't run a webinar. We connect distressed sellers to a marketed
+                  auction and we get paid only when the buyer pays the auction premium.
+                </p>
+
+                <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">
+                  Questions, press, or partnership outside the three core forms?{" "}
+                  <Link
+                    href="/inquiry"
+                    className="text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline"
+                  >
+                    Drop us a note
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+        </SnapSection>
+
         {/* === FAQ (allows internal scroll if items expand past viewport) === */}
         <SnapSection videoSrc="/video/section-faq.mp4" allowOverflow>
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
@@ -416,7 +462,26 @@ export default function V2Content() {
               <FaqSection />
             </div>
 
-            <div className="mt-12 pt-6 border-t border-white/[0.06]">
+            {/* Closing CTA — catches anyone still scrolling past the FAQ */}
+            <div className="falco-scroll-reveal mt-10 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.04] p-6 md:p-7 flex flex-wrap items-center justify-between gap-5">
+              <div>
+                <div className="text-[15px] md:text-[16px] font-medium text-white">
+                  Still have a question?
+                </div>
+                <div className="text-[13px] text-white/60 mt-1">
+                  Press, partnership, or anything else — drop us a note and we'll come
+                  back within one business day.
+                </div>
+              </div>
+              <Link
+                href="/inquiry"
+                className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
+              >
+                Get in touch →
+              </Link>
+            </div>
+
+            <div className="mt-10 pt-6 border-t border-white/[0.06]">
               <div className="flex items-center justify-between flex-wrap gap-4 text-[12px] tracking-[0.18em] text-white/40">
                 <div>FALCO · Tennessee</div>
                 <div className="flex items-center gap-5">
@@ -428,6 +493,12 @@ export default function V2Content() {
                   </Link>
                   <Link href="/partners" className="hover:text-white transition-colors">
                     Auction partners
+                  </Link>
+                  <Link href="/inquiry" className="hover:text-white transition-colors">
+                    Contact
+                  </Link>
+                  <Link href="/privacy" className="hover:text-white transition-colors">
+                    Privacy
                   </Link>
                   <span className="text-white/15">falco.llc</span>
                 </div>

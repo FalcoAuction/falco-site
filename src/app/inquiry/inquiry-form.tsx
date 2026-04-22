@@ -51,7 +51,7 @@ export default function InquiryForm() {
     <FormShell
       eyebrow="General inquiry"
       title="Don't fit the other forms? Tell us what you're up to."
-      intro="Press, partnerships outside auction, vendors, investor introductions, anyone curious about the model — drop a note. We respond within 24 hours."
+      intro="Press, partnerships outside auction, vendors, investor introductions, anyone curious about the model — drop a note. We respond within one business day."
     >
       {success ? (
         <FormSuccess msg={success} />
@@ -124,7 +124,7 @@ export default function InquiryForm() {
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <SubmitButton pending={pending}>Send</SubmitButton>
             <div className="text-[11px] text-white/40">
-              We respond within 24 hours from{" "}
+              We respond within one business day from{" "}
               <span className="text-white/65">falco@falco.llc</span>.
             </div>
           </div>

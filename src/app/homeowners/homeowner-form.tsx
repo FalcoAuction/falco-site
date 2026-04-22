@@ -59,7 +59,7 @@ export default function HomeownerForm() {
     <FormShell
       eyebrow="For homeowners · Tennessee"
       title="A free 15-minute call. Real math. No pitch."
-      intro="Tell us about the property. Within 24 hours we'll come back to you with the actual numbers for your situation: what your home is worth, what you'd walk away with through a marketed sale, and whether the auction route actually fits. If it doesn't, we'll tell you that plainly."
+      intro="Tell us about the property. Within one business day we'll come back to you with the actual numbers for your situation: what your home is worth, what you'd walk away with through a marketed sale, and whether the auction route actually fits. If it doesn't, we'll tell you that plainly."
     >
       {success ? (
         <FormSuccess msg={success} />
@@ -179,7 +179,7 @@ export default function HomeownerForm() {
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <SubmitButton pending={pending}>Send my request</SubmitButton>
             <div className="text-[11px] text-white/40">
-              We respond within 24 hours from{" "}
+              We respond within one business day from{" "}
               <span className="text-white/65">falco@falco.llc</span>. Nothing you tell us is shared.
             </div>
           </div>

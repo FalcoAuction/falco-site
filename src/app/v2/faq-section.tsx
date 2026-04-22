@@ -5,35 +5,35 @@ import { useState } from "react"
 const ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "Is this legit?",
-    a: "Yes. We're a Tennessee-based pipeline that sources distressed property signals from county courthouses, then lists qualifying homes for sale through a licensed Tennessee auction partner. We don't buy your home, we don't ask you for money up front, we don't take commission out of what you keep. Our revenue comes from the standard buyer's premium — paid by the buyer, not by you.",
+    a: "Yes. We're a Tennessee company that sources distressed property data from county courthouses, then lists qualifying homes for sale through a state-licensed Tennessee auction partner. We don't buy your home. We don't ask you for money up front. We don't take any commission out of what you keep. Our revenue comes from the standard 8% buyer's premium, paid by the buyer of the home, not by you.",
   },
   {
     q: "Do I have to sell?",
-    a: "No. We'll tell you what the math looks like — what you'd walk away with through a marketed sale versus a wholesaler offer versus letting the trustee sale happen. If the numbers don't make sense for your situation, we say that plainly and you make your own call.",
+    a: "No. We'll show you the math: what a marketed sale would yield, what a wholesaler would pay, and what happens if the trustee sale goes through. If the numbers don't make sense for your situation, we'll say so plainly and you decide.",
   },
   {
     q: "How is this different from a wholesaler?",
-    a: "Wholesalers buy your house below market and resell at market. Their profit is the gap between what they pay you and what the home is actually worth. We don't buy your house at all. Our auction partner sells it to the highest bidder at market value. You keep the equity a wholesaler would have taken.",
+    a: "Wholesalers buy your house below market and resell at market. Their profit is the gap between what they pay you and what the home is actually worth. We don't buy your house at all. Our auction partner sells it to the highest bidder at competitive open-bid pricing, typically 85–95% of full retail value. You keep the equity a wholesaler would have pocketed.",
   },
   {
     q: "What if the auction doesn't sell for enough?",
-    a: "Marketed auctions in Tennessee typically land between 85–95% of market value when properly run. If a property clearly won't clear a threshold that makes sense for you, we won't list it — we'll tell you up front. Sometimes wholesale or even trustee sale is the right answer for the math. We'd rather tell you that than waste both our time.",
+    a: "Marketed auctions in Tennessee typically land between 85% and 95% of full retail when properly run. If a property clearly won't clear a number that makes sense for you, we won't list it. We'll tell you up front. Sometimes a wholesaler offer or even letting the trustee sale happen is the right answer for the math. We'd rather tell you that than waste both our time.",
   },
   {
     q: "What does it cost me?",
-    a: "Zero dollars out of pocket. No listing fee, no upfront cost, no commission from your side. The auction partner is compensated by a standard buyer's premium paid on top of the winning bid by the buyer. If the property doesn't sell, you don't owe anyone anything.",
+    a: "Zero dollars out of pocket. No listing fee, no upfront cost, no commission from your side. The auction partner is compensated by a standard 8% buyer's premium paid on top of the winning bid by the buyer. If the property doesn't sell, you don't owe anyone anything.",
   },
   {
     q: "How long does this take?",
-    a: "Typical timeline is 45 to 75 days from when you decide to list to when the sale closes. We can run shorter windows (21–30 days for online-only marketed auctions) if your trustee sale date is very close. Our partner coordinates postponement of the foreclosure with your lender so the auction has time to run.",
+    a: "Typical timeline is 45 to 75 days from when you decide to list to when the sale closes. We can run shorter windows (21 to 30 days for online-only marketed auctions) if your trustee sale date is very close. Our partner will reach out to your lender about postponing the foreclosure so the auction has time to run. We can't guarantee the lender agrees, but most do when there's an active marketed sale on the property.",
   },
   {
     q: "Who are the buyers?",
-    a: "Cash buyers and active investors who have pre-registered for Tennessee inventory access. We notify them first when a new property lists. Standard 8% buyer's premium, clean title, pre-verified — same model professional auction houses have used for decades.",
+    a: "Cash buyers and active investors who have pre-registered for Tennessee inventory access. We notify them first when a new property lists. Standard 8% buyer's premium, clean title, pre-verified. The same model professional auction houses have used for decades.",
   },
   {
     q: "How do I get started as a seller?",
-    a: "Use the form on the homeowner page or email us at falco@falco.llc with your property address, your estimated mortgage balance, and your trustee sale date if there is one. We'll come back to you within 24 hours with the math for your specific situation. No pressure, no pitch, no 'come to our webinar.' Just real numbers.",
+    a: "Use the form on the homeowner page or email us at falco@falco.llc with your property address, your estimated mortgage balance, and your trustee sale date if there is one. We'll come back to you within one business day with the math for your specific situation. No pressure, no pitch, no 'come to our webinar.' Just real numbers.",
   },
 ]
 

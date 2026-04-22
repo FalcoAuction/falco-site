@@ -57,7 +57,7 @@ export default function PartnerForm() {
     <FormShell
       eyebrow="For auction partners · Tennessee"
       title="Open a partnership conversation."
-      intro="If you run a Tennessee auction company and you'd rather not spend your week sourcing inventory, that's exactly what we do. Tell us a little about your operation and we'll come back within 24 hours to set up a call."
+      intro="If you run a Tennessee auction company and you'd rather not spend your week sourcing inventory, that's exactly what we do. Tell us a little about your operation and we'll come back within one business day to set up a call."
     >
       {success ? (
         <FormSuccess msg={success} />
@@ -167,7 +167,7 @@ export default function PartnerForm() {
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <SubmitButton pending={pending}>Open the conversation</SubmitButton>
             <div className="text-[11px] text-white/40">
-              We respond within 24 hours from{" "}
+              We respond within one business day from{" "}
               <span className="text-white/65">falco@falco.llc</span>.
             </div>
           </div>
