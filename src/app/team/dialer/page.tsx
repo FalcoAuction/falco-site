@@ -174,7 +174,7 @@ export default function DialerRolePage() {
             <><strong>Not wholesalers.</strong> We don't buy the house. We don't take a commission from the homeowner. We get paid only when our partner closes the marketed sale.</>,
             <><strong>Not a course / mastermind / coaching biz.</strong> We don't sell anything to investors or "students." We never will.</>,
             <><strong>Not aggressive.</strong> If a homeowner says no or doesn't engage after 3 attempts, we move on. We don't badger.</>,
-            <><strong>Not a sweatshop dialer farm.</strong> Quality of conversation > quantity. You'll have time to think between calls. You'll be expected to use it.</>,
+            <><strong>Not a sweatshop dialer farm.</strong> Quality of conversation beats quantity. You&apos;ll have time to think between calls. You&apos;ll be expected to use it.</>,
             <><strong>Not a get-rich-quick play.</strong> Six figures of homeowner equity per closed deal compounds. So does our reputation. Both take 12-24 months to ramp. We're playing for years, not months.</>,
           ]} />
         </Section>
