@@ -41,14 +41,14 @@ export default function V2Content() {
     >
       {/* === HEADER === */}
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3 md:px-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-10">
           <Link
             href="/"
-            className="text-[12px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[15px] font-semibold tracking-[0.32em] text-white hover:text-emerald-300 transition-colors"
           >
             FALCO
           </Link>
-          <nav className="flex items-center gap-3 text-[11px] tracking-wide text-white/60">
+          <nav className="flex items-center gap-6 text-[13px] tracking-wide text-white/65">
             <a href="#homeowners" className="hover:text-white transition-colors hidden md:inline">
               Homeowners
             </a>
@@ -60,7 +60,7 @@ export default function V2Content() {
             </a>
             <Link
               href="/partner-login"
-              className="falco-orbit-right falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-[11px] font-semibold transition"
+              className="falco-orbit-right falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
             >
               Partner Login
             </Link>
@@ -72,39 +72,20 @@ export default function V2Content() {
       <section className="relative isolate overflow-hidden min-h-[78vh] flex items-center">
         <div className="absolute inset-0 -z-40 bg-[#060606]" />
 
-        {/* Cinematic B&W drone hero loop — 12 seconds, ~4.5MB, brighter than section bgs */}
-        <video
-          className="absolute inset-0 -z-30 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="/video/hero-poster.jpg"
-          aria-hidden="true"
-          style={{ opacity: 0.62 }}
-        >
-          <source src="/video/hero-loop.mp4" type="video/mp4" />
-        </video>
-
-        {/* Vignette + gradient wash — keeps text readable over the brighter video */}
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
-        <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
-
         {/* Brand wash + dot grid */}
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_55%)]" />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
+        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.07),transparent_55%)]" />
+        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.40]" />
 
-        {/* Orbiting dot canvas — dialed back so it doesn't fight the video */}
+        {/* Orbiting dot canvas — back at original presence since no video competes */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <DotOrbit
-            dotColor="rgba(16, 185, 129, 0.5)"
-            lineColor="rgba(16, 185, 129, 0.06)"
-            density={0.55}
-            speed={0.3}
-            dotSize={1.1}
-            linkDistance={120}
-            opacity={0.6}
+            dotColor="rgba(16, 185, 129, 0.6)"
+            lineColor="rgba(16, 185, 129, 0.08)"
+            density={0.85}
+            speed={0.35}
+            dotSize={1.3}
+            linkDistance={130}
+            opacity={0.8}
           />
         </div>
 
@@ -148,7 +129,7 @@ export default function V2Content() {
       </section>
 
       {/* === THESIS === */}
-      <SectionWithVideo videoSrc="/video/section-thesis.mp4">
+      <PlainSection>
         <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
           <div className="grid md:grid-cols-[180px_1fr] gap-6 md:gap-14">
             <div className="falco-scroll-reveal">
@@ -175,12 +156,12 @@ export default function V2Content() {
             </div>
           </div>
         </div>
-      </SectionWithVideo>
+      </PlainSection>
 
       <Divider />
 
       {/* === HOW IT WORKS === */}
-      <SectionWithVideo id="how" videoSrc="/video/section-how.mp4">
+      <PlainSection id="how">
         <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
           <div className="falco-scroll-reveal mb-12 max-w-2xl">
             <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80 mb-2.5">
@@ -209,7 +190,7 @@ export default function V2Content() {
             />
           </div>
         </div>
-      </SectionWithVideo>
+      </PlainSection>
 
       <Divider />
 
@@ -394,7 +375,7 @@ export default function V2Content() {
       <Divider />
 
       {/* === WHY DIFFERENT === */}
-      <SectionWithVideo videoSrc="/video/section-different.mp4">
+      <PlainSection>
         <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
           <div className="falco-scroll-reveal mb-12 max-w-2xl">
             <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80 mb-2.5">
@@ -420,7 +401,7 @@ export default function V2Content() {
             />
           </div>
         </div>
-      </SectionWithVideo>
+      </PlainSection>
 
       <Divider />
 
@@ -476,6 +457,20 @@ function SectionWithVideo({
       {/* Vignette to keep text readable */}
       <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_75%,#060606_100%)]" />
       <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
+      {children}
+    </section>
+  )
+}
+
+function PlainSection({
+  id,
+  children,
+}: {
+  id?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section id={id} className="relative isolate overflow-hidden bg-[#060606]">
       {children}
     </section>
   )
