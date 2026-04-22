@@ -187,6 +187,14 @@ export default function V2Content() {
                   We don't buy your house. We don't take a commission. The buyer pays a
                   standard 8% auction premium and you keep the equity that's yours.
                 </p>
+                <p className="falco-scroll-reveal mt-7 text-[14px] leading-[1.7]">
+                  <Link
+                    href="/manifesto"
+                    className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors"
+                  >
+                    Read the longer, angrier version →
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
