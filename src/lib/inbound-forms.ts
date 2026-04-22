@@ -216,8 +216,8 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     id: String(data.id),
     alreadyExisted,
     message: alreadyExisted
-      ? "Got it. We updated your request and will be in touch within one business day."
-      : "Got it. We'll be in touch within one business day with the math on your specific situation.",
+      ? "Got it. We updated your request and will be in touch within one business day with the math on what your home would clear at a marketed auction."
+      : "Got it. We'll be in touch within one business day with the math on your specific situation — what your home would clear at a marketed auction vs. what you'd lose at the trustee sale.",
   }
 }
 

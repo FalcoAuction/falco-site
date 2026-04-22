@@ -187,9 +187,9 @@ export default function V2Content() {
                 </p>
                 <p className="falco-scroll-reveal mt-7 text-[17px] leading-[1.7] text-white/75">
                   We try to reach them before the wholesaler call. We show them what
-                  their home would actually clear at auction. Then we list it with our
-                  auction partners and let the market set the price, not a flipper's
-                  margin.
+                  their home would actually clear at a marketed auction. Then we list
+                  it with our auction partners and let the market set the price, not
+                  a flipper's margin.
                 </p>
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
                   We don't buy your house. We don't take a commission. The buyer pays a
@@ -226,7 +226,7 @@ export default function V2Content() {
               <Step
                 num="03"
                 title="We list with auction"
-                body="Property goes to marketed auction with one of our Tennessee auction partners. Buyers compete openly. Properties typically clear at 85–95% of retail. Seller pays zero. Buyer pays an 8% premium on the winning bid. Everyone sees the terms up front."
+                body="Property goes to a marketed public auction run by one of our state-licensed Tennessee auction partners — not the trustee sale on the courthouse steps. Buyers compete openly. Properties typically clear at 85–95% of retail. Seller pays zero. Buyer pays an 8% premium on the winning bid. Everyone sees the terms up front."
               />
             </div>
           </div>
