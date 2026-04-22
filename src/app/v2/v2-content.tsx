@@ -126,36 +126,36 @@ export default function V2Content() {
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
               <h1 className="falco-scroll-reveal text-[34px] md:text-[72px] leading-[1.02] md:leading-[0.96] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
-                We route distressed Tennessee homes{" "}
-                <span className="text-emerald-400">to auction</span>
-                <span className="text-white/45">. Not to wholesalers.</span>
+                <span className="block">We route distressed Tennessee homes</span>
+                <span className="block text-emerald-400">to local auction companies.</span>
+                <span className="block text-white/45">Not to wholesalers.</span>
               </h1>
 
               <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
                 We find Tennessee homeowners before the trustee sale. We show them what
-                their home would actually clear at auction. Then we list it with our
-                auction partners. The equity goes home with them, not a wholesaler.
+                their home would actually clear at a marketed auction. Then we list it
+                with our auction partners. The equity goes home with them, not a
+                wholesaler.
               </p>
 
-              <div className="falco-scroll-reveal mt-7 md:mt-10 flex flex-wrap items-center gap-3">
+              {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
+                  stops the trio of buttons from competing visually. */}
+              <div className="falco-scroll-reveal mt-7 md:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                 <a
                   href="#homeowners"
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors w-fit"
                 >
                   For Homeowners
                 </a>
-                <a
-                  href="#buyers"
-                  className="falco-orbit-left falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-6 py-3 text-[14px] font-semibold transition"
-                >
-                  For Buyers
-                </a>
-                <a
-                  href="#auction-partners"
-                  className="text-[13px] text-white/60 hover:text-white underline-offset-4 hover:underline transition-colors px-2 py-2"
-                >
-                  For Auction Partners →
-                </a>
+                <div className="flex items-center gap-1 text-[13px] text-white/55">
+                  <a href="#buyers" className="hover:text-white transition-colors px-1 py-2">
+                    For Buyers
+                  </a>
+                  <span className="text-white/25">·</span>
+                  <a href="#auction-partners" className="hover:text-white transition-colors px-1 py-2">
+                    For Auction Partners
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function V2Content() {
                 How it works
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Three steps. No middlemen.
+                Three steps. No wholesalers.
               </h2>
             </div>
 
@@ -221,12 +221,12 @@ export default function V2Content() {
               <Step
                 num="02"
                 title="We make the call"
-                body="Our team reaches the homeowner directly. Not with a lowball cash offer, but with real numbers on what a marketed sale would yield. Most homeowners have never had anyone explain that an alternative existed. We're often the first."
+                body="Our team reaches the homeowner directly. Not with a lowball cash offer, but with real numbers on what a marketed sale would yield. Most homeowners have never had anyone explain that an alternative existed."
               />
               <Step
                 num="03"
                 title="We list with auction"
-                body="Property goes to a marketed public auction run by one of our state-licensed Tennessee auction partners — not the trustee sale on the courthouse steps. Buyers compete openly. Properties typically clear at 85–95% of retail. Seller pays zero. Buyer pays an 8% premium on the winning bid. Everyone sees the terms up front."
+                body="Property goes to a marketed public auction (not the courthouse trustee sale) run by a state-licensed TN auction partner. Buyers compete openly. Typically clears at 85–95% of retail. Seller pays zero — the buyer pays an 8% premium."
               />
             </div>
           </div>
@@ -247,10 +247,10 @@ export default function V2Content() {
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  You'll get a lot of calls. Wholesalers offering 60–75% of your home's
-                  value, in cash, fast. Many homeowners sign because nobody told them
-                  there was a third path. There is. It's built around what you keep,
-                  not what someone else takes.
+                  You'll get a lot of calls. Wholesalers offering 65–75% of your home's
+                  value, in cash, fast — built on the wholesale industry's "70% rule."
+                  Many homeowners sign because nobody told them there was a third path.
+                  There is. It's built around what you keep, not what someone else takes.
                 </p>
 
                 <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
@@ -302,7 +302,7 @@ export default function V2Content() {
               </div>
               <div className="max-w-2xl">
                 <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Get first look.
+                  Skip the wholesaler swarm.
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
@@ -401,6 +401,16 @@ export default function V2Content() {
                 body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure hits, so they keep the equity."
               />
             </div>
+
+            <div className="falco-scroll-reveal mt-12 text-[14px] text-white/55">
+              Want the math behind this?{" "}
+              <Link
+                href="/manifesto"
+                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors font-medium"
+              >
+                Read the long version →
+              </Link>
+            </div>
           </div>
         </SnapSection>
 
@@ -419,9 +429,12 @@ export default function V2Content() {
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  FALCO is a Tennessee operation built on top of a distress-data
-                  pipeline that monitors trustee notices, lis pendens filings, tax
-                  records, and probate courts across all 95 TN counties, every day.
+                  Tennessee sees roughly{" "}
+                  <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
+                  per week. We read every one. FALCO is a Tennessee operation built on
+                  a distress-data pipeline that monitors trustee notices, lis pendens
+                  filings, tax records, and probate courts across all 95 TN counties,
+                  every day.
                 </p>
 
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
@@ -430,6 +443,17 @@ export default function V2Content() {
                   the courthouse steps. We don't buy houses. We don't broker mortgages.
                   We don't run a webinar. We connect distressed sellers to a marketed
                   auction and we get paid only when the buyer pays the auction premium.
+                </p>
+
+                <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">
+                  Sources for our claims live on the{" "}
+                  <Link
+                    href="/manifesto#sources"
+                    className="text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline"
+                  >
+                    manifesto page
+                  </Link>
+                  .
                 </p>
 
                 <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">
