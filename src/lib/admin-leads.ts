@@ -9,6 +9,23 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export type LeadKind = "homeowner" | "buyer" | "partner" | "inquiry"
 
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "listed"
+  | "closed"
+  | "lost"
+
+export const LEAD_STATUSES: LeadStatus[] = [
+  "new",
+  "contacted",
+  "qualified",
+  "listed",
+  "closed",
+  "lost",
+]
+
 export type Lead = {
   id: string
   kind: LeadKind
@@ -19,6 +36,11 @@ export type Lead = {
   summary: string
   /** Full details map for the expanded view. */
   details: Array<{ label: string; value: string }>
+  // Workflow fields (added by the admin_lead_workflow migration)
+  status: LeadStatus
+  notes: string
+  nextActionAt: string | null
+  lastContactedAt: string | null
 }
 
 export type LeadsBundle = {
@@ -56,7 +78,30 @@ function within24h(iso: string): boolean {
 // Per-table → Lead mappers
 // ----------------------------------------------------------------------------
 
-type HomeownerRow = {
+/** Shared workflow columns added by the admin_lead_workflow migration. */
+type WorkflowRow = {
+  status: string | null
+  admin_notes: string | null
+  next_action_at: string | null
+  last_contacted_at: string | null
+}
+
+function pickWorkflow(r: WorkflowRow): {
+  status: LeadStatus
+  notes: string
+  nextActionAt: string | null
+  lastContactedAt: string | null
+} {
+  const s = (r.status ?? "new") as LeadStatus
+  return {
+    status: LEAD_STATUSES.includes(s) ? s : "new",
+    notes: r.admin_notes ?? "",
+    nextActionAt: r.next_action_at,
+    lastContactedAt: r.last_contacted_at,
+  }
+}
+
+type HomeownerRow = WorkflowRow & {
   id: string
   email: string
   full_name: string | null
@@ -93,10 +138,11 @@ function mapHomeowner(r: HomeownerRow): Lead {
       { label: "Situation", value: r.situation_notes ?? "" },
       { label: "Found via", value: r.referrer ?? "" },
     ].filter((d) => d.value && d.value.trim()),
+    ...pickWorkflow(r),
   }
 }
 
-type BuyerRow = {
+type BuyerRow = WorkflowRow & {
   id: string
   email: string
   full_name: string | null
@@ -145,10 +191,11 @@ function mapBuyer(r: BuyerRow): Lead {
       { label: "Notes", value: r.notes ?? "" },
       { label: "Found via", value: r.referrer ?? "" },
     ].filter((d) => d.value && d.value.trim()),
+    ...pickWorkflow(r),
   }
 }
 
-type PartnerRow = {
+type PartnerRow = WorkflowRow & {
   id: string
   email: string
   full_name: string | null
@@ -183,10 +230,11 @@ function mapPartner(r: PartnerRow): Lead {
       { label: "Fee structure", value: r.fee_structure ?? "" },
       { label: "Notes", value: r.notes ?? "" },
     ].filter((d) => d.value && d.value.trim()),
+    ...pickWorkflow(r),
   }
 }
 
-type InquiryRow = {
+type InquiryRow = WorkflowRow & {
   id: string
   email: string
   full_name: string | null
@@ -211,6 +259,7 @@ function mapInquiry(r: InquiryRow): Lead {
       { label: "Topic", value: r.topic ?? "" },
       { label: "Message", value: r.message ?? "" },
     ].filter((d) => d.value && d.value.trim()),
+    ...pickWorkflow(r),
   }
 }
 

@@ -61,13 +61,14 @@ export default function OpenGraphImage() {
           />
         ) : null}
 
-        {/* Vignette + emerald glow stack — bumped up a notch for readability. */}
+        {/* Vignette + emerald glow stack — strong enough that white text
+            on the left side stays crisp at small preview sizes. */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(ellipse at center, rgba(6,6,6,0.55) 0%, rgba(6,6,6,0.92) 70%, #060606 100%)",
+              "radial-gradient(ellipse at center, rgba(6,6,6,0.50) 0%, rgba(6,6,6,0.90) 75%, #060606 100%)",
             display: "flex",
           }}
         />
@@ -81,27 +82,32 @@ export default function OpenGraphImage() {
           }}
         />
 
-        {/* Content — three-row column: FALCO (top, centered) /
-            headline (middle, centered) / falco.llc (bottom, centered). */}
+        {/* Content — left-aligned column: FALCO top-left, big headline
+            anchored left-of-center, falco.llc bottom-right. Mirrors the
+            live hero's left-aligned reading flow rather than a stacked
+            centered layout. */}
         <div
           style={{
             position: "relative",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "center",
+            justifyContent: "center",
+            alignItems: "flex-start",
             width: "100%",
             height: "100%",
-            padding: "56px 60px",
+            padding: "70px 64px",
           }}
         >
-          {/* Centered FALCO wordmark */}
+          {/* FALCO wordmark top-left */}
           <div
             style={{
+              position: "absolute",
+              top: 56,
+              left: 64,
               display: "flex",
               fontSize: 22,
               fontWeight: 700,
-              letterSpacing: 14,
+              letterSpacing: 12,
               textTransform: "uppercase",
               color: "rgba(255,255,255,0.95)",
             }}
@@ -109,19 +115,20 @@ export default function OpenGraphImage() {
             FALCO
           </div>
 
-          {/* Hero headline — three explicit lines mirroring the live hero
-              (white / emerald / faded), centered, sized to be legible at
-              small preview dimensions. */}
+          {/* Hero headline — three explicit left-aligned lines, larger
+              than the centered version was. Each line styled to match the
+              live hero (white / emerald / faded). Sized so "We route
+              distressed Tennessee homes" fits on one line at 1200px. */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              fontSize: 62,
+              alignItems: "flex-start",
+              fontSize: 70,
               fontWeight: 600,
-              lineHeight: 1.1,
-              letterSpacing: -2,
-              textAlign: "center",
+              lineHeight: 1.08,
+              letterSpacing: -2.5,
+              textAlign: "left",
             }}
           >
             <div style={{ color: "#ffffff" }}>
@@ -135,11 +142,14 @@ export default function OpenGraphImage() {
             </div>
           </div>
 
-          {/* Centered falco.llc */}
+          {/* falco.llc bottom-right */}
           <div
             style={{
+              position: "absolute",
+              bottom: 56,
+              right: 64,
               display: "flex",
-              fontSize: 14,
+              fontSize: 16,
               letterSpacing: 5,
               textTransform: "uppercase",
               color: "rgba(255,255,255,0.55)",
