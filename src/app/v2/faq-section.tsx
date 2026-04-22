@@ -33,7 +33,7 @@ const ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "How do I get started as a seller?",
-    a: "Email us — falcoauction@gmail.com — with the property address, your estimated mortgage balance, and when your trustee sale date is (if there is one). We'll come back to you within 24 hours with the math on your specific situation. No pressure, no pitch, no 'come to our webinar.' Just real numbers.",
+    a: "Use the form on the homeowner page or email us at falco@falco.llc with your property address, your estimated mortgage balance, and your trustee sale date if there is one. We'll come back to you within 24 hours with the math for your specific situation. No pressure, no pitch, no 'come to our webinar.' Just real numbers.",
   },
 ]
 

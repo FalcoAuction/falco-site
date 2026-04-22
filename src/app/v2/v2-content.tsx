@@ -87,13 +87,8 @@ export default function V2Content() {
           />
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pt-24 pb-28 md:px-10 md:pt-32 md:pb-40">
+        <div className="mx-auto max-w-5xl px-6 pt-28 pb-28 md:px-10 md:pt-40 md:pb-40">
           <div className="max-w-3xl">
-            <div className="falco-scroll-reveal mb-8 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-emerald-300/75">
-              <span className="falco-pulse inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
-              Tennessee · Distressed Real Estate
-            </div>
-
             <h1 className="falco-scroll-reveal text-[44px] md:text-[72px] leading-[0.96] tracking-[-0.035em] font-semibold text-white">
               We route distressed Tennessee homes{" "}
               <span className="text-emerald-400">to auction</span>
@@ -101,9 +96,10 @@ export default function V2Content() {
             </h1>
 
             <p className="falco-scroll-reveal mt-8 max-w-2xl text-[16px] md:text-[18px] leading-[1.65] text-white/65">
-              We find homeowners facing foreclosure across Tennessee. We show them the
-              math. Then we list their home through our auction pipeline so they walk
-              away with their equity — not lose it to a wholesaler or the courthouse.
+              We find homeowners facing foreclosure across Tennessee. We show them what
+              their home is actually worth. Then we list it through our auction pipeline
+              so they walk away with their equity intact, instead of losing it to a
+              wholesaler or the courthouse.
             </p>
 
             <div className="falco-scroll-reveal mt-10 flex flex-wrap items-center gap-3">
@@ -140,14 +136,15 @@ export default function V2Content() {
           </div>
           <div className="max-w-2xl">
             <p className="falco-scroll-reveal text-[20px] md:text-[26px] leading-[1.5] text-white/90 font-light tracking-tight">
-              Tennessee homeowners lose{" "}
-              <span className="text-white font-medium">$200,000 of equity</span> to
-              wholesalers every week. Most don't know there was another option.
+              A Tennessee homeowner facing foreclosure is typically sitting on{" "}
+              <span className="text-white font-medium">$100,000 to $250,000</span> of
+              equity they're about to lose. Most of them never hear about the option
+              that keeps it in their pocket.
             </p>
             <p className="falco-scroll-reveal mt-6 text-[15px] leading-[1.75] text-white/55">
               We get to them first. We show them what their home is actually worth at
               auction. Then we list it through our auction pipeline so the sale price
-              gets set by the market — not by a flipper's margin.
+              gets set by the market, not by a flipper's margin.
             </p>
             <p className="falco-scroll-reveal mt-6 text-[15px] leading-[1.75] text-white/55">
               We don't buy your house. We don't take a commission. The buyer pays a
@@ -179,7 +176,7 @@ export default function V2Content() {
           <Step
             num="02"
             title="We make the call"
-            body="Our team reaches the homeowner directly. Not a lowball cash offer — the actual math on what they'd keep through a marketed sale. Most homeowners have never heard the option exists."
+            body="Our team reaches the homeowner directly. Not with a lowball cash offer. With the actual math on what they'd walk away with through a marketed sale. For most homeowners, it's the first time anyone has told them the option exists."
           />
           <Step
             num="03"
@@ -249,12 +246,12 @@ export default function V2Content() {
             </div>
 
             <div className="falco-scroll-reveal mt-10 flex flex-wrap gap-3">
-              <a
-                href="mailto:falcoauction@gmail.com?subject=Tennessee%20foreclosure%20help&body=Hi%20FALCO%20--%20I%27m%20facing%20a%20trustee%20sale%20and%20want%20to%20hear%20how%20your%20auction%20option%20works.%0A%0AProperty%20address%3A%0AApprox.%20sale%20date%3A%0AMortgage%20balance%3A%0ABest%20phone%3A"
+              <Link
+                href="/homeowners"
                 className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
               >
                 Get a free 15-min call
-              </a>
+              </Link>
               <div className="text-[12px] text-white/40 self-center">
                 No pitch. Real math. We can either help you or we can't.
               </div>
@@ -352,12 +349,12 @@ export default function V2Content() {
             </ul>
 
             <div className="falco-scroll-reveal mt-10 flex flex-wrap gap-3">
-              <a
-                href="mailto:falcoauction@gmail.com?subject=Auction%20partner%20inquiry&body=Hi%20FALCO%20--%20I%20run%20an%20auction%20company%20in%20Tennessee%20and%20want%20to%20learn%20more%20about%20your%20pipeline.%0A%0ACompany%3A%0ACounty%20coverage%3A%0AAvg.%20deals%2Fyear%3A%0AContact%20phone%3A"
+              <Link
+                href="/partners"
                 className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
               >
                 Open a partnership conversation
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -387,7 +384,7 @@ export default function V2Content() {
           />
           <Diff
             label="vs. national auction sites"
-            body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure — so they keep the equity, not the lender."
+            body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure hits, so they keep the equity instead of the lender keeping it."
           />
         </div>
       </section>
