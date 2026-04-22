@@ -68,22 +68,42 @@ export default function V2Content() {
       </header>
 
       {/* === HERO === */}
-      <section className="relative isolate overflow-hidden">
-        {/* Background layers — subtle radial wash + dotted grid + animated dot orbit */}
-        <div className="absolute inset-0 -z-30 bg-[#060606]" />
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_45%)]" />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.45]" />
+      <section className="relative isolate overflow-hidden min-h-[88vh] flex items-center">
+        {/* Background layer 1 — solid base */}
+        <div className="absolute inset-0 -z-40 bg-[#060606]" />
 
-        {/* Orbiting dot canvas — turned up vs original (denser, slightly brighter) */}
+        {/* Background layer 2 — cinematic B&W drone footage */}
+        <video
+          className="absolute inset-0 -z-30 h-full w-full object-cover opacity-[0.42]"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/video/hero-poster.jpg"
+          aria-hidden="true"
+        >
+          <source src="/video/hero-montage.mp4" type="video/mp4" />
+        </video>
+
+        {/* Background layer 3 — vignette wash to keep text readable */}
+        <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_70%,#060606_100%)]" />
+        <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/40 via-transparent to-[#060606]" />
+
+        {/* Background layer 4 — emerald wash + subtle dot grid */}
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.07),transparent_55%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.35]" />
+
+        {/* Background layer 5 — orbiting dot canvas, dialed back so it doesn't fight the video */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <DotOrbit
-            dotColor="rgba(16, 185, 129, 0.6)"
-            lineColor="rgba(16, 185, 129, 0.09)"
-            density={0.95}
-            speed={0.4}
-            dotSize={1.4}
+            dotColor="rgba(16, 185, 129, 0.55)"
+            lineColor="rgba(16, 185, 129, 0.07)"
+            density={0.7}
+            speed={0.35}
+            dotSize={1.2}
             linkDistance={130}
-            opacity={0.85}
+            opacity={0.7}
           />
         </div>
 
