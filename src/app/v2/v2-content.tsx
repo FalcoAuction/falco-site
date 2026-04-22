@@ -134,8 +134,9 @@ export default function V2Content() {
               <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
                 We find Tennessee homeowners before the trustee sale. We show them what
                 their home would actually clear at a marketed auction. Then we list it
-                with our auction partners. The equity goes home with them, not a
-                wholesaler.
+                with our auction partners. The equity goes home with them.
+                <br />
+                <span className="text-emerald-300/90 font-medium">Not a wholesaler.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
