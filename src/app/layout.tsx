@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FALCO · Tennessee Distressed Real Estate",
   description:
-    "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
+    "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
   icons: {
     icon: [
       { url: "/falco-logo.png", type: "image/png" },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
+      "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -46,7 +46,10 @@ export const metadata: Metadata = {
     // WhatsApp) ignore it and just show the image — that's expected.
     videos: [
       {
-        url: "https://falco.llc/video/hero-loop.mp4",
+        // hero-share.mp4 is the hero loop with the headline burned in via
+        // ffmpeg drawtext, sized + vignetted for share previews. Used by
+        // platforms that play og:video inline (iMessage, Discord, Facebook).
+        url: "https://falco.llc/video/hero-share.mp4",
         width: 1280,
         height: 720,
         type: "video/mp4",
@@ -59,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "Homeowners keep their equity. Buyers get first look at Tennessee inventory before it hits the broader market.",
+      "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
     images: ["/opengraph-image"],
   },
 };
