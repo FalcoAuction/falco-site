@@ -94,7 +94,7 @@ export default function V2Content() {
           Desktop: flex-1 scroll-snap container that owns the viewport. */}
       <main
         ref={scrollerRef}
-        className="md:flex-1 md:overflow-y-scroll md:overflow-x-hidden md:snap-y md:snap-mandatory md:scroll-smooth"
+        className="md:flex-1 md:overflow-y-scroll md:overflow-x-hidden md:snap-y md:snap-proximity md:scroll-smooth"
       >
         {/* === HERO ===
             On mobile we force min-h-[88vh] so the video has room to breathe
