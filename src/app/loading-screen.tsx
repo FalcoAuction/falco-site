@@ -15,6 +15,15 @@ const FALCON_FACTS = [
 
 const SKIP_KEY = "falco_loaded_session"
 
+// Assets we want resolved before we hand the page over. The poster prevents
+// a black flash before the hero video is ready; window load handles fonts
+// + initial JS. Hard cap keeps us from holding the user hostage on truly
+// terrible networks — the poster `preload` link in <head> means it's usually
+// in cache anyway.
+const HERO_POSTER_URL = "/video/hero-poster.jpg"
+const HARD_CAP_MS = 12000
+const MIN_VISIBLE_MS = 1800
+
 function pickFact(): string {
   const idx = Math.floor(Math.random() * FALCON_FACTS.length)
   return FALCON_FACTS[idx]
@@ -41,19 +50,32 @@ export default function LoadingScreen() {
     if (!mounted) return
     let cancelled = false
 
+    // Track each thing we're waiting on. We finish when ALL are ready
+    // (or the hard cap fires).
+    const ready = {
+      windowLoad: false,
+      heroPoster: false,
+    }
+
+    const synthCap = () => (allReady() ? 100 : 88)
+    const allReady = () => ready.windowLoad && ready.heroPoster
+
+    // Synthetic progress — eased ramp to either 88 (still loading something)
+    // or 100 (everything ready). Keeps the bar moving so the user doesn't
+    // think we've stalled on slow connections.
     const interval = setInterval(() => {
       if (cancelled) return
       const elapsed = Date.now() - startedAt.current
       const t = Math.min(elapsed / 2600, 1)
       const eased = 1 - Math.pow(1 - t, 3)
-      setProgress((p) => Math.max(p, Math.round(eased * 92)))
-      if (t >= 1) clearInterval(interval)
+      setProgress((p) => Math.max(p, Math.min(synthCap(), Math.round(eased * synthCap()))))
+      if (t >= 1 && allReady()) clearInterval(interval)
     }, 60)
 
     const finish = () => {
       if (cancelled) return
       const elapsed = Date.now() - startedAt.current
-      const wait = Math.max(0, 1800 - elapsed)
+      const wait = Math.max(0, MIN_VISIBLE_MS - elapsed)
       setTimeout(() => {
         if (cancelled) return
         setProgress(100)
@@ -73,19 +95,51 @@ export default function LoadingScreen() {
       }, wait)
     }
 
-    if (document.readyState === "complete") {
-      finish()
-    } else {
-      window.addEventListener("load", finish, { once: true })
+    const tryFinish = () => {
+      if (allReady()) finish()
     }
 
-    const cap = setTimeout(finish, 6500)
+    // 1. Window load (fonts, scripts, initial DOM)
+    if (document.readyState === "complete") {
+      ready.windowLoad = true
+    } else {
+      window.addEventListener(
+        "load",
+        () => {
+          ready.windowLoad = true
+          tryFinish()
+        },
+        { once: true }
+      )
+    }
+
+    // 2. Hero poster image — the asset that fills the hero section behind
+    //    the video. If this is loaded the user never sees a black flash
+    //    even if the video itself is still buffering.
+    const poster = new Image()
+    const markPosterReady = () => {
+      ready.heroPoster = true
+      tryFinish()
+    }
+    poster.onload = markPosterReady
+    poster.onerror = markPosterReady // never block on a missing asset
+    poster.src = HERO_POSTER_URL
+
+    // Already-cached image: onload may not fire in some browsers
+    if (poster.complete) markPosterReady()
+
+    // Initial check in case both were already ready
+    tryFinish()
+
+    // Hard cap — never hold the user hostage
+    const cap = setTimeout(finish, HARD_CAP_MS)
 
     return () => {
       cancelled = true
       clearInterval(interval)
-      window.removeEventListener("load", finish)
       clearTimeout(cap)
+      poster.onload = null
+      poster.onerror = null
     }
   }, [mounted])
 
