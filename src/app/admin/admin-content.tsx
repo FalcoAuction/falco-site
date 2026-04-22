@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   LEAD_STATUSES,
@@ -544,6 +545,15 @@ function LeadRow({
             >
               New email
             </a>
+            {lead.kind === "homeowner" && (
+              <Link
+                href={`/admin/math-sheet/${lead.id}`}
+                className="rounded-md border border-emerald-400/40 hover:border-emerald-400/70 bg-emerald-400/[0.06] hover:bg-emerald-400/[0.12] px-3 py-1.5 text-emerald-200 hover:text-emerald-100 font-medium transition-colors"
+                title="Generate the 3-path math sheet for this homeowner"
+              >
+                Math sheet →
+              </Link>
+            )}
             <span className="text-[11px] text-white/35 ml-auto">
               ID: {lead.id.slice(0, 8)} · {new Date(lead.submittedAt).toLocaleString()}
             </span>
