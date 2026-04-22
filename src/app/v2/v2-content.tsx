@@ -5,12 +5,12 @@ import { useEffect, useRef } from "react"
 import { DotOrbit } from "../dot-orbit"
 import FaqSection from "./faq-section"
 import { SectionVideoBg } from "./section-video-bg"
+import { RequestDropdown } from "./request-dropdown"
 
-/** Reveal each .falco-scroll-reveal child as it enters the viewport. */
-function useScrollReveal() {
-  const ref = useRef<HTMLDivElement>(null)
+/** Reveal each .falco-scroll-reveal child as it enters the viewport (within the snap container). */
+function useScrollReveal(rootRef: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
-    const el = ref.current
+    const el = rootRef.current
     if (!el) return
     const targets = el.querySelectorAll(".falco-scroll-reveal")
     if (!targets.length) return
@@ -23,24 +23,41 @@ function useScrollReveal() {
           }
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { root: el, threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     )
     for (const target of targets) observer.observe(target)
     return () => observer.disconnect()
+  }, [rootRef])
+}
+
+/** Lock body scroll while the snap-scrolling /v2 main owns the viewport. */
+function useBodyScrollLock() {
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtml = html.style.overflow
+    const prevBody = body.style.overflow
+    html.style.overflow = "hidden"
+    body.style.overflow = "hidden"
+    return () => {
+      html.style.overflow = prevHtml
+      body.style.overflow = prevBody
+    }
   }, [])
-  return ref
 }
 
 export default function V2Content() {
-  const scrollRef = useScrollReveal()
+  const mainRef = useRef<HTMLElement>(null)
+  useScrollReveal(mainRef)
+  useBodyScrollLock()
 
   return (
     <main
-      ref={scrollRef}
-      className="min-h-screen bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white"
+      ref={mainRef}
+      className="h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth scroll-pt-[88px] bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white"
     >
       {/* === HEADER === */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-10">
           <Link
             href="/"
@@ -58,21 +75,15 @@ export default function V2Content() {
             <a href="#auction-partners" className="hover:text-white transition-colors hidden md:inline">
               Auction Partners
             </a>
-            <Link
-              href="/partner-login"
-              className="falco-orbit-right falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
-            >
-              Partner Login
-            </Link>
+            <RequestDropdown />
           </nav>
         </div>
       </header>
 
-      {/* === HERO === */}
-      <section className="relative isolate overflow-hidden min-h-[78vh] flex items-center">
+      {/* === HERO (snap section, 93% sizing — slightly tighter than rest) === */}
+      <SnapSection>
         <div className="absolute inset-0 -z-40 bg-[#060606]" />
 
-        {/* Cinematic B&W drone hero loop — preloaded during the loading screen */}
         <video
           className="absolute inset-0 -z-30 h-full w-full object-cover"
           autoPlay
@@ -87,15 +98,11 @@ export default function V2Content() {
           <source src="/video/hero-loop.mp4" type="video/mp4" />
         </video>
 
-        {/* Vignette to keep text readable over the brighter hero video */}
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
         <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
-
-        {/* Brand wash + dot grid */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_55%)]" />
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
 
-        {/* Orbiting dot canvas — dialed back so it doesn't fight the video */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <DotOrbit
             dotColor="rgba(16, 185, 129, 0.5)"
@@ -108,90 +115,88 @@ export default function V2Content() {
           />
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pt-24 pb-24 md:px-10 md:pt-32 md:pb-32 relative">
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
           <div className="max-w-3xl">
-            <h1 className="falco-scroll-reveal text-[36px] md:text-[60px] leading-[0.96] tracking-[-0.035em] font-semibold text-white">
+            <h1 className="falco-scroll-reveal text-[41px] md:text-[67px] leading-[0.96] tracking-[-0.035em] font-semibold text-white">
               We route distressed Tennessee homes{" "}
               <span className="text-emerald-400">to auction</span>
               <span className="text-white/40">. Not to wholesalers.</span>
             </h1>
 
-            <p className="falco-scroll-reveal mt-7 max-w-2xl text-[14px] md:text-[16px] leading-[1.65] text-white/70">
+            <p className="falco-scroll-reveal mt-7 max-w-2xl text-[15px] md:text-[17px] leading-[1.65] text-white/72">
               We find homeowners facing foreclosure across Tennessee. We show them what
               their home is actually worth. Then we list it through our auction pipeline
               so they walk away with their equity intact, instead of losing it to a
               wholesaler or the courthouse.
             </p>
 
-            <div className="falco-scroll-reveal mt-8 flex flex-wrap items-center gap-3">
+            <div className="falco-scroll-reveal mt-9 flex flex-wrap items-center gap-3">
               <a
                 href="#homeowners"
-                className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[12px] tracking-wide px-4 py-2 transition-colors"
+                className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
               >
                 For Homeowners
               </a>
               <a
                 href="#buyers"
-                className="falco-orbit-left falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-4 py-2 text-[12px] font-semibold transition"
+                className="falco-orbit-left falco-accent-button-secondary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold transition"
               >
                 For Buyers
               </a>
               <a
                 href="#auction-partners"
-                className="text-[11px] text-white/55 hover:text-white/95 underline-offset-4 hover:underline transition-colors px-2 py-2"
+                className="text-[12px] text-white/55 hover:text-white/95 underline-offset-4 hover:underline transition-colors px-2 py-2"
               >
                 For Auction Partners →
               </a>
             </div>
           </div>
         </div>
-      </section>
+      </SnapSection>
 
-      {/* === THESIS === */}
-      <PlainSection>
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="grid md:grid-cols-[180px_1fr] gap-6 md:gap-14">
+      {/* === THESIS (100%) === */}
+      <SnapSection>
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
             <div className="falco-scroll-reveal">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80">
                 Our thesis
               </div>
             </div>
             <div className="max-w-2xl">
-              <p className="falco-scroll-reveal text-[18px] md:text-[22px] leading-[1.5] text-white/95 font-light tracking-tight">
+              <p className="falco-scroll-reveal text-[20px] md:text-[26px] leading-[1.5] text-white/95 font-light tracking-tight">
                 A Tennessee homeowner facing foreclosure is typically sitting on{" "}
                 <span className="text-white font-medium">$100,000 to $250,000</span> of
                 equity they're about to lose. Most of them never hear about the option
                 that keeps it in their pocket.
               </p>
-              <p className="falco-scroll-reveal mt-5 text-[13px] leading-[1.75] text-white/65">
+              <p className="falco-scroll-reveal mt-6 text-[15px] leading-[1.75] text-white/65">
                 We get to them first. We show them what their home is actually worth at
                 auction. Then we list it through our auction pipeline so the sale price
                 gets set by the market, not by a flipper's margin.
               </p>
-              <p className="falco-scroll-reveal mt-5 text-[13px] leading-[1.75] text-white/65">
+              <p className="falco-scroll-reveal mt-6 text-[15px] leading-[1.75] text-white/65">
                 We don't buy your house. We don't take a commission. The buyer pays a
                 standard auction premium and you keep the equity that's yours.
               </p>
             </div>
           </div>
         </div>
-      </PlainSection>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === HOW IT WORKS === */}
-      <PlainSection id="how">
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="falco-scroll-reveal mb-12 max-w-2xl">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80 mb-2.5">
+      {/* === HOW IT WORKS (100%) === */}
+      <SnapSection id="how">
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="falco-scroll-reveal mb-14 max-w-2xl">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80 mb-3">
               How it works
             </div>
-            <h2 className="text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+            <h2 className="text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
               Three steps. No middlemen.
             </h2>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-10 md:grid-cols-3">
             <Step
               num="01"
               title="We find the file"
@@ -209,114 +214,90 @@ export default function V2Content() {
             />
           </div>
         </div>
-      </PlainSection>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === FOR HOMEOWNERS === */}
-      <SectionWithVideo id="homeowners" videoSrc="/video/section-homeowners.mp4">
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="grid md:grid-cols-[200px_1fr] gap-6 md:gap-14">
+      {/* === FOR HOMEOWNERS (100%, with video bg) === */}
+      <SnapSection id="homeowners" videoSrc="/video/section-homeowners.mp4">
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
             <div className="falco-scroll-reveal">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80">
                 For homeowners
               </div>
             </div>
             <div className="max-w-2xl">
-              <h2 className="falco-scroll-reveal text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="falco-scroll-reveal text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Facing foreclosure in Tennessee? Read this.
               </h2>
 
-              <div className="falco-scroll-reveal mt-7 space-y-5 text-[13px] leading-[1.75] text-white/70">
-                <p>
-                  You'll get a lot of calls. Wholesalers offering 60–70% of your home's
-                  value, in cash, fast. Most homeowners take those offers because nobody
-                  told them there was a third path besides letting the trustee sale happen.
-                </p>
-                <p className="text-white/90">
-                  There is one. And it's built around what you keep, not what someone
-                  else takes.
-                </p>
-              </div>
+              <p className="falco-scroll-reveal mt-7 text-[15px] leading-[1.75] text-white/72">
+                You'll get a lot of calls. Wholesalers offering 60–70% of your home's
+                value, in cash, fast. Most homeowners take those offers because nobody
+                told them there was a third path besides letting the trustee sale happen.
+                There is one. And it's built around what you keep, not what someone
+                else takes.
+              </p>
 
               {/* Three-paths table */}
-              <div className="falco-scroll-reveal mt-8 rounded-lg border border-white/[0.10] overflow-hidden bg-black/30 backdrop-blur-sm">
-                <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-2.5 bg-white/[0.03] text-[10px] uppercase tracking-wider text-white/50">
+              <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.10] overflow-hidden bg-black/30 backdrop-blur-sm">
+                <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-2.5 bg-white/[0.03] text-[10px] uppercase tracking-wider text-white/50">
                   <div>Your option</div>
                   <div>You walk away with</div>
                 </div>
-                <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-t border-white/[0.06]">
-                  <div className="text-[13px] text-white/75">Do nothing → trustee sale</div>
-                  <div className="text-[13px] text-red-300 font-medium tabular-nums">$0</div>
+                <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 border-t border-white/[0.06]">
+                  <div className="text-[14px] text-white/75">Do nothing → trustee sale</div>
+                  <div className="text-[14px] text-red-300 font-medium tabular-nums">$0</div>
                 </div>
-                <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-t border-white/[0.06]">
-                  <div className="text-[13px] text-white/75">Sell to a wholesaler at 60–70%</div>
-                  <div className="text-[13px] text-amber-200 font-medium tabular-nums">$25K – $50K</div>
+                <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 border-t border-white/[0.06]">
+                  <div className="text-[14px] text-white/75">Sell to a wholesaler at 60–70%</div>
+                  <div className="text-[14px] text-amber-200 font-medium tabular-nums">$25K – $50K</div>
                 </div>
-                <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-t border-white/[0.06] bg-emerald-400/[0.06]">
-                  <div className="text-[13px] text-emerald-100 font-medium">List with us → marketed auction</div>
-                  <div className="text-[13px] text-emerald-300 font-semibold tabular-nums">$100K+</div>
+                <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 border-t border-white/[0.06] bg-emerald-400/[0.06]">
+                  <div className="text-[14px] text-emerald-100 font-medium">List with us → marketed auction</div>
+                  <div className="text-[14px] text-emerald-300 font-semibold tabular-nums">$100K+</div>
                 </div>
               </div>
 
-              <div className="falco-scroll-reveal mt-7 space-y-3.5 text-[13px] leading-[1.75] text-white/70">
-                <p>
-                  We don't buy your house. We don't charge you anything. Our auction
-                  partners sell it for you, the buyer pays a standard premium on top of
-                  the bid, and you keep the rest after your mortgage is paid off.
-                </p>
-                <p className="text-white/90">
-                  Most sellers we work with walk away with $100K–$250K they otherwise
-                  would have lost.
-                </p>
-              </div>
-
-              <div className="falco-scroll-reveal mt-8 flex flex-wrap gap-3">
+              <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
                 <Link
                   href="/homeowners"
-                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[12px] tracking-wide px-4 py-2 transition-colors"
+                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
                 >
                   Get a free 15-min call
                 </Link>
-                <div className="text-[11px] text-white/45 self-center">
+                <div className="text-[12px] text-white/45 self-center">
                   No pitch. Real math. We can either help you or we can't.
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </SectionWithVideo>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === FOR BUYERS === */}
-      <SectionWithVideo id="buyers" videoSrc="/video/section-buyers.mp4">
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="grid md:grid-cols-[200px_1fr] gap-6 md:gap-14">
+      {/* === FOR BUYERS (100%, with video bg) === */}
+      <SnapSection id="buyers" videoSrc="/video/section-buyers.mp4">
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
             <div className="falco-scroll-reveal">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80">
                 For buyers
               </div>
             </div>
             <div className="max-w-2xl">
-              <h2 className="falco-scroll-reveal text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="falco-scroll-reveal text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Buy distressed Tennessee real estate? Get first look.
               </h2>
 
-              <div className="falco-scroll-reveal mt-7 space-y-5 text-[13px] leading-[1.75] text-white/70">
-                <p>
-                  We surface equity-rich Tennessee distressed properties before they hit
-                  MLS, before they propagate to PropStream and BatchLeads, before the
-                  wholesaler swarm shows up. Then we list them through our auction
-                  pipeline. Clean title, pre-verified, standard 8% buyer's premium.
-                </p>
-                <p className="text-white/90">
-                  No underwater junk. No buried fees. You bid the number you want to pay.
-                  If you win, you close.
-                </p>
-              </div>
+              <p className="falco-scroll-reveal mt-7 text-[15px] leading-[1.75] text-white/72">
+                We surface equity-rich Tennessee distressed properties before they hit
+                MLS, before they propagate to PropStream and BatchLeads, before the
+                wholesaler swarm shows up. Then we list them through our auction
+                pipeline. Clean title, pre-verified, standard 8% buyer's premium. No
+                underwater junk. No buried fees. You bid the number you want to pay. If
+                you win, you close.
+              </p>
 
-              <ul className="falco-scroll-reveal mt-7 space-y-2.5 text-[13px] text-white/80">
+              <ul className="falco-scroll-reveal mt-7 space-y-2.5 text-[14px] text-white/85">
                 <BuyerBullet text="First-look notifications on Tennessee inventory before public listing" />
                 <BuyerBullet text="Equity-positive deals only. We filter the underwater ones out" />
                 <BuyerBullet text="Standard 8% buyer's premium, no surprises, no junk fees" />
@@ -327,50 +308,43 @@ export default function V2Content() {
               <div className="falco-scroll-reveal mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/buyers"
-                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[12px] tracking-wide px-4 py-2 transition-colors"
+                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
                 >
                   Register for buyer access →
                 </Link>
-                <div className="text-[11px] text-white/45 self-center">
+                <div className="text-[12px] text-white/45 self-center">
                   90 seconds. No spam. Unsubscribe anytime.
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </SectionWithVideo>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === FOR AUCTION PARTNERS === */}
-      <SectionWithVideo id="auction-partners" videoSrc="/video/section-partners.mp4">
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="grid md:grid-cols-[200px_1fr] gap-6 md:gap-14">
+      {/* === FOR AUCTION PARTNERS (100%, with video bg) === */}
+      <SnapSection id="auction-partners" videoSrc="/video/section-partners.mp4">
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
             <div className="falco-scroll-reveal">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80">
                 For auction partners
               </div>
             </div>
             <div className="max-w-2xl">
-              <h2 className="falco-scroll-reveal text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="falco-scroll-reveal text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Run a Tennessee auction company? Let's talk.
               </h2>
 
-              <div className="falco-scroll-reveal mt-7 space-y-5 text-[13px] leading-[1.75] text-white/70">
-                <p>
-                  We bring you a steady flow of Tennessee distressed inventory you don't
-                  have to source. Sellers we hand off are already qualified and already
-                  understand the auction option. The homework is done before you make
-                  the listing call.
-                </p>
-                <p className="text-white/90">
-                  You bring the licensing, marketing, and execution. We bring the
-                  pipeline. The result is a partnership where your team focuses on
-                  what auction companies do best, not on cold-calling for inventory.
-                </p>
-              </div>
+              <p className="falco-scroll-reveal mt-7 text-[15px] leading-[1.75] text-white/72">
+                We bring you a steady flow of Tennessee distressed inventory you don't
+                have to source. Sellers we hand off are already qualified and already
+                understand the auction option. You bring the licensing, marketing, and
+                execution. We bring the pipeline. The result is a partnership where your
+                team focuses on what auction companies do best, not on cold-calling for
+                inventory.
+              </p>
 
-              <ul className="falco-scroll-reveal mt-7 space-y-2.5 text-[13px] text-white/80">
+              <ul className="falco-scroll-reveal mt-7 space-y-2.5 text-[14px] text-white/85">
                 <BuyerBullet text="Pre-qualified, equity-positive Tennessee inventory delivered weekly" />
                 <BuyerBullet text="Sellers educated on the auction-first option before handoff" />
                 <BuyerBullet text="No sourcing cost. Your team sees only ready listings" />
@@ -381,7 +355,7 @@ export default function V2Content() {
               <div className="falco-scroll-reveal mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/partners"
-                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[12px] tracking-wide px-4 py-2 transition-colors"
+                  className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
                 >
                   Open a partnership conversation
                 </Link>
@@ -389,23 +363,21 @@ export default function V2Content() {
             </div>
           </div>
         </div>
-      </SectionWithVideo>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === WHY DIFFERENT === */}
-      <PlainSection>
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="falco-scroll-reveal mb-12 max-w-2xl">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80 mb-2.5">
+      {/* === WHY DIFFERENT (100%) === */}
+      <SnapSection>
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="falco-scroll-reveal mb-14 max-w-2xl">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80 mb-3">
               What makes us different
             </div>
-            <h2 className="text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+            <h2 className="text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
               Not wholesalers. Not MLS. Not Auction.com.
             </h2>
           </div>
 
-          <div className="grid gap-7 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-3">
             <Diff
               label="vs. wholesalers"
               body="They profit when you sell at a discount. We profit only when you sell at market. Our incentives line up with yours; theirs line up against."
@@ -420,97 +392,89 @@ export default function V2Content() {
             />
           </div>
         </div>
-      </PlainSection>
+      </SnapSection>
 
-      <Divider />
-
-      {/* === FAQ === */}
-      <SectionWithVideo videoSrc="/video/section-faq.mp4">
-        <div className="mx-auto max-w-5xl px-6 py-20 md:px-10 relative">
-          <div className="falco-scroll-reveal mb-12 max-w-2xl">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/80 mb-2.5">
+      {/* === FAQ (100%, with video bg, content can scroll within section if expanded) === */}
+      <SnapSection videoSrc="/video/section-faq.mp4" allowOverflow>
+        <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
+          <div className="falco-scroll-reveal mb-10 max-w-2xl">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/80 mb-3">
               Common questions
             </div>
-            <h2 className="text-[26px] md:text-[38px] leading-[1.05] tracking-[-0.02em] font-semibold">
+            <h2 className="text-[32px] md:text-[44px] leading-[1.05] tracking-[-0.02em] font-semibold">
               Straight answers.
             </h2>
           </div>
           <div className="falco-scroll-reveal">
             <FaqSection />
           </div>
-        </div>
-      </SectionWithVideo>
 
-      {/* === FOOTER === */}
-      <footer className="mx-auto max-w-5xl px-6 py-8 md:px-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[10px] tracking-[0.18em] text-white/35">
-          <div>FALCO · Tennessee</div>
-          <div className="flex items-center gap-5">
-            <Link href="/buyers" className="hover:text-white/70 transition-colors">
-              Buyers
-            </Link>
-            <Link href="/partner-login" className="hover:text-white/70 transition-colors">
-              Partner login
-            </Link>
-            <span className="text-white/15">falco.llc</span>
+          {/* Footer pinned inside the last section so it doesn't break snap */}
+          <div className="mt-16 pt-6 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+              <div>FALCO · Tennessee</div>
+              <div className="flex items-center gap-5">
+                <Link href="/buyers" className="hover:text-white/70 transition-colors">
+                  Buyers
+                </Link>
+                <Link href="/homeowners" className="hover:text-white/70 transition-colors">
+                  Homeowners
+                </Link>
+                <Link href="/partners" className="hover:text-white/70 transition-colors">
+                  Auction partners
+                </Link>
+                <span className="text-white/15">falco.llc</span>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
+      </SnapSection>
     </main>
   )
 }
 
-function SectionWithVideo({
+/**
+ * Each snap-stop section. Fits the viewport, content vertically centered.
+ * Optionally takes a video bg (lazy-loaded). `allowOverflow` lets long content
+ * (e.g. FAQ when items are expanded) scroll within the section before snapping.
+ */
+function SnapSection({
   id,
+  children,
   videoSrc,
-  children,
-}: {
-  id?: string
-  videoSrc: string
-  children: React.ReactNode
-}) {
-  return (
-    <section id={id} className="relative isolate overflow-hidden">
-      <div className="absolute inset-0 -z-40 bg-[#060606]" />
-      <SectionVideoBg src={videoSrc} opacity={0.32} />
-      {/* Vignette to keep text readable */}
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_75%,#060606_100%)]" />
-      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
-      {children}
-    </section>
-  )
-}
-
-function PlainSection({
-  id,
-  children,
+  allowOverflow = false,
 }: {
   id?: string
   children: React.ReactNode
+  videoSrc?: string
+  allowOverflow?: boolean
 }) {
+  const overflowCls = allowOverflow ? "min-h-screen" : "h-screen"
   return (
-    <section id={id} className="relative isolate overflow-hidden bg-[#060606]">
-      {children}
+    <section
+      id={id}
+      className={`relative isolate snap-start ${overflowCls} flex flex-col justify-center overflow-hidden bg-[#060606]`}
+    >
+      {videoSrc && (
+        <>
+          <SectionVideoBg src={videoSrc} opacity={0.32} />
+          <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_75%,#060606_100%)]" />
+          <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
+        </>
+      )}
+      <div className="w-full py-20 md:py-24 mt-[88px] md:mt-[88px]">{children}</div>
     </section>
-  )
-}
-
-function Divider() {
-  return (
-    <div className="mx-auto max-w-5xl px-6 md:px-10">
-      <div className="h-px bg-white/[0.06]" />
-    </div>
   )
 }
 
 function Step({ num, title, body }: { num: string; title: string; body: string }) {
   return (
     <div className="falco-scroll-reveal">
-      <div className="text-[10px] text-emerald-400/85 font-semibold tracking-[0.18em] tabular-nums">
+      <div className="text-[11px] text-emerald-400/85 font-semibold tracking-[0.18em] tabular-nums">
         {num}
       </div>
-      <div className="mt-2.5 text-[15px] font-semibold text-white">{title}</div>
-      <p className="mt-2.5 text-[12px] leading-[1.7] text-white/65">{body}</p>
+      <div className="mt-3 text-[18px] font-semibold text-white">{title}</div>
+      <p className="mt-3 text-[14px] leading-[1.7] text-white/70">{body}</p>
     </div>
   )
 }
@@ -518,10 +482,10 @@ function Step({ num, title, body }: { num: string; title: string; body: string }
 function Diff({ label, body }: { label: string; body: string }) {
   return (
     <div className="falco-scroll-reveal">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-white/45 font-medium">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-white/45 font-medium">
         {label}
       </div>
-      <p className="mt-2.5 text-[12px] leading-[1.7] text-white/85">{body}</p>
+      <p className="mt-3 text-[14px] leading-[1.7] text-white/85">{body}</p>
     </div>
   )
 }
@@ -529,7 +493,7 @@ function Diff({ label, body }: { label: string; body: string }) {
 function BuyerBullet({ text }: { text: string }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="mt-1.5 inline-block h-1 w-1 rounded-full bg-emerald-400 shrink-0" />
+      <span className="mt-2 inline-block h-1 w-1 rounded-full bg-emerald-400 shrink-0" />
       <span>{text}</span>
     </li>
   )
