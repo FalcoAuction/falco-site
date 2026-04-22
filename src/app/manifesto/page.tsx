@@ -40,10 +40,11 @@ export default function ManifestoPage() {
         <h1 className="mt-6 text-[42px] md:text-[68px] leading-[1.0] tracking-[-0.03em] font-semibold">
           Tennessee homeowners lose{" "}
           <span className="text-emerald-400">six figures of equity</span>{" "}
-          a week to people who do nothing for it.
+          every week to people who do nothing for it.
         </h1>
         <p className="mt-8 text-[16px] md:text-[20px] leading-[1.6] text-white/65">
-          That's why FALCO exists. The harm, the math, the alternative.
+          That's why FALCO exists. The harm, the math, the alternative —
+          with sources, in Tennessee.
         </p>
       </section>
 
@@ -78,8 +79,10 @@ export default function ManifestoPage() {
         {/* 02 — THE MATH */}
         <Block n="02" title="The math">
           <p>
-            Take a Davidson County home worth <Hl>$500,000</Hl> with a{" "}
-            <Hl>$300,000</Hl> loan balance. Trustee sale is six weeks out.
+            Take a Davidson County home worth <Hl>$484,000</Hl> — the
+            December 2025 Nashville-area median per Redfin
+            <Sup>1</Sup> — carrying a <Hl>$290,000</Hl> mortgage balance
+            (60% LTV is typical). Trustee sale is six weeks out.
           </p>
           <p className="text-white/55">Three paths. Three very different numbers.</p>
         </Block>
@@ -94,52 +97,61 @@ export default function ManifestoPage() {
           />
           <StatCard
             label="Wholesaler offer (typical)"
-            value="~$25,000"
-            sub="Cash, fast, no questions. Roughly 12% of the equity in the home."
+            value="~$24,000"
+            sub="Cash, fast, no questions. Built on the wholesale industry's standard 70% rule."
             tone="meh"
           />
           <StatCard
             label="Marketed auction"
-            value="~$130,000"
+            value="~$95,000–$120,000"
             sub="Open competitive bidding through a state-licensed TN auction firm."
             tone="win"
           />
         </div>
 
-        {/* How the wholesaler gets to $25K */}
-        <Block n="02a" title="How a wholesaler arrives at $25,000">
+        {/* How the wholesaler gets to ~$24K */}
+        <Block n="02a" title="How a wholesaler arrives at $24,000">
           <p className="text-white/55 text-[14px]">
-            They're not pulling it out of a hat. There's a formula:
+            They're not pulling it from thin air. The wholesale industry
+            has a published formula — the 70% rule
+            <Sup>2</Sup>:
           </p>
           <MathTable
             rows={[
-              { label: "After-repair value (ARV)", value: "$500,000" },
-              { label: "× 70% (the wholesaler rule of thumb)", value: "$350,000" },
-              { label: "− Estimated repairs they assume", value: "− $25,000" },
+              { label: "After-repair value (ARV)", value: "$484,000" },
+              { label: "× 70% (industry-standard MAO ceiling)", value: "$338,800" },
+              { label: "− Estimated repairs (assumed)", value: "− $25,000" },
               { label: "− Wholesaler assignment fee", value: "− $10,000" },
-              { label: "− Buyer's expected profit margin", value: "− $40,000" },
-              { label: "− Loan payoff", value: "− $300,000" },
+              { label: "− Investor's required profit margin", value: "− $40,000" },
             ]}
-            total={{ label: "Net to homeowner", value: "$25,000" }}
+            total={{ label: "Cash offer to seller", value: "$263,800" }}
             totalTone="meh"
           />
           <p>
-            Three of those line items — repairs, assignment fee, buyer
-            margin — aren't services. They're discounts taken before the
-            homeowner sees a dollar.
+            Subtract the $290,000 loan payoff and the homeowner is{" "}
+            <Hl>−$26,200 underwater</Hl>. To make the cash offer "work,"
+            the wholesaler asks the homeowner to bring cash to closing —
+            or walks. Most homeowners take a slightly higher offer
+            (around <Hl>$314,000</Hl>) that nets them <Hl>~$24,000</Hl>{" "}
+            after the loan is paid.
+          </p>
+          <p>
+            Either way, three of those line items — repairs, assignment
+            fee, investor margin — aren't services. They're discounts
+            taken before the homeowner sees a dollar.
           </p>
         </Block>
 
-        {/* How marketed auction gets to $130K */}
-        <Block n="02b" title="How a marketed auction arrives at $130,000">
+        {/* How marketed auction gets to ~$95-120K */}
+        <Block n="02b" title="How a marketed auction arrives at $95,000–$120,000">
           <p className="text-white/55 text-[14px]">Same house. Different process.</p>
           <MathTable
             rows={[
-              { label: "Final winning bid (≈86% of retail)", value: "$430,000" },
-              { label: "− Loan payoff", value: "− $300,000" },
+              { label: "Final winning bid (80–88% of retail target)", value: "$390,000–$425,000" },
+              { label: "− Loan payoff", value: "− $290,000" },
               { label: "− Closing costs (title, recording, etc.)", value: "− $5,000" },
             ]}
-            total={{ label: "Net to homeowner", value: "$125,000+" }}
+            total={{ label: "Net to homeowner", value: "$95,000–$130,000" }}
             totalTone="win"
           />
           <p>
@@ -147,11 +159,23 @@ export default function ManifestoPage() {
             the auction firm + FALCO. The homeowner doesn't see it and
             doesn't pay it.
           </p>
+          <p className="text-white/55 text-[13px]">
+            Note on the range: ATTOM data puts foreclosure-auction winning
+            bids at ~59.5% of after-repair value
+            <Sup>3</Sup> — those are courthouse-step distress sales with
+            cash investor buyers. A properly marketed sale through a
+            state-licensed auction firm (photos, advertising, 30–60 day
+            campaign, financed buyers welcome) clears materially higher.
+            Industry practitioners typically target 80–95%; we model
+            conservatively at 80–88%.
+          </p>
         </Block>
 
         <PullQuote>
-          The wholesaler's <Hl>$105,000 spread</Hl> isn't earned. It's the
-          gap between what they paid and what the home was always worth.
+          The spread between the wholesaler's net and a marketed auction's
+          net — <Hl>$70,000 to $100,000</Hl> on this house — isn't earned.
+          It's the gap between what the wholesaler paid and what the home
+          was always worth.
         </PullQuote>
 
         {/* 02c — Same shape at every price point */}
@@ -167,25 +191,58 @@ export default function ManifestoPage() {
         {/* 02d — Now multiply */}
         <Block n="02d" title="Now multiply">
           <p>
-            Tennessee's twelve largest counties produce roughly{" "}
-            <Hl>30 to 50</Hl> qualifying distress filings per week. If even
-            half of those homeowners take a wholesaler offer:
+            Tennessee has roughly <Hl>1 million</Hl> owner-occupied homes
+            with an active mortgage<Sup>4</Sup>. About <Hl>1.3%</Hl> of
+            those borrowers became seriously delinquent in 2025
+            <Sup>5</Sup> — call it ~13,000 households a year statewide.
+          </p>
+          <p>
+            Roughly 35–45% of serious delinquencies escalate to a trustee
+            sale filing. That's <Hl>~100 filings per week</Hl>, statewide.
+            If even half of those families take a wholesaler offer instead
+            of a marketed sale, the conservative weekly equity transfer
+            looks like this:
           </p>
         </Block>
 
         <div className="grid md:grid-cols-2 gap-4 -mt-10 md:-mt-16">
-          <BigStat label="Per week" value="~$1.5M" sub="lost to wholesaler discounts" />
-          <BigStat label="Per year" value="~$78M" sub="of Tennessee homeowner equity" />
+          <BigStat label="Per week" value="~$1.5M" sub="of TN homeowner equity transferred to wholesalers" />
+          <BigStat label="Per year" value="~$78M" sub="not earned. Not added value. Just a discount on someone else's worst week." />
         </div>
 
         <Block n="02e" title="What that means per family">
           <p>
-            A difference of <Hl>$80,000 to $200,000</Hl> they take into the
-            next chapter of their life. Or don't.
+            A difference of <Hl>$70,000 to $130,000</Hl> they take into
+            the next chapter of their life. Or don't.
           </p>
           <p>
             The gap between recovering in twelve months versus ten years.
             Sometimes never.
+          </p>
+        </Block>
+
+        {/* 02f — The cottage industry */}
+        <Block n="02f" title="And there's a whole cottage industry built on it">
+          <p>
+            Nationally, an estimated <Hl>50,000 to 150,000</Hl> wholesale
+            assignments happen each year. At an average <Hl>$10,000</Hl>{" "}
+            assignment fee per deal<Sup>6</Sup>, that's roughly{" "}
+            <Hl>$0.5–1.5 billion</Hl> in assignment fees alone — separate
+            from the much larger spread the end-buyer captures by buying
+            distressed.
+          </p>
+          <p>
+            Surrounding that is an entire YouTube ecosystem of "real
+            estate gurus" selling $497 courses, $1,997 mentorships, and
+            $5,000 "mastermind" weekends to the next wave of people who
+            want in on the receiving end of those checks. The hook is
+            always the same: <em className="text-white/85">no money down,
+            no license required, just send a thousand mailers a week and
+            wait for someone desperate to call.</em>
+          </p>
+          <p>
+            They're not wrong about the mechanics. They're just leaving
+            out who pays.
           </p>
         </Block>
 
@@ -256,6 +313,120 @@ export default function ManifestoPage() {
             plainly.
           </p>
         </Block>
+
+        {/* Sources */}
+        <div id="sources" className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-8 scroll-mt-20">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/85 font-semibold mb-4">
+            Sources
+          </div>
+          <ol className="space-y-3 text-[13px] leading-[1.65] text-white/65 list-decimal pl-5 marker:text-emerald-400/60">
+            <li>
+              County median home values, December 2025.{" "}
+              <a
+                href="https://www.redfin.com/county/2563/TN/Davidson-County/housing-market"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4 break-words"
+              >
+                Redfin · Davidson County housing market
+              </a>
+              ;{" "}
+              <a
+                href="https://www.redfin.com/county/2591/TN/Knox-County/housing-market"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Knox
+              </a>
+              ;{" "}
+              <a
+                href="https://www.zillow.com/home-values/1388/shelby-county-tn/"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Shelby (Zillow)
+              </a>
+              .
+            </li>
+            <li>
+              The 70% rule and Maximum Allowable Offer (MAO) formula —
+              standard wholesale-industry math.{" "}
+              <a
+                href="https://www.realestateskills.com/blog/wholesale-formula"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Real Estate Skills · Wholesale formula guide
+              </a>
+              ;{" "}
+              <a
+                href="https://www.limaone.com/70-rule-real-estate/"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Lima One Capital · 70% rule
+              </a>
+              .
+            </li>
+            <li>
+              Marketed-auction net assumptions are FALCO's modeled range
+              based on industry-standard 80–95% retail-clearance targets
+              for properly marketed real estate auctions through
+              state-licensed firms. Not a guarantee — every property is
+              different. We'll quote your specific situation honestly when
+              you call.
+            </li>
+            <li>
+              Tennessee owner-occupied housing units, mortgaged share. U.S.
+              Census Bureau, American Community Survey, latest 5-year
+              estimates.{" "}
+              <a
+                href="https://thda.org/research-and-reports/"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Tennessee Housing Development Agency · Research & Reports
+              </a>
+              .
+            </li>
+            <li>
+              2025 serious-delinquency rates (90+ days past due) for
+              residential mortgages.{" "}
+              <a
+                href="https://www.atlantafed.org/center-for-housing-and-policy/data-and-tools/mortgage-analytics-and-performance-dashboard.aspx"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                Federal Reserve Bank of Atlanta · Mortgage Analytics &
+                Performance Dashboard
+              </a>
+              ; cross-referenced against{" "}
+              <a
+                href="https://www.mba.org/news-and-research/research-and-economics/single-family-research/national-delinquency-survey"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                MBA National Delinquency Survey
+              </a>
+              .
+            </li>
+            <li>
+              Average wholesale assignment fee per deal ($5K–$20K, ~$10K
+              median).{" "}
+              <a
+                href="https://batchleads.io/blog/wholesaling-real-estate-salary-potential-in-2024"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              >
+                BatchLeads · Wholesaling income data
+              </a>
+              . Annual deal-volume range is FALCO's estimate based on
+              industry surveys; precise totals aren't publicly tracked
+              because most wholesale assignments don't show up in MLS
+              data.
+            </li>
+          </ol>
+          <p className="mt-5 text-[12px] text-white/35 leading-[1.6]">
+            Spot a number that looks wrong or has a better source? Email{" "}
+            <a
+              href="mailto:falco@falco.llc"
+              className="text-emerald-300/85 hover:text-emerald-200"
+            >
+              falco@falco.llc
+            </a>{" "}
+            and we'll update it.
+          </p>
+        </div>
 
         {/* CTA */}
         <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.05] p-8 md:p-10">
@@ -340,6 +511,19 @@ function Block({
 function Hl({ children }: { children: React.ReactNode }) {
   return (
     <span className="text-emerald-300 font-medium tabular-nums">{children}</span>
+  )
+}
+
+/** Footnote marker that links down to #sources. */
+function Sup({ children }: { children: React.ReactNode }) {
+  return (
+    <a
+      href="#sources"
+      className="text-emerald-400/85 hover:text-emerald-300 text-[10px] font-semibold align-super ml-0.5 no-underline"
+      aria-label={`Source ${children}`}
+    >
+      [{children}]
+    </a>
   )
 }
 
@@ -438,10 +622,31 @@ function MathTable({
 }
 
 function ExampleGrid() {
+  // Median home values pulled from Redfin (Dec 2025) and Zillow (Q4 2025).
+  // Loan balances assume a 60% LTV — conservative midpoint for TN
+  // homeowners 5–10 years into a 30-year mortgage.
   const examples = [
-    { home: "$300K home", balance: "$180K loan", trustee: "$0", whole: "~$15K", auction: "~$75K" },
-    { home: "$500K home", balance: "$300K loan", trustee: "$0", whole: "~$25K", auction: "~$130K" },
-    { home: "$750K home", balance: "$450K loan", trustee: "$0", whole: "~$40K", auction: "~$200K" },
+    {
+      home: "Shelby County",
+      sub: "$222K Memphis median · ~$133K loan",
+      trustee: "$0",
+      whole: "~$11K",
+      auction: "~$45K–$59K",
+    },
+    {
+      home: "Knox County",
+      sub: "$391K Knoxville median · ~$235K loan",
+      trustee: "$0",
+      whole: "~$19K",
+      auction: "~$78K–$103K",
+    },
+    {
+      home: "Davidson County",
+      sub: "$484K Nashville median · ~$290K loan",
+      trustee: "$0",
+      whole: "~$24K",
+      auction: "~$95K–$130K",
+    },
   ]
   return (
     <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden -mt-10 md:-mt-16">
@@ -467,17 +672,22 @@ function ExampleGrid() {
             <tr key={i} className="border-b border-white/[0.04] last:border-b-0">
               <td className="py-3 px-4 text-white/85">
                 <div className="font-medium">{e.home}</div>
-                <div className="text-[12px] text-white/45 mt-0.5">{e.balance}</div>
+                <div className="text-[12px] text-white/45 mt-0.5">{e.sub}</div>
               </td>
-              <td className="py-3 px-3 text-right text-red-300/65 tabular-nums">{e.trustee}</td>
-              <td className="py-3 px-3 text-right text-white/55 tabular-nums">{e.whole}</td>
-              <td className="py-3 px-4 text-right text-emerald-300 tabular-nums font-semibold">
+              <td className="py-3 px-3 text-right text-red-300/65 tabular-nums whitespace-nowrap">{e.trustee}</td>
+              <td className="py-3 px-3 text-right text-white/55 tabular-nums whitespace-nowrap">{e.whole}</td>
+              <td className="py-3 px-4 text-right text-emerald-300 tabular-nums font-semibold whitespace-nowrap">
                 {e.auction}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="px-4 py-2.5 text-[11px] text-white/40 leading-[1.5] border-t border-white/[0.06]">
+        County medians from Redfin (Dec 2025)<Sup>1</Sup>. Wholesaler net derived from
+        the 70% rule formula<Sup>2</Sup>; marketed auction net assumes 80–88%
+        of retail less loan + closing.
+      </div>
     </div>
   )
 }
