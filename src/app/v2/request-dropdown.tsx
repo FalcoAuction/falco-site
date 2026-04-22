@@ -23,6 +23,11 @@ const OPTIONS: Array<{
     label: "Auction Company",
     blurb: "I run an auction company in Tennessee.",
   },
+  {
+    href: "/inquiry",
+    label: "General Inquiry",
+    blurb: "Press, partnership, or anything else.",
+  },
 ]
 
 export function RequestDropdown() {

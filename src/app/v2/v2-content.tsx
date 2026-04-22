@@ -446,7 +446,7 @@ function SnapSection({
       id={id}
       className={`relative isolate snap-start snap-always ${
         allowOverflow ? "min-h-full" : "h-full"
-      } flex flex-col justify-center overflow-hidden bg-[#060606] py-16 md:py-20`}
+      } grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20`}
     >
       {videoSrc && (
         <>
@@ -455,7 +455,7 @@ function SnapSection({
           <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
         </>
       )}
-      {children}
+      <div className="w-full">{children}</div>
     </section>
   )
 }

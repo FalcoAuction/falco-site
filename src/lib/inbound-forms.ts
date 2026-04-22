@@ -176,6 +176,95 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
 }
 
 // ============================================================================
+// General inquiry (anything else)
+// ============================================================================
+
+export type GeneralInquiryInput = {
+  email: string
+  fullName: string
+  phone?: string
+  company?: string
+  topic?: string
+  message?: string
+  ipAddress?: string | null
+  userAgent?: string | null
+}
+
+export async function submitGeneralInquiry(
+  input: GeneralInquiryInput
+): Promise<SubmitResult> {
+  if (!supabaseAdmin) {
+    return { ok: false, error: supabaseAdminConfigError ?? "Database not configured." }
+  }
+  const email = normEmail(input.email)
+  if (!email || !EMAIL_RE.test(email)) {
+    return { ok: false, error: "A valid email is required." }
+  }
+  if (!input.fullName?.trim()) {
+    return { ok: false, error: "Please tell us your name." }
+  }
+  if (!input.message?.trim()) {
+    return { ok: false, error: "Please tell us what's on your mind." }
+  }
+
+  const row = {
+    email,
+    full_name: input.fullName.trim(),
+    phone: (input.phone ?? "").trim(),
+    company: (input.company ?? "").trim(),
+    topic: (input.topic ?? "").trim(),
+    message: (input.message ?? "").trim(),
+    ip_address: input.ipAddress ?? null,
+    user_agent: input.userAgent ?? null,
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("general_inquiries")
+    .insert(row)
+    .select("id")
+    .single()
+  if (error) {
+    console.error("submitGeneralInquiry error:", error.message)
+    return { ok: false, error: `Submission failed: ${error.message}` }
+  }
+
+  const subject = `📨 General inquiry: ${row.full_name}${row.topic ? ` · ${row.topic}` : ""}`
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+<div style="max-width:600px;margin:0 auto">
+<div style="padding:16px 0;border-bottom:2px solid #10b981">
+<div style="font-size:10px;letter-spacing:2px;color:#10b981;text-transform:uppercase">FALCO · General Inquiry</div>
+<div style="font-size:22px;font-weight:700;margin-top:4px">${esc(row.full_name)}</div>
+<div style="font-size:13px;color:#888;margin-top:2px">${esc(email)}${row.phone ? ` · ${esc(row.phone)}` : ""}${row.company ? ` · ${esc(row.company)}` : ""}</div>
+</div>
+${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1.5px">Topic</div><div style="font-size:14px;color:#fff;margin-top:4px">${esc(row.topic)}</div>` : ""}
+<div style="margin-top:16px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1.5px">Message</div>
+<div style="font-size:14px;color:#fff;margin-top:6px;background:#111;padding:12px 16px;border-radius:6px;white-space:pre-wrap;line-height:1.55">${esc(row.message)}</div>
+<div style="color:#555;font-size:10px;text-align:center;margin-top:16px">FALCO · general inquiry</div>
+</div></body></html>`
+  const text = [
+    `General inquiry: ${row.full_name}`,
+    `Email: ${email}`,
+    row.phone ? `Phone: ${row.phone}` : "",
+    row.company ? `Company: ${row.company}` : "",
+    row.topic ? `Topic: ${row.topic}` : "",
+    "",
+    "Message:",
+    row.message,
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  sendNotificationEmail(subject, html, text).catch(() => {})
+
+  return {
+    ok: true,
+    id: String(data.id),
+    alreadyExisted: false,
+    message: "Got it. We'll be in touch within 24 hours.",
+  }
+}
+
+// ============================================================================
 // Partner inquiry (auction company)
 // ============================================================================
 
