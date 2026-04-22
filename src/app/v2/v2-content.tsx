@@ -473,8 +473,8 @@ export default function V2Content() {
           </div>
         </SnapSection>
 
-        {/* === FAQ (allows internal scroll if items expand past viewport) === */}
-        <SnapSection videoSrc="/video/section-faq.mp4" allowOverflow>
+        {/* === FAQ (no snap — let the page scroll naturally to the footer) === */}
+        <SnapSection videoSrc="/video/section-faq.mp4" noSnap>
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="falco-scroll-reveal mb-10 max-w-2xl">
               <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
@@ -549,20 +549,26 @@ function SnapSection({
   videoSrc,
   allowOverflow = false,
   mobileMinH,
+  noSnap = false,
 }: {
   id?: string
   children: React.ReactNode
   videoSrc?: string
   allowOverflow?: boolean
   mobileMinH?: string
+  /** Skip the snap-start behavior so the page scrolls naturally past this
+   *  section. Used on the FAQ section so the page just ends at the footer
+   *  instead of trying to snap-fit a long collapsible list. */
+  noSnap?: boolean
 }) {
   // Mobile: natural-height sections with generous breathing room (no snap).
   // Desktop: snap-start, exactly one viewport tall (or min-h-full + allowOverflow for FAQ).
-  const desktopHeight = allowOverflow ? "md:min-h-full" : "md:h-full"
+  const snapClasses = noSnap ? "" : "snap-start snap-always"
+  const desktopHeight = noSnap ? "" : allowOverflow ? "md:min-h-full" : "md:h-full"
   return (
     <section
       id={id}
-      className={`relative isolate snap-start snap-always ${mobileMinH ?? ""} ${desktopHeight} grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20 px-1`}
+      className={`relative isolate ${snapClasses} ${mobileMinH ?? ""} ${desktopHeight} grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20 px-1`}
     >
       {videoSrc && (
         <>
