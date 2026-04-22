@@ -7,12 +7,17 @@ import FaqSection from "./faq-section"
 import { SectionVideoBg } from "./section-video-bg"
 import { RequestDropdown } from "./request-dropdown"
 
-/** Reveal each .falco-scroll-reveal child as it enters the viewport (within the snap container). */
+/**
+ * Reveal each .falco-scroll-reveal child as it enters the viewport.
+ * Desktop uses the snap-scroll container as root; mobile uses the actual
+ * viewport (root: null) since mobile no longer uses an inner scroller.
+ */
 function useScrollReveal(rootRef: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
-    const el = rootRef.current
-    if (!el) return
-    const targets = el.querySelectorAll(".falco-scroll-reveal")
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches
+    const root = isDesktop ? rootRef.current : null
+    if (isDesktop && !root) return
+    const targets = (root ?? document).querySelectorAll(".falco-scroll-reveal")
     if (!targets.length) return
     const observer = new IntersectionObserver(
       (entries) => {
@@ -23,16 +28,21 @@ function useScrollReveal(rootRef: React.RefObject<HTMLElement | null>) {
           }
         }
       },
-      { root: el, threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { root, threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     )
     for (const target of targets) observer.observe(target)
     return () => observer.disconnect()
   }, [rootRef])
 }
 
-/** Lock body scroll while /v2 owns the viewport for snap scrolling. */
+/**
+ * Lock body scroll for the snap-scroll layout — DESKTOP ONLY.
+ * Mobile lets the body scroll naturally (snap-mandatory + iOS momentum
+ * scrolling fight each other and the result is janky on touch devices).
+ */
 function useBodyScrollLock() {
   useEffect(() => {
+    if (!window.matchMedia("(min-width: 768px)").matches) return
     const html = document.documentElement
     const body = document.body
     const prevHtml = html.style.overflow
@@ -52,13 +62,15 @@ export default function V2Content() {
   useBodyScrollLock()
 
   return (
-    <div className="h-screen flex flex-col bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
-      {/* === HEADER (fixed at top, OUTSIDE the snap container) === */}
-      <header className="shrink-0 border-b border-white/[0.06] bg-[#060606]/85 backdrop-blur-xl z-30">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-10">
+    <div className="md:h-screen md:flex md:flex-col bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
+      {/* === HEADER ===
+          Mobile: sticky top of viewport so it stays as user scrolls naturally.
+          Desktop: shrink-0 inside the fixed-viewport flex column. */}
+      <header className="sticky top-0 md:static md:shrink-0 border-b border-white/[0.06] bg-[#060606]/90 backdrop-blur-xl z-30">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-10 md:py-5">
           <Link
             href="/"
-            className="text-[16px] font-semibold tracking-[0.32em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[14px] md:text-[16px] font-semibold tracking-[0.28em] md:tracking-[0.32em] text-white hover:text-emerald-300 transition-colors"
           >
             FALCO
           </Link>
@@ -77,13 +89,17 @@ export default function V2Content() {
         </div>
       </header>
 
-      {/* === SCROLL-SNAP CONTAINER === */}
+      {/* === MAIN ===
+          Mobile: just a flow container, body scrolls naturally, no snap.
+          Desktop: flex-1 scroll-snap container that owns the viewport. */}
       <main
         ref={scrollerRef}
-        className="flex-1 overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth"
+        className="md:flex-1 md:overflow-y-scroll md:overflow-x-hidden md:snap-y md:snap-mandatory md:scroll-smooth"
       >
-        {/* === HERO === */}
-        <SnapSection>
+        {/* === HERO ===
+            On mobile we force min-h-[88vh] so the video has room to breathe
+            even though we removed snap fit-to-viewport on small screens. */}
+        <SnapSection mobileMinH="min-h-[88vh]">
           <video
             className="absolute inset-0 -z-30 h-full w-full object-cover"
             autoPlay
@@ -117,20 +133,20 @@ export default function V2Content() {
 
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
-              <h1 className="falco-scroll-reveal text-[44px] md:text-[72px] leading-[0.96] tracking-[-0.035em] font-semibold text-white">
+              <h1 className="falco-scroll-reveal text-[34px] md:text-[72px] leading-[1.02] md:leading-[0.96] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
                 We route distressed Tennessee homes{" "}
                 <span className="text-emerald-400">to auction</span>
                 <span className="text-white/45">. Not to wholesalers.</span>
               </h1>
 
-              <p className="falco-scroll-reveal mt-8 max-w-2xl text-[18px] md:text-[20px] leading-[1.6] text-white/85">
+              <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
                 We find homeowners facing foreclosure across Tennessee. We show them
                 what their home is actually worth. Then we list it through our auction
                 pipeline so they walk away with their equity intact, instead of losing
                 it to a wholesaler or the courthouse.
               </p>
 
-              <div className="falco-scroll-reveal mt-10 flex flex-wrap items-center gap-3">
+              <div className="falco-scroll-reveal mt-7 md:mt-10 flex flex-wrap items-center gap-3">
                 <a
                   href="#homeowners"
                   className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
@@ -164,7 +180,7 @@ export default function V2Content() {
                 </div>
               </div>
               <div className="max-w-2xl">
-                <p className="falco-scroll-reveal text-[24px] md:text-[30px] leading-[1.45] text-white font-light tracking-tight">
+                <p className="falco-scroll-reveal text-[20px] md:text-[30px] leading-[1.4] md:leading-[1.45] text-white font-light tracking-tight">
                   A Tennessee homeowner facing foreclosure is typically sitting on{" "}
                   <span className="font-medium">$100,000 to $250,000</span> of equity
                   they're about to lose. Most of them never hear about the option that
@@ -191,7 +207,7 @@ export default function V2Content() {
               <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
                 How it works
               </div>
-              <h2 className="text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Three steps. No middlemen.
               </h2>
             </div>
@@ -226,7 +242,7 @@ export default function V2Content() {
                 </div>
               </div>
               <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                   Facing foreclosure in Tennessee?
                 </h2>
 
@@ -282,7 +298,7 @@ export default function V2Content() {
                 </div>
               </div>
               <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                   Get first look.
                 </h2>
 
@@ -326,7 +342,7 @@ export default function V2Content() {
                 </div>
               </div>
               <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                   Run a TN auction company?
                 </h2>
 
@@ -363,7 +379,7 @@ export default function V2Content() {
               <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
                 What makes us different
               </div>
-              <h2 className="text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Not wholesalers. Not MLS. Not Auction.com.
               </h2>
             </div>
@@ -392,7 +408,7 @@ export default function V2Content() {
               <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
                 Common questions
               </div>
-              <h2 className="text-[36px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
+              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
                 Straight answers.
               </h2>
             </div>
@@ -435,18 +451,21 @@ function SnapSection({
   children,
   videoSrc,
   allowOverflow = false,
+  mobileMinH,
 }: {
   id?: string
   children: React.ReactNode
   videoSrc?: string
   allowOverflow?: boolean
+  mobileMinH?: string
 }) {
+  // Mobile: natural-height sections with generous breathing room (no snap).
+  // Desktop: snap-start, exactly one viewport tall (or min-h-full + allowOverflow for FAQ).
+  const desktopHeight = allowOverflow ? "md:min-h-full" : "md:h-full"
   return (
     <section
       id={id}
-      className={`relative isolate snap-start snap-always ${
-        allowOverflow ? "min-h-full" : "h-full"
-      } grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20`}
+      className={`relative isolate snap-start snap-always ${mobileMinH ?? ""} ${desktopHeight} grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20 px-1`}
     >
       {videoSrc && (
         <>
