@@ -14,6 +14,20 @@ export async function POST(req: NextRequest) {
   if (!password) {
     return NextResponse.json({ ok: false, error: "Password required." }, { status: 400 })
   }
+  // If no admin password is configured server-side, say so explicitly
+  // instead of claiming "wrong password" for every submission. Much easier
+  // to diagnose than a silent 401 loop.
+  const configured = process.env.FALCO_ADMIN_PASSWORD?.trim()
+  if (!configured) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Admin password not configured on the server. Set FALCO_ADMIN_PASSWORD in Vercel env vars, then redeploy.",
+      },
+      { status: 500 }
+    )
+  }
   if (!isValidAdminPassword(password)) {
     // Constant-ish delay so password timing isn't a side-channel
     await new Promise((r) => setTimeout(r, 250))
