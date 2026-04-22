@@ -1,10 +1,13 @@
-import Link from "next/link"
-import { getHomeMetrics } from "@/lib/home-metrics"
-import { HomeContent } from "./home-content"
+import V2Content from "./v2/v2-content"
 
 export const dynamic = "force-dynamic"
 
-export default async function HomePage() {
-  const metrics = await getHomeMetrics()
-  return <HomeContent metrics={metrics} />
+export const metadata = {
+  title: "FALCO · Tennessee Distressed Real Estate",
+  description:
+    "FALCO routes distressed Tennessee homes through our auction pipeline — not to wholesalers. Homeowners keep their equity. Buyers get first look.",
+}
+
+export default function HomePage() {
+  return <V2Content />
 }

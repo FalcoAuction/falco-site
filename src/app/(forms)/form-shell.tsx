@@ -67,13 +67,13 @@ export function FormShell({
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4 md:px-10">
           <Link
-            href="/v2"
+            href="/"
             className="text-[13px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
           >
             FALCO
           </Link>
           <Link
-            href="/v2"
+            href="/"
             className="text-[12px] tracking-wide text-white/55 hover:text-white transition-colors"
           >
             ← Back
@@ -108,7 +108,7 @@ export function FormShell({
         <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
           <div>FALCO · Tennessee</div>
           <div className="flex items-center gap-5">
-            <Link href="/v2" className="hover:text-white/70 transition-colors">
+            <Link href="/" className="hover:text-white/70 transition-colors">
               Home
             </Link>
             <Link href="/buyers" className="hover:text-white/70 transition-colors">

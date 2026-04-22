@@ -29,25 +29,71 @@ function notifyRecipient(): string | null {
   return (
     process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
     process.env.FALCO_DIGEST_TO?.trim() ||
+    process.env.FALCO_SMTP_USER?.trim() ||
     process.env.FALCO_GMAIL_USER?.trim() ||
     null
   )
 }
 
+/**
+ * Build a nodemailer transport that works with either:
+ *   - Generic SMTP: set FALCO_SMTP_HOST, FALCO_SMTP_PORT (default 587),
+ *     FALCO_SMTP_USER, FALCO_SMTP_PASS. SMTP_SECURE=true for port 465.
+ *   - Gmail/Workspace shorthand: leave FALCO_SMTP_HOST unset, set
+ *     FALCO_SMTP_USER + FALCO_SMTP_PASS (or legacy FALCO_GMAIL_USER /
+ *     FALCO_GMAIL_APP_PASSWORD). nodemailer will use Google SMTP.
+ *
+ * For falco@falco.llc on Google Workspace: set FALCO_SMTP_USER=falco@falco.llc
+ * and FALCO_SMTP_PASS=<16-char app password from Google account>.
+ */
+function buildTransport() {
+  const user =
+    process.env.FALCO_SMTP_USER?.trim() ||
+    process.env.FALCO_GMAIL_USER?.trim()
+  const pass =
+    process.env.FALCO_SMTP_PASS?.trim() ||
+    process.env.FALCO_GMAIL_APP_PASSWORD?.trim()
+  if (!user || !pass) return null
+
+  const host = process.env.FALCO_SMTP_HOST?.trim()
+  if (host) {
+    const port = Number(process.env.FALCO_SMTP_PORT?.trim() || "587")
+    const secure =
+      process.env.FALCO_SMTP_SECURE?.trim().toLowerCase() === "true" ||
+      port === 465
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+    })
+  }
+  // Default: Gmail / Google Workspace
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  })
+}
+
+function fromAddress(): string {
+  const explicit = process.env.FALCO_SMTP_FROM?.trim()
+  if (explicit) return explicit
+  const user =
+    process.env.FALCO_SMTP_USER?.trim() ||
+    process.env.FALCO_GMAIL_USER?.trim()
+  return user ? `"FALCO" <${user}>` : `"FALCO" <falco@falco.llc>`
+}
+
 async function sendNotificationEmail(subject: string, html: string, text: string) {
   const recipient = notifyRecipient()
   if (!recipient) return
-  const user = process.env.FALCO_GMAIL_USER?.trim()
-  const pass = process.env.FALCO_GMAIL_APP_PASSWORD?.trim()
-  if (!user || !pass) return
+  const transporter = buildTransport()
+  if (!transporter) return
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user, pass },
-    })
     await transporter.sendMail({
-      from: `"FALCO" <${user}>`,
+      from: fromAddress(),
       to: recipient,
+      replyTo: recipient,
       subject,
       text,
       html,
@@ -170,8 +216,8 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     id: String(data.id),
     alreadyExisted,
     message: alreadyExisted
-      ? "Got it — we updated your request. We'll be in touch within 24 hours."
-      : "Got it. We'll be in touch within 24 hours with the math on your specific situation.",
+      ? "Got it. We updated your request and will be in touch within one business day."
+      : "Got it. We'll be in touch within one business day with the math on your specific situation.",
   }
 }
 
@@ -260,7 +306,7 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
     ok: true,
     id: String(data.id),
     alreadyExisted: false,
-    message: "Got it. We'll be in touch within 24 hours.",
+    message: "Got it. We'll be in touch within one business day.",
   }
 }
 
@@ -365,7 +411,7 @@ ${row.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
     id: String(data.id),
     alreadyExisted,
     message: alreadyExisted
-      ? "Updated. We'll be in touch shortly."
-      : "Got it. We'll be in touch within 24 hours to set up a call.",
+      ? "Updated. We'll be in touch within one business day."
+      : "Got it. We'll be in touch within one business day to set up a call.",
   }
 }
