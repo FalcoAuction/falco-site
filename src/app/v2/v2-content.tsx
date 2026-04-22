@@ -137,7 +137,7 @@ export default function V2Content() {
                 with our auction partners. The equity goes home with{" "}
                 <span className="text-emerald-300/90 font-medium">the homeowner</span>.
                 <br />
-                <span className="text-rose-300/55">Not a wholesaler.</span>
+                <span className="text-white/45">Not a wholesaler.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
