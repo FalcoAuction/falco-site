@@ -4,10 +4,6 @@ import { useState } from "react"
 
 const ITEMS: Array<{ q: string; a: string }> = [
   {
-    q: "Is this legit?",
-    a: "Yes. We're a Tennessee company that sources distressed property data from county courthouses, then lists qualifying homes for sale through a state-licensed Tennessee auction partner. We don't buy your home. We don't ask you for money up front. We don't take any commission out of what you keep. Our revenue comes from the standard 8% buyer's premium, paid by the buyer of the home, not by you.",
-  },
-  {
     q: "Wait — is this the foreclosure auction at the courthouse?",
     a: "No. The trustee sale at the courthouse is exactly the thing we're trying to prevent. That's a 60-second formality on the courthouse steps where the bank takes the property for the loan balance and your equity disappears. What we run is a marketed public auction through a state-licensed Tennessee auction firm: photos, advertising, a 30-to-60-day campaign, a defined sale day, and buyers competing openly on price. Two completely different things — one takes your equity, the other captures it for you.",
   },
