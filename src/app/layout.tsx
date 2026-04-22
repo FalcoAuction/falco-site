@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FALCO | Find the File. Control the Deal.",
+  title: "FALCO · Tennessee Distressed Real Estate",
   description:
-    "FALCO monitors real estate distress signals across Tennessee daily and assembles the full file so you can act on opportunities in minutes, not days.",
+    "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity. Buyers get first look at TN inventory.",
   icons: {
     icon: [
       { url: "/falco-logo.png", type: "image/png" },
@@ -28,9 +28,9 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
-    title: "FALCO | Find the File. Control the Deal.",
+    title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "Real estate distress intelligence across Tennessee. Sourced daily. Assembled automatically.",
+      "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity. Buyers get first look.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -38,7 +38,18 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "FALCO distress asset intelligence preview",
+        alt: "FALCO routes distressed Tennessee homes to auction",
+      },
+    ],
+    // Some platforms (Discord, Facebook) play a linked og:video alongside
+    // the og:image preview. Most (iMessage, Slack, Twitter, LinkedIn,
+    // WhatsApp) ignore it and just show the image — that's expected.
+    videos: [
+      {
+        url: "https://falco.llc/video/hero-loop.mp4",
+        width: 1280,
+        height: 720,
+        type: "video/mp4",
       },
     ],
     locale: "en_US",
@@ -46,9 +57,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FALCO | Find the File. Control the Deal.",
+    title: "FALCO · Tennessee Distressed Real Estate",
     description:
-      "Real estate distress intelligence across Tennessee. Sourced daily. Assembled automatically.",
+      "We route distressed Tennessee homes to auction — not to wholesalers. Homeowners keep their equity.",
     images: ["/opengraph-image"],
   },
 };
