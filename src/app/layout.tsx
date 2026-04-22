@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import LoadingScreen from "./loading-screen";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -59,17 +60,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Warm cache for the hero video so it's ready by the time the loading screen finishes */}
+        <link rel="preload" as="video" href="/video/hero-loop.mp4" type="video/mp4" />
+        <link rel="preload" as="image" href="/video/hero-poster.jpg" type="image/jpeg" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <div className="falco-preloader" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/falco-logo.png"
-            alt=""
-            width={120}
-            height={120}
-            className="falco-preloader-logo"
-          />
-        </div>
+        <LoadingScreen />
         {children}
       </body>
     </html>

@@ -53,23 +53,11 @@ body {
   50% { box-shadow: 0 0 60px rgb(var(--falco-accent-rgb) / 0.3), 0 0 120px rgb(var(--falco-accent-rgb) / 0.1); }
 }
 
+/* Legacy static preloader styles (kept as no-op for any old references).
+   The active loading screen is now src/app/loading-screen.tsx and renders
+   from layout.tsx — it tracks real load progress instead of a fixed timer. */
 .falco-preloader {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  animation: falcoPreloaderFade 2.4s ease-in-out forwards;
-}
-
-.falco-preloader-logo {
-  animation: falcoLogoPulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  /* Flip the logo to black for the light preloader background. */
-  filter: invert(1)
-          drop-shadow(0 0 30px rgb(0 0 0 / 0.12))
-          drop-shadow(0 0 60px rgb(0 0 0 / 0.06));
+  display: none;
 }
 
 /* ================================================================

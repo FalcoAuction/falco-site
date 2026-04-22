@@ -72,20 +72,39 @@ export default function V2Content() {
       <section className="relative isolate overflow-hidden min-h-[78vh] flex items-center">
         <div className="absolute inset-0 -z-40 bg-[#060606]" />
 
-        {/* Brand wash + dot grid */}
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.07),transparent_55%)]" />
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.40]" />
+        {/* Cinematic B&W drone hero loop — preloaded during the loading screen */}
+        <video
+          className="absolute inset-0 -z-30 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster="/video/hero-poster.jpg"
+          aria-hidden="true"
+          style={{ opacity: 0.62 }}
+        >
+          <source src="/video/hero-loop.mp4" type="video/mp4" />
+        </video>
 
-        {/* Orbiting dot canvas — back at original presence since no video competes */}
+        {/* Vignette to keep text readable over the brighter hero video */}
+        <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
+        <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
+
+        {/* Brand wash + dot grid */}
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_55%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
+
+        {/* Orbiting dot canvas — dialed back so it doesn't fight the video */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <DotOrbit
-            dotColor="rgba(16, 185, 129, 0.6)"
-            lineColor="rgba(16, 185, 129, 0.08)"
-            density={0.85}
-            speed={0.35}
-            dotSize={1.3}
-            linkDistance={130}
-            opacity={0.8}
+            dotColor="rgba(16, 185, 129, 0.5)"
+            lineColor="rgba(16, 185, 129, 0.06)"
+            density={0.55}
+            speed={0.3}
+            dotSize={1.1}
+            linkDistance={120}
+            opacity={0.6}
           />
         </div>
 
