@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FALCO · Tennessee Distressed Real Estate",
+  title: "FALCO — Save the equity. Skip the wholesaler.",
   description:
     "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
   icons: {
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
-    title: "FALCO · Tennessee Distressed Real Estate",
+    title: "FALCO — Save the equity. Skip the wholesaler.",
     description:
       "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
     url: "https://falco.llc",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FALCO · Tennessee Distressed Real Estate",
+    title: "FALCO — Save the equity. Skip the wholesaler.",
     description:
       "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
     images: ["/opengraph-image"],
