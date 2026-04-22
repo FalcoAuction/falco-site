@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
 
 // ============================================================================
@@ -25,79 +25,62 @@ function fmtCurrency(n: number | null | undefined): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 }
 
+// ============================================================================
+// Email layer — Resend
+// ----------------------------------------------------------------------------
+// We send via Resend's API instead of SMTP because GoDaddy / M365 SMTP auth
+// is a hostile experience. Resend signs mail as falco.llc via DNS records, so
+// notifications appear to come from falco@falco.llc (or whatever FALCO_FROM
+// is set to) without anyone touching SMTP credentials.
+//
+// Required env vars (set in Vercel):
+//   RESEND_API_KEY           the API key starting with "re_..."
+//   FALCO_INBOUND_NOTIFY_TO  recipient (e.g. falco@falco.llc)
+//
+// Optional:
+//   FALCO_FROM_EMAIL         override sender. Default: "FALCO <falco@falco.llc>"
+// ============================================================================
+
+const resendClient = (() => {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) return null
+  return new Resend(key)
+})()
+
 function notifyRecipient(): string | null {
   return (
     process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
     process.env.FALCO_DIGEST_TO?.trim() ||
-    process.env.FALCO_SMTP_USER?.trim() ||
-    process.env.FALCO_GMAIL_USER?.trim() ||
     null
   )
 }
 
-/**
- * Build a nodemailer transport that works with either:
- *   - Generic SMTP: set FALCO_SMTP_HOST, FALCO_SMTP_PORT (default 587),
- *     FALCO_SMTP_USER, FALCO_SMTP_PASS. SMTP_SECURE=true for port 465.
- *   - Gmail/Workspace shorthand: leave FALCO_SMTP_HOST unset, set
- *     FALCO_SMTP_USER + FALCO_SMTP_PASS (or legacy FALCO_GMAIL_USER /
- *     FALCO_GMAIL_APP_PASSWORD). nodemailer will use Google SMTP.
- *
- * For falco@falco.llc on Google Workspace: set FALCO_SMTP_USER=falco@falco.llc
- * and FALCO_SMTP_PASS=<16-char app password from Google account>.
- */
-function buildTransport() {
-  const user =
-    process.env.FALCO_SMTP_USER?.trim() ||
-    process.env.FALCO_GMAIL_USER?.trim()
-  const pass =
-    process.env.FALCO_SMTP_PASS?.trim() ||
-    process.env.FALCO_GMAIL_APP_PASSWORD?.trim()
-  if (!user || !pass) return null
-
-  const host = process.env.FALCO_SMTP_HOST?.trim()
-  if (host) {
-    const port = Number(process.env.FALCO_SMTP_PORT?.trim() || "587")
-    const secure =
-      process.env.FALCO_SMTP_SECURE?.trim().toLowerCase() === "true" ||
-      port === 465
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: { user, pass },
-    })
-  }
-  // Default: Gmail / Google Workspace
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass },
-  })
-}
-
 function fromAddress(): string {
-  const explicit = process.env.FALCO_SMTP_FROM?.trim()
-  if (explicit) return explicit
-  const user =
-    process.env.FALCO_SMTP_USER?.trim() ||
-    process.env.FALCO_GMAIL_USER?.trim()
-  return user ? `"FALCO" <${user}>` : `"FALCO" <falco@falco.llc>`
+  return process.env.FALCO_FROM_EMAIL?.trim() || "FALCO <falco@falco.llc>"
 }
 
 async function sendNotificationEmail(subject: string, html: string, text: string) {
   const recipient = notifyRecipient()
-  if (!recipient) return
-  const transporter = buildTransport()
-  if (!transporter) return
+  if (!recipient) {
+    console.warn("inbound notify skipped: FALCO_INBOUND_NOTIFY_TO not set")
+    return
+  }
+  if (!resendClient) {
+    console.warn("inbound notify skipped: RESEND_API_KEY not set")
+    return
+  }
   try {
-    await transporter.sendMail({
+    const result = await resendClient.emails.send({
       from: fromAddress(),
-      to: recipient,
+      to: [recipient],
       replyTo: recipient,
       subject,
-      text,
       html,
+      text,
     })
+    if (result.error) {
+      console.error("resend send failed:", result.error)
+    }
   } catch (err) {
     console.error("inbound notify email failed:", err)
   }

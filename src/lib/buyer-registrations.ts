@@ -1,5 +1,11 @@
-import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import { supabaseAdmin, supabaseAdminConfigError } from "@/lib/supabase-admin"
+
+const resendClient = (() => {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) return null
+  return new Resend(key)
+})()
 
 export type BuyerRegistrationInput = {
   email: string
@@ -102,13 +108,14 @@ export async function registerBuyer(input: BuyerRegistrationInput): Promise<Regi
 async function notifyBuyerSignup(reg: BuyerRegistration, alreadyExisted: boolean) {
   const recipient =
     process.env.FALCO_BUYER_NOTIFY_TO?.trim() ||
-    process.env.FALCO_DIGEST_TO?.trim() ||
-    process.env.FALCO_GMAIL_USER?.trim()
+    process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
+    process.env.FALCO_DIGEST_TO?.trim()
   if (!recipient) return
-
-  const user = process.env.FALCO_GMAIL_USER?.trim()
-  const pass = process.env.FALCO_GMAIL_APP_PASSWORD?.trim()
-  if (!user || !pass) return
+  if (!resendClient) {
+    console.warn("notifyBuyerSignup skipped: RESEND_API_KEY not set")
+    return
+  }
+  const fromAddr = process.env.FALCO_FROM_EMAIL?.trim() || "FALCO <falco@falco.llc>"
 
   function esc(s: string): string {
     return String(s ?? "")
@@ -166,15 +173,17 @@ ${reg.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
     .filter(Boolean)
     .join("\n")
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass },
-  })
-  await transporter.sendMail({
-    from: `"FALCO Buyer Signup" <${user}>`,
-    to: recipient,
-    subject,
-    text,
-    html,
-  })
+  try {
+    const result = await resendClient.emails.send({
+      from: fromAddr,
+      to: [recipient],
+      replyTo: recipient,
+      subject,
+      html,
+      text,
+    })
+    if (result.error) console.error("resend send failed:", result.error)
+  } catch (err) {
+    console.error("notifyBuyerSignup send failed:", err)
+  }
 }
