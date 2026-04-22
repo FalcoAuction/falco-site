@@ -3,17 +3,17 @@ import PrintButton from "../../pilot/parks/economics/print-button"
 
 export const dynamic = "force-static"
 export const metadata = {
-  title: "FALCO — Dialer / Closer Role",
+  title: "FALCO — For Chris",
   description:
-    "What the FALCO dialer/closer role actually is — the work, the tools, the numbers, and what success looks like.",
+    "Why FALCO needs you specifically, what we're building together, and the questions only you can answer.",
   robots: "noindex, nofollow",
 }
 
 // ============================================================================
-// PUBLIC role onboarding doc for Chris Lannotti — the dialer/closer hire.
+// PUBLIC mission/alignment doc for Chris Lannotti.
 // URL: /team/dialer
-// Walk-through of FALCO + the role + day-in-the-life + tools + numbers +
-// compliance + onboarding checklist. Shareable URL.
+// Peer-to-peer pitch. Chris already knows the operational mechanics — this
+// doc is about mission, personal fit, commitment, and what we're playing for.
 // ============================================================================
 
 export default function DialerRolePage() {
@@ -36,231 +36,252 @@ export default function DialerRolePage() {
             ← FALCO
           </Link>
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/55 hidden sm:block">
-            Team · Dialer / Closer Role
+            For Chris
           </div>
           <PrintButton />
         </div>
       </div>
 
-      <article className="mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14 text-[14px] leading-[1.7]">
+      <article className="mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14 text-[15px] leading-[1.75]">
         {/* Header */}
         <header className="border-b-2 border-emerald-600 pb-6">
           <div className="text-[11px] tracking-[0.32em] uppercase font-bold text-emerald-700">
-            FALCO · The Dialer / Closer Role
+            FALCO · For Chris
           </div>
-          <h1 className="mt-2 text-[28px] md:text-[36px] font-semibold tracking-tight leading-tight">
-            You are the voice on the other end of the worst week of someone's life.
+          <h1 className="mt-3 text-[30px] md:text-[42px] font-semibold tracking-tight leading-[1.05]">
+            We don&apos;t need you to learn the job. We need you to mean it.
           </h1>
-          <p className="mt-4 text-[15px] text-neutral-600 leading-[1.65]">
-            This is what the job is, the tools you&apos;ll use, the numbers
-            you&apos;ll move, and what FALCO is trying to be. Read it before our
-            next call.
+          <p className="mt-5 text-[16px] text-neutral-600 leading-[1.65]">
+            You already know how to dial. You know what wholesalers sound like
+            on the phone because you&apos;ve been one. You know the script, the
+            leverage points, the tone-shift when the homeowner starts to push
+            back. None of that needs explaining. This is about everything else.
           </p>
         </header>
 
-        {/* 1 — What FALCO is */}
-        <Section n="1" title="What FALCO is">
+        {/* 1 — The mission */}
+        <Section n="1" title="The mission, in plain English">
           <p>
-            Tennessee homeowners facing foreclosure get one type of call:
-            wholesalers offering them 12-15% of the equity in their home, in
-            cash, before the trustee sale takes everything.
+            Tennessee families lose roughly <strong>$78 million of equity per
+            year</strong> to wholesalers. Not to investors who renovate and add
+            value. To people whose only contribution to the transaction was
+            finding a desperate seller and acting fast.
           </p>
           <p>
-            FALCO calls them with a different option. We route their home to a
-            <strong> licensed Tennessee auction firm</strong> that runs a
-            marketed sale — photos, advertising, 30-60 day campaign,
-            competitive bidding — and the homeowner walks away with{" "}
-            <strong>4-6× more equity</strong> than the wholesaler offer.
+            FALCO exists to put that money back where it belongs. We monitor
+            the same county filings the wholesalers monitor. We get to the
+            homeowner first. We show them what their house actually clears at
+            a marketed auction. We route the deal to a licensed Tennessee
+            auction firm — Parks Auction &amp; Realty in Murfreesboro — and
+            the family walks away with 4-6× more than the wholesaler would
+            have given them.
           </p>
           <p>
-            Read the long version at{" "}
+            That&apos;s the whole company. No app. No course. No webinar. Just
+            the homeowner on the phone, the math sheet on the table, and the
+            choice in front of them.
+          </p>
+          <Note>
+            Read the long version, with sources, at{" "}
             <Link href="/manifesto" className="text-emerald-700 underline">
               falco.llc/manifesto
-            </Link>{" "}
-            before we talk. The math, the sources, the wholesaler industry
-            we&apos;re built against — it&apos;s all there.
-          </p>
-        </Section>
-
-        {/* 2 — The role */}
-        <Section n="2" title="What the role actually is">
-          <p>
-            You are the <strong>only direct human contact</strong> between
-            FALCO&apos;s data pipeline and the homeowner&apos;s decision. Without
-            you, our stack is just an inbox of distressed addresses. With you,
-            it becomes deals.
-          </p>
-          <p>The job, in one sentence:</p>
-          <Note>
-            Call distressed TN homeowners within hours of their property
-            appearing in our pipeline, deliver a real math sheet showing
-            their three options, and either route them to our auction
-            partner or honestly tell them auction isn&apos;t their best path.
-          </Note>
-          <p className="!mt-4">It is <strong>not</strong>:</p>
-          <Ul items={[
-            "A cold-call sales job. You're not selling a vacuum cleaner. You're delivering math the homeowner has been trying to get for weeks.",
-            "A wholesaler script. You don't pitch lowball cash offers. You don't pressure. If the auction route doesn't fit, you say so.",
-            "A volume game. We'd rather you make 30 high-quality contacts a week than 300 spray-and-pray calls.",
-          ]} />
-        </Section>
-
-        {/* 3 — Day in the life */}
-        <Section n="3" title="A day in the life">
-          <Ol items={[
-            <><strong>Morning (8:30-9 AM CT):</strong> open <code className="px-1.5 py-0.5 bg-neutral-100 rounded text-[12px]">/admin</code>. Filter to <em>New</em> + <em>Overdue</em>. Triage: which leads have a trustee sale this week? Those go to top of queue.</>,
-            <><strong>Per lead (10-15 min each):</strong> open the homeowner row. Pull a quick comp on the property (Zillow, county records). Fire up <code className="px-1.5 py-0.5 bg-neutral-100 rounded text-[12px]">/admin/math-sheet/[id]</code> and adjust the inputs to real numbers. Pre-load the email reply.</>,
-            <><strong>Make the call.</strong> Goal: 60-90 seconds to introduce, 90 seconds to qualify their situation, 3-4 minutes to walk them through the 3 paths. Total call: 5-8 minutes if they&apos;re engaged, 90 seconds if they&apos;re not.</>,
-            <><strong>Update /admin in real-time.</strong> Status (contacted / qualified / lost), notes from the call, next-action date if they need a callback.</>,
-            <><strong>If qualified:</strong> email them the math sheet (PDF saved from <code className="px-1.5 py-0.5 bg-neutral-100 rounded text-[12px]">/admin/math-sheet</code>). Schedule a 15-min follow-up. Move status to <em>qualified</em>.</>,
-            <><strong>If a yes:</strong> email handoff package to our auction partner (Parks Auction & Realty) with the property address, owner contact, mortgage balance, and the math sheet PDF. Move status to <em>listed</em>. We collect at closing.</>,
-            <><strong>End of day (5 PM):</strong> 15 min reviewing tomorrow&apos;s queue. Patrick reviews your stats Friday afternoons over coffee.</>,
-          ]} />
-        </Section>
-
-        {/* 4 — The tools */}
-        <Section n="4" title="The tools you'll live in">
-          <KvTable
-            rows={[
-              ["/admin", "The lead inbox. Every distressed homeowner in our pipeline. You sort, filter, status-track, and add notes here."],
-              ["/admin/math-sheet/[id]", "The 3-path math generator. Pull a homeowner row, plug in actual ARV/loan/repairs, get the printable PDF. This is the deliverable."],
-              ["Phone (TBD)", "We'll provide a dedicated FALCO line. Likely Google Voice or RingCentral routed to your cell. Numbers are tracked + recorded for compliance."],
-              ["Email (you@falco.llc)", "Personal FALCO inbox. Replies route through this. We use Resend for outbound transactional + your inbox for human follow-up."],
-              ["County records / Zillow / Redfin", "Property comp lookups. ~5 min per lead until we automate it."],
-              ["Calendar (Google)", "Patrick adds you to FALCO calendar; you book follow-ups directly with homeowners from there."],
-            ]}
-          />
-        </Section>
-
-        {/* 5 — The numbers */}
-        <Section n="5" title="The numbers you're responsible for">
-          <p>
-            Tennessee produces ~<strong>100 distressed property filings per
-            week</strong> statewide (per Atlanta Fed mortgage delinquency
-            data). Of those, FALCO&apos;s pipeline qualifies roughly{" "}
-            <strong>30-50/week</strong> as actionable (right loan position,
-            right county coverage, reachable owner).
-          </p>
-          <p>That&apos;s your daily inventory: ~6-10 fresh leads per workday.</p>
-          <KvTable
-            rows={[
-              ["Inventory delivered to you", "~6-10 fresh leads / workday (~30-50 / week)"],
-              ["Reach rate (industry standard)", "5-15% — most homeowners ignore the first call. Persistence + email follow-up matters."],
-              ["Conversion to qualified", "20-40% of those reached. They engage, they hear the math, they want to see the auction option."],
-              ["Conversion to listed", "30-50% of qualified. Some need time, some need to talk to family, some are too late on the timeline."],
-              ["Effective close rate (filing → closed)", "~1-3%. Industry-standard for distress work. Don't take low conversion personally — it's the math."],
-              ["Realistic monthly closes", "3-8 in your first 3 months, ramping to 10-20 once you have rhythm."],
-              ["Per-deal FALCO revenue", "~$13K average (3% of an 8% buyer's premium on a ~$540K bid)"],
-              ["Your comp", "TBD — Patrick will walk you through base + commission structure on our next call."],
-            ]}
-          />
-        </Section>
-
-        {/* 6 — What success looks like */}
-        <Section n="6" title="What success looks like">
-          <KvTable
-            rows={[
-              ["Month 1", "30-40 quality contacts. 3-5 qualified handoffs to Parks. 0-1 closed deals (timeline lag is real). Tight notes in /admin on every lead."],
-              ["Month 3", "10-15 closed deals total. Reach rate >10%. Patrick & Parks both have a clear read on what's working / what isn't. You've identified 1-2 process gaps and we've built fixes."],
-              ["Month 6", "30-50 closed deals total. You've got a personal list of 5-10 referral attorneys / counselors who send you warm leads. We're scaling to AL or KY and you're helping define the playbook."],
-              ["Year 1", "$1M+ TN homeowner equity preserved through your calls. You know the TN distress market better than any wholesaler. We're hiring your replacement (you become a manager) or your peer (we double the desk)."],
-            ]}
-          />
-        </Section>
-
-        {/* 7 — What we're NOT */}
-        <Section n="7" title="What we're not">
-          <Ul items={[
-            <><strong>Not wholesalers.</strong> We don't buy the house. We don't take a commission from the homeowner. We get paid only when our partner closes the marketed sale.</>,
-            <><strong>Not a course / mastermind / coaching biz.</strong> We don't sell anything to investors or "students." We never will.</>,
-            <><strong>Not aggressive.</strong> If a homeowner says no or doesn't engage after 3 attempts, we move on. We don't badger.</>,
-            <><strong>Not a sweatshop dialer farm.</strong> Quality of conversation beats quantity. You&apos;ll have time to think between calls. You&apos;ll be expected to use it.</>,
-            <><strong>Not a get-rich-quick play.</strong> Six figures of homeowner equity per closed deal compounds. So does our reputation. Both take 12-24 months to ramp. We're playing for years, not months.</>,
-          ]} />
-        </Section>
-
-        {/* 8 — Compliance */}
-        <Section n="8" title="Compliance — the non-negotiables">
-          <p>
-            This work touches federal consumer protection law. Mistakes here
-            kill the company. Read this carefully.
-          </p>
-          <Ul items={[
-            <><strong>TCPA (calls):</strong> No calls outside 8 AM – 9 PM in the homeowner&apos;s local time zone (TN is mostly Central, parts of east TN are Eastern). No autodialer to cell phones. No prerecorded messages without consent.</>,
-            <><strong>DNC (Do Not Call):</strong> Every number gets scrubbed against the National DNC Registry before dialing. We&apos;ll set up the scrubbing tool — you confirm the badge before each call.</>,
-            <><strong>SMS:</strong> Never send a text to a number that hasn&apos;t given prior express consent. CTIA + carrier rules + federal law all stack here. When in doubt, call instead.</>,
-            <><strong>Recording:</strong> TN is a one-party consent state — you can record without telling them. We do record for training + compliance. Disclose it anyway: "I record my calls for quality, that OK?" Most say yes.</>,
-            <><strong>Disclosure:</strong> First sentence after their hello: "Hi, this is [your name] with FALCO — we&apos;re a Tennessee company that helps homeowners facing foreclosure understand their options. Your address came up in the [county] trustee filings. Got 90 seconds?"</>,
-            <><strong>Honesty:</strong> Never imply you&apos;re from the lender, the court, the trustee, or a government agency. Never say "we can save your home" — sometimes we can&apos;t. Always say what we actually are: a routing service to a marketed auction.</>,
-            <><strong>Document everything:</strong> Every call gets a note in /admin. Every email goes through your falco.llc inbox. If we ever get a complaint, we need to be able to show what happened.</>,
-          ]} />
-          <Note>
-            We&apos;ll do a 1-hour compliance walkthrough on day 1 with Patrick.
-            You won&apos;t be expected to know all this on day zero.
+            </Link>
+            . If the math there doesn&apos;t make you want to go to work
+            tomorrow, the rest of this doc is moot.
           </Note>
         </Section>
 
-        {/* 9 — Onboarding checklist */}
-        <Section n="9" title="Onboarding checklist (first week)">
-          <Ol items={[
-            "Read this doc end-to-end. Read the manifesto.",
-            "Day 1: 1-hour intro call with Patrick. Walk through /admin live. Walk through /admin/math-sheet live. Compliance overview.",
-            "Day 1: get @falco.llc email set up. Get FALCO phone line provisioned.",
-            "Day 2: shadow Patrick on 3-5 calls. Take notes. Ask everything.",
-            "Day 3-4: make 5-10 calls under Patrick's coaching. Debrief each one within an hour.",
-            "Day 5: solo on the queue. Patrick reviews your /admin notes at end of day.",
-            "Week 2: Friday afternoon — your first weekly review with Patrick. Numbers + qualitative read.",
-          ]} />
+        {/* 2 — Why YOU specifically */}
+        <Section n="2" title="Why we need somebody who used to wholesale">
+          <p>
+            Most people in your seat at FALCO would be a former real estate
+            agent, a former call-center closer, or a kid out of college trying
+            to learn the trade. Any of them would be fine at the mechanics.
+            None of them can do what you can do.
+          </p>
+          <p>
+            <strong>You&apos;ve been the call the homeowner is afraid to
+            answer.</strong> You know exactly what the next wholesaler is
+            going to say to them — because you&apos;ve said it. You know the
+            urgency play. The repair-cost inflation. The "we&apos;re a local
+            family" angle. The "I just need to know your bottom number"
+            close. All of it.
+          </p>
+          <p>That&apos;s our weapon.</p>
+          <p>
+            When you call a Tennessee homeowner two days after their notice
+            files, you can do something nobody else at FALCO can:
+          </p>
+          <Note muted>
+            "Look — you&apos;re going to get a call in the next 48 hours from
+            somebody offering you cash, fast, no questions. Probably named
+            Brad. Probably says he&apos;s a local family. He&apos;s going to
+            tell you the house needs $25K in repairs whether it does or not.
+            He&apos;s going to push you to commit on the call. Here&apos;s
+            what he won&apos;t tell you. Here&apos;s the math he&apos;s
+            doing in his head while he&apos;s talking to you. And here&apos;s
+            what your house is actually worth if we run a real sale."
+          </Note>
+          <p>
+            That conversation is impossible from anyone who hasn&apos;t lived
+            it. The homeowner hears it and thinks "this person is on my
+            side." That&apos;s not a tactic. That&apos;s the truth — you ARE
+            on their side now, and you&apos;re the only person at FALCO who
+            can prove it from experience.
+          </p>
+          <p>
+            <strong>You&apos;re the antibody.</strong> Every wholesaler call
+            we preempt is a Tennessee family that keeps their house money.
+            That&apos;s the seat. That&apos;s why this is your call to take
+            or pass on.
+          </p>
         </Section>
 
-        {/* 10 — Why Chris specifically */}
-        <Section n="10" title="Why we want you on this">
+        {/* 3 — Personal alignment */}
+        <Section n="3" title="Questions only you can answer">
           <p>
-            Patrick will fill in the personal version of this in conversation.
-            But the structural reason FALCO needs the right person in this seat:
+            None of these have right answers. We&apos;re not testing you.
+            But before we go further, sit with them.
           </p>
-          <p>
-            The homeowner on the other end is having one of the worst weeks of
-            their life. They&apos;ve been lied to by wholesalers, ignored by
-            their lender, and possibly disappointed by family. The first 60
-            seconds of your call decides whether they hear the rest of it.
-          </p>
-          <p>
-            The job needs someone who can hold both: the operational rigor to
-            move ~30 leads through a pipeline weekly, and the human steadiness
-            to be the reason a Tennessee family keeps $100K of equity. Most
-            people are good at one. Patrick thinks you&apos;re good at both.
-            That&apos;s why this conversation is happening.
-          </p>
-        </Section>
-
-        {/* 11 — Open questions */}
-        <Section n="11" title="What we should talk about">
-          <p>Bring questions on:</p>
           <Ul items={[
-            "Comp structure (base + commission, or commission-only, or hybrid). Patrick has a model in mind — wants your read on it before locking.",
-            "Schedule. Full-time? Part-time ramping to full? You decide what works.",
-            "Geography. Are you working from TN or remote? FALCO doesn't need you in an office; calls are the work.",
-            "Tools you've used before — CRM, dialer, anything. We'll match the stack to what you're fastest with.",
-            "Any compliance / RE licensing background. Not required (you're not the licensed agent — Parks is) but a plus if you have any.",
-            "What scares you about the role. The honest answer is more useful than the polished one.",
+            "Why did you stop wholesaling? (Or why do you want to?) Answer honestly to yourself, not to Patrick.",
+            "What's the worst homeowner conversation you ever had as a wholesaler — the one that, looking back, you'd handle completely differently? What did you learn from it that you've never used since?",
+            "Who in your life would be most disappointed if you took this work seriously vs. did it half-assed? Are you OK with the version of yourself they'd see in 6 months?",
+            "What does success at FALCO look like for you 18 months from now, in a way that has nothing to do with money?",
+            "What's the version of this job that would make you walk away? Not 'what's a dealbreaker' — what's the SLOW death? The thing that would burn you out by month 4 if we let it?",
+          ]} />
+          <p>
+            We don&apos;t need answers to all of these on the next call. We
+            need to know you&apos;ve at least asked yourself the questions.
+          </p>
+        </Section>
+
+        {/* 4 — Commitment */}
+        <Section n="4" title="The honest mutual ask">
+          <p>What we&apos;re asking from you:</p>
+          <Ul items={[
+            <>To be the <strong>best in Tennessee</strong> at this conversation. Not the busiest. Not the highest-volume. The best.</>,
+            <>To pick up the 7 AM call when a homeowner&apos;s trustee sale is tomorrow.</>,
+            <>To be willing to ship deals that piss off people you used to work with on the wholesaler side. Some of them won&apos;t talk to you again. Some will. The ones that do are worth keeping.</>,
+            <>To tell us when something isn&apos;t working — the script, the handoff, the partner, the comp, anything. We don&apos;t need yes-men. We need the operator who saw the problem first.</>,
+            <>To stay 24-36 months. This kind of work compounds. Reputation, referral network, your own muscle memory on the conversation — none of it shows up in month 3. All of it shows up in year 2.</>,
+          ]} />
+          <p className="mt-5">What you should be asking from us:</p>
+          <Ul items={[
+            <>Comp that respects what you bring. Patrick has a model. Push back on it if it doesn&apos;t reflect your value — your wholesaler experience is the lever, use it.</>,
+            <>Honest scoreboards. Weekly numbers, monthly review, no BS. If we&apos;re winning we both see it; if we&apos;re losing we both see it.</>,
+            <>Tools that don&apos;t suck. The /admin lead inbox is real. The math sheet generator is real. We&apos;ll fix anything operational that&apos;s slowing you down within a week.</>,
+            <>A real partner on the auction side, not a flake. Parks is 40 years old, doing the meeting tomorrow. If for any reason that doesn&apos;t pan out we&apos;ll have a different licensed firm in place before you take your first call.</>,
+            <>Equity. Not just commission. If you&apos;re building this with us, you should own a piece of what we build. We&apos;ll talk about what that looks like.</>,
+            <>Honesty about what could go sideways. We&apos;re early. Things will break. We&apos;d rather you walk in eyes open than oversold.</>,
           ]} />
         </Section>
 
-        {/* Contact */}
-        <section className="mt-10 rounded-lg border-2 border-emerald-600 bg-emerald-50 p-5">
+        {/* 5 — What we're playing for */}
+        <Section n="5" title="What we're actually playing for">
+          <p>
+            We have the data pipeline. We have the auction partner. We have
+            the math. We have the homeowner-facing brand. What&apos;s missing
+            is the voice on the phone.
+          </p>
+          <p>That&apos;s the seat we&apos;re offering you.</p>
+          <p>12 months from now, here&apos;s the realistic floor:</p>
+          <KvTable
+            rows={[
+              ["TN deals closed", "30-50"],
+              ["TN homeowner equity preserved", "$3-5M (real money, real families, real receipts)"],
+              ["FALCO ARR", "$400K-$700K"],
+              ["Your role", "OG of the dialer function. Either training the next two hires or running them."],
+              ["Geographic reach", "Probably TN + AL by month 12. KY in year 2."],
+            ]}
+          />
+          <p>And the realistic ceiling:</p>
+          <KvTable
+            rows={[
+              ["Year 2-3 deals/year", "150-300 across TN/AL/KY"],
+              ["Year 2-3 ARR", "$2-5M"],
+              ["Equity outcome for you", "Material, if you bought in early"],
+              ["What you actually built", "The honest alternative to wholesaling in the South. A category. Not a company — a category."],
+            ]}
+          />
+          <p>
+            FALCO doesn&apos;t need to be a unicorn to be worth your 24-36
+            months. It needs to do exactly what it says it does, on enough
+            properties, for long enough that wholesalers start losing
+            inventory to us instead of the other way around. That&apos;s the
+            game.
+          </p>
+        </Section>
+
+        {/* 6 — The honest part */}
+        <Section n="6" title="What you should know about us">
+          <p>
+            Patrick is 23. He built the data pipeline, the site, the math
+            sheet, the lead inbox, the partner pitch — all of it — solo. He
+            knows what he doesn&apos;t know, and one of those things is your
+            half of the work. He&apos;s not going to tell you how to handle a
+            homeowner on the phone. He&apos;d be embarrassed to try.
+          </p>
+          <p>
+            What he is going to do: keep the pipeline full, ship the tools
+            you need, close the partner deals, raise capital when the time
+            comes, and stay out of your way on the homeowner conversations
+            you&apos;re running.
+          </p>
+          <p>
+            FALCO is bootstrapped. Patrick&apos;s uncle (built Bargain Hunt,
+            astock.com — real operator, not just check-writer) is coming in
+            as advisor + small early investor after the Parks pilot proves
+            the unit economics. There&apos;s a path to a real seed round in
+            12-18 months on actual numbers. Not a deck.
+          </p>
+          <p>
+            We&apos;re not going to oversell. The first 3-5 closed deals are
+            going to be slower and uglier than anyone wants. Some of those
+            calls are going to be heavy — homeowners crying, families
+            fighting, lenders being lenders. You&apos;ve been close enough to
+            this work to know that. We just want you in with eyes open.
+          </p>
+        </Section>
+
+        {/* 7 — The ask */}
+        <Section n="7" title="The actual ask">
+          <p>
+            Read this. Sit with it for a day. Then tell us:
+          </p>
+          <Ol items={[
+            "Are you in or are you out? Don't soft-pedal a 'maybe.' We'd rather hear no this week than maybe for a month.",
+            "If you're in — what do you need from us to be all-in? Comp, structure, equity, schedule, anything. Be direct.",
+            "If you're out — tell us what we'd need to change for it to be a yes. Maybe we can. Maybe we can't. Either way it's useful.",
+          ]} />
+        </Section>
+
+        {/* Hype close */}
+        <section className="mt-10 rounded-xl border-2 border-emerald-600 bg-emerald-50 p-6 md:p-7">
           <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-800 font-semibold">
-            Next step
+            Last thing
           </div>
-          <h3 className="mt-2 text-[18px] font-semibold tracking-tight text-neutral-900">
-            Walk this back through with Patrick on the next call.
+          <h3 className="mt-2 text-[22px] md:text-[26px] font-semibold tracking-tight text-neutral-900 leading-tight">
+            Nobody else gets to do this work.
           </h3>
-          <p className="mt-2 text-[13px] text-neutral-700 leading-[1.6]">
-            Email questions or notes to{" "}
+          <p className="mt-3 text-[14px] md:text-[15px] text-neutral-800 leading-[1.7]">
+            Nobody at the wholesaler firms gets to be the antibody. Nobody at
+            the auction firms gets to talk to the homeowner before the system
+            chews them up. Nobody at the foreclosure-help nonprofits has the
+            data pipeline or the math or the partner machinery. The job is
+            sitting open in TN right now, and the person who fills it gets to
+            decide what the next decade of distress real estate looks like in
+            the South.
+          </p>
+          <p className="mt-3 text-[14px] md:text-[15px] text-neutral-800 leading-[1.7]">
+            Patrick thinks that&apos;s you. Tell us if he&apos;s right.
+          </p>
+          <p className="mt-4 text-[12px] text-neutral-600">
+            Email{" "}
             <a href="mailto:falco@falco.llc" className="text-emerald-700 underline">
               falco@falco.llc
             </a>{" "}
-            ahead of time. Or just bring them to the call. Either works.
+            or just text. You know how to reach us.
           </p>
         </section>
 
@@ -268,7 +289,7 @@ export default function DialerRolePage() {
         <footer className="mt-10 pt-5 border-t border-neutral-300 text-[11px] text-neutral-500">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>FALCO LLC · Tennessee · falco@falco.llc · falco.llc</div>
-            <div>Drafted April 22, 2026</div>
+            <div>Drafted April 22, 2026 · For Chris Lannotti</div>
           </div>
         </footer>
       </article>
@@ -277,13 +298,13 @@ export default function DialerRolePage() {
 }
 
 // ============================================================================
-// Primitives — same look as the Parks term sheet
+// Primitives
 // ============================================================================
 
 function Section({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-9">
-      <h2 className="text-[19px] md:text-[20px] font-semibold tracking-tight text-neutral-900">
+    <section className="mt-10">
+      <h2 className="text-[20px] md:text-[22px] font-semibold tracking-tight text-neutral-900 leading-tight">
         <span className="text-emerald-700 mr-3 font-bold tabular-nums">{n}.</span>
         {title}
       </h2>
@@ -299,7 +320,7 @@ function KvTable({ rows }: { rows: [string, string][] }) {
         <tbody>
           {rows.map(([k, v]) => (
             <tr key={k} className="border-b border-neutral-200 last:border-b-0">
-              <td className="px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500 font-semibold w-[220px] align-top bg-neutral-50">
+              <td className="px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-neutral-500 font-semibold w-[200px] align-top bg-neutral-50">
                 {k}
               </td>
               <td className="px-4 py-2.5 text-neutral-900">{v}</td>
@@ -327,9 +348,13 @@ function Ul({ items }: { items: React.ReactNode[] }) {
   )
 }
 
-function Note({ children }: { children: React.ReactNode }) {
+function Note({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
   return (
-    <div className="mt-2 rounded border-l-2 border-emerald-500 bg-emerald-50 px-3 py-2 text-[13px] leading-[1.6] text-emerald-900">
+    <div className={`mt-2 rounded border-l-2 px-3 py-2 text-[13px] leading-[1.65] ${
+      muted
+        ? "border-neutral-300 bg-neutral-50 text-neutral-700 italic"
+        : "border-emerald-500 bg-emerald-50 text-emerald-900"
+    }`}>
       {children}
     </div>
   )

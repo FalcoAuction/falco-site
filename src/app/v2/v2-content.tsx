@@ -562,8 +562,12 @@ function SnapSection({
   noSnap?: boolean
 }) {
   // Mobile: natural-height sections with generous breathing room (no snap).
-  // Desktop: snap-start, exactly one viewport tall (or min-h-full + allowOverflow for FAQ).
-  const snapClasses = noSnap ? "" : "snap-start snap-always"
+  // Desktop: snap-start (soft snap target). NOT snap-always — that was forcing
+  // the browser to keep pulling users back to the previous snap point when
+  // they tried to scroll into the FAQ section (which has no snap point).
+  // snap-start + snap-proximity on the parent gives clean snap on the way
+  // down without trapping anyone at the bottom.
+  const snapClasses = noSnap ? "" : "snap-start"
   const desktopHeight = noSnap ? "" : allowOverflow ? "md:min-h-full" : "md:h-full"
   return (
     <section
