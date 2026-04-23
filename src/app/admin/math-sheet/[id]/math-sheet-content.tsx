@@ -71,6 +71,7 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
     buyerPremiumPct: DEFAULT_INPUTS.buyerPremiumPct,
     auctionMinPct,
     auctionMaxPct,
+    auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
     wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
   }
@@ -326,15 +327,39 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
             <thead>
               <tr className="bg-neutral-50">
                 <th className="px-3 py-2 text-left text-[10px] uppercase tracking-[0.16em] text-neutral-500 font-semibold">Scenario</th>
+                <th className="px-3 py-2 text-right text-[10px] uppercase tracking-[0.16em] text-red-600/80 font-semibold">Worst case ({Math.round(out.auction.worst.retailPct * 100)}%)</th>
                 <th className="px-3 py-2 text-right text-[10px] uppercase tracking-[0.16em] text-neutral-500 font-semibold">Conservative ({Math.round(out.auction.low.retailPct * 100)}%)</th>
-                <th className="px-3 py-2 text-right text-[10px] uppercase tracking-[0.16em] text-neutral-500 font-semibold">Strong ({Math.round(out.auction.high.retailPct * 100)}%)</th>
+                <th className="px-3 py-2 text-right text-[10px] uppercase tracking-[0.16em] text-emerald-700/80 font-semibold">Strong ({Math.round(out.auction.high.retailPct * 100)}%)</th>
               </tr>
             </thead>
             <tbody>
-              <RowPair label="Winning bid" lo={out.auction.low.winningBid} hi={out.auction.high.winningBid} />
-              <RowPair label="− Loan payoff" lo={-out.auction.low.loanBalance} hi={-out.auction.high.loanBalance} negative />
-              <RowPair label="− Closing costs" lo={-out.auction.low.closingCosts} hi={-out.auction.high.closingCosts} negative />
-              <RowPair label="Net to you" lo={out.auction.low.netToHomeowner} hi={out.auction.high.netToHomeowner} bold />
+              <RowTriple
+                label="Winning bid"
+                w={out.auction.worst.winningBid}
+                lo={out.auction.low.winningBid}
+                hi={out.auction.high.winningBid}
+              />
+              <RowTriple
+                label="− Loan payoff"
+                w={-out.auction.worst.loanBalance}
+                lo={-out.auction.low.loanBalance}
+                hi={-out.auction.high.loanBalance}
+                negative
+              />
+              <RowTriple
+                label="− Closing costs"
+                w={-out.auction.worst.closingCosts}
+                lo={-out.auction.low.closingCosts}
+                hi={-out.auction.high.closingCosts}
+                negative
+              />
+              <RowTriple
+                label="Net to you"
+                w={out.auction.worst.netToHomeowner}
+                lo={out.auction.low.netToHomeowner}
+                hi={out.auction.high.netToHomeowner}
+                bold
+              />
             </tbody>
           </table>
           <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
@@ -342,6 +367,61 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
             covers the auction firm and FALCO. You don&apos;t pay it. You don&apos;t see it.
             Your only cost is the closing fees above.
           </p>
+
+          {/* Worst-case-still-beats-wholesaler callout — strongest pitch when true */}
+          {out.wholesaler.scenario !== "walks" && out.auction.worstStillBeatsWholesaler && (
+            <div className="mt-4 rounded-md border border-emerald-300/70 bg-emerald-50 p-3.5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
+                The bottom of the range still wins
+              </div>
+              <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
+                Even if your auction underperforms badly and only clears{" "}
+                <strong>{Math.round(out.auction.worst.retailPct * 100)}% of retail</strong>,
+                you walk away with{" "}
+                <strong>{fmt(out.auction.worst.netToHomeowner)}</strong> — still
+                roughly{" "}
+                <strong>{fmt(out.auction.worst.netToHomeowner - out.wholesaler.realisticNet)}</strong>{" "}
+                more than the wholesaler offer.
+                {out.auction.breakevenPct !== null && out.auction.breakevenPct > 0.5 && out.auction.breakevenPct < out.auction.worst.retailPct && (
+                  <>
+                    {" "}For the wholesaler to come out ahead, the auction would
+                    need to clear below{" "}
+                    <strong>{Math.round(out.auction.breakevenPct * 100)}% of retail</strong>.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+          {out.wholesaler.scenario !== "walks" && !out.auction.worstStillBeatsWholesaler && (
+            <div className="mt-4 rounded-md border border-amber-300/70 bg-amber-50 p-3.5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
+                Honest read on the range
+              </div>
+              <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
+                The auction would need to clear at least{" "}
+                <strong>{out.auction.breakevenPct !== null ? `${Math.round(out.auction.breakevenPct * 100)}% of retail` : "above the worst-case modeled here"}</strong>{" "}
+                to net you more than the wholesaler offer. The conservative and
+                strong scenarios both clear that bar, but a weak auction outcome
+                could underperform the wholesaler. We&apos;ll only list if we
+                believe the campaign can clear comfortably above breakeven.
+              </p>
+            </div>
+          )}
+          {out.wholesaler.scenario === "walks" && (
+            <div className="mt-4 rounded-md border border-emerald-300/70 bg-emerald-50 p-3.5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
+                The auction is your real path to equity
+              </div>
+              <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
+                With the wholesaler walking away and the trustee sale paying
+                you nothing, the auction is the only route that puts money
+                in your pocket. Even at our worst-case scenario ({Math.round(out.auction.worst.retailPct * 100)}%
+                of retail), you&apos;d walk away with{" "}
+                <strong>{fmt(out.auction.worst.netToHomeowner)}</strong>.
+                {out.auction.worst.netToHomeowner < 5000 && " That's still tight; we'd want to see strong comparables before committing to list."}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* What we'll do next */}
@@ -504,6 +584,41 @@ function RowPair({
       </td>
       <td className={cls}>{lo < 0 ? fmtSigned(lo) : fmt(lo)}</td>
       <td className={cls}>{hi < 0 ? fmtSigned(hi) : fmt(hi)}</td>
+    </tr>
+  )
+}
+
+function RowTriple({
+  label,
+  w,
+  lo,
+  hi,
+  bold,
+  negative,
+}: {
+  label: string
+  w: number
+  lo: number
+  hi: number
+  bold?: boolean
+  negative?: boolean
+}) {
+  const baseCls = `px-3 py-2 text-right tabular-nums ${bold ? "font-semibold" : ""}`
+  const fmtCell = (n: number) => (n < 0 ? fmtSigned(n) : fmt(n))
+  return (
+    <tr className="border-t border-neutral-200">
+      <td className={`px-3 py-2 text-neutral-700 ${bold ? "font-semibold text-neutral-900" : ""}`}>
+        {label}
+      </td>
+      <td className={`${baseCls} ${negative ? "text-red-600" : bold ? "text-amber-700" : "text-neutral-700"}`}>
+        {fmtCell(w)}
+      </td>
+      <td className={`${baseCls} ${negative ? "text-red-600" : "text-neutral-900"}`}>
+        {fmtCell(lo)}
+      </td>
+      <td className={`${baseCls} ${negative ? "text-red-600" : bold ? "text-emerald-700" : "text-neutral-900"}`}>
+        {fmtCell(hi)}
+      </td>
     </tr>
   )
 }

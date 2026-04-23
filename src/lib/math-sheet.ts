@@ -26,6 +26,10 @@ export type MathInputs = {
   auctionMinPct: number
   /** Marketed auction modeled clearance — high end. Default 0.88. */
   auctionMaxPct: number
+  /** Worst-case marketed auction clearance for the "even if it goes badly"
+   *  comparison. Default 0.70 — substantially below the typical range,
+   *  modeling a poorly-attended sale day or weak market. */
+  auctionWorstPct: number
   /** 70% rule MAO cap. Default 0.70. */
   wholesalerMaoPct: number
   /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
@@ -66,6 +70,7 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     buyerPremiumPct: 0.08,
     auctionMinPct: 0.80,
     auctionMaxPct: 0.88,
+    auctionWorstPct: 0.70,
     wholesalerMaoPct: 0.70,
     wholesalerStretchPct: 0.78,
   }
@@ -81,6 +86,7 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   buyerPremiumPct: 0.08,
   auctionMinPct: 0.80,
   auctionMaxPct: 0.88,
+  auctionWorstPct: 0.70,
   wholesalerMaoPct: 0.70,
   wholesalerStretchPct: 0.78,
 }
@@ -128,8 +134,16 @@ export type AuctionBreakdown = {
   arv: number
   low: AuctionScenario
   high: AuctionScenario
+  worst: AuctionScenario
   /** Range string like "$95,000 – $130,000" for headline use. */
   netRangeLabel: string
+  /** % of retail at which auction net would tie the realistic wholesaler net.
+   *  Below this, wholesaler beats auction. Above, auction wins. Useful for
+   *  the "even at X%, you still beat the wholesaler" callout. */
+  breakevenPct: number | null
+  /** True if the worst-case auction scenario STILL nets more than the
+   *  realistic wholesaler offer. Strongest pitch when true. */
+  worstStillBeatsWholesaler: boolean
 }
 
 export type MathOutput = {
@@ -203,9 +217,22 @@ export function computeMath(inputs: MathInputs): MathOutput {
   }
   const low = scenarioCalc(inputs.auctionMinPct)
   const high = scenarioCalc(inputs.auctionMaxPct)
+  const worst = scenarioCalc(inputs.auctionWorstPct)
   const netRangeLabel = `${fmt(low.netToHomeowner)} – ${fmt(high.netToHomeowner)}`
 
   const auctionMidpointNet = (low.netToHomeowner + high.netToHomeowner) / 2
+
+  // Breakeven: at what % of retail would the auction net match the
+  // realistic wholesaler offer? Solve for retailPct given:
+  //   bid - loanBalance - closingCosts = realisticNet
+  //   arv * retailPct = realisticNet + loanBalance + closingCosts
+  let breakevenPct: number | null = null
+  if (inputs.arv > 0) {
+    const requiredBid = realisticNet + inputs.loanBalance + inputs.closingCosts
+    const pct = requiredBid / inputs.arv
+    breakevenPct = pct > 0 && pct < 1.5 ? pct : null
+  }
+  const worstStillBeatsWholesaler = worst.netToHomeowner > realisticNet
 
   return {
     inputs,
@@ -229,7 +256,10 @@ export function computeMath(inputs: MathInputs): MathOutput {
       arv: inputs.arv,
       low,
       high,
+      worst,
       netRangeLabel,
+      breakevenPct,
+      worstStillBeatsWholesaler,
     },
     spreadEstimate: {
       midpointGain: auctionMidpointNet - realisticNet,
