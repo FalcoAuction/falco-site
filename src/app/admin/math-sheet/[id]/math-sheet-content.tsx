@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   computeMath,
   DEFAULT_INPUTS,
+  defaultInputsFor,
   fmt,
   fmtSigned,
   type MathInputs,
@@ -48,11 +49,14 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
       : homeowner.mortgageBalance
       ? Math.round((homeowner.mortgageBalance * 1.6) / 1000) * 1000
       : 400000
+  // Compute property-aware defaults (deductions scale with ARV so the
+  // model is sensible across $100K Memphis properties → $1M Nashville).
+  const seed = defaultInputsFor(arvDefault, homeowner.mortgageBalance ?? 0)
   const [arv, setArv] = useState<number>(arvDefault)
   const [loanBalance, setLoanBalance] = useState<number>(homeowner.mortgageBalance ?? 0)
-  const [repairs, setRepairs] = useState<number>(DEFAULT_INPUTS.repairs)
-  const [assignmentFee, setAssignmentFee] = useState<number>(DEFAULT_INPUTS.assignmentFee)
-  const [investorMargin, setInvestorMargin] = useState<number>(DEFAULT_INPUTS.investorMargin)
+  const [repairs, setRepairs] = useState<number>(seed.repairs)
+  const [assignmentFee, setAssignmentFee] = useState<number>(seed.assignmentFee)
+  const [investorMargin, setInvestorMargin] = useState<number>(seed.investorMargin)
   const [closingCosts, setClosingCosts] = useState<number>(DEFAULT_INPUTS.closingCosts)
   const [auctionMinPct, setAuctionMinPct] = useState<number>(DEFAULT_INPUTS.auctionMinPct)
   const [auctionMaxPct, setAuctionMaxPct] = useState<number>(DEFAULT_INPUTS.auctionMaxPct)
@@ -68,6 +72,7 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
     auctionMinPct,
     auctionMaxPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
+    wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
 
@@ -178,11 +183,23 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
             tone="loss"
           />
           <PathCard
-            label="Wholesaler offer (typical)"
-            value={fmt(out.wholesaler.realisticNetEstimate)}
+            label={
+              out.wholesaler.scenario === "walks"
+                ? "Wholesaler typically walks"
+                : out.wholesaler.scenario === "stretched"
+                ? "Wholesaler offer (stretched)"
+                : "Wholesaler offer (typical)"
+            }
+            value={
+              out.wholesaler.scenario === "walks"
+                ? "$0 / no deal"
+                : fmt(out.wholesaler.realisticNet)
+            }
             sub={
-              out.wholesaler.isUnderwater
-                ? "Pure 70% rule offer is underwater on this property — wholesalers typically sweeten just enough to close."
+              out.wholesaler.scenario === "walks"
+                ? "No offer makes economic sense for the wholesaler at this loan-to-value. Most walk; some try seller-financing or 'subject-to' deals."
+                : out.wholesaler.scenario === "stretched"
+                ? "The strict 70% rule doesn't pencil here, so the wholesaler eats some margin (~78% MAO) to close a thinner deal."
                 : "Built on the wholesale industry's standard 70% rule."
             }
             tone="meh"
@@ -227,31 +244,72 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
           <table className="mt-3 w-full text-[13px] border border-neutral-200">
             <tbody>
               <Row label="After-repair value (ARV)" value={fmt(out.wholesaler.arv)} />
-              <Row label={`× 70% — wholesaler MAO ceiling`} value={fmt(out.wholesaler.maoCeiling)} />
+              <Row label="× 70% — wholesaler MAO ceiling" value={fmt(out.wholesaler.maoCeiling)} />
               <Row label="− Estimated repairs (assumed)" value={fmtSigned(-out.wholesaler.repairs)} />
               <Row label="− Wholesaler assignment fee" value={fmtSigned(-out.wholesaler.assignmentFee)} />
               <Row label="− Investor's required profit margin" value={fmtSigned(-out.wholesaler.investorMargin)} />
               <Row
-                label="Cash offer to seller"
-                value={fmt(out.wholesaler.cashOfferToSeller)}
+                label="Standard cash offer to seller"
+                value={fmt(out.wholesaler.cashOfferStandard)}
                 bold
               />
               <Row label="− Loan payoff" value={fmtSigned(-out.wholesaler.loanBalance)} />
               <Row
-                label="Net to you"
-                value={fmt(out.wholesaler.netToHomeowner)}
+                label={
+                  out.wholesaler.netStandard < 0
+                    ? "Standard rule outcome"
+                    : "Net to you (standard rule)"
+                }
+                value={
+                  out.wholesaler.netStandard < 0
+                    ? `Underwater by ${fmt(Math.abs(out.wholesaler.netStandard))}`
+                    : fmt(out.wholesaler.netStandard)
+                }
                 bold
-                negative={out.wholesaler.netToHomeowner < 0}
+                negative={out.wholesaler.netStandard < 0}
               />
             </tbody>
           </table>
-          {out.wholesaler.isUnderwater && (
-            <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
-              The pure 70% rule offer leaves you underwater on the loan. In practice,
-              the wholesaler will sweeten just enough to close the deal — typically
-              {" "}{fmt(out.wholesaler.realisticNetEstimate)} above the loan payoff.
-              That&apos;s the realistic number used in the comparison above.
-            </p>
+
+          {/* Scenario-aware follow-up: what actually happens on this property */}
+          {out.wholesaler.scenario === "stretched" && (
+            <div className="mt-4 rounded-md border border-amber-300/70 bg-amber-50 p-3.5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
+                What the wholesaler actually does on this property
+              </div>
+              <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
+                The strict 70% rule doesn&apos;t leave them margin to close. To
+                make a deal happen, they stretch up to ~78% of ARV (eating some
+                of their own profit). Realistic offer math:
+              </p>
+              <table className="mt-2 w-full text-[12px] border border-amber-200/60 bg-white">
+                <tbody>
+                  <Row label="× 78% — stretched MAO" value={fmt(out.wholesaler.arv * 0.78)} />
+                  <Row label="− Same deductions (repairs / fee / margin)" value={fmtSigned(-(out.wholesaler.repairs + out.wholesaler.assignmentFee + out.wholesaler.investorMargin))} />
+                  <Row label="Stretched cash offer" value={fmt(out.wholesaler.cashOfferStretched)} bold />
+                  <Row label="− Loan payoff" value={fmtSigned(-out.wholesaler.loanBalance)} />
+                  <Row label="Net to you (realistic)" value={fmt(out.wholesaler.netStretched)} bold />
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {out.wholesaler.scenario === "walks" && (
+            <div className="mt-4 rounded-md border border-red-300/70 bg-red-50 p-3.5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-red-700 font-semibold">
+                What actually happens here
+              </div>
+              <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
+                Even stretched to 78% of ARV, the wholesaler can&apos;t cover
+                your loan and still earn enough to bother. <strong>Most walk
+                away.</strong> A few try creative deals — &quot;subject-to,&quot;
+                seller financing, novation — that take the property without
+                paying off the loan. Those are highly situational and often
+                end badly for the homeowner. <strong>If a wholesaler walks,
+                your real choice is between the trustee sale and a marketed
+                auction. Wholesale isn&apos;t actually on the table.</strong>
+              </p>
+            </div>
           )}
         </section>
 

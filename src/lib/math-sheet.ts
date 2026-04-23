@@ -12,11 +12,11 @@ export type MathInputs = {
   arv: number
   /** Mortgage payoff at trustee sale date. */
   loanBalance: number
-  /** Estimated repairs the wholesaler will deduct. Default $25,000. */
+  /** Estimated repairs the wholesaler will deduct. Defaults scale with ARV. */
   repairs: number
-  /** Wholesaler assignment fee (their cut). Default $10,000. */
+  /** Wholesaler assignment fee (their cut). Defaults scale with ARV. */
   assignmentFee: number
-  /** Investor profit margin baked into the wholesaler's MAO. Default $40,000. */
+  /** Investor profit margin baked into the wholesaler's MAO. Defaults scale with ARV. */
   investorMargin: number
   /** Closing costs at marketed sale (title, recording, etc.). Default $5,000. */
   closingCosts: number
@@ -28,8 +28,51 @@ export type MathInputs = {
   auctionMaxPct: number
   /** 70% rule MAO cap. Default 0.70. */
   wholesalerMaoPct: number
+  /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
+  wholesalerStretchPct: number
 }
 
+/**
+ * Default deductions scale with property value. The old static defaults
+ * ($25K / $10K / $40K) were tuned for the $500K Davidson example and
+ * produced nonsense on lower-priced properties (cash offer < $0).
+ *
+ * Real wholesaler behavior:
+ *   - Repairs deducted typically 5% of ARV with floor/ceiling
+ *   - Assignment fee scales with deal size: ~$5K low, $10K mid, $15K high
+ *   - Investor margin: ~8% of ARV with floor (investor needs minimum return)
+ */
+function defaultRepairs(arv: number): number {
+  return Math.max(8000, Math.min(60000, Math.round((arv * 0.05) / 1000) * 1000))
+}
+function defaultAssignmentFee(arv: number): number {
+  if (arv < 200000) return 5000
+  if (arv > 750000) return 15000
+  return 10000
+}
+function defaultInvestorMargin(arv: number): number {
+  return Math.max(15000, Math.min(80000, Math.round((arv * 0.08) / 1000) * 1000))
+}
+
+/** Build sensible defaults for a given property value. */
+export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
+  return {
+    arv,
+    loanBalance,
+    repairs: defaultRepairs(arv),
+    assignmentFee: defaultAssignmentFee(arv),
+    investorMargin: defaultInvestorMargin(arv),
+    closingCosts: 5000,
+    buyerPremiumPct: 0.08,
+    auctionMinPct: 0.80,
+    auctionMaxPct: 0.88,
+    wholesalerMaoPct: 0.70,
+    wholesalerStretchPct: 0.78,
+  }
+}
+
+/** Legacy static defaults — kept for backwards compat with the old admin UI.
+ *  Prefer defaultInputsFor() for new callers. */
 export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   repairs: 25000,
   assignmentFee: 10000,
@@ -39,23 +82,37 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   auctionMinPct: 0.80,
   auctionMaxPct: 0.88,
   wholesalerMaoPct: 0.70,
+  wholesalerStretchPct: 0.78,
 }
+
+/** Three possible wholesaler outcomes for a given property. */
+export type WholesalerScenario =
+  | "standard"   // pure 70% rule works; this is what they'd offer
+  | "stretched"  // standard rule underwater; wholesaler stretches to ~78% to close
+  | "walks"      // even stretched is underwater; wholesaler doesn't make an offer
 
 export type WholesalerBreakdown = {
   arv: number
+  // Standard 70% rule chain
   maoCeiling: number          // ARV × 0.70
-  repairs: number             // negative
-  assignmentFee: number       // negative
-  investorMargin: number      // negative
-  cashOfferToSeller: number   // result of the 70% rule chain
-  loanBalance: number         // negative
-  netToHomeowner: number      // cashOfferToSeller - loanBalance (may be negative)
-  /** True if the pure 70% rule offer leaves the homeowner underwater. */
-  isUnderwater: boolean
-  /** What homeowner would realistically net if a wholesaler tweaks the offer
-   *  upward enough to make the deal close — typically loan + $10-20K cushion.
-   *  Capped at the actual cashOfferToSeller if that's already higher. */
-  realisticNetEstimate: number
+  repairs: number             // shown as deduction
+  assignmentFee: number       // shown as deduction
+  investorMargin: number      // shown as deduction
+  cashOfferStandard: number   // = max(0, MAO - repairs - fee - margin)
+  netStandard: number         // cashOfferStandard - loanBalance (may be negative)
+  // Stretched scenario — wholesaler at ~78% MAO to close a thinner deal
+  cashOfferStretched: number  // = max(0, ARV * 0.78 - repairs - fee - margin)
+  netStretched: number        // cashOfferStretched - loanBalance
+  // Loan + scenario summary
+  loanBalance: number
+  scenario: WholesalerScenario
+  /** What the homeowner most realistically nets, scenario-aware:
+   *  - standard:   netStandard
+   *  - stretched:  netStretched
+   *  - walks:      0 (no deal happens) */
+  realisticNet: number
+  /** Human label for the scenario, ready for UI display. */
+  scenarioLabel: string
 }
 
 export type AuctionScenario = {
@@ -89,23 +146,49 @@ export type MathOutput = {
   }
 }
 
+/** "Floor of $5K" — wholesalers won't bother closing a deal that nets the
+ *  homeowner less than this; they'd walk instead. Realistic threshold based
+ *  on the friction cost of any closing (lawyer, title, etc.). */
+const WHOLESALER_MIN_NET_TO_CLOSE = 5000
+
 export function computeMath(inputs: MathInputs): MathOutput {
-  // Wholesaler chain (70% rule)
+  const totalDeductions = inputs.repairs + inputs.assignmentFee + inputs.investorMargin
+
+  // Standard 70% rule: max(0, MAO - all the deductions)
   const maoCeiling = inputs.arv * inputs.wholesalerMaoPct
-  const cashOfferToSeller =
-    maoCeiling - inputs.repairs - inputs.assignmentFee - inputs.investorMargin
-  const wholesalerNet = cashOfferToSeller - inputs.loanBalance
-  const isUnderwater = wholesalerNet < 0
-  // If underwater, model what a wholesaler would ACTUALLY offer to close
-  // the deal — typically loan + $10-25K cushion. Real-world the homeowner
-  // would push back on the pure 70% rule and the wholesaler would either
-  // walk or sweeten enough to net a "make-it-go-away" amount.
-  const realisticNetEstimate = isUnderwater
-    ? 18000 // typical "sweetened to close" wholesaler scenario
-    : wholesalerNet
+  const cashOfferStandard = Math.max(0, maoCeiling - totalDeductions)
+  const netStandard = cashOfferStandard - inputs.loanBalance
+
+  // Stretched scenario: wholesaler accepts thinner margin (e.g. 78% MAO)
+  // to close a deal that wouldn't pencil at the strict 70% rule. Their
+  // own profit is smaller but they get a deal vs. nothing.
+  const stretchedCeiling = inputs.arv * inputs.wholesalerStretchPct
+  const cashOfferStretched = Math.max(0, stretchedCeiling - totalDeductions)
+  const netStretched = cashOfferStretched - inputs.loanBalance
+
+  // Determine which scenario actually plays out:
+  // - If standard rule clears the floor → wholesaler offers it
+  // - Else if stretched clears the floor → wholesaler stretches
+  // - Else → wholesaler walks (no deal, homeowner faces trustee sale)
+  let scenario: WholesalerScenario
+  let realisticNet: number
+  let scenarioLabel: string
+  if (netStandard >= WHOLESALER_MIN_NET_TO_CLOSE) {
+    scenario = "standard"
+    realisticNet = netStandard
+    scenarioLabel = "Standard 70% rule offer"
+  } else if (netStretched >= WHOLESALER_MIN_NET_TO_CLOSE) {
+    scenario = "stretched"
+    realisticNet = netStretched
+    scenarioLabel = "Stretched offer (wholesaler eats margin to close)"
+  } else {
+    scenario = "walks"
+    realisticNet = 0
+    scenarioLabel = "Wholesaler walks — no offer makes economic sense"
+  }
 
   // Auction scenarios
-  function scenario(retailPct: number): AuctionScenario {
+  function scenarioCalc(retailPct: number): AuctionScenario {
     const winningBid = inputs.arv * retailPct
     const buyerPremium = winningBid * inputs.buyerPremiumPct
     const netToHomeowner = winningBid - inputs.loanBalance - inputs.closingCosts
@@ -118,8 +201,8 @@ export function computeMath(inputs: MathInputs): MathOutput {
       buyerPremium,
     }
   }
-  const low = scenario(inputs.auctionMinPct)
-  const high = scenario(inputs.auctionMaxPct)
+  const low = scenarioCalc(inputs.auctionMinPct)
+  const high = scenarioCalc(inputs.auctionMaxPct)
   const netRangeLabel = `${fmt(low.netToHomeowner)} – ${fmt(high.netToHomeowner)}`
 
   const auctionMidpointNet = (low.netToHomeowner + high.netToHomeowner) / 2
@@ -133,11 +216,14 @@ export function computeMath(inputs: MathInputs): MathOutput {
       repairs: inputs.repairs,
       assignmentFee: inputs.assignmentFee,
       investorMargin: inputs.investorMargin,
-      cashOfferToSeller,
+      cashOfferStandard,
+      netStandard,
+      cashOfferStretched,
+      netStretched,
       loanBalance: inputs.loanBalance,
-      netToHomeowner: wholesalerNet,
-      isUnderwater,
-      realisticNetEstimate,
+      scenario,
+      realisticNet,
+      scenarioLabel,
     },
     auction: {
       arv: inputs.arv,
@@ -146,8 +232,8 @@ export function computeMath(inputs: MathInputs): MathOutput {
       netRangeLabel,
     },
     spreadEstimate: {
-      midpointGain: auctionMidpointNet - realisticNetEstimate,
-      bestCaseGain: high.netToHomeowner - realisticNetEstimate,
+      midpointGain: auctionMidpointNet - realisticNet,
+      bestCaseGain: high.netToHomeowner - realisticNet,
     },
   }
 }
