@@ -107,11 +107,13 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
 
   const last = await fetchLast24hLeads()
   const totals = {
+    pipeline: last.pipeline.length,
     homeowners: last.homeowners.length,
     buyers: last.buyers.length,
     partners: last.partners.length,
     inquiries: last.inquiries.length,
     total:
+      last.pipeline.length +
       last.homeowners.length +
       last.buyers.length +
       last.partners.length +
@@ -138,7 +140,8 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     <div style="font-size:13px;color:#9ca3af;margin-top:4px">${esc(today)} · falco.llc/admin</div>
   </div>
   <div style="padding:6px 28px 24px">
-    ${sectionHtml("Homeowners", "🏠", last.homeowners)}
+    ${sectionHtml("Pipeline (FALCO-pulled)", "🛰", last.pipeline)}
+    ${sectionHtml("Inbound homeowners", "🏠", last.homeowners)}
     ${sectionHtml("Buyers", "🆕", last.buyers)}
     ${sectionHtml("Auction partners", "🤝", last.partners)}
     ${sectionHtml("General inquiries", "📨", last.inquiries)}
@@ -153,7 +156,9 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     `FALCO Daily Digest — ${today}`,
     `${totals.total} new lead${totals.total === 1 ? "" : "s"} in the last 24 hours`,
     "",
-    ...leadTextLines(last.homeowners, "🏠 Homeowners"),
+    ...leadTextLines(last.pipeline, "🛰 Pipeline (FALCO-pulled)"),
+    "",
+    ...leadTextLines(last.homeowners, "🏠 Inbound homeowners"),
     "",
     ...leadTextLines(last.buyers, "🆕 Buyers"),
     "",

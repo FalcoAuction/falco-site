@@ -12,7 +12,8 @@ import {
 } from "@/lib/admin-leads"
 
 const TABS: Array<{ key: LeadKind; label: string; emoji: string }> = [
-  { key: "homeowner", label: "Homeowners", emoji: "🏠" },
+  { key: "pipeline", label: "Pipeline", emoji: "🛰" },
+  { key: "homeowner", label: "Inbound", emoji: "🏠" },
   { key: "buyer", label: "Buyers", emoji: "🆕" },
   { key: "partner", label: "Partners", emoji: "🤝" },
   { key: "inquiry", label: "Inquiries", emoji: "📨" },
@@ -86,6 +87,7 @@ function isoToLocalInput(iso: string | null): string {
 
 function replySubject(lead: Lead): string {
   switch (lead.kind) {
+    case "pipeline":
     case "homeowner":
       return `Re: your FALCO request${lead.summary ? ` — ${lead.summary.split(" · ")[0]}` : ""}`
     case "buyer":
@@ -99,7 +101,7 @@ function replySubject(lead: Lead): string {
 
 export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<LeadKind>("homeowner")
+  const [activeTab, setActiveTab] = useState<LeadKind>("pipeline")
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all" | "open" | "overdue">(
     "open"
@@ -107,6 +109,7 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
   const [openId, setOpenId] = useState<string | null>(null)
 
   const leadsByTab: Record<LeadKind, Lead[]> = {
+    pipeline: bundle.pipeline,
     homeowner: bundle.homeowners,
     buyer: bundle.buyers,
     partner: bundle.partners,
@@ -116,6 +119,7 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
   // Aggregate "needs attention" — overdue or next-action today across all tabs.
   const needsAttention = useMemo(() => {
     const all = [
+      ...bundle.pipeline,
       ...bundle.homeowners,
       ...bundle.buyers,
       ...bundle.partners,
@@ -213,8 +217,8 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <Stat label="Total leads" value={bundle.totals.total} accent />
-            <Stat label="Last 24h" value={bundle.last24h.total} accent />
-            <Stat label="Homeowners" value={bundle.totals.homeowners} sub={bundle.last24h.homeowners} />
+            <Stat label="Pipeline" value={bundle.totals.pipeline} sub={bundle.last24h.pipeline} accent />
+            <Stat label="Inbound" value={bundle.totals.homeowners} sub={bundle.last24h.homeowners} />
             <Stat label="Buyers" value={bundle.totals.buyers} sub={bundle.last24h.buyers} />
             <Stat
               label="Partners + Inq."

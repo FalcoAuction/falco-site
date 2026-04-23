@@ -7,7 +7,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 // so they can act on them. But we do shape them into a consistent envelope.
 // ============================================================================
 
-export type LeadKind = "homeowner" | "buyer" | "partner" | "inquiry"
+export type LeadKind = "homeowner" | "pipeline" | "buyer" | "partner" | "inquiry"
 
 export type LeadStatus =
   | "new"
@@ -44,13 +44,30 @@ export type Lead = {
 }
 
 export type LeadsBundle = {
+  /** Form-submitted homeowner requests (source = 'form'). Hot — they came to us. */
   homeowners: Lead[]
+  /** Bot-pulled distress leads (source = 'bot'). The FALCO pipeline queue. */
+  pipeline: Lead[]
   buyers: Lead[]
   partners: Lead[]
   inquiries: Lead[]
-  totals: { homeowners: number; buyers: number; partners: number; inquiries: number; total: number }
+  totals: {
+    homeowners: number
+    pipeline: number
+    buyers: number
+    partners: number
+    inquiries: number
+    total: number
+  }
   /** Counts of submissions in the last 24h, for the dashboard banner. */
-  last24h: { homeowners: number; buyers: number; partners: number; inquiries: number; total: number }
+  last24h: {
+    homeowners: number
+    pipeline: number
+    buyers: number
+    partners: number
+    inquiries: number
+    total: number
+  }
   /** True if Supabase isn't configured (admin should still render an empty state). */
   unavailable?: boolean
 }
@@ -165,9 +182,11 @@ function mapHomeowner(r: HomeownerRow): Lead {
       ? "Manual entry"
       : "Form submission"
 
+  // source = 'bot' rows become "pipeline" kind; everything else stays "homeowner"
+  const kind: LeadKind = r.source === "bot" ? "pipeline" : "homeowner"
   return {
     id: String(r.id),
-    kind: "homeowner",
+    kind,
     submittedAt: r.submitted_at,
     email: r.email ?? "",
     name: r.full_name || r.owner_name_records || "",
@@ -323,21 +342,26 @@ export async function fetchAllLeads(limitPerTable = 200): Promise<LeadsBundle> {
   if (!supabaseAdmin) {
     return {
       homeowners: [],
+      pipeline: [],
       buyers: [],
       partners: [],
       inquiries: [],
-      totals: { homeowners: 0, buyers: 0, partners: 0, inquiries: 0, total: 0 },
-      last24h: { homeowners: 0, buyers: 0, partners: 0, inquiries: 0, total: 0 },
+      totals: { homeowners: 0, pipeline: 0, buyers: 0, partners: 0, inquiries: 0, total: 0 },
+      last24h: { homeowners: 0, pipeline: 0, buyers: 0, partners: 0, inquiries: 0, total: 0 },
       unavailable: true,
     }
   }
+
+  // Pipeline (bot) leads can be much larger than form submissions —
+  // pull more of them than the standard limit so the queue isn't truncated.
+  const pipelineLimit = Math.max(limitPerTable, 500)
 
   const [hRes, bRes, pRes, iRes] = await Promise.all([
     supabaseAdmin
       .from("homeowner_requests")
       .select("*")
       .order("submitted_at", { ascending: false })
-      .limit(limitPerTable),
+      .limit(pipelineLimit),
     supabaseAdmin
       .from("buyer_registrations")
       .select("*")
@@ -355,34 +379,48 @@ export async function fetchAllLeads(limitPerTable = 200): Promise<LeadsBundle> {
       .limit(limitPerTable),
   ])
 
-  const homeowners = (hRes.data ?? []).map((r) => mapHomeowner(r as HomeownerRow))
+  // Split homeowner_requests into homeowners (form-submitted) and pipeline
+  // (bot-discovered) based on the source column. mapHomeowner already sets
+  // .kind based on source so we can split by that here.
+  const allHomeownerRows = (hRes.data ?? []).map((r) => mapHomeowner(r as HomeownerRow))
+  const homeowners = allHomeownerRows.filter((l) => l.kind === "homeowner")
+  const pipeline = allHomeownerRows.filter((l) => l.kind === "pipeline")
   const buyers = (bRes.data ?? []).map((r) => mapBuyer(r as BuyerRow))
   const partners = (pRes.data ?? []).map((r) => mapPartner(r as PartnerRow))
   const inquiries = (iRes.data ?? []).map((r) => mapInquiry(r as InquiryRow))
 
   const totals = {
     homeowners: homeowners.length,
+    pipeline: pipeline.length,
     buyers: buyers.length,
     partners: partners.length,
     inquiries: inquiries.length,
-    total: homeowners.length + buyers.length + partners.length + inquiries.length,
+    total:
+      homeowners.length +
+      pipeline.length +
+      buyers.length +
+      partners.length +
+      inquiries.length,
   }
 
   const cnt = (xs: Lead[]) => xs.filter((x) => within24h(x.submittedAt)).length
   const last24h = {
     homeowners: cnt(homeowners),
+    pipeline: cnt(pipeline),
     buyers: cnt(buyers),
     partners: cnt(partners),
     inquiries: cnt(inquiries),
-    total: cnt(homeowners) + cnt(buyers) + cnt(partners) + cnt(inquiries),
+    total:
+      cnt(homeowners) + cnt(pipeline) + cnt(buyers) + cnt(partners) + cnt(inquiries),
   }
 
-  return { homeowners, buyers, partners, inquiries, totals, last24h }
+  return { homeowners, pipeline, buyers, partners, inquiries, totals, last24h }
 }
 
 /** Just the last-24h slice — used by the daily digest cron. */
 export async function fetchLast24hLeads(): Promise<{
   homeowners: Lead[]
+  pipeline: Lead[]
   buyers: Lead[]
   partners: Lead[]
   inquiries: Lead[]
@@ -390,6 +428,7 @@ export async function fetchLast24hLeads(): Promise<{
   const all = await fetchAllLeads(500)
   return {
     homeowners: all.homeowners.filter((x) => within24h(x.submittedAt)),
+    pipeline: all.pipeline.filter((x) => within24h(x.submittedAt)),
     buyers: all.buyers.filter((x) => within24h(x.submittedAt)),
     partners: all.partners.filter((x) => within24h(x.submittedAt)),
     inquiries: all.inquiries.filter((x) => within24h(x.submittedAt)),

@@ -6,7 +6,10 @@ import { LEAD_STATUSES, type LeadKind } from "@/lib/admin-leads"
 export const dynamic = "force-dynamic"
 
 const TABLE_FOR_KIND: Record<LeadKind, string> = {
+  // Both homeowner (form-submitted) and pipeline (bot-pulled) live in the
+  // same homeowner_requests table — separated only by `source` column.
   homeowner: "homeowner_requests",
+  pipeline: "homeowner_requests",
   buyer: "buyer_registrations",
   partner: "partner_inquiries",
   inquiry: "general_inquiries",
@@ -22,7 +25,13 @@ type PatchBody = {
 }
 
 function isLeadKind(s: string): s is LeadKind {
-  return s === "homeowner" || s === "buyer" || s === "partner" || s === "inquiry"
+  return (
+    s === "homeowner" ||
+    s === "pipeline" ||
+    s === "buyer" ||
+    s === "partner" ||
+    s === "inquiry"
+  )
 }
 
 export async function PATCH(
