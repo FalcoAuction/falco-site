@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -194,6 +195,30 @@ export default function LeadDetail({
 
       {/* Equity Math — the centerpiece for the seller pitch */}
       <EquityWorkup lead={lead} />
+
+      {/* Math sheet — printable 3-path comparison to send the homeowner */}
+      <Link
+        href={`/dialer/${lead.slug}/math-sheet`}
+        className="mt-3 block rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.06] hover:bg-emerald-400/[0.12] p-4 transition-colors"
+      >
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-emerald-300/85 font-semibold">
+              Math sheet
+            </div>
+            <div className="text-sm text-white mt-1">
+              Open the printable 3-path comparison
+            </div>
+            <div className="text-[11px] text-white/55 mt-0.5">
+              Trustee sale vs. wholesaler offer vs. marketed auction. Edit ARV /
+              loan inputs, then Print → Save PDF → email to the homeowner.
+            </div>
+          </div>
+          <div className="text-emerald-300 text-sm font-semibold whitespace-nowrap">
+            Open →
+          </div>
+        </div>
+      </Link>
 
       {/* Tactical callouts (absentee, urgency, owned-since) */}
       <Tactical lead={lead} />
