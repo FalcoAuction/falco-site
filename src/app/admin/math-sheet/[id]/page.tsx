@@ -34,7 +34,7 @@ export default async function MathSheetPage({
 
   const snapshot: HomeownerSnapshot = {
     id: String(data.id),
-    fullName: (data.full_name as string) || "",
+    fullName: (data.full_name as string) || (data.owner_name_records as string) || "",
     email: (data.email as string) || "",
     phone: (data.phone as string) || "",
     propertyAddress: (data.property_address as string) || "",
@@ -42,6 +42,9 @@ export default async function MathSheetPage({
     trusteeSaleDate: (data.trustee_sale_date as string | null) ?? null,
     mortgageBalance: (data.mortgage_balance as number | null) ?? null,
     submittedAt: (data.submitted_at as string) || "",
+    // Pipeline-enriched fields used to pre-populate the math sheet inputs
+    propertyValue: (data.property_value as number | null) ?? null,
+    propertyValueSource: (data.property_value_source as string | null) ?? null,
   }
 
   return <MathSheetContent homeowner={snapshot} />

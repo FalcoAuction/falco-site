@@ -137,27 +137,83 @@ export default function ParksTermSheetPage() {
 
         {/* 5 — Economics */}
         <Section n="5" title="Economics">
-          <p className="!mt-0">For each property that closes through Parks under this pilot:</p>
+          <p className="!mt-0">
+            <strong>Per closed deal.</strong> Buyer pays an 8% buyer&apos;s
+            premium on the winning bid. From that premium, the auction
+            company first recovers documented marketing costs (capped at{" "}
+            <strong>$4,000 per deal</strong>). The remaining net premium is
+            split three ways:
+          </p>
           <KvTable
             rows={[
               ["Buyer's premium", "8% of winning bid, paid by buyer at closing"],
-              ["Parks's share", "5% of winning bid (covers Parks's licensing, marketing, auction execution, closing)"],
-              ["FALCO's share", "3% of winning bid (covers FALCO's sourcing, homeowner education, math sheet, handoff)"],
-              ["Homeowner pays", "$0 to FALCO and $0 to Parks. Homeowner pays only standard closing costs."],
-              ["Failed listings", "Neither party owes the other. Both absorb their own costs."],
+              ["Marketing recovery", "Up to $4,000 of premium reimbursed to whichever party covered marketing (default: Parks)"],
+              ["Auction Company (Parks)", "65% of net premium — covers Parks's licensing, marketing execution, auctioneer, closing coordination"],
+              ["Operator (FALCO-side)", "20% of net premium — paid to the FALCO closer/operator working the deal end-to-end (homeowner contact, education, math, handoff)"],
+              ["FALCO", "15% of net premium — covers data pipeline, lead generation, brand, technology, ops"],
+              ["Seller (homeowner)", "$0 commission, $0 fees. Optional $2,500 cash advance at listing signing (auction-company discretion, recouped at close)"],
+              ["Lender postponement coordination", "Owned by Parks (Dale or designee)"],
+              ["Failed listings", "Neither party owes the other. Each absorbs own costs."],
             ]}
           />
           <p>
-            <strong>Payment timing:</strong> FALCO&apos;s 3% is paid at closing,
-            wired by Parks within 5 business days of funds clearing.
+            <strong>Operator definition:</strong> &quot;Operator&quot; in this
+            structure refers to the FALCO-side person actively working the deal
+            (today: the FALCO closer Patrick is bringing on). The 20% Operator
+            allocation is FALCO-side, not a Parks employee. Combined FALCO
+            house take is 35% of net premium; Parks house take is 65%.
           </p>
           <p>
-            <strong>Buyer&apos;s premium structure rationale:</strong> This is
-            the standard real estate auction model — the buyer pays the premium
-            on top of their winning bid; the seller (homeowner) sees only the
-            bid amount minus loan payoff and standard closing costs. Neither
-            party charges the homeowner a commission or a fee.
+            <strong>Payment timing:</strong> FALCO&apos;s combined 35% is wired
+            by Parks within 5 business days of funds clearing at close.
           </p>
+
+          <p className="!mt-5"><strong>Volume bonuses to FALCO (network-wide):</strong></p>
+          <KvTable
+            rows={[
+              ["5 closes / month", "+$2,000 bonus to FALCO"],
+              ["10 closes / month", "+$5,000 bonus to FALCO"],
+              ["20 closes / month", "+$15,000 bonus to FALCO"],
+            ]}
+          />
+          <p className="text-[12px] text-neutral-600 italic">
+            &quot;Network-wide&quot; means combined closes across all FALCO
+            auction partners (Parks + any future regional partners). Bonuses
+            replace prior tier (i.e., at 10 closes/mo, FALCO earns the
+            $5,000 tier, not $2,000 + $5,000).
+          </p>
+
+          <p className="!mt-5"><strong>Optional volume-flip clause:</strong></p>
+          <p>
+            For sustainable scale alignment, both parties agree that at{" "}
+            <strong>10 or more closed deals per month from Parks
+            specifically</strong>, the per-deal split shifts to:
+          </p>
+          <KvTable
+            rows={[
+              ["Auction Company (Parks)", "60% of net premium"],
+              ["Operator (FALCO-side)", "22% of net premium"],
+              ["FALCO", "18% of net premium"],
+            ]}
+          />
+          <p className="text-[12px] text-neutral-600 italic">
+            Flip applies only on deals 11+ in any given calendar month from
+            Parks. Recognizes shared cost-savings at scale; rewards both
+            sides for delivering volume. Optional — both parties may
+            negotiate alternate threshold.
+          </p>
+
+          <p className="!mt-5"><strong>Optional exclusivity arrangement:</strong></p>
+          <p>
+            FALCO offers Parks the option of a TN exclusivity arrangement at{" "}
+            <strong>$3,000/month retainer paid to FALCO</strong>, in exchange
+            for Parks&apos;s first right of refusal on FALCO&apos;s next-state
+            (AL, KY) auction-partner expansion. Optional, month-to-month, no
+            penalty to terminate. Parks and FALCO may continue working
+            together without this arrangement; it&apos;s offered for parties
+            seeking deeper alignment.
+          </p>
+
           <Note muted>
             See the live per-deal walkthrough on the{" "}
             <Link href="/pilot/parks/economics" className="text-emerald-700 underline">

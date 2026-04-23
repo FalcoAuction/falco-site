@@ -103,7 +103,7 @@ function pickWorkflow(r: WorkflowRow): {
 
 type HomeownerRow = WorkflowRow & {
   id: string
-  email: string
+  email: string | null
   full_name: string | null
   phone: string | null
   property_address: string | null
@@ -114,26 +114,79 @@ type HomeownerRow = WorkflowRow & {
   situation_notes: string | null
   referrer: string | null
   submitted_at: string
+  // Pipeline-sync fields (populated by falco-distress-bots when source='bot')
+  source: string | null
+  owner_name_records: string | null
+  distress_type: string | null
+  property_value: number | null
+  property_value_source: string | null
+  property_value_as_of: string | null
+  beds: number | null
+  baths: number | null
+  sqft: number | null
+  year_built: number | null
+  last_sale_date: string | null
+  last_sale_price: number | null
+  lien_position: string | null
+  pipeline_score: number | null
+  pipeline_lead_key: string | null
 }
 
 function mapHomeowner(r: HomeownerRow): Lead {
   const summaryBits: string[] = []
   if (r.property_address) summaryBits.push(r.property_address)
+  if (r.property_value) summaryBits.push(`AVM ${fmtCurrency(r.property_value)}`)
   if (r.trustee_sale_date) summaryBits.push(`sale ${fmtDateHuman(r.trustee_sale_date)}`)
   if (r.mortgage_balance) summaryBits.push(`bal ${fmtCurrency(r.mortgage_balance)}`)
+
+  const bedBath =
+    r.beds || r.baths || r.sqft
+      ? [
+          r.beds ? `${r.beds}bd` : null,
+          r.baths ? `${r.baths}ba` : null,
+          r.sqft ? `${r.sqft.toLocaleString()} sqft` : null,
+        ]
+          .filter(Boolean)
+          .join(" / ")
+      : ""
+  const lastSale =
+    r.last_sale_price && r.last_sale_date
+      ? `${fmtCurrency(r.last_sale_price)} (${fmtDateHuman(r.last_sale_date)})`
+      : ""
+  const avm = r.property_value
+    ? `${fmtCurrency(r.property_value)}${
+        r.property_value_source ? ` (${r.property_value_source})` : ""
+      }`
+    : ""
+  const sourceLabel =
+    r.source === "bot"
+      ? "Bot pipeline"
+      : r.source === "manual"
+      ? "Manual entry"
+      : "Form submission"
+
   return {
     id: String(r.id),
     kind: "homeowner",
     submittedAt: r.submitted_at,
-    email: r.email,
-    name: r.full_name ?? "",
+    email: r.email ?? "",
+    name: r.full_name || r.owner_name_records || "",
     summary: summaryBits.join(" · ") || "No property details",
     details: [
+      { label: "Source", value: sourceLabel },
+      { label: "Distress type", value: r.distress_type ?? "" },
+      { label: "Pipeline score", value: r.pipeline_score ? String(r.pipeline_score) : "" },
       { label: "Phone", value: r.phone ?? "" },
       { label: "Property", value: r.property_address ?? "" },
       { label: "County", value: r.county ?? "" },
+      { label: "AVM (after-repair value)", value: avm },
+      { label: "Beds / Baths / Sqft", value: bedBath },
+      { label: "Year built", value: r.year_built ? String(r.year_built) : "" },
+      { label: "Last sale", value: lastSale },
+      { label: "Lien position", value: r.lien_position ?? "" },
       { label: "Trustee sale", value: fmtDateHuman(r.trustee_sale_date) },
       { label: "Mortgage balance", value: r.mortgage_balance ? fmtCurrency(r.mortgage_balance) : "" },
+      { label: "Owner (records)", value: r.owner_name_records ?? "" },
       { label: "Best callback", value: r.best_callback ?? "" },
       { label: "Situation", value: r.situation_notes ?? "" },
       { label: "Found via", value: r.referrer ?? "" },

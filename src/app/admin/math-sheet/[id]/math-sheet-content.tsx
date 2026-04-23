@@ -20,6 +20,10 @@ export type HomeownerSnapshot = {
   trusteeSaleDate: string | null
   mortgageBalance: number | null
   submittedAt: string
+  /** Pipeline-enriched ARV (e.g. ATTOM AVM). Defaults math-sheet ARV input
+   *  when present, falling back to mortgage × 1.6 when absent. */
+  propertyValue: number | null
+  propertyValueSource: string | null
 }
 
 function fmtDateHuman(iso: string | null): string {
@@ -34,13 +38,17 @@ function fmtDateHuman(iso: string | null): string {
 }
 
 export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSnapshot }) {
-  // Inputs default from the homeowner row, falling back to library defaults.
-  // ARV defaults to a guess from loan balance × 1.6 (assumes 60% LTV) — admin
-  // overrides to the actual value once they pull comps.
-  const arvGuess = homeowner.mortgageBalance
-    ? Math.round((homeowner.mortgageBalance * 1.6) / 1000) * 1000
-    : 400000
-  const [arv, setArv] = useState<number>(arvGuess)
+  // ARV default priority:
+  //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
+  //   2. Loan balance × 1.6 (60% LTV guess) when no AVM yet
+  //   3. $400K when neither is known
+  const arvDefault =
+    homeowner.propertyValue && homeowner.propertyValue > 0
+      ? Math.round(homeowner.propertyValue / 1000) * 1000
+      : homeowner.mortgageBalance
+      ? Math.round((homeowner.mortgageBalance * 1.6) / 1000) * 1000
+      : 400000
+  const [arv, setArv] = useState<number>(arvDefault)
   const [loanBalance, setLoanBalance] = useState<number>(homeowner.mortgageBalance ?? 0)
   const [repairs, setRepairs] = useState<number>(DEFAULT_INPUTS.repairs)
   const [assignmentFee, setAssignmentFee] = useState<number>(DEFAULT_INPUTS.assignmentFee)

@@ -26,11 +26,17 @@ export default function ParksEconomicsPublicPage() {
   const closingCosts = 5000
   const buyerPremiumPct = 0.08
   const auctionMidPct = 0.84
+  const marketingCap = 4000
 
   const winningBid = arv * auctionMidPct
   const buyerPremium = winningBid * buyerPremiumPct
-  const parksShare = winningBid * 0.05
-  const falcoShare = winningBid * 0.03
+  const netPremium = buyerPremium - marketingCap
+  // 65/20/15 split of NET premium (after marketing cost recovery)
+  const parksNetShare = netPremium * 0.65
+  const operatorShare = netPremium * 0.20
+  const falcoShare = netPremium * 0.15
+  // Parks total = their share + marketing recovery
+  const parksShare = parksNetShare + marketingCap
   const totalToBuyer = winningBid + buyerPremium
   const homeownerNet = winningBid - loan - closingCosts
 
@@ -104,23 +110,35 @@ export default function ParksEconomicsPublicPage() {
               color="bg-neutral-900"
             />
             <Bar
-              label="Homeowner net (FALCO's promise)"
+              label="Homeowner net"
               detail={`Bid ${fmt(winningBid)} less ${fmt(loan)} loan less ${fmt(closingCosts)} closing`}
               value={fmt(homeownerNet)}
               color="bg-emerald-600"
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Bar
+              label={`Net premium after $${marketingCap.toLocaleString()} marketing recovery`}
+              detail={`${fmt(buyerPremium)} premium less ${fmt(marketingCap)} marketing reimbursement to Parks`}
+              value={fmt(netPremium)}
+              color="bg-neutral-700"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Bar
                 label="Parks earns"
-                detail="5% of bid · covers licensing, marketing, sale execution, closing"
+                detail={`65% of net + ${fmt(marketingCap)} marketing recovery`}
                 value={fmt(parksShare)}
                 color="bg-emerald-700"
               />
               <Bar
-                label="FALCO earns"
-                detail="3% of bid · covers sourcing, homeowner education, math sheet, handoff"
-                value={fmt(falcoShare)}
+                label="Operator (FALCO-side)"
+                detail="20% of net · paid to FALCO closer working the deal"
+                value={fmt(operatorShare)}
                 color="bg-emerald-500"
+              />
+              <Bar
+                label="FALCO earns"
+                detail="15% of net · pipeline, brand, technology, ops"
+                value={fmt(falcoShare)}
+                color="bg-emerald-400"
               />
             </div>
           </div>
@@ -164,16 +182,18 @@ export default function ParksEconomicsPublicPage() {
           <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-800 font-semibold">
             Three pilot deals — outcome
           </div>
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Stat label="Parks earns" value={fmt(parksShare * 3)} />
+            <Stat label="Operator earns" value={fmt(operatorShare * 3)} />
             <Stat label="FALCO earns" value={fmt(falcoShare * 3)} />
             <Stat label="Equity preserved for TN families" value={fmt(homeownerNet * 3)} />
           </div>
           <p className="mt-3 text-[11px] text-emerald-900/80 leading-[1.55]">
-            Numbers assume three deals at the Davidson example above. Actual mix
-            will include Memphis ($222K median) and Knoxville ($391K median) which
-            come in lower per-deal. Three deals at the statewide median (~$300K
-            ARV) still produces ~{fmt(parksShare * 0.62 * 3)} for Parks.
+            Numbers assume three deals at the Davidson example above. Actual
+            mix will include Memphis ($222K median) and Knoxville ($391K
+            median) which come in lower per-deal. Three deals at the
+            statewide blended ~$340K ARV still produces ~
+            {fmt(parksShare * 0.7 * 3)} for Parks.
           </p>
         </section>
 
@@ -207,8 +227,14 @@ export default function ParksEconomicsPublicPage() {
             <div>Patrick Armour, Founder</div>
           </div>
           <p className="mt-2 text-[10px] leading-[1.5]">
-            All economics derived from the standard 8% buyer&apos;s premium model with
-            5% to Parks and 3% to FALCO of winning bid. Full sources at{" "}
+            All economics derived from the standard 8% buyer&apos;s premium
+            with $4K marketing recovery, then a 65/20/15 split (Parks /
+            FALCO Operator / FALCO) of net premium. Volume bonuses + optional
+            exclusivity arrangement detailed in the{" "}
+            <Link href="/pilot/parks/term-sheet" className="text-emerald-700 underline">
+              term sheet
+            </Link>
+            . Industry sources at{" "}
             <Link href="/manifesto#sources" className="text-emerald-700 underline">
               falco.llc/manifesto#sources
             </Link>
