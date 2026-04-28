@@ -16,6 +16,7 @@ import {
   type DialerOutcome,
   type DialerActivity,
 } from "@/lib/dialer-types"
+import { classifyTier, fmtTierFee } from "@/lib/tier-classification"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -141,6 +142,21 @@ export default function LeadDetail({
               })()}
             </>
           )}
+          {(() => {
+            const tier = classifyTier(lead.avmMid)
+            if (!tier) return null
+            return (
+              <>
+                <span className="text-white/30">·</span>
+                <span
+                  title={`Per-Qualified-Lead fee: ${fmtTierFee(tier.feeUSD)} (${tier.arvBand})`}
+                  className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200"
+                >
+                  {tier.label} · {fmtTierFee(tier.feeUSD)}
+                </span>
+              </>
+            )
+          })()}
         </div>
       </header>
 
@@ -219,6 +235,9 @@ export default function LeadDetail({
           </div>
         </div>
       </Link>
+
+      {/* Qualified Lead delivery — billable trigger to Parks */}
+      <QualifiedLeadSection lead={lead} caller={caller} onDelivered={() => router.refresh()} />
 
       {/* Tactical callouts (absentee, urgency, owned-since) */}
       <Tactical lead={lead} />
@@ -935,4 +954,187 @@ function toLocalInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
     d.getMinutes()
   )}`
+}
+
+/** ============================================================================
+ *  QualifiedLeadSection
+ *  ----------------------------------------------------------------------------
+ *  The billable delivery trigger to Parks. Shows the locked-in tier + fee
+ *  for this lead's ARV and presents the "Mark as Qualified Lead Delivered"
+ *  action. Submission persists a delivery record and emails Parks.
+ *
+ *  Required to deliver:
+ *    - ARV present (otherwise no tier can be classified)
+ *    - Confirmed appointment time (recommended; can be deferred)
+ *    - Optional notes for Parks
+ *  ========================================================================= */
+function QualifiedLeadSection({
+  lead,
+  caller,
+  onDelivered,
+}: {
+  lead: DialerLeadView
+  caller: string
+  onDelivered: () => void
+}) {
+  const tier = classifyTier(lead.avmMid)
+  const [open, setOpen] = useState(false)
+  const [appointmentAt, setAppointmentAt] = useState("")
+  const [notes, setNotes] = useState("")
+  const [submitting, startSubmit] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  // No AVM = cannot classify tier = cannot deliver
+  if (!tier) {
+    return (
+      <section className="mt-3 rounded-2xl border border-dashed border-amber-400/30 bg-amber-400/[0.04] p-4">
+        <div className="text-[10px] uppercase tracking-wider text-amber-300/85 font-semibold">
+          Qualified Lead Delivery
+        </div>
+        <div className="text-xs text-amber-100/85 mt-1">
+          AVM missing — cannot classify tier or compute fee. Enrich this lead
+          (BatchData) before it can be delivered to Parks.
+        </div>
+      </section>
+    )
+  }
+
+  function submit() {
+    setError(null)
+    setSuccess(null)
+    startSubmit(async () => {
+      try {
+        const res = await fetch("/api/dialer/qualify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            listingSlug: lead.slug,
+            arv: lead.avmMid,
+            appointmentAt: appointmentAt
+              ? new Date(appointmentAt).toISOString()
+              : null,
+            notes,
+          }),
+        })
+        const json = await res.json()
+        if (!res.ok || !json?.ok) {
+          setError(json?.error || `Delivery failed (HTTP ${res.status}).`)
+          return
+        }
+        const returnedTier = (json?.tier ?? null) as
+          | { label: string; feeUSD: number }
+          | null
+        const labelOut = returnedTier?.label ?? tier!.label
+        const feeOut = returnedTier?.feeUSD ?? tier!.feeUSD
+        setSuccess(
+          `Delivered as ${labelOut} (${fmtTierFee(feeOut)}). Parks notified.`
+        )
+        setOpen(false)
+        setNotes("")
+        setAppointmentAt("")
+        onDelivered()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Network error.")
+      }
+    })
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.06] p-4">
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-emerald-300/85 font-semibold">
+            Qualified Lead Delivery — billable to Parks
+          </div>
+          <div className="text-sm text-white mt-1">
+            {tier.label} · <span className="font-semibold text-emerald-200">{fmtTierFee(tier.feeUSD)}</span>
+            <span className="text-white/55"> per Data Services Agreement</span>
+          </div>
+          <div className="text-[11px] text-white/55 mt-0.5">
+            Mark this lead as a Qualified Lead once you&rsquo;ve confirmed an
+            appointment with the seller. Parks gets notified, the delivery is
+            logged, and the per-QL fee is locked at this tier.
+          </div>
+        </div>
+        {!open && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-emerald-300 hover:text-emerald-200 text-sm font-semibold whitespace-nowrap rounded-lg border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-1.5 transition-colors"
+          >
+            Mark as Qualified Lead →
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div className="mt-3 grid gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="Appointment time (optional, recommended)">
+              <input
+                type="datetime-local"
+                value={appointmentAt}
+                onChange={(e) => setAppointmentAt(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white"
+              />
+            </Field>
+            <Field label="Delivered by">
+              <input
+                type="text"
+                value={caller}
+                disabled
+                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white/60"
+              />
+            </Field>
+          </div>
+          <Field label="Delivery notes for Parks (optional)">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Context for Dale: seller&rsquo;s situation, urgency, any quirks Parks should know."
+              className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white"
+            />
+          </Field>
+
+          {error && (
+            <div className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-200">
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={submitting}
+              className="rounded-lg border border-emerald-400/50 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors"
+            >
+              {submitting
+                ? "Delivering..."
+                : `Confirm — bill Parks ${fmtTierFee(tier.feeUSD)}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                setError(null)
+              }}
+              disabled={submitting}
+              className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm text-white/70 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="mt-3 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
+          {success}
+        </div>
+      )}
+    </section>
+  )
 }
