@@ -1,7 +1,30 @@
 import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { OUTCOME_LABELS, CHANNEL_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import type { DialerOutcome, DialerChannel } from "@/lib/dialer-types"
+
+// Resend client — preferred email transport (matches inbound-digest.ts).
+// Falls back to nodemailer/Gmail for legacy notifyAuctionPartnerOnBooking.
+const resendClient = (() => {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) return null
+  return new Resend(key)
+})()
+
+function fromAddress(): string {
+  return process.env.FALCO_FROM_EMAIL?.trim() || "FALCO <falco@falco.llc>"
+}
+
+/** Recipient for QL delivery notifications. Falls back to inbound digest
+ *  recipient (Patrick) if Parks-specific notify address isn't configured yet. */
+function qualifiedLeadNotifyRecipient(): string | null {
+  return (
+    process.env.FALCO_AUCTION_NOTIFY_TO?.trim() ||
+    process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
+    null
+  )
+}
 
 type BookedNotifyContext = {
   listingSlug: string
@@ -271,6 +294,9 @@ const TIER_LABELS: Record<"T0" | "T1" | "T2" | "T3", string> = {
  * Email Dale (and ownership cc, if configured) when a Qualified Lead is
  * formally delivered. This is the billable event under the Parks contract.
  *
+ * Uses Resend (matches inbound-digest.ts). Falls back gracefully if
+ * RESEND_API_KEY or recipient isn't configured.
+ *
  * Non-blocking: logs and swallows errors so the underlying delivery write
  * never fails because of email infra hiccups.
  */
@@ -278,15 +304,15 @@ export async function notifyQualifiedLeadDelivered(
   ctx: QualifiedLeadDeliveredContext
 ): Promise<void> {
   try {
-    const recipient = (process.env.FALCO_AUCTION_NOTIFY_TO ?? "").trim()
+    const recipient = qualifiedLeadNotifyRecipient()
     if (!recipient) {
-      console.warn("notifyQualifiedLeadDelivered: FALCO_AUCTION_NOTIFY_TO not set — skipping")
+      console.warn(
+        "notifyQualifiedLeadDelivered: no recipient configured (set FALCO_AUCTION_NOTIFY_TO or FALCO_INBOUND_NOTIFY_TO) — skipping"
+      )
       return
     }
-    const from = (process.env.FALCO_GMAIL_USER ?? "").trim()
-    const pass = (process.env.FALCO_GMAIL_APP_PASSWORD ?? "").trim()
-    if (!from || !pass) {
-      console.warn("notifyQualifiedLeadDelivered: missing Gmail creds — skipping")
+    if (!resendClient) {
+      console.warn("notifyQualifiedLeadDelivered: RESEND_API_KEY not set — skipping")
       return
     }
 
@@ -393,19 +419,21 @@ export async function notifyQualifiedLeadDelivered(
       .filter(Boolean)
       .join("\n")
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: from, pass },
-    })
-
-    await transporter.sendMail({
-      from: `"FALCO Delivery" <${from}>`,
-      to: recipient,
+    const result = await resendClient.emails.send({
+      from: fromAddress(),
+      to: [recipient],
+      replyTo: recipient,
       subject,
-      text,
       html,
+      text,
     })
-    console.log(`[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier} / ${feeStr})`)
+    if (result.error) {
+      console.error("notifyQualifiedLeadDelivered Resend error:", result.error)
+      return
+    }
+    console.log(
+      `[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier} / ${feeStr})`
+    )
   } catch (err) {
     console.error("notifyQualifiedLeadDelivered failed:", err)
   }
