@@ -1,7 +1,30 @@
 import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { OUTCOME_LABELS, CHANNEL_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import type { DialerOutcome, DialerChannel } from "@/lib/dialer-types"
+
+// Resend client — preferred email transport (matches inbound-digest.ts).
+// Falls back to nodemailer/Gmail for legacy notifyAuctionPartnerOnBooking.
+const resendClient = (() => {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) return null
+  return new Resend(key)
+})()
+
+function fromAddress(): string {
+  return process.env.FALCO_FROM_EMAIL?.trim() || "FALCO <falco@falco.llc>"
+}
+
+/** Recipient for QL delivery notifications. Falls back to inbound digest
+ *  recipient (Patrick) if Parks-specific notify address isn't configured yet. */
+function qualifiedLeadNotifyRecipient(): string | null {
+  return (
+    process.env.FALCO_AUCTION_NOTIFY_TO?.trim() ||
+    process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
+    null
+  )
+}
 
 type BookedNotifyContext = {
   listingSlug: string
@@ -239,5 +262,179 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
   } catch (err) {
     // Non-blocking: log and swallow so the activity insert never fails
     console.error("notifyAuctionPartner failed:", err)
+  }
+}
+
+// ============================================================================
+// Qualified Lead Delivery Notification
+// ----------------------------------------------------------------------------
+// Fires when a lead is formally delivered to Parks as a billable Qualified
+// Lead under the Data Services Agreement. Includes tier classification,
+// per-QL fee, and a clear next-steps callout for Dale + ownership.
+// ============================================================================
+
+type QualifiedLeadDeliveredContext = {
+  listingSlug: string
+  deliveredBy: string
+  tier: "T0" | "T1" | "T2" | "T3"
+  feeUSD: number
+  arvAtDelivery: number | null
+  appointmentAt?: string | null
+  notes?: string
+}
+
+const TIER_LABELS: Record<"T0" | "T1" | "T2" | "T3", string> = {
+  T0: "Tier 0 (Under $250K)",
+  T1: "Tier 1 ($250K – $550K)",
+  T2: "Tier 2 ($550K – $750K)",
+  T3: "Tier 3 ($750K and above)",
+}
+
+/**
+ * Email Dale (and ownership cc, if configured) when a Qualified Lead is
+ * formally delivered. This is the billable event under the Parks contract.
+ *
+ * Uses Resend (matches inbound-digest.ts). Falls back gracefully if
+ * RESEND_API_KEY or recipient isn't configured.
+ *
+ * Non-blocking: logs and swallows errors so the underlying delivery write
+ * never fails because of email infra hiccups.
+ */
+export async function notifyQualifiedLeadDelivered(
+  ctx: QualifiedLeadDeliveredContext
+): Promise<void> {
+  try {
+    const recipient = qualifiedLeadNotifyRecipient()
+    if (!recipient) {
+      console.warn(
+        "notifyQualifiedLeadDelivered: no recipient configured (set FALCO_AUCTION_NOTIFY_TO or FALCO_INBOUND_NOTIFY_TO) — skipping"
+      )
+      return
+    }
+    if (!resendClient) {
+      console.warn("notifyQualifiedLeadDelivered: RESEND_API_KEY not set — skipping")
+      return
+    }
+
+    const lead = await findDialerInventoryLead(ctx.listingSlug)
+
+    const address = lead?.address || "(address unknown)"
+    const county = lead?.county || ""
+    const owner = lead?.ownerName || "Unknown owner"
+    const phone1 = lead?.ownerPhonePrimary || ""
+    const phone2 = lead?.ownerPhoneSecondary || ""
+    const distress = distressTypeLabel(lead?.distressType).label
+    const tierLabel = TIER_LABELS[ctx.tier]
+    const feeStr = fmtCurrency(ctx.feeUSD)
+    const arvStr = ctx.arvAtDelivery !== null ? fmtCurrency(ctx.arvAtDelivery) : "—"
+    const apptStr = ctx.appointmentAt
+      ? fmtDateTime(ctx.appointmentAt)
+      : "Confirm with seller — appointment time pending"
+
+    const subject = `[QL Delivered · ${ctx.tier} · ${feeStr}] ${address}`
+
+    const html = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+<div style="max-width:640px;margin:0 auto">
+  <div style="padding:16px 0;border-bottom:2px solid #10b981">
+    <div style="font-size:10px;letter-spacing:2px;color:#10b981;text-transform:uppercase">FALCO · Qualified Lead Delivered</div>
+    <div style="font-size:22px;font-weight:700;margin-top:4px;color:#fff">${esc(address)}</div>
+    <div style="font-size:13px;color:#888;margin-top:2px">${esc(owner)} · ${esc(county)} · ${esc(distress)}</div>
+  </div>
+
+  <div style="padding:20px 0;border-bottom:1px solid #222">
+    <div style="font-size:12px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;margin-bottom:8px">Billable Delivery</div>
+    <table style="width:100%;border-collapse:collapse">
+      <tr><td style="padding:6px 0;color:#888;font-size:12px;width:160px">Tier</td><td style="padding:6px 0;color:#fff;font-size:13px;font-weight:700">${esc(tierLabel)}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;font-size:12px">Per-QL fee</td><td style="padding:6px 0;color:#10b981;font-size:14px;font-weight:700">${esc(feeStr)}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;font-size:12px">ARV at delivery</td><td style="padding:6px 0;color:#fff;font-size:13px">${esc(arvStr)}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;font-size:12px">Delivered by</td><td style="padding:6px 0;color:#fff;font-size:13px">${esc(ctx.deliveredBy || "FALCO")}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;font-size:12px">Appointment</td><td style="padding:6px 0;color:#fff;font-size:13px">${esc(apptStr)} CT</td></tr>
+    </table>
+  </div>
+
+  <div style="padding:20px 0;border-bottom:1px solid #222">
+    <div style="font-size:12px;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin-bottom:8px">Seller Contact</div>
+    <table style="width:100%;border-collapse:collapse">
+      <tr><td style="padding:6px 0;color:#888;font-size:12px;width:160px">Name</td><td style="padding:6px 0;color:#fff;font-size:13px;font-weight:600">${esc(owner)}</td></tr>
+      ${phone1 ? `<tr><td style="padding:6px 0;color:#888;font-size:12px">Primary phone</td><td style="padding:6px 0;color:#fff;font-size:13px"><a href="tel:${esc(phone1.replace(/\D/g, ""))}" style="color:#10b981;text-decoration:none">${esc(fmtPhone(phone1))}</a></td></tr>` : ""}
+      ${phone2 ? `<tr><td style="padding:6px 0;color:#888;font-size:12px">Secondary phone</td><td style="padding:6px 0;color:#fff;font-size:13px"><a href="tel:${esc(phone2.replace(/\D/g, ""))}" style="color:#10b981;text-decoration:none">${esc(fmtPhone(phone2))}</a></td></tr>` : ""}
+    </table>
+  </div>
+
+  ${ctx.notes ? `
+  <div style="padding:20px 0;border-bottom:1px solid #222">
+    <div style="font-size:12px;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin-bottom:8px">Delivery Notes</div>
+    <div style="background:#111;padding:12px;border-radius:4px;color:#ddd;font-size:13px;white-space:pre-wrap;line-height:1.5">${esc(ctx.notes)}</div>
+  </div>
+  ` : ""}
+
+  <div style="padding:20px 0;border-bottom:1px solid #222;background:#0d1f17;border-radius:6px;margin:16px 0;padding:16px">
+    <div style="font-size:12px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;margin-bottom:8px;font-weight:600">Next Steps for Parks</div>
+    <ol style="margin:0;padding-left:20px;color:#ddd;font-size:13px;line-height:1.6">
+      <li>Take the appointment with the seller (time confirmed above)</li>
+      <li>Run the listing solicitation and execute the listing agreement</li>
+      <li>Invoice for ${esc(feeStr)} arrives separately — Net 15 from invoice receipt</li>
+      <li>If the lead materially fails the qualification standard, reject within 10 business days for full refund</li>
+    </ol>
+  </div>
+
+  <div style="padding:24px 0 16px;text-align:center">
+    <a href="https://falco.llc/dialer/${esc(ctx.listingSlug)}" style="display:inline-block;padding:12px 24px;background:#10b981;color:#000;text-decoration:none;border-radius:6px;font-weight:700;font-size:13px">Open Lead in Dialer →</a>
+  </div>
+
+  <div style="color:#555;font-size:10px;text-align:center;margin-top:16px">
+    FALCO · Qualified Lead delivery under FALCO × Parks Data Services Agreement
+  </div>
+</div>
+</body>
+</html>`
+
+    const text = [
+      `QUALIFIED LEAD DELIVERED — ${address}`,
+      `${owner} · ${county} · ${distress}`,
+      ``,
+      `BILLABLE DELIVERY`,
+      `  Tier: ${tierLabel}`,
+      `  Per-QL fee: ${feeStr}`,
+      `  ARV at delivery: ${arvStr}`,
+      `  Delivered by: ${ctx.deliveredBy || "FALCO"}`,
+      `  Appointment: ${apptStr} CT`,
+      ``,
+      `SELLER CONTACT`,
+      `  Name: ${owner}`,
+      phone1 ? `  Primary: ${fmtPhone(phone1)}` : "",
+      phone2 ? `  Secondary: ${fmtPhone(phone2)}` : "",
+      ``,
+      ctx.notes ? `DELIVERY NOTES\n${ctx.notes}\n` : "",
+      `NEXT STEPS FOR PARKS`,
+      `  1. Take the appointment with the seller`,
+      `  2. Run listing solicitation and execute listing agreement`,
+      `  3. Invoice for ${feeStr} arrives separately (Net 15)`,
+      `  4. Reject within 10 business days if lead fails qualification standard`,
+      ``,
+      `Open: https://falco.llc/dialer/${ctx.listingSlug}`,
+    ]
+      .filter(Boolean)
+      .join("\n")
+
+    const result = await resendClient.emails.send({
+      from: fromAddress(),
+      to: [recipient],
+      replyTo: recipient,
+      subject,
+      html,
+      text,
+    })
+    if (result.error) {
+      console.error("notifyQualifiedLeadDelivered Resend error:", result.error)
+      return
+    }
+    console.log(
+      `[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier} / ${feeStr})`
+    )
+  } catch (err) {
+    console.error("notifyQualifiedLeadDelivered failed:", err)
   }
 }
