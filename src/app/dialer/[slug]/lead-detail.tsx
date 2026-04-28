@@ -16,7 +16,7 @@ import {
   type DialerOutcome,
   type DialerActivity,
 } from "@/lib/dialer-types"
-import { classifyTier, fmtTierFee } from "@/lib/tier-classification"
+import { classifyTier } from "@/lib/tier-classification"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -149,10 +149,10 @@ export default function LeadDetail({
               <>
                 <span className="text-white/30">·</span>
                 <span
-                  title={`Per-Qualified-Lead fee: ${fmtTierFee(tier.feeUSD)} (${tier.arvBand})`}
+                  title={`Property tier: ${tier.label} (${tier.arvBand})`}
                   className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200"
                 >
-                  {tier.label} · {fmtTierFee(tier.feeUSD)}
+                  {tier.label} · {tier.arvBand}
                 </span>
               </>
             )
@@ -959,14 +959,17 @@ function toLocalInput(iso: string): string {
 /** ============================================================================
  *  QualifiedLeadSection
  *  ----------------------------------------------------------------------------
- *  The billable delivery trigger to Parks. Shows the locked-in tier + fee
- *  for this lead's ARV and presents the "Mark as Qualified Lead Delivered"
- *  action. Submission persists a delivery record and emails Parks.
+ *  Operational handoff to Dale at Parks. When Chris confirms an appointment,
+ *  this fires the QL email to Dale with the full seller package (math sheet,
+ *  contact, sale timeline, equity math). Logs the handoff for tracking.
+ *
+ *  Compensation is commission-based on close (65 Parks / 20 Chris / 15 FALCO),
+ *  not per-QL — this action is the operational trigger, not a billing event.
  *
  *  Required to deliver:
- *    - ARV present (otherwise no tier can be classified)
+ *    - ARV present (so the equity math in Dale's email computes correctly)
  *    - Confirmed appointment time (recommended; can be deferred)
- *    - Optional notes for Parks
+ *    - Optional notes for Dale
  *  ========================================================================= */
 function QualifiedLeadSection({
   lead,
@@ -985,16 +988,16 @@ function QualifiedLeadSection({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  // No AVM = cannot classify tier = cannot deliver
+  // No AVM = cannot classify tier = math sheet won't compute = don't hand off
   if (!tier) {
     return (
       <section className="mt-3 rounded-2xl border border-dashed border-amber-400/30 bg-amber-400/[0.04] p-4">
         <div className="text-[10px] uppercase tracking-wider text-amber-300/85 font-semibold">
-          Qualified Lead Delivery
+          Hand Off to Dale
         </div>
         <div className="text-xs text-amber-100/85 mt-1">
-          AVM missing — cannot classify tier or compute fee. Enrich this lead
-          (BatchData) before it can be delivered to Parks.
+          AVM missing — equity math won&rsquo;t compute, so Dale won&rsquo;t
+          have the numbers he needs. Enrich this lead (BatchData) first.
         </div>
       </section>
     )
@@ -1019,16 +1022,11 @@ function QualifiedLeadSection({
         })
         const json = await res.json()
         if (!res.ok || !json?.ok) {
-          setError(json?.error || `Delivery failed (HTTP ${res.status}).`)
+          setError(json?.error || `Handoff failed (HTTP ${res.status}).`)
           return
         }
-        const returnedTier = (json?.tier ?? null) as
-          | { label: string; feeUSD: number }
-          | null
-        const labelOut = returnedTier?.label ?? tier!.label
-        const feeOut = returnedTier?.feeUSD ?? tier!.feeUSD
         setSuccess(
-          `Delivered as ${labelOut} (${fmtTierFee(feeOut)}). Parks notified.`
+          `Sent to Dale. Lead handoff logged. Standard commission split applies on close.`
         )
         setOpen(false)
         setNotes("")
@@ -1045,16 +1043,17 @@ function QualifiedLeadSection({
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-wider text-emerald-300/85 font-semibold">
-            Qualified Lead Delivery — billable to Parks
+            Hand Off to Dale
           </div>
           <div className="text-sm text-white mt-1">
-            {tier.label} · <span className="font-semibold text-emerald-200">{fmtTierFee(tier.feeUSD)}</span>
-            <span className="text-white/55"> per Data Services Agreement</span>
+            {tier.label} · <span className="text-white/70">{tier.arvBand}</span>
           </div>
           <div className="text-[11px] text-white/55 mt-0.5">
-            Mark this lead as a Qualified Lead once you&rsquo;ve confirmed an
-            appointment with the seller. Parks gets notified, the delivery is
-            logged, and the per-QL fee is locked at this tier.
+            Once you&rsquo;ve confirmed an appointment with the seller, this
+            sends the full lead package to Dale (math sheet, contact, sale
+            timeline, equity math) and logs the handoff for tracking.
+            Compensation is the standard 65/20/15 commission split on close —
+            no per-QL fee.
           </div>
         </div>
         {!open && (
@@ -1063,7 +1062,7 @@ function QualifiedLeadSection({
             onClick={() => setOpen(true)}
             className="text-emerald-300 hover:text-emerald-200 text-sm font-semibold whitespace-nowrap rounded-lg border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-1.5 transition-colors"
           >
-            Mark as Qualified Lead →
+            Send Qualified Lead to Dale →
           </button>
         )}
       </div>
@@ -1079,7 +1078,7 @@ function QualifiedLeadSection({
                 className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white"
               />
             </Field>
-            <Field label="Delivered by">
+            <Field label="Sent by">
               <input
                 type="text"
                 value={caller}
@@ -1088,12 +1087,12 @@ function QualifiedLeadSection({
               />
             </Field>
           </div>
-          <Field label="Delivery notes for Parks (optional)">
+          <Field label="Notes for Dale (optional)">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Context for Dale: seller&rsquo;s situation, urgency, any quirks Parks should know."
+              placeholder="Context for Dale: seller&rsquo;s situation, urgency, any quirks worth knowing before he calls."
               className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white"
             />
           </Field>
@@ -1111,9 +1110,7 @@ function QualifiedLeadSection({
               disabled={submitting}
               className="rounded-lg border border-emerald-400/50 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors"
             >
-              {submitting
-                ? "Delivering..."
-                : `Confirm — bill Parks ${fmtTierFee(tier.feeUSD)}`}
+              {submitting ? "Sending..." : "Confirm — Send to Dale"}
             </button>
             <button
               type="button"

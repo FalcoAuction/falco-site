@@ -393,7 +393,6 @@ export async function notifyQualifiedLeadDelivered(
 
     const lead = await loadEnhancedLeadContext(ctx.listingSlug)
     const tierLabel = TIER_LABELS[ctx.tier]
-    const feeStr = fmtCurrency(ctx.feeUSD)
     const distress = distressTypeLabel(lead.distressType).label
 
     // Sale timeline
@@ -464,7 +463,7 @@ export async function notifyQualifiedLeadDelivered(
     if (lead.yearBuilt) propBits.push(`built ${lead.yearBuilt}`)
     const propSnapshot = propBits.join("  ·  ")
 
-    const subject = `[QL · ${ctx.tier} · ${feeStr}] ${lead.address} — ${apptStr}`
+    const subject = `[Qualified Lead] ${lead.address} — appointment ${apptStr}`
 
     const mathSheetUrl = `https://falco.llc/dialer/${ctx.listingSlug}/math-sheet`
     const dialerUrl = `https://falco.llc/dialer/${ctx.listingSlug}`
@@ -607,16 +606,17 @@ export async function notifyQualifiedLeadDelivered(
       <li>Reference the math sheet — same numbers Chris already shared with them</li>
       <li>Send the seller the authorization form so Lindsey at Signature Title can pull payoff</li>
       <li>Run listing solicitation and execute the listing agreement</li>
-      <li>Reject within 3 business days if the lead materially fails the qualification standard</li>
+      <li>Standard 65/20/15 commission split applies on close (Parks / Chris-via-Benchmark / FALCO)</li>
     </ol>
   </div>
 
-  <!-- BILLING / DELIVERY DETAILS -->
+  <!-- LEAD CONTEXT -->
   <div style="padding:14px 0;border-top:1px solid #1f2937">
-    <div style="font-size:10px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Delivery Details</div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Lead Context</div>
     <div style="font-size:12px;color:#9ca3af;line-height:1.6">
-      Tier: <span style="color:#fff">${esc(tierLabel)}</span>  ·  Per-QL fee: <span style="color:#10b981;font-weight:600">${esc(feeStr)}</span><br>
-      Billing: invoice arrives separately, Net 15 from receipt.
+      Property tier: <span style="color:#fff">${esc(tierLabel)}</span><br>
+      This is the operational handoff — no per-QL invoice. Compensation flows
+      via the standard commission split when the deal closes.
     </div>
   </div>
 
@@ -684,12 +684,12 @@ export async function notifyQualifiedLeadDelivered(
       `  2. Reference the math sheet — same numbers Chris shared`,
       `  3. Send authorization form to seller; loop in Lindsey for payoff`,
       `  4. Run listing solicitation, execute listing agreement`,
-      `  5. Reject within 3 business days if material qualification fail`,
+      `  5. Standard 65/20/15 commission split on close (Parks / Chris-via-Benchmark / FALCO)`,
       ``,
-      `DELIVERY DETAILS`,
-      `  Tier: ${tierLabel}`,
-      `  Per-QL fee: ${feeStr}`,
-      `  Billing: invoice arrives separately, Net 15`,
+      `LEAD CONTEXT`,
+      `  Property tier: ${tierLabel}`,
+      `  Operational handoff — no per-QL invoice. Comp flows via standard`,
+      `  commission split when the deal closes.`,
       ``,
       `Open lead: ${dialerUrl}`,
     ]
@@ -709,7 +709,7 @@ export async function notifyQualifiedLeadDelivered(
       return
     }
     console.log(
-      `[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier} / ${feeStr})`
+      `[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier})`
     )
   } catch (err) {
     console.error("notifyQualifiedLeadDelivered failed:", err)
