@@ -376,7 +376,7 @@ export async function notifyQualifiedLeadDelivered(
       <li>Take the appointment with the seller (time confirmed above)</li>
       <li>Run the listing solicitation and execute the listing agreement</li>
       <li>Invoice for ${esc(feeStr)} arrives separately — Net 15 from invoice receipt</li>
-      <li>If the lead materially fails the qualification standard, reject within 10 business days for full refund</li>
+      <li>If the lead materially fails the qualification standard, reject within 3 business days for full refund</li>
     </ol>
   </div>
 
@@ -412,7 +412,7 @@ export async function notifyQualifiedLeadDelivered(
       `  1. Take the appointment with the seller`,
       `  2. Run listing solicitation and execute listing agreement`,
       `  3. Invoice for ${feeStr} arrives separately (Net 15)`,
-      `  4. Reject within 10 business days if lead fails qualification standard`,
+      `  4. Reject within 3 business days if lead fails qualification standard`,
       ``,
       `Open: https://falco.llc/dialer/${ctx.listingSlug}`,
     ]
