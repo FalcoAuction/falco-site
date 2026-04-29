@@ -236,7 +236,10 @@ export default function LeadDetail({
         </div>
       </Link>
 
-      {/* Qualified Lead delivery — billable trigger to Parks */}
+      {/* Outreach helpers — email follow-up + SMS template */}
+      <OutreachHelpers lead={lead} />
+
+      {/* Qualified Lead delivery — operational handoff to Dale */}
       <QualifiedLeadSection lead={lead} caller={caller} onDelivered={() => router.refresh()} />
 
       {/* Tactical callouts (absentee, urgency, owned-since) */}
@@ -1132,6 +1135,171 @@ function QualifiedLeadSection({
           {success}
         </div>
       )}
+    </section>
+  )
+}
+
+/** ============================================================================
+ *  OutreachHelpers
+ *  ----------------------------------------------------------------------------
+ *  Free outreach actions Chris uses after a call:
+ *    - "Send follow-up email" — fires a personalized email with the math
+ *      sheet via Resend (only enabled if email on file).
+ *    - "Copy text template" — pre-fills a personalized SMS, copies to
+ *      clipboard. Chris pastes into his own phone and sends — no Twilio.
+ *
+ *  Auto-logs the email send as a dialer_activity for audit trail.
+ *  ========================================================================= */
+function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
+  const [emailing, startEmail] = useTransition()
+  const [emailMsg, setEmailMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [showCustom, setShowCustom] = useState(false)
+  const [customMessage, setCustomMessage] = useState("")
+
+  const ownerFirst = (lead.ownerName || "").split(/\s+/)[0] || "there"
+  const titleCasedFirst =
+    ownerFirst === ownerFirst.toUpperCase()
+      ? ownerFirst.charAt(0) + ownerFirst.slice(1).toLowerCase()
+      : ownerFirst
+
+  const smsTemplate = `Hi ${titleCasedFirst}, Chris with FALCO — left you a vm about ${
+    lead.address ?? "your property"
+  }. Worth a 5-min talk about your auction options before any decisions get made. When's good?`
+
+  function copyToClipboard(text: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2500)
+        },
+        () => {
+          setCopied(false)
+        }
+      )
+    }
+  }
+
+  function sendEmail() {
+    setEmailMsg(null)
+    startEmail(async () => {
+      try {
+        const res = await fetch("/api/dialer/send-followup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            listingSlug: lead.slug,
+            customMessage: customMessage.trim() || undefined,
+          }),
+        })
+        const json = await res.json()
+        if (!res.ok || !json?.ok) {
+          setEmailMsg({
+            kind: "err",
+            text: json?.error || `Send failed (HTTP ${res.status}).`,
+          })
+          return
+        }
+        setEmailMsg({
+          kind: "ok",
+          text: `Sent to ${json.sentTo}. Logged as activity.`,
+        })
+        setCustomMessage("")
+        setShowCustom(false)
+      } catch (err) {
+        setEmailMsg({
+          kind: "err",
+          text: err instanceof Error ? err.message : "Network error.",
+        })
+      }
+    })
+  }
+
+  const hasEmail = !!lead.ownerMail
+
+  return (
+    <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2 font-semibold">
+        Quick Outreach
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {/* Send follow-up email */}
+        <button
+          type="button"
+          onClick={sendEmail}
+          disabled={!hasEmail || emailing}
+          title={
+            hasEmail
+              ? "Send a personalized follow-up email with the math sheet"
+              : "No email on file for this lead"
+          }
+          className="rounded-lg border border-blue-400/35 bg-blue-400/10 hover:bg-blue-400/20 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-blue-100 transition-colors"
+        >
+          {emailing
+            ? "Sending..."
+            : hasEmail
+            ? "📧 Send follow-up email"
+            : "📧 No email on file"}
+        </button>
+
+        {hasEmail && !showCustom && (
+          <button
+            type="button"
+            onClick={() => setShowCustom(true)}
+            className="text-[11px] text-white/45 hover:text-white/70 underline underline-offset-2"
+          >
+            add custom note
+          </button>
+        )}
+
+        {/* Copy SMS template */}
+        <button
+          type="button"
+          onClick={() => copyToClipboard(smsTemplate)}
+          title="Copy a personalized SMS — paste into your phone and send from your number"
+          className="rounded-lg border border-purple-400/35 bg-purple-400/10 hover:bg-purple-400/20 px-3 py-1.5 text-sm text-purple-100 transition-colors"
+        >
+          {copied ? "✓ Copied — paste in your phone" : "💬 Copy text template"}
+        </button>
+      </div>
+
+      {showCustom && hasEmail && (
+        <div className="mt-3">
+          <Field label="Custom note (optional, gets inserted into the email body)">
+            <textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={2}
+              placeholder="e.g. 'You mentioned you'd want to keep the house — here are options that might preserve it.'"
+              className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white"
+            />
+          </Field>
+        </div>
+      )}
+
+      {emailMsg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            emailMsg.kind === "ok"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-red-400/30 bg-red-400/10 text-red-200"
+          }`}
+        >
+          {emailMsg.text}
+        </div>
+      )}
+
+      {/* SMS template preview, collapsed under the buttons */}
+      <details className="mt-2">
+        <summary className="text-[11px] text-white/45 hover:text-white/70 cursor-pointer">
+          preview SMS template
+        </summary>
+        <div className="mt-1 rounded-md bg-black/30 border border-white/8 px-3 py-2 text-[12px] text-white/75 leading-relaxed font-mono">
+          {smsTemplate}
+        </div>
+      </details>
     </section>
   )
 }
