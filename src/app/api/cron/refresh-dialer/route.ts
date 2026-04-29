@@ -1,18 +1,19 @@
 // Daily dialer-data refresh cron.
 //
-// Goal: keep the dialer queue showing fresh data even though the bot
-// pipeline runs locally on Patrick's machine.
+// Goal: keep the dialer queue showing fresh data on top of whatever the
+// bot pipeline has scraped (GitHub Actions writes raw bot leads daily).
 //
 // What this does each day:
 //   1. Re-runs BatchData skip-trace on bot leads where the phone is
 //      stale OR missing (last refreshed >7 days ago, or never)
-//   2. Re-runs BatchData property enrichment on leads still missing AVM
-//   3. Logs a summary of what was refreshed
+//   2. Backfills missing AVMs — ATTOM-first (preferred when subscription
+//      is active), BatchData as automatic fallback when ATTOM fails or
+//      isn't configured
+//   3. Logs a summary of what was refreshed AND which source filled each
 //
-// What this does NOT do:
-//   - Pull NEW leads from the bot scrapers (those run locally; Patrick
-//     has to run `python -m src.run_all` + `python sync_to_vault.py`
-//     from C:/code/falco-distress-bots to add new leads)
+// Source-of-truth precedence for AVMs:
+//   property_value_source = 'ATTOM_AVM'      ← preferred (subscription)
+//   property_value_source = 'BATCHDATA_AVM'  ← fallback / when ATTOM down
 //
 // Auth pattern matches the other crons (CRON_SECRET via Bearer).
 
@@ -112,8 +113,53 @@ type RefreshResult = {
   skiptrace_no_match: number
   skiptrace_failed: number
   avm_success: number
+  avm_via_attom: number
+  avm_via_batchdata: number
   avm_failed: number
   budget_used_estimate_usd: number
+}
+
+// ---------------------------------------------------------------------------
+// ATTOM AVM lookup
+//
+// Primary source for AVMs when subscription is active. Returns null on any
+// failure (auth, timeout, no result) so the caller falls back to BatchData.
+// ATTOM's auth is `apikey` header (not Bearer). Address format wants
+// address1 = "123 Main St", address2 = "City, ST" (no zip in address2).
+// ---------------------------------------------------------------------------
+
+const ATTOM_BASE = "https://api.gateway.attomdata.com/propertyapi/v1.0.0"
+
+async function lookupAttomAvm(
+  parts: { street: string; city: string; state: string; zip: string },
+  apiKey: string
+): Promise<number | null> {
+  try {
+    const address1 = parts.street.trim()
+    const address2 = `${parts.city.trim()}, ${parts.state.trim()}`
+    const url =
+      `${ATTOM_BASE}/attomavm/detail?` +
+      new URLSearchParams({ address1, address2 }).toString()
+
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", apikey: apiKey },
+    })
+    if (!res.ok) {
+      // 401 = expired/invalid key. 400 with SuccessWithoutResult = no
+      // property found (legitimate miss, not an error). Either way, return
+      // null so the caller falls through to BatchData.
+      return null
+    }
+    const json = await res.json()
+    // ATTOM returns property[0].avm.amount.value
+    const props = json?.property
+    if (!Array.isArray(props) || props.length === 0) return null
+    const avm = props[0]?.avm?.amount?.value
+    if (typeof avm !== "number" || avm <= 0) return null
+    return Math.round(avm)
+  } catch {
+    return null
+  }
 }
 
 async function runRefresh(): Promise<RefreshResult> {
@@ -125,6 +171,8 @@ async function runRefresh(): Promise<RefreshResult> {
     skiptrace_no_match: 0,
     skiptrace_failed: 0,
     avm_success: 0,
+    avm_via_attom: 0,
+    avm_via_batchdata: 0,
     avm_failed: 0,
     budget_used_estimate_usd: 0,
   }
@@ -133,8 +181,13 @@ async function runRefresh(): Promise<RefreshResult> {
     return { ...result, ok: false, reason: "supabase not configured" }
   }
   const apiKey = (process.env.FALCO_BATCHDATA_API_KEY ?? "").trim()
-  if (!apiKey) {
-    return { ...result, ok: false, reason: "FALCO_BATCHDATA_API_KEY not set" }
+  const attomKey = (process.env.FALCO_ATTOM_API_KEY ?? "").trim()
+  if (!apiKey && !attomKey) {
+    return {
+      ...result,
+      ok: false,
+      reason: "neither FALCO_BATCHDATA_API_KEY nor FALCO_ATTOM_API_KEY set",
+    }
   }
 
   const cutoff = new Date(
@@ -249,64 +302,85 @@ async function runRefresh(): Promise<RefreshResult> {
     const r = row as { id: string; property_address: string | null }
     const parts = splitAddress(r.property_address)
     if (!parts) continue
-    try {
-      const verifyRes = await fetch(VERIFY_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ requests: [parts] }),
-      })
-      result.budget_used_estimate_usd += 0.2
-      if (!verifyRes.ok) {
-        result.avm_failed++
-        continue
-      }
-      const verifyData = await verifyRes.json()
-      const hash = verifyData?.results?.addresses?.[0]?.hash
-      if (!hash) {
-        result.avm_failed++
-        continue
-      }
-      const lookupRes = await fetch(LOOKUP_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ requests: [{ hash }] }),
-      })
-      if (!lookupRes.ok) {
-        result.avm_failed++
-        continue
-      }
-      const lookup = await lookupRes.json()
-      const property = lookup?.results?.properties?.[0] || {}
-      const valuation = property.valuation || {}
-      const avm =
-        valuation?.estimatedValue ?? valuation?.value ?? valuation?.avm ?? null
-      if (!avm || avm <= 0) {
-        result.avm_failed++
-        continue
-      }
-      const { error: upErr } = await supabaseAdmin
-        .from("homeowner_requests")
-        .update({
-          property_value: Math.round(Number(avm)),
-          property_value_source: "BATCHDATA_AVM",
-          property_value_as_of: new Date().toISOString().slice(0, 10),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", r.id)
-      if (upErr) {
-        result.avm_failed++
-        continue
-      }
-      result.avm_success++
-    } catch {
-      result.avm_failed++
+
+    let avm: number | null = null
+    let source: "ATTOM_AVM" | "BATCHDATA_AVM" | null = null
+
+    // ----- Pass 1: ATTOM (preferred when subscription active) -----
+    if (attomKey) {
+      avm = await lookupAttomAvm(parts, attomKey)
+      result.budget_used_estimate_usd += 0.05 // ATTOM call cost is much lower than BatchData
+      if (avm) source = "ATTOM_AVM"
     }
+
+    // ----- Pass 2: BatchData fallback -----
+    if (!avm && apiKey) {
+      try {
+        const verifyRes = await fetch(VERIFY_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ requests: [parts] }),
+        })
+        result.budget_used_estimate_usd += 0.2
+        if (verifyRes.ok) {
+          const verifyData = await verifyRes.json()
+          const hash = verifyData?.results?.addresses?.[0]?.hash
+          if (hash) {
+            const lookupRes = await fetch(LOOKUP_URL, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ requests: [{ hash }] }),
+            })
+            if (lookupRes.ok) {
+              const lookup = await lookupRes.json()
+              const property = lookup?.results?.properties?.[0] || {}
+              const valuation = property.valuation || {}
+              const candidate =
+                valuation?.estimatedValue ??
+                valuation?.value ??
+                valuation?.avm ??
+                null
+              if (candidate && candidate > 0) {
+                avm = Math.round(Number(candidate))
+                source = "BATCHDATA_AVM"
+              }
+            }
+          }
+        }
+      } catch {
+        /* fall through to fail counter */
+      }
+    }
+
+    if (!avm || !source) {
+      result.avm_failed++
+      await new Promise((res) => setTimeout(res, 300))
+      continue
+    }
+
+    const { error: upErr } = await supabaseAdmin
+      .from("homeowner_requests")
+      .update({
+        property_value: avm,
+        property_value_source: source,
+        property_value_as_of: new Date().toISOString().slice(0, 10),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", r.id)
+    if (upErr) {
+      result.avm_failed++
+    } else {
+      result.avm_success++
+      if (source === "ATTOM_AVM") result.avm_via_attom++
+      else result.avm_via_batchdata++
+    }
+
     await new Promise((res) => setTimeout(res, 300))
   }
 
