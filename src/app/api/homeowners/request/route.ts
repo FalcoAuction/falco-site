@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { submitHomeownerRequest } from "@/lib/inbound-forms"
+import { guardPublicForm } from "@/lib/public-form-guard"
 
 export const dynamic = "force-dynamic"
 
@@ -23,6 +24,8 @@ function toInt(v: number | string | null | undefined): number | null {
 }
 
 export async function POST(req: NextRequest) {
+  const guard = guardPublicForm(req, "homeowner-request")
+  if (guard) return guard
   let body: Body
   try {
     body = await req.json()

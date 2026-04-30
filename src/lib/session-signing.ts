@@ -15,17 +15,22 @@ function base64UrlDecode(value: string) {
 }
 
 export function getSessionSigningSecret() {
-  const secret =
-    process.env.FALCO_SESSION_SECRET?.trim() ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-    process.env.FALCO_APPROVAL_SECRET?.trim()
-
+  // FALCO_SESSION_SECRET is REQUIRED. Never fall back to other env vars —
+  // doing so couples session validity to the lifecycle of unrelated
+  // credentials (e.g., rotating the Supabase service-role key would
+  // silently invalidate every signed session, and the `.env.local` concat
+  // bug could leak the wrong value into the signing path).
+  const secret = process.env.FALCO_SESSION_SECRET?.trim()
   if (!secret) {
     throw new Error(
-      "Missing FALCO_SESSION_SECRET, SUPABASE_SERVICE_ROLE_KEY, or FALCO_APPROVAL_SECRET."
+      "FALCO_SESSION_SECRET is required and must be set in environment."
     )
   }
-
+  if (secret.length < 32) {
+    throw new Error(
+      "FALCO_SESSION_SECRET must be at least 32 chars of high-entropy data."
+    )
+  }
   return secret
 }
 
@@ -51,7 +56,13 @@ export function verifySessionPayload<T extends SessionPayload>(token: string): T
     .update(encodedPayload)
     .digest("base64url")
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+  // timingSafeEqual throws RangeError on length mismatch — that crashes
+  // the request handler with a 500. A tampered/malformed cookie should
+  // simply return null (treated as logged-out).
+  const sigBuf = Buffer.from(signature)
+  const expBuf = Buffer.from(expected)
+  if (sigBuf.length !== expBuf.length) return null
+  if (!crypto.timingSafeEqual(sigBuf, expBuf)) {
     return null
   }
 

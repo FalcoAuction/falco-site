@@ -1,13 +1,14 @@
-import nodemailer from "nodemailer"
 import { Resend } from "resend"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { OUTCOME_LABELS, CHANNEL_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import type { DialerOutcome, DialerChannel } from "@/lib/dialer-types"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt as fmtMath } from "@/lib/math-sheet"
+import { auctionPartnerRecipients } from "@/lib/notify"
 
-// Resend client — preferred email transport (matches inbound-digest.ts).
-// Falls back to nodemailer/Gmail for legacy notifyAuctionPartnerOnBooking.
+// Resend is the only transport. Previously this file had a nodemailer/Gmail
+// path for the booking notification — removed in favor of one consistent
+// transport (matches inbound-digest.ts and send-followup).
 const resendClient = (() => {
   const key = process.env.RESEND_API_KEY?.trim()
   if (!key) return null
@@ -16,16 +17,6 @@ const resendClient = (() => {
 
 function fromAddress(): string {
   return process.env.FALCO_FROM_EMAIL?.trim() || "FALCO <falco@falco.llc>"
-}
-
-/** Recipient for QL delivery notifications. Falls back to inbound digest
- *  recipient (Patrick) if Parks-specific notify address isn't configured yet. */
-function qualifiedLeadNotifyRecipient(): string | null {
-  return (
-    process.env.FALCO_AUCTION_NOTIFY_TO?.trim() ||
-    process.env.FALCO_INBOUND_NOTIFY_TO?.trim() ||
-    null
-  )
 }
 
 type BookedNotifyContext = {
@@ -102,15 +93,13 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
   try {
     if (ctx.outcome !== "booked") return
 
-    const recipient = (process.env.FALCO_AUCTION_NOTIFY_TO ?? "").trim()
-    if (!recipient) {
-      console.warn("notifyAuctionPartner: FALCO_AUCTION_NOTIFY_TO not set — skipping")
+    const recipients = auctionPartnerRecipients()
+    if (recipients.length === 0) {
+      console.warn("notifyAuctionPartner: no FALCO_AUCTION_NOTIFY_TO/FALCO_INBOUND_NOTIFY_TO — skipping")
       return
     }
-    const from = (process.env.FALCO_GMAIL_USER ?? "").trim()
-    const pass = (process.env.FALCO_GMAIL_APP_PASSWORD ?? "").trim()
-    if (!from || !pass) {
-      console.warn("notifyAuctionPartner: missing Gmail creds — skipping")
+    if (!resendClient) {
+      console.warn("notifyAuctionPartner: RESEND_API_KEY not set — skipping")
       return
     }
 
@@ -123,9 +112,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
     const phone1 = lead?.ownerPhonePrimary || ""
     const phone2 = lead?.ownerPhoneSecondary || ""
     const saleDate = lead?.currentSaleDate || ""
-    const avmLow = lead?.avmLow ?? null
     const avmMid = lead?.avmMid ?? null
-    const avmHigh = lead?.avmHigh ?? null
     const loan = lead?.mortgageAmount ?? null
     const lender = lead?.mortgageLender || ""
     const distress = distressTypeLabel(lead?.distressType).label
@@ -136,15 +123,21 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
       ? Math.ceil((new Date(saleDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       : null
 
-    // Three-path equity math
-    const commissionPct = 0.09
-    const wholesalerPct = 0.65
-    const equityLow =
-      avmLow && payoff !== null ? Math.max(0, Math.round(avmLow * (1 - commissionPct) - payoff)) : null
-    const equityHigh =
-      avmHigh && payoff !== null ? Math.max(0, Math.round(avmHigh * (1 - commissionPct) - payoff)) : null
-    const wholesalerNet =
-      avmMid && payoff !== null ? Math.max(0, Math.round(avmMid * wholesalerPct - payoff)) : null
+    // Use the SAME math-sheet engine as the QL email + dialer math sheet.
+    // Previously this function had its own simplified equity model
+    // (90% of AVM minus 9% commission, 65% wholesaler) which produced
+    // different numbers from what Chris walked the seller through. Now
+    // unified — Dale never sees two conflicting "official" numbers.
+    let equityLow: number | null = null
+    let equityHigh: number | null = null
+    let wholesalerNet: number | null = null
+    if (avmMid && avmMid > 0) {
+      const inputs = defaultInputsFor(avmMid, payoff ?? loan ?? 0)
+      const m = computeMath(inputs)
+      equityLow = Math.max(0, Math.round(m.auction.low.netToHomeowner))
+      equityHigh = Math.max(0, Math.round(m.auction.high.netToHomeowner))
+      wholesalerNet = Math.max(0, Math.round(m.wholesaler.realisticNet))
+    }
 
     const subject = `🔥 New Auction Call Booked — ${address}${dts !== null ? ` (${dts}d to sale)` : ""}`
 
@@ -192,7 +185,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
   <div style="padding:20px 0;border-bottom:1px solid #222">
     <div style="font-size:12px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;margin-bottom:8px">Equity Math</div>
     <table style="width:100%;border-collapse:collapse">
-      <tr><td style="padding:6px 0;color:#888;font-size:12px;width:140px">Market value (AVM)</td><td style="padding:6px 0;color:#fff;font-size:13px;font-weight:600">${esc(fmtCurrency(avmMid))}${avmLow && avmHigh ? ` <span style="color:#888">(${esc(fmtCurrency(avmLow))} – ${esc(fmtCurrency(avmHigh))})</span>` : ""}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;font-size:12px;width:140px">Market value (AVM)</td><td style="padding:6px 0;color:#fff;font-size:13px;font-weight:600">${esc(fmtCurrency(avmMid))}</td></tr>
       <tr><td style="padding:6px 0;color:#888;font-size:12px">Loan amount</td><td style="padding:6px 0;color:#fff;font-size:13px">${esc(fmtCurrency(loan))}${lender ? ` <span style="color:#888">· ${esc(lender)}</span>` : ""}</td></tr>
       <tr><td style="padding:6px 0;color:#888;font-size:12px">Est. loan payoff</td><td style="padding:6px 0;color:#fff;font-size:13px">${esc(fmtCurrency(payoff))}</td></tr>
       <tr><td style="padding:6px 0;color:#10b981;font-size:12px;font-weight:600">Est. seller take-home</td><td style="padding:6px 0;color:#10b981;font-size:14px;font-weight:700">${equityLow !== null && equityHigh !== null ? `${esc(fmtCurrency(equityLow))} – ${esc(fmtCurrency(equityHigh))}` : "—"}</td></tr>
@@ -236,7 +229,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
       saleDate ? `SALE: ${fmtDate(saleDate)}${dts !== null ? ` (${dts} days out)` : ""}` : "",
       ``,
       `EQUITY`,
-      `  AVM: ${fmtCurrency(avmMid)}${avmLow && avmHigh ? ` (${fmtCurrency(avmLow)} – ${fmtCurrency(avmHigh)})` : ""}`,
+      `  AVM: ${fmtCurrency(avmMid)}`,
       `  Loan: ${fmtCurrency(loan)}${lender ? ` · ${lender}` : ""}`,
       `  Est. payoff: ${fmtCurrency(payoff)}`,
       `  Est. seller take-home: ${equityLow !== null && equityHigh !== null ? `${fmtCurrency(equityLow)} – ${fmtCurrency(equityHigh)}` : "—"}`,
@@ -248,19 +241,18 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
       .filter(Boolean)
       .join("\n")
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: from, pass },
-    })
-
-    await transporter.sendMail({
-      from: `"FALCO Dialer" <${from}>`,
-      to: recipient,
+    const sendResult = await resendClient.emails.send({
+      from: fromAddress(),
+      to: recipients,
       subject,
       text,
       html,
     })
-    console.log(`[notifyAuctionPartner] sent to ${recipient} for ${ctx.listingSlug}`)
+    if (sendResult.error) {
+      console.error("notifyAuctionPartner Resend error:", sendResult.error)
+      return
+    }
+    console.log(`[notifyAuctionPartner] sent to ${recipients.join(", ")} for ${ctx.listingSlug}`)
   } catch (err) {
     // Non-blocking: log and swallow so the activity insert never fails
     console.error("notifyAuctionPartner failed:", err)
@@ -377,8 +369,8 @@ export async function notifyQualifiedLeadDelivered(
   ctx: QualifiedLeadDeliveredContext
 ): Promise<void> {
   try {
-    const recipient = qualifiedLeadNotifyRecipient()
-    if (!recipient) {
+    const recipients = auctionPartnerRecipients()
+    if (recipients.length === 0) {
       console.warn(
         "notifyQualifiedLeadDelivered: no recipient configured (set FALCO_AUCTION_NOTIFY_TO or FALCO_INBOUND_NOTIFY_TO) — skipping"
       )
@@ -698,8 +690,8 @@ export async function notifyQualifiedLeadDelivered(
 
     const result = await resendClient.emails.send({
       from: fromAddress(),
-      to: [recipient],
-      replyTo: recipient,
+      to: recipients,
+      replyTo: recipients[0],
       subject,
       html,
       text,
@@ -709,7 +701,7 @@ export async function notifyQualifiedLeadDelivered(
       return
     }
     console.log(
-      `[notifyQualifiedLeadDelivered] sent to ${recipient} for ${ctx.listingSlug} (${ctx.tier})`
+      `[notifyQualifiedLeadDelivered] sent to ${recipients.join(", ")} for ${ctx.listingSlug} (${ctx.tier})`
     )
   } catch (err) {
     console.error("notifyQualifiedLeadDelivered failed:", err)

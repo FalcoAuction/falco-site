@@ -19,8 +19,14 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { fetchWithTimeout, notifyOpsAlert } from "@/lib/notify"
 
 export const dynamic = "force-dynamic"
+
+// Hard daily $ ceiling. Cron will abort before exceeding this even if
+// other limits (per-run row caps) somehow allow it. Tune up as volume
+// grows. ~$20/day = ~$600/mo worst case.
+const DAILY_BUDGET_USD_CAP = 20
 
 const VERIFY_URL = "https://api.batchdata.com/api/v1/address/verify"
 const SKIP_TRACE_URL = "https://api.batchdata.com/api/v1/property/skip-trace"
@@ -141,8 +147,9 @@ async function lookupAttomAvm(
       `${ATTOM_BASE}/attomavm/detail?` +
       new URLSearchParams({ address1, address2 }).toString()
 
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: { Accept: "application/json", apikey: apiKey },
+      timeoutMs: 12000,
     })
     if (!res.ok) {
       // 401 = expired/invalid key. 400 with SuccessWithoutResult = no
@@ -194,12 +201,20 @@ async function runRefresh(): Promise<RefreshResult> {
     Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000
   ).toISOString()
 
-  // --- Skip-trace stale leads (phone older than STALE_DAYS) -----------
+  // --- Skip-trace candidates --------------------------------------------
+  // Selection priority (so we serve phone-less leads first, instead of
+  // re-tracing the freshest rows in a hot loop):
+  //   1. phone IS NULL or empty
+  //   2. phone_refreshed_at < cutoff (stale phone)
+  //   3. phone_refreshed_at IS NULL (never refreshed) — handled by NULLS FIRST
+  // We use phone_refreshed_at instead of updated_at so unrelated writes
+  // don't reset the staleness clock.
   const { data: skipCandidates, error: skipErr } = await supabaseAdmin
     .from("homeowner_requests")
-    .select("id, property_address, owner_name_records, full_name, email, updated_at")
+    .select("id, property_address, owner_name_records, full_name, phone, email, phone_refreshed_at")
     .eq("source", "bot")
-    .lt("updated_at", cutoff)
+    .or(`phone.is.null,phone.eq.,phone_refreshed_at.is.null,phone_refreshed_at.lt.${cutoff}`)
+    .order("phone_refreshed_at", { ascending: true, nullsFirst: true })
     .limit(50) // cap per run to control cost
   if (skipErr) {
     return { ...result, ok: false, reason: skipErr.message }
@@ -207,6 +222,11 @@ async function runRefresh(): Promise<RefreshResult> {
   result.candidates_skiptrace = skipCandidates?.length || 0
 
   for (const row of skipCandidates || []) {
+    // Hard budget guard — abort the loop if we'd blow past the daily cap.
+    if (result.budget_used_estimate_usd >= DAILY_BUDGET_USD_CAP) {
+      result.reason = `daily budget cap ${DAILY_BUDGET_USD_CAP} reached`
+      break
+    }
     const r = row as {
       id: string
       property_address: string | null
@@ -221,13 +241,14 @@ async function runRefresh(): Promise<RefreshResult> {
       const requestBody: Record<string, unknown> = { propertyAddress: parts }
       if (ownerName) requestBody.ownerName = ownerName
 
-      const res = await fetch(SKIP_TRACE_URL, {
+      const res = await fetchWithTimeout(SKIP_TRACE_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ requests: [requestBody] }),
+        timeoutMs: 15000,
       })
       result.budget_used_estimate_usd += 0.25
       if (!res.ok) {
@@ -237,6 +258,12 @@ async function runRefresh(): Promise<RefreshResult> {
       const json = await res.json()
       const persons = json?.results?.persons
       if (!Array.isArray(persons) || persons.length === 0) {
+        // Even on no match, mark as refreshed so we don't re-trace the same
+        // address every day. Wait until phone_refreshed_at goes stale again.
+        await supabaseAdmin
+          .from("homeowner_requests")
+          .update({ phone_refreshed_at: new Date().toISOString() })
+          .eq("id", r.id)
         result.skiptrace_no_match++
         continue
       }
@@ -252,12 +279,18 @@ async function runRefresh(): Promise<RefreshResult> {
       const phones = rankPhones(allPhones)
       const emails = rankEmails(allEmails)
       if (phones.length === 0) {
+        await supabaseAdmin
+          .from("homeowner_requests")
+          .update({ phone_refreshed_at: new Date().toISOString() })
+          .eq("id", r.id)
         result.skiptrace_no_match++
         continue
       }
+      // Use the dedicated `phone_refreshed_at` so unrelated writes don't
+      // reset the staleness clock.
       const writePayload: Record<string, unknown> = {
         phone: phones[0].number,
-        updated_at: new Date().toISOString(),
+        phone_refreshed_at: new Date().toISOString(),
       }
       if (emails[0] && !r.email) {
         writePayload.email = emails[0]
@@ -270,7 +303,10 @@ async function runRefresh(): Promise<RefreshResult> {
         // Try phone-only fallback if unique constraint blocks email write
         const phoneOnly = await supabaseAdmin
           .from("homeowner_requests")
-          .update({ phone: phones[0].number, updated_at: new Date().toISOString() })
+          .update({
+            phone: phones[0].number,
+            phone_refreshed_at: new Date().toISOString(),
+          })
           .eq("id", r.id)
         if (phoneOnly.error) {
           result.skiptrace_failed++
@@ -316,26 +352,28 @@ async function runRefresh(): Promise<RefreshResult> {
     // ----- Pass 2: BatchData fallback -----
     if (!avm && apiKey) {
       try {
-        const verifyRes = await fetch(VERIFY_URL, {
+        const verifyRes = await fetchWithTimeout(VERIFY_URL, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ requests: [parts] }),
+          timeoutMs: 15000,
         })
         result.budget_used_estimate_usd += 0.2
         if (verifyRes.ok) {
           const verifyData = await verifyRes.json()
           const hash = verifyData?.results?.addresses?.[0]?.hash
           if (hash) {
-            const lookupRes = await fetch(LOOKUP_URL, {
+            const lookupRes = await fetchWithTimeout(LOOKUP_URL, {
               method: "POST",
               headers: {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ requests: [{ hash }] }),
+              timeoutMs: 15000,
             })
             if (lookupRes.ok) {
               const lookup = await lookupRes.json()
@@ -403,9 +441,25 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await runRefresh()
+    // Soft-fail alert: if the run completed but produced anomalies (zero
+    // candidates AND >0 leads in DB, or >50% failure rate on the calls
+    // we made), notify ops so silent degradation doesn't go unnoticed.
+    const totalCalls =
+      result.skiptrace_success + result.skiptrace_failed + result.skiptrace_no_match
+    if (totalCalls > 0 && result.skiptrace_failed / totalCalls > 0.5) {
+      await notifyOpsAlert(
+        "refresh-dialer: high skip-trace failure rate",
+        `Skip-trace failed ${result.skiptrace_failed}/${totalCalls} calls.\n\n${JSON.stringify(result, null, 2)}`
+      )
+    }
     return NextResponse.json(result)
   } catch (err) {
     console.error("refresh-dialer cron failed:", err)
+    // Hard-fail alert: cron threw before completing.
+    await notifyOpsAlert(
+      "refresh-dialer cron CRASHED",
+      `${err instanceof Error ? err.stack || err.message : String(err)}`
+    )
     return NextResponse.json(
       {
         ok: false,

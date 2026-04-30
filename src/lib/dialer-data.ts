@@ -272,7 +272,11 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
   }
   const row = data as ActivityRow
 
-  // Roll up onto workflow row
+  // Roll up onto workflow row.
+  // Use the atomic dialer_increment_counters RPC for the counter math so
+  // concurrent activities can't lose increments via read-modify-write.
+  // Status transitions still need a read because the rule depends on the
+  // current state — but counters are bumped atomically.
   const existing = await getWorkflow(input.listingSlug)
   const isAttempt = input.channel !== "note"
   const isRpc = input.outcome === "connected" || input.outcome === "booked"
@@ -285,29 +289,70 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
     if (existing.status === "attempting_contact" && isRpc) return "rpc_made"
     return existing.status
   })()
-  const newAttempt = existing.attemptCount + (isAttempt ? 1 : 0)
-  const newRpc = existing.rpcCount + (isRpc ? 1 : 0)
-  const merged = {
-    listing_slug: input.listingSlug,
-    status: newStatus,
-    next_action: input.nextAction ?? existing.nextAction,
-    next_action_at:
-      input.nextActionAt !== undefined ? input.nextActionAt : existing.nextActionAt ?? null,
-    auction_call_at:
-      input.outcome === "booked" && input.nextActionAt
-        ? input.nextActionAt
-        : existing.auctionCallAt ?? null,
-    closed_lost_reason: existing.closedLostReason ?? null,
-    summary_notes: existing.summaryNotes ?? "",
-    last_contact_at: occurredAt,
-    attempt_count: newAttempt,
-    rpc_count: newRpc,
-    updated_by: input.createdBy ?? existing.updatedBy ?? "",
-    updated_at: new Date().toISOString(),
+  const nextActionAt =
+    input.nextActionAt !== undefined ? input.nextActionAt : existing.nextActionAt ?? null
+
+  const { error: rpcErr } = await supabaseAdmin.rpc("dialer_increment_counters", {
+    p_listing_slug: input.listingSlug,
+    p_attempt_delta: isAttempt ? 1 : 0,
+    p_rpc_delta: isRpc ? 1 : 0,
+    p_last_outcome: input.outcome,
+    p_last_outcome_at: occurredAt,
+    p_status: newStatus,
+    p_next_action_at: nextActionAt,
+  })
+  if (rpcErr) {
+    // Fall back to upsert if the RPC isn't available yet (e.g. migration
+    // hasn't been applied in a preview env). Logs the issue so we notice.
+    console.warn("dialer_increment_counters RPC missing — falling back to upsert:", rpcErr.message)
+    const newAttempt = existing.attemptCount + (isAttempt ? 1 : 0)
+    const newRpc = existing.rpcCount + (isRpc ? 1 : 0)
+    const merged = {
+      listing_slug: input.listingSlug,
+      status: newStatus,
+      next_action: input.nextAction ?? existing.nextAction,
+      next_action_at: nextActionAt,
+      auction_call_at:
+        input.outcome === "booked" && input.nextActionAt
+          ? input.nextActionAt
+          : existing.auctionCallAt ?? null,
+      closed_lost_reason: existing.closedLostReason ?? null,
+      summary_notes: existing.summaryNotes ?? "",
+      last_contact_at: occurredAt,
+      attempt_count: newAttempt,
+      rpc_count: newRpc,
+      updated_by: input.createdBy ?? existing.updatedBy ?? "",
+      updated_at: new Date().toISOString(),
+    }
+    await supabaseAdmin
+      .from("dialer_lead_workflow")
+      .upsert(merged, { onConflict: "listing_slug" })
+  } else {
+    // RPC succeeded for counter+status; still need to update non-counter
+    // fields the RPC doesn't manage.
+    if (input.nextAction !== undefined || input.outcome === "booked") {
+      await supabaseAdmin
+        .from("dialer_lead_workflow")
+        .update({
+          next_action: input.nextAction ?? existing.nextAction,
+          auction_call_at:
+            input.outcome === "booked" && input.nextActionAt
+              ? input.nextActionAt
+              : existing.auctionCallAt ?? null,
+          last_contact_at: occurredAt,
+          updated_by: input.createdBy ?? existing.updatedBy ?? "",
+        })
+        .eq("listing_slug", input.listingSlug)
+    } else {
+      await supabaseAdmin
+        .from("dialer_lead_workflow")
+        .update({
+          last_contact_at: occurredAt,
+          updated_by: input.createdBy ?? existing.updatedBy ?? "",
+        })
+        .eq("listing_slug", input.listingSlug)
+    }
   }
-  await supabaseAdmin
-    .from("dialer_lead_workflow")
-    .upsert(merged, { onConflict: "listing_slug" })
 
   // Fire-and-forget notification to the auction partner when a call is booked.
   // Non-blocking — errors log but never fail the activity write.
