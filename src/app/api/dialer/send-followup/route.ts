@@ -105,98 +105,112 @@ export async function POST(req: NextRequest) {
   const address = inventory?.address || "your property"
   const distress = distressTypeLabel(inventory?.distressType).label
 
+  // Pull the street name for a more conversational subject
+  const streetName = (() => {
+    const m = address.match(/^[\d-]+\s+([^,]+)/)
+    return m ? m[1].trim() : address.split(",")[0]
+  })()
+
   // Compute math for the email body
   const arv = hr?.property_value ?? inventory?.avmMid ?? 0
   const loan = inventory?.mortgageAmount ?? 0
   let mathBlock = ""
   let mathTextBlock = ""
+  let auctionLow = 0
+  let auctionHigh = 0
+  let wholesaleNet = 0
   if (arv > 0) {
     const m = computeMath(defaultInputsFor(arv, loan))
-    const auctionLow = m.auction.low.netToHomeowner
-    const auctionHigh = m.auction.high.netToHomeowner
-    const wholesaleNet = m.wholesaler.realisticNet
+    auctionLow = m.auction.low.netToHomeowner
+    auctionHigh = m.auction.high.netToHomeowner
+    wholesaleNet = m.wholesaler.realisticNet
 
+    // Plain, scannable, no marketing decoration. Three lines, monospace
+    // numbers, single light divider before the auction line. Reads like
+    // someone who actually did the math, not a template.
     mathBlock = `
-<table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin:16px 0">
-  <tr><td colspan="2" style="padding:12px 14px 4px;color:#1e293b;font-size:13px;font-weight:600">What we estimate you'd take home, three different ways:</td></tr>
-  <tr>
-    <td style="padding:6px 14px;color:#475569;font-size:13px">Wholesaler offer (typical 70% rule)</td>
-    <td style="padding:6px 14px;color:#1e293b;font-size:13px;font-weight:600;text-align:right">${esc(fmtMath(wholesaleNet))}</td>
-  </tr>
-  <tr>
-    <td style="padding:6px 14px;color:#475569;font-size:13px">If trustee sale runs (no listing)</td>
-    <td style="padding:6px 14px;color:#dc2626;font-size:13px;font-weight:600;text-align:right">$0</td>
-  </tr>
-  <tr>
-    <td style="padding:6px 14px 12px;color:#15803d;font-size:13px;font-weight:600;border-top:1px solid #e2e8f0">Marketed auction (Parks Auction &amp; Realty)</td>
-    <td style="padding:6px 14px 12px;color:#15803d;font-size:14px;font-weight:700;text-align:right;border-top:1px solid #e2e8f0">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td>
-  </tr>
-</table>`
+<div style="margin:18px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.7">
+    <tr>
+      <td style="padding:4px 0;color:#475569">If you sold to a wholesaler today</td>
+      <td style="padding:4px 0;color:#1e293b;text-align:right;font-variant-numeric:tabular-nums">${esc(fmtMath(wholesaleNet))}</td>
+    </tr>
+    <tr>
+      <td style="padding:4px 0;color:#475569">If the trustee sale runs (no listing)</td>
+      <td style="padding:4px 0;color:#1e293b;text-align:right;font-variant-numeric:tabular-nums">$0</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0 4px;color:#475569;border-top:1px solid #e2e8f0">If we route it through a marketed auction</td>
+      <td style="padding:8px 0 4px;color:#15803d;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-top:1px solid #e2e8f0">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td>
+    </tr>
+  </table>
+</div>`
 
     mathTextBlock = `
-What we estimate you'd take home, three different ways:
-
-  Wholesaler offer (typical 70% rule):  ${fmtMath(wholesaleNet)}
-  If trustee sale runs (no listing):    $0
-  Marketed auction (Parks):             ${fmtMath(auctionLow)} - ${fmtMath(auctionHigh)}
+  If you sold to a wholesaler today:        ${fmtMath(wholesaleNet)}
+  If the trustee sale runs (no listing):    $0
+  If we route through a marketed auction:   ${fmtMath(auctionLow)} - ${fmtMath(auctionHigh)}
 `
   }
 
-  const callerName = firstName(session.caller) || "Chris"
-  const subject = `Quick numbers on ${address}`
+  const callerName = firstName(session.caller) || "Patrick"
+  const subject = `${streetName} — quick numbers worth seeing`
 
-  // Optional caller-customized message
+  // Optional caller-customized message — slips in naturally, no decoration
   const customLine = body.customMessage?.trim()
-    ? `<p style="margin:0 0 14px;color:#1e293b;font-size:14px;line-height:1.6">${esc(body.customMessage.trim())}</p>`
+    ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">${esc(body.customMessage.trim())}</p>`
     : ""
+
+  // Soft mention of the source — only when AVM is meaningful, otherwise
+  // skip so the email isn't disclosing a number we can't compute
+  const mathIntro =
+    arv > 0
+      ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+        Pulled together what we estimate you'd take home in three different scenarios for ${esc(address)}:
+      </p>`
+      : `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+        Wanted to put something in front of you about ${esc(address)} before any decisions get rushed.
+      </p>`
 
   const html = `<!DOCTYPE html>
 <html>
-<body style="margin:0;padding:24px;background:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:8px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
+<body style="margin:0;padding:32px 16px;background:#ffffff;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:560px;margin:0 auto">
 
-  <p style="margin:0 0 14px;color:#1e293b;font-size:14px;line-height:1.6">Hi ${esc(greetingName)},</p>
+  <p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">Hi ${esc(greetingName)},</p>
 
-  <p style="margin:0 0 14px;color:#1e293b;font-size:14px;line-height:1.6">
-    ${esc(callerName)} here from FALCO — I tried to reach you earlier today about
-    ${esc(address)}. Wanted to follow up by email since I know cold calls
-    are easy to ignore.
-  </p>
-
-  <p style="margin:0 0 14px;color:#1e293b;font-size:14px;line-height:1.6">
-    Quick context: I work with Parks Auction &amp; Realty here in Nashville
-    — the largest auction firm in the Southeast. We help homeowners in
-    pre-foreclosure and foreclosure situations preserve a lot more of
-    their equity than wholesalers offer. The math is usually pretty stark.
-  </p>
-
-  ${customLine}
+  ${mathIntro}
 
   ${mathBlock}
 
-  <p style="margin:14px 0;color:#475569;font-size:12px;line-height:1.5">
-    Those numbers are estimates based on public data — they get sharper
-    once we look at your actual mortgage payoff and property condition.
-    But the spread is real, and the trustee sale outcome is the one
-    most homeowners don't realize until it's too late.
+  ${
+    arv > 0
+      ? `<p style="margin:14px 0;color:#475569;font-size:13px;line-height:1.6">
+    Numbers are estimates from public data — they get sharper once we
+    pull your actual mortgage payoff. But the spread between option 1
+    and option 3 is usually where most homeowners leave money. The
+    courthouse outcome is the one most folks don't see coming until
+    it's too late to do anything about it.
+  </p>`
+      : ""
+  }
+
+  ${customLine}
+
+  <p style="margin:18px 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
+    If anything in there looks off, or you want to talk through your
+    specific situation, just reply to this email or text the number
+    that called you. No pressure either way — I'd rather you have the
+    math than not.
   </p>
 
-  <p style="margin:14px 0;color:#1e293b;font-size:14px;line-height:1.6">
-    Worth 10 minutes on the phone? No pressure — I just want to make
-    sure you've seen the actual options before any decisions get made.
-    Easiest is to text or call me back at the number I rang from.
+  <p style="margin:18px 0 8px;color:#1e293b;font-size:15px;line-height:1.6">
+    — ${esc(callerName)}
+  </p>
+  <p style="margin:0;color:#64748b;font-size:12px">
+    FALCO · falco@falco.llc
   </p>
 
-  <p style="margin:14px 0;color:#1e293b;font-size:14px;line-height:1.6">
-    — ${esc(callerName)}<br>
-    <span style="color:#64748b;font-size:12px">FALCO &middot; falco@falco.llc</span>
-  </p>
-
-</div>
-
-<div style="max-width:560px;margin:12px auto 0;text-align:center;color:#94a3b8;font-size:11px;line-height:1.5">
-  This is a one-time follow-up regarding your property. If you'd prefer
-  no further contact, just reply STOP and we'll remove you from outreach.
 </div>
 </body>
 </html>`
@@ -204,19 +218,19 @@ What we estimate you'd take home, three different ways:
   const text = [
     `Hi ${greetingName},`,
     ``,
-    `${callerName} here from FALCO — I tried to reach you earlier today about ${address}. Wanted to follow up by email since I know cold calls are easy to ignore.`,
-    ``,
-    `Quick context: I work with Parks Auction & Realty here in Nashville — the largest auction firm in the Southeast. We help homeowners in pre-foreclosure and foreclosure situations preserve a lot more of their equity than wholesalers offer. The math is usually pretty stark.`,
-    body.customMessage?.trim() ? `\n${body.customMessage.trim()}\n` : "",
+    arv > 0
+      ? `Pulled together what we estimate you'd take home in three different scenarios for ${address}:`
+      : `Wanted to put something in front of you about ${address} before any decisions get rushed.`,
     mathTextBlock,
-    `Those numbers are estimates based on public data — they get sharper once we look at your actual mortgage payoff and property condition. But the spread is real, and the trustee sale outcome is the one most homeowners don't realize until it's too late.`,
+    arv > 0
+      ? `Numbers are estimates from public data — they get sharper once we pull your actual mortgage payoff. The spread between option 1 and option 3 is usually where most homeowners leave money. The courthouse outcome is the one most folks don't see coming until it's too late.`
+      : "",
+    body.customMessage?.trim() ? `\n${body.customMessage.trim()}` : "",
     ``,
-    `Worth 10 minutes on the phone? No pressure — I just want to make sure you've seen the actual options before any decisions get made. Easiest is to text or call me back at the number I rang from.`,
+    `If anything in there looks off, or you want to talk through your specific situation, just reply to this email or text the number that called you. No pressure either way — I'd rather you have the math than not.`,
     ``,
     `— ${callerName}`,
     `FALCO · falco@falco.llc`,
-    ``,
-    `(If you'd prefer no further contact, reply STOP and we'll remove you.)`,
   ]
     .filter((line) => line !== "")
     .join("\n")
