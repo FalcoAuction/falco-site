@@ -132,18 +132,27 @@ export async function POST(req: NextRequest) {
       payoff = Math.round(loan * 0.93)
     }
   }
+  // Underwater detection — if estimated payoff is at or near AVM, all
+  // pitches that quote a "you'll net $X" number are misleading. Public-
+  // records mortgage_balance is often stale or includes stacked liens
+  // (HELOCs, second mortgages), so we'd rather verify with the homeowner
+  // than send a math sheet that shows negative take-home.
+  const isUnderwater = arv > 0 && payoff > arv * 0.90
+
   let mathBlock = ""
   let mathTextBlock = ""
   let auctionLow = 0
   let auctionHigh = 0
   let auctionWorst = 0
   let wholesaleNet = 0
-  if (arv > 0) {
+  if (arv > 0 && !isUnderwater) {
     const inputs = defaultInputsFor(arv, payoff)
     const m = computeMath(inputs)
-    auctionLow = m.auction.low.netToHomeowner
-    auctionHigh = m.auction.high.netToHomeowner
-    auctionWorst = m.auction.worst.netToHomeowner
+    // Clamp at $0 — never display negative take-home in the email even
+    // if raw arithmetic goes underwater on the worst-case scenario.
+    auctionLow = Math.max(0, m.auction.low.netToHomeowner)
+    auctionHigh = Math.max(0, m.auction.high.netToHomeowner)
+    auctionWorst = Math.max(0, m.auction.worst.netToHomeowner)
     wholesaleNet = m.wholesaler.realisticNet
 
     // Full math sheet inline. Reads like someone showed you their
@@ -240,32 +249,123 @@ export async function POST(req: NextRequest) {
   }
 
   const callerName = firstName(session.caller) || "Patrick"
-  const subject = `${streetName} — quick numbers worth seeing`
+
+  // Branch: FSBO sellers need a different pitch than distressed/foreclosure.
+  // FSBO are already actively selling — no wholesale pressure, no urgency.
+  // Distressed homeowners face foreclosure timeline + wholesalers circling.
+  // Underwater homeowners need payoff verification before any model runs.
+  const isFSBO = (inventory?.distressType || "").toUpperCase() === "FSBO"
+
+  const subject = isUnderwater
+    ? `${streetName} — quick question on your mortgage payoff`
+    : isFSBO
+    ? `${streetName} — quick note on your FSBO listing`
+    : `${streetName} — quick numbers worth seeing`
 
   // Optional caller-customized message — slips in naturally, no decoration
   const customLine = body.customMessage?.trim()
     ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">${esc(body.customMessage.trim())}</p>`
     : ""
 
-  // Soft mention of the source — only when AVM is meaningful, otherwise
-  // skip so the email isn't disclosing a number we can't compute
-  const mathIntro =
-    arv > 0
-      ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
-        Pulled together what we estimate you'd take home in three different scenarios for ${esc(address)}:
-      </p>`
-      : `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
-        Wanted to put something in front of you about ${esc(address)} before any decisions get rushed.
-      </p>`
-
-  const html = `<!DOCTYPE html>
+  // ─────────────────────────────────────────────────────────────────────
+  // BODY VARIANT A: FSBO seller
+  // They're actively selling on their own, no wholesale pressure, no
+  // foreclosure deadline. Different pitch entirely — focus on the
+  // tradeoffs FSBO sellers actually feel: open-ended timeline, managing
+  // showings, no broad buyer pool. Auction = certainty + speed + buyer
+  // pays the premium. Soft, conversational, no math sheet.
+  // ─────────────────────────────────────────────────────────────────────
+  const fsboHtml = `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:32px 16px;background:#ffffff;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
 <div style="max-width:560px;margin:0 auto">
 
   <p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">Hi ${esc(greetingName)},</p>
 
-  ${mathIntro}
+  <p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+    Saw your property at ${esc(address)} is listed for sale by owner.
+    Most folks in your spot are doing it to keep more of the sale price
+    (no 6% agent commission), but the trade-off is the open-ended
+    timeline and managing inquiries yourself.
+  </p>
+
+  <p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+    If you've been at it a while, or just want a different option on
+    the table, we route properties like yours through marketed auction
+    with Parks Auction &amp; Realty here in Nashville. A few things that
+    tend to make sense for FSBO sellers:
+  </p>
+
+  <ul style="margin:14px 0;padding-left:20px;color:#1e293b;font-size:15px;line-height:1.7">
+    <li>Defined sale date — typically 30-45 days from listing to close</li>
+    <li>The buyer pays the premium, so your sale price stays cleaner</li>
+    <li>Broad buyer pool — Parks has 40K+ active investors on their list</li>
+    <li>No showings, no repeated negotiations</li>
+  </ul>
+
+  ${customLine}
+
+  <p style="margin:18px 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
+    Won't always be the right move — depends on your situation. If
+    it's worth a quick conversation, just reply or text the number
+    that called you. No pressure either way.
+  </p>
+
+  <p style="margin:18px 0 8px;color:#1e293b;font-size:15px;line-height:1.6">
+    — ${esc(callerName)}
+  </p>
+  <p style="margin:0;color:#64748b;font-size:12px">
+    FALCO · falco@falco.llc
+  </p>
+
+</div>
+</body>
+</html>`
+
+  const fsboText = [
+    `Hi ${greetingName},`,
+    ``,
+    `Saw your property at ${address} is listed for sale by owner. Most folks in your spot are doing it to keep more of the sale price (no 6% agent commission), but the trade-off is the open-ended timeline and managing inquiries yourself.`,
+    ``,
+    `If you've been at it a while, or just want a different option on the table, we route properties like yours through marketed auction with Parks Auction & Realty here in Nashville. A few things that tend to make sense for FSBO sellers:`,
+    ``,
+    `  • Defined sale date — typically 30-45 days from listing to close`,
+    `  • The buyer pays the premium, so your sale price stays cleaner`,
+    `  • Broad buyer pool — Parks has 40K+ active investors on their list`,
+    `  • No showings, no repeated negotiations`,
+    ``,
+    body.customMessage?.trim() ? body.customMessage.trim() : "",
+    ``,
+    `Won't always be the right move — depends on your situation. If it's worth a quick conversation, just reply or text the number that called you. No pressure either way.`,
+    ``,
+    `— ${callerName}`,
+    `FALCO · falco@falco.llc`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n")
+
+  // ─────────────────────────────────────────────────────────────────────
+  // BODY VARIANT B: Distressed (TRUSTEE_NOTICE / LIS_PENDENS / NOD / etc.)
+  // Math sheet leads. Three paths broken out. Worst-case auction beats
+  // wholesaler. Soft close.
+  // ─────────────────────────────────────────────────────────────────────
+  const distressedMathIntro =
+    arv > 0
+      ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+        Pulled the math on ${esc(address)} for you, three ways:
+      </p>`
+      : `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+        Wanted to put something in front of you about ${esc(address)} before any decisions get rushed.
+      </p>`
+
+  const distressedHtml = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:32px 16px;background:#ffffff;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:560px;margin:0 auto">
+
+  <p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">Hi ${esc(greetingName)},</p>
+
+  ${distressedMathIntro}
 
   ${mathBlock}
 
@@ -273,9 +373,9 @@ export async function POST(req: NextRequest) {
     arv > 0
       ? `<p style="margin:14px 0;color:#475569;font-size:13px;line-height:1.6">
     Numbers are estimates from public data — they get sharper once we
-    pull your actual mortgage payoff. But the spread between option 1
-    and option 3 is usually where most homeowners leave money. The
-    courthouse outcome is the one most folks don't see coming until
+    pull your actual mortgage payoff. The spread between Path 1 and
+    Path 3 is where most homeowners leave money. The courthouse
+    outcome (Path 2) is the one most folks don't see coming until
     it's too late to do anything about it.
   </p>`
       : ""
@@ -301,15 +401,15 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-  const text = [
+  const distressedText = [
     `Hi ${greetingName},`,
     ``,
     arv > 0
-      ? `Pulled together what we estimate you'd take home in three different scenarios for ${address}:`
+      ? `Pulled the math on ${address} for you, three ways:`
       : `Wanted to put something in front of you about ${address} before any decisions get rushed.`,
     mathTextBlock,
     arv > 0
-      ? `Numbers are estimates from public data — they get sharper once we pull your actual mortgage payoff. The spread between option 1 and option 3 is usually where most homeowners leave money. The courthouse outcome is the one most folks don't see coming until it's too late.`
+      ? `Numbers are estimates from public data — they get sharper once we pull your actual mortgage payoff. The spread between Path 1 and Path 3 is where most homeowners leave money. The courthouse outcome (Path 2) is the one most folks don't see coming until it's too late.`
       : "",
     body.customMessage?.trim() ? `\n${body.customMessage.trim()}` : "",
     ``,
@@ -320,6 +420,84 @@ export async function POST(req: NextRequest) {
   ]
     .filter((line) => line !== "")
     .join("\n")
+
+  // ─────────────────────────────────────────────────────────────────────
+  // BODY VARIANT C: Underwater
+  // Public-records mortgage_balance shows payoff at or above market.
+  // Could be real, could be stale data / stacked liens. Either way the
+  // math sheet pitch fails — they'd see negative take-home and trash it.
+  // Short, no math, asks for the actual payoff letter so we can re-model.
+  // ─────────────────────────────────────────────────────────────────────
+  const underwaterHtml = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:32px 16px;background:#ffffff;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:560px;margin:0 auto">
+
+  <p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">Hi ${esc(greetingName)},</p>
+
+  <p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+    Pulled what I could on ${esc(address)} from public records. Based on
+    what's filed, your loan payoff looks like it's right around — or
+    above — the current market value of the house.
+  </p>
+
+  <p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
+    Two things that's usually true:
+  </p>
+
+  <ul style="margin:14px 0;padding-left:20px;color:#1e293b;font-size:15px;line-height:1.7">
+    <li>The recorded balance is often stale by years, or it stacks a HELOC on top of the first mortgage. Your real payoff might be $30K–$80K lower.</li>
+    <li>If the payoff really is at or above market, the cleanest path is usually a short-sale negotiation with your lender before the trustee sale runs — they often write off the deficiency rather than take the property back.</li>
+  </ul>
+
+  ${customLine}
+
+  <p style="margin:18px 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
+    Easiest way to get clarity: pull your most recent mortgage statement
+    (or call the servicer's payoff line) and reply with the actual
+    number. I'll re-run the comparison with real data — takes me about
+    ten minutes — and we'll know exactly which path makes sense.
+  </p>
+
+  <p style="margin:14px 0;color:#475569;font-size:13px;line-height:1.6">
+    No pressure, no sales pitch. If you'd rather just text me back the payoff number, that works too.
+  </p>
+
+  <p style="margin:18px 0 8px;color:#1e293b;font-size:15px;line-height:1.6">
+    — ${esc(callerName)}
+  </p>
+  <p style="margin:0;color:#64748b;font-size:12px">
+    FALCO · falco@falco.llc
+  </p>
+
+</div>
+</body>
+</html>`
+
+  const underwaterText = [
+    `Hi ${greetingName},`,
+    ``,
+    `Pulled what I could on ${address} from public records. Based on what's filed, your loan payoff looks like it's right around — or above — the current market value of the house.`,
+    ``,
+    `Two things that's usually true:`,
+    ``,
+    `  • The recorded balance is often stale by years, or it stacks a HELOC on top of the first mortgage. Your real payoff might be $30K-$80K lower.`,
+    `  • If the payoff really is at or above market, the cleanest path is usually a short-sale negotiation with your lender before the trustee sale runs — they often write off the deficiency rather than take the property back.`,
+    ``,
+    body.customMessage?.trim() ? body.customMessage.trim() : "",
+    ``,
+    `Easiest way to get clarity: pull your most recent mortgage statement (or call the servicer's payoff line) and reply with the actual number. I'll re-run the comparison with real data — takes me about ten minutes — and we'll know exactly which path makes sense.`,
+    ``,
+    `No pressure, no sales pitch. If you'd rather just text me back the payoff number, that works too.`,
+    ``,
+    `— ${callerName}`,
+    `FALCO · falco@falco.llc`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n")
+
+  const html = isUnderwater ? underwaterHtml : isFSBO ? fsboHtml : distressedHtml
+  const text = isUnderwater ? underwaterText : isFSBO ? fsboText : distressedText
 
   // Send via Resend
   const result = await resendClient.emails.send({
