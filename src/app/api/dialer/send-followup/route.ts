@@ -114,42 +114,128 @@ export async function POST(req: NextRequest) {
   // Compute math for the email body
   const arv = hr?.property_value ?? inventory?.avmMid ?? 0
   const loan = inventory?.mortgageAmount ?? 0
+  // Estimate current mortgage payoff via simple amortization at 4%, default
+  // 0.93 of original if mortgage date unknown.
+  const mortgageDate = inventory?.mortgageDate || ""
+  let payoff = loan
+  if (loan > 0) {
+    const start = mortgageDate ? new Date(mortgageDate).getTime() : NaN
+    if (Number.isFinite(start)) {
+      const yrs = Math.max(0, (Date.now() - start) / (1000 * 60 * 60 * 24 * 365.25))
+      const r = 0.04 / 12
+      const n = 360
+      const paid = Math.min(yrs * 12, n)
+      const remaining =
+        (Math.pow(1 + r, n) - Math.pow(1 + r, paid)) / (Math.pow(1 + r, n) - 1)
+      payoff = Math.round(loan * remaining)
+    } else {
+      payoff = Math.round(loan * 0.93)
+    }
+  }
   let mathBlock = ""
   let mathTextBlock = ""
   let auctionLow = 0
   let auctionHigh = 0
+  let auctionWorst = 0
   let wholesaleNet = 0
   if (arv > 0) {
-    const m = computeMath(defaultInputsFor(arv, loan))
+    const inputs = defaultInputsFor(arv, payoff)
+    const m = computeMath(inputs)
     auctionLow = m.auction.low.netToHomeowner
     auctionHigh = m.auction.high.netToHomeowner
+    auctionWorst = m.auction.worst.netToHomeowner
     wholesaleNet = m.wholesaler.realisticNet
 
-    // Plain, scannable, no marketing decoration. Three lines, monospace
-    // numbers, single light divider before the auction line. Reads like
-    // someone who actually did the math, not a template.
+    // Full math sheet inline. Reads like someone showed you their
+    // calculation — three sections, line-item breakdown, monospace
+    // numbers so they line up. Same data the homeowner would see if
+    // Chris walked them through the printed math sheet on a call.
+    const sectionStyle =
+      "margin:0 0 16px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden"
+    const headerStyle =
+      "padding:10px 14px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase"
+    const tableStyle =
+      "width:100%;border-collapse:collapse;font-size:14px;line-height:1.6;font-variant-numeric:tabular-nums"
+    const labelStyle = "padding:6px 14px;color:#475569"
+    const valStyle = "padding:6px 14px;color:#1e293b;text-align:right"
+    const totalLabelStyle =
+      "padding:10px 14px 12px;color:#1e293b;font-weight:600;border-top:1px solid #e2e8f0"
+    const totalValStyle =
+      "padding:10px 14px 12px;color:#1e293b;font-weight:700;text-align:right;border-top:1px solid #e2e8f0"
+
     mathBlock = `
-<div style="margin:18px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-  <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.7">
-    <tr>
-      <td style="padding:4px 0;color:#475569">If you sold to a wholesaler today</td>
-      <td style="padding:4px 0;color:#1e293b;text-align:right;font-variant-numeric:tabular-nums">${esc(fmtMath(wholesaleNet))}</td>
-    </tr>
-    <tr>
-      <td style="padding:4px 0;color:#475569">If the trustee sale runs (no listing)</td>
-      <td style="padding:4px 0;color:#1e293b;text-align:right;font-variant-numeric:tabular-nums">$0</td>
-    </tr>
-    <tr>
-      <td style="padding:8px 0 4px;color:#475569;border-top:1px solid #e2e8f0">If we route it through a marketed auction</td>
-      <td style="padding:8px 0 4px;color:#15803d;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;border-top:1px solid #e2e8f0">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td>
-    </tr>
+<!-- WHOLESALER PATH -->
+<div style="${sectionStyle}">
+  <div style="${headerStyle}">Path 1 · If you sold to a wholesaler today</div>
+  <table style="${tableStyle}">
+    <tr><td style="${labelStyle}">Property value (AVM)</td><td style="${valStyle}">${esc(fmtMath(arv))}</td></tr>
+    <tr><td style="${labelStyle}">Wholesaler max offer (70% rule)</td><td style="${valStyle}">${esc(fmtMath(arv * 0.7))}</td></tr>
+    <tr><td style="${labelStyle}">Less repairs estimate</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.repairs))}</td></tr>
+    <tr><td style="${labelStyle}">Less assignment fee</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.assignmentFee))}</td></tr>
+    <tr><td style="${labelStyle}">Less investor margin</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.investorMargin))}</td></tr>
+    <tr><td style="${labelStyle}">Cash offer to you</td><td style="${valStyle}">${esc(fmtMath(m.wholesaler.cashOfferStandard))}</td></tr>
+    <tr><td style="${labelStyle}">Less mortgage payoff (est.)</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(payoff))}</td></tr>
+    <tr><td style="${totalLabelStyle}">Your take-home</td><td style="${totalValStyle}">${esc(fmtMath(wholesaleNet))}</td></tr>
   </table>
+</div>
+
+<!-- TRUSTEE PATH -->
+<div style="${sectionStyle}">
+  <div style="${headerStyle}">Path 2 · If the trustee sale runs (no listing)</div>
+  <div style="padding:12px 14px;color:#475569;font-size:14px;line-height:1.6">
+    Sells at the courthouse steps for whatever the bank needs to recover.
+    Typically wipes the equity. After the bank is paid, the homeowner gets
+    what's left — almost always <strong style="color:#dc2626">$0</strong>
+    in distressed scenarios.
+  </div>
+</div>
+
+<!-- AUCTION PATH -->
+<div style="${sectionStyle};border-color:#bbf7d0;background:#f0fdf4">
+  <div style="${headerStyle};background:#dcfce7;color:#166534">Path 3 · If we route it through a marketed auction</div>
+  <table style="${tableStyle}">
+    <tr><td style="${labelStyle}">Property value (AVM)</td><td style="${valStyle}">${esc(fmtMath(arv))}</td></tr>
+    <tr><td style="${labelStyle}">Modeled clearance range</td><td style="${valStyle}">80% – 88%</td></tr>
+    <tr><td style="${labelStyle}">Winning bid range</td><td style="${valStyle}">${esc(fmtMath(arv * 0.8))} – ${esc(fmtMath(arv * 0.88))}</td></tr>
+    <tr><td style="${labelStyle}">Less mortgage payoff (est.)</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(payoff))}</td></tr>
+    <tr><td style="${labelStyle}">Less closing costs</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.closingCosts))}</td></tr>
+    <tr><td style="${totalLabelStyle};color:#15803d">Your take-home</td><td style="${totalValStyle};color:#15803d">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td></tr>
+  </table>
+  ${
+    m.auction.worstStillBeatsWholesaler
+      ? `<div style="padding:10px 14px;background:#dcfce7;color:#166534;font-size:13px;line-height:1.5">
+        <strong>Even at a worst-case auction (~70% clearance):</strong> you'd still net
+        <strong>${esc(fmtMath(auctionWorst))}</strong> — better than the wholesaler offer.
+      </div>`
+      : `<div style="padding:10px 14px;background:#dcfce7;color:#166534;font-size:13px;line-height:1.5">
+        Worst-case auction (~70% clearance): ${esc(fmtMath(auctionWorst))}
+      </div>`
+  }
 </div>`
 
     mathTextBlock = `
-  If you sold to a wholesaler today:        ${fmtMath(wholesaleNet)}
-  If the trustee sale runs (no listing):    $0
-  If we route through a marketed auction:   ${fmtMath(auctionLow)} - ${fmtMath(auctionHigh)}
+  PATH 1 · If you sold to a wholesaler today
+    Property value (AVM):              ${fmtMath(arv)}
+    Wholesaler max offer (70%):        ${fmtMath(arv * 0.7)}
+    Less repairs estimate:           - ${fmtMath(inputs.repairs)}
+    Less assignment fee:             - ${fmtMath(inputs.assignmentFee)}
+    Less investor margin:            - ${fmtMath(inputs.investorMargin)}
+    Cash offer to you:                 ${fmtMath(m.wholesaler.cashOfferStandard)}
+    Less mortgage payoff (est.):     - ${fmtMath(payoff)}
+    Your take-home:                    ${fmtMath(wholesaleNet)}
+
+  PATH 2 · If the trustee sale runs (no listing)
+    Sells at courthouse for whatever the bank needs to recover.
+    Typically wipes the equity. Almost always $0 to the homeowner.
+
+  PATH 3 · If we route it through a marketed auction
+    Property value (AVM):              ${fmtMath(arv)}
+    Modeled clearance range:           80% - 88%
+    Winning bid range:                 ${fmtMath(arv * 0.8)} - ${fmtMath(arv * 0.88)}
+    Less mortgage payoff (est.):     - ${fmtMath(payoff)}
+    Less closing costs:              - ${fmtMath(inputs.closingCosts)}
+    Your take-home:                    ${fmtMath(auctionLow)} - ${fmtMath(auctionHigh)}
+    Even at worst-case auction (~70%): ${fmtMath(auctionWorst)}
 `
   }
 
