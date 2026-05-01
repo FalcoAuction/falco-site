@@ -81,6 +81,7 @@ export async function GET(
   const ownerFull =
     hr?.full_name || hr?.owner_name_records || inventory?.ownerName || ""
   const greeting = firstName(ownerFull)
+  const address = inventory?.address || "your property"
   const arv = hr?.property_value ?? inventory?.avmMid ?? 0
   const loan = inventory?.mortgageAmount ?? 0
   const payoff = estimatePayoff(loan, inventory?.mortgageDate || null)
@@ -98,61 +99,46 @@ export async function GET(
     ? `+${phoneDigits}`
     : ""
 
-  // Compute math for the opener
-  let wholesaleNet = 0
-  let auctionLow = 0
-  let auctionHigh = 0
+  // Compute math (kept for warm-lead callers / future use; the brutal
+  // opener delegates the numbers to the PDF link, doesn't put them in
+  // the text body).
   if (arv > 0) {
-    const m = computeMath(defaultInputsFor(arv, payoff))
-    wholesaleNet = Math.max(0, m.wholesaler.realisticNet)
-    auctionLow = Math.max(0, m.auction.low.netToHomeowner)
-    auctionHigh = Math.max(0, m.auction.high.netToHomeowner)
+    computeMath(defaultInputsFor(arv, payoff))
   }
+  // Suppress unused-import warning by referencing fmt
+  void fmt
 
   const greetTag = greeting ? `${greeting} — ` : ""
 
+  // Public math link — falco.llc/m/{slug}. Resolves to the one-page PDF
+  // via /api/m/[slug]. Slug is the sha40 pipeline_lead_key, unguessable.
+  const baseUrl =
+    process.env.FALCO_PUBLIC_BASE_URL?.trim().replace(/\/$/, "") ||
+    "https://falco.llc"
+  const mathLink = `${baseUrl}/m/${slug}`
+
   // ─── Variant selection ───────────────────────────────────────────────
+  // Brutal short. No permission ask. No "want the math?" — the math IS
+  // the link. They tap or they don't.
   let text: string
 
   if (isFSBO) {
-    // FSBO: no foreclosure trap framing. Direct trade-off statement.
-    text = [
-      `${greetTag}saw your FSBO listing.`,
-      ``,
-      `Most FSBO sellers we work with eventually deal with one of two issues — open-ended timeline or no buyer pool. We route through a marketed sale (Parks Auction & Realty, state-licensed) — defined sale date in 30-45 days, broad buyer market, you keep agent commission, buyer pays the premium.`,
-      ``,
-      `Want me to text you the math on what your house would clear? Reply yes or ignore. — Patrick / FALCO`,
-    ].join("\n")
+    // FSBO: no foreclosure framing. Direct trade-off statement + math link.
+    text = `${greetTag}saw the FSBO on ${address}. Marketed sale gets you a defined sale date, broad buyer pool, buyer pays the premium. Math: ${mathLink} — Patrick / FALCO`
   } else if (isUnderwater) {
-    // Underwater: payoff verification angle, no math claims.
-    text = [
-      `${greetTag}pulled the records on your house. Public data shows your loan payoff at or above current market value.`,
-      ``,
-      `That's usually wrong by $30-80K (recorded balance is stale, or it's stacking a HELOC). If you have your most recent mortgage statement handy, text me the actual payoff and I'll run the real numbers — wholesale vs marketed sale vs trustee sale.`,
-      ``,
-      `If the payoff is real, the cleanest path is a short sale negotiation before the trustee sale runs — different conversation. — Patrick / FALCO`,
-    ].join("\n")
+    // Underwater: no math link (we can't compute it accurately). The
+    // ASK itself is the action — text back the actual payoff number.
+    text = `${greetTag}public records show your loan payoff at or above market on ${address}. The recorded number is usually $30-80K stale. Text back your actual payoff and I'll run real numbers. — Patrick / FALCO`
   } else {
-    // Distressed default: brute honesty + the wholesaler trap.
-    const dtsLine =
+    // Distressed default: brutal short. Hook + disqualifier + math link.
+    const hook =
       dts !== null && dts > 0
-        ? `Trustee sale in ${dts} days.`
+        ? `${dts} days to your trustee sale.`
         : dts !== null && dts <= 0
-        ? `Trustee sale already passed — call me before another runs.`
-        : `Pre-foreclosure on record.`
+        ? `Your trustee sale already ran — call me before another fires.`
+        : `Pre-foreclosure on ${address}.`
 
-    const numbersLine =
-      arv > 0
-        ? `Cash wholesalers will offer ~${fmt(wholesaleNet)} take-home. Marketed sale projects ${fmt(auctionLow)}–${fmt(auctionHigh)}. Trustee sale = $0.`
-        : `I'd rather you have the math than not.`
-
-    text = [
-      `${greetTag}${dtsLine}`,
-      ``,
-      `The wholesale offers don't get better — they get worse the closer the sale date gets. ${numbersLine}`,
-      ``,
-      `Reply for a one-page PDF with the breakdown, or ignore. — Patrick / FALCO`,
-    ].join("\n")
+    text = `${greetTag}${hook} We're not wholesalers. Real math: ${mathLink} — Patrick / FALCO`
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses
