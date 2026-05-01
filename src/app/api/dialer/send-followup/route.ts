@@ -54,7 +54,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
   }
 
-  let body: { listingSlug?: string; customMessage?: string }
+  let body: {
+    listingSlug?: string
+    customMessage?: string
+    testRecipient?: string  // Override recipient for QA tests. Auth-gated.
+  }
   try {
     body = await req.json()
   } catch {
@@ -92,12 +96,24 @@ export async function POST(req: NextRequest) {
     if (data) hr = data as unknown as HRSnapshot
   }
 
-  const sellerEmail = (hr?.email || inventory?.ownerMail || "").trim()
+  // Test-recipient override — lets QA fire the email to a target inbox
+  // without spamming the real homeowner. Requires the dialer session
+  // (already enforced above) so it can't be abused publicly. Logged so
+  // we can audit any test fires.
+  const testOverride = (body.testRecipient ?? "").trim().toLowerCase()
+  const realEmail = (hr?.email || inventory?.ownerMail || "").trim()
+  const sellerEmail = testOverride && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testOverride)
+    ? testOverride
+    : realEmail
+
   if (!sellerEmail) {
     return NextResponse.json(
       { error: "No email on file for this lead — cannot send follow-up." },
       { status: 400 }
     )
+  }
+  if (testOverride) {
+    console.log(`[send-followup TEST] override recipient → ${testOverride} (real: ${realEmail || "none"})`)
   }
 
   const ownerFullName =
