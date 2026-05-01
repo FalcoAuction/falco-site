@@ -46,31 +46,26 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 })
 
 // ---------- math (mirrors src/lib/math-sheet.ts) ----------
-function defaultRepairs(arv) {
-  return Math.max(8000, Math.min(60000, Math.round((arv * 0.05) / 1000) * 1000))
-}
-function defaultAssignmentFee(arv) {
-  if (arv < 200000) return 5000
-  if (arv > 750000) return 15000
-  return 10000
-}
-function defaultInvestorMargin(arv) {
-  return Math.max(15000, Math.min(80000, Math.round((arv * 0.08) / 1000) * 1000))
-}
+// Recalibrated 2026-04-30 — match what TN distressed wholesalers actually
+// offer (45-55% of ARV cash to homeowner). Repairs/assignment/margin are
+// baked into the spread, not deducted as line items. See math-sheet.ts.
+function defaultRepairs(_arv) { return 0 }
+function defaultAssignmentFee(_arv) { return 0 }
+function defaultInvestorMargin(_arv) { return 0 }
 function defaultInputsFor(arv, loanBalance) {
   return {
     arv,
     loanBalance,
-    repairs: defaultRepairs(arv),
-    assignmentFee: defaultAssignmentFee(arv),
-    investorMargin: defaultInvestorMargin(arv),
+    repairs: 0,
+    assignmentFee: 0,
+    investorMargin: 0,
     closingCosts: 5000,
     buyerPremiumPct: 0.08,
     auctionMinPct: 0.80,
     auctionMaxPct: 0.88,
     auctionWorstPct: 0.70,
-    wholesalerMaoPct: 0.70,
-    wholesalerStretchPct: 0.78,
+    wholesalerMaoPct: 0.55,
+    wholesalerStretchPct: 0.62,
   }
 }
 const WHOLESALER_MIN_NET = 5000
@@ -255,33 +250,36 @@ filtered.forEach((lead, i) => {
   const inputs = defaultInputsFor(arv, payoff)
   const subject = `${street} — quick numbers worth seeing`
 
+  // Brutal opener + three-number table + full math sheet (PDF attached
+  // in the actual email; preview shows the inline text version).
   const body = [
-    `Hi ${greeting},`,
+    `The wholesale offers calling you don't get better — they get worse as the sale date gets closer. Here's what your house actually clears, three ways:`,
     ``,
-    `Pulled the math on ${lead.property_address} for you, three ways:`,
+    `  Cash wholesaler — your take-home:  ${fmt(m.realisticNet)}`,
+    `  Trustee sale (do nothing):         $0`,
+    `  Marketed sale — your take-home:    ${fmt(m.auctionLow)} – ${fmt(m.auctionHigh)}`,
+    ``,
+    `One-page PDF attached with the full breakdown. Detail follows below in case the PDF doesn't render.`,
     ``,
     `─────────────────────────────────────────────────────────`,
-    `PATH 1 · If you sold to a wholesaler today`,
+    `PATH 1 · Cash wholesaler offer`,
     `─────────────────────────────────────────────────────────`,
     `  Property value (AVM):              ${fmt(arv)}`,
-    `  Wholesaler max offer (70% rule):   ${fmt(arv * 0.7)}`,
-    `  Less repairs estimate:           − ${fmt(inputs.repairs)}`,
-    `  Less assignment fee:             − ${fmt(inputs.assignmentFee)}`,
-    `  Less investor margin:            − ${fmt(inputs.investorMargin)}`,
-    `  Cash offer to you:                 ${fmt(m.cashOfferStandard)}`,
+    `  Cash offer (real distressed comps): ${fmt(m.cashOfferStandard)}`,
     `  Less mortgage payoff (est.):     − ${fmt(payoff)}`,
     `  Your take-home:                    ${fmt(m.realisticNet)}`,
+    `  (Reflects what TN cash buyers actually offer — 45-55% of market.`,
+    `   Not the textbook 70% rule — that's what investors pay wholesalers,`,
+    `   not what wholesalers pay you.)`,
     ``,
     `─────────────────────────────────────────────────────────`,
     `PATH 2 · If the trustee sale runs (no listing)`,
     `─────────────────────────────────────────────────────────`,
-    `  Sells at the courthouse for whatever the bank needs to`,
-    `  recover. Typically wipes the equity. After the bank is`,
-    `  paid, the homeowner gets what's left — almost always $0`,
-    `  in distressed scenarios.`,
+    `  Sells at the courthouse for whatever the bank needs to recover.`,
+    `  Equity wiped. Almost always $0 to the homeowner.`,
     ``,
     `─────────────────────────────────────────────────────────`,
-    `PATH 3 · If we route it through a marketed auction`,
+    `PATH 3 · Marketed sale (Parks Auction & Realty, state-licensed)`,
     `─────────────────────────────────────────────────────────`,
     `  Property value (AVM):              ${fmt(arv)}`,
     `  Modeled clearance range:           80% – 88%`,
@@ -289,17 +287,13 @@ filtered.forEach((lead, i) => {
     `  Less mortgage payoff (est.):     − ${fmt(payoff)}`,
     `  Less closing costs:              − ${fmt(inputs.closingCosts)}`,
     `  Your take-home:                    ${fmt(m.auctionLow)} – ${fmt(m.auctionHigh)}`,
+    `  Buyer pays the auction premium, not you.`,
     ``,
     m.worstStillBeatsWholesaler
-      ? `  Even at a worst-case auction (~70% clearance), you'd`
-      : `  Worst-case auction (~70% clearance):`,
-    m.worstStillBeatsWholesaler
-      ? `  still net ${fmt(m.auctionWorst)} — better than the wholesaler.`
-      : `  ${fmt(m.auctionWorst)}`,
+      ? `  Worst-case auction (~70% clearance): ${fmt(m.auctionWorst)} — still beats the wholesaler.`
+      : `  Worst-case auction (~70% clearance): ${fmt(m.auctionWorst)}`,
     ``,
-    `Numbers are estimates from public data — they get sharper once we pull your actual mortgage payoff. The spread between Path 1 and Path 3 is where most homeowners leave money. The courthouse outcome (Path 2) is the one most folks don't see coming until it's too late.`,
-    ``,
-    `If anything in there looks off, or you want to talk through your specific situation, just reply to this email or text the number that called you. No pressure either way — I'd rather you have the math than not.`,
+    `Reply or text back if you want to talk through it. If you don't, I'm not going to keep emailing — wanted you to have the actual math once.`,
     ``,
     `— ${callerName}`,
     `FALCO · falco@falco.llc`,

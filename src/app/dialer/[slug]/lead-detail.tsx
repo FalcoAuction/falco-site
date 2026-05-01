@@ -1154,6 +1154,9 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
   const [emailing, startEmail] = useTransition()
   const [emailMsg, setEmailMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [openerLoading, setOpenerLoading] = useState(false)
+  const [openerCopied, setOpenerCopied] = useState(false)
+  const [openerPreview, setOpenerPreview] = useState<string | null>(null)
   const [showCustom, setShowCustom] = useState(false)
   const [customMessage, setCustomMessage] = useState("")
 
@@ -1163,6 +1166,9 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
       ? ownerFirst.charAt(0) + ownerFirst.slice(1).toLowerCase()
       : ownerFirst
 
+  // Legacy soft "left you a vm" template — kept for back-compat / familiarity.
+  // The brute-honest opener (preferred) is fetched live via /opener-text so
+  // it always reflects current numbers + lead variant (distressed/FSBO/underwater).
   const smsTemplate = `Hi ${titleCasedFirst}, Chris with FALCO — left you a vm about ${
     lead.address ?? "your property"
   }. Worth a 5-min talk about your auction options before any decisions get made. When's good?`
@@ -1179,6 +1185,46 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
         }
       )
     }
+  }
+
+  // Fetch the brute-honest opener with live numbers, copy to clipboard,
+  // and (if a phone is on file) open the SMS app pre-filled. iOS / Android
+  // both honor sms: URIs.
+  function fetchAndCopyOpener() {
+    setOpenerCopied(false)
+    setOpenerPreview(null)
+    setEmailMsg(null)
+    setOpenerLoading(true)
+    fetch(`/api/dialer/${lead.slug}/opener-text`)
+      .then((r) => r.json())
+      .then((json: { text?: string; smsHref?: string | null; error?: string }) => {
+        if (!json.text) {
+          setEmailMsg({ kind: "err", text: json.error || "Couldn't build opener." })
+          return
+        }
+        setOpenerPreview(json.text)
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+          navigator.clipboard.writeText(json.text).catch(() => {})
+        }
+        setOpenerCopied(true)
+        setTimeout(() => setOpenerCopied(false), 4000)
+        // If we have the homeowner's phone, open the SMS app pre-filled.
+        // Patrick taps Send.
+        if (json.smsHref) {
+          window.location.href = json.smsHref
+        }
+      })
+      .catch((err) => {
+        setEmailMsg({
+          kind: "err",
+          text: err instanceof Error ? err.message : "Network error.",
+        })
+      })
+      .finally(() => setOpenerLoading(false))
+  }
+
+  function downloadMathPdf() {
+    window.open(`/api/dialer/${lead.slug}/math-pdf`, "_blank")
   }
 
   function sendEmail() {
@@ -1225,14 +1271,40 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {/* Send follow-up email */}
+        {/* Brute-honest opener — primary CTA. Generates live numbers, copies
+            to clipboard, opens SMS app pre-filled when phone is on file. */}
+        <button
+          type="button"
+          onClick={fetchAndCopyOpener}
+          disabled={openerLoading}
+          title="Generates the brute-honest opener with live numbers, copies it, and opens your SMS app pre-filled."
+          className="rounded-lg border border-amber-400/40 bg-amber-400/15 hover:bg-amber-400/25 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-amber-100 font-semibold transition-colors"
+        >
+          {openerLoading
+            ? "Building..."
+            : openerCopied
+            ? "✓ Copied & SMS opened"
+            : "📲 Send opener text"}
+        </button>
+
+        {/* Download math PDF — primary attachment for the opener text */}
+        <button
+          type="button"
+          onClick={downloadMathPdf}
+          title="Download the one-page PDF math sheet. Attach to the opener text or save for sharing."
+          className="rounded-lg border border-emerald-400/35 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-1.5 text-sm text-emerald-100 transition-colors"
+        >
+          📄 Download math PDF
+        </button>
+
+        {/* Send follow-up email — for warm leads who already replied */}
         <button
           type="button"
           onClick={sendEmail}
           disabled={!hasEmail || emailing}
           title={
             hasEmail
-              ? "Send a personalized follow-up email with the math sheet"
+              ? "Send the long-form math-sheet email (use after they reply to the opener)"
               : "No email on file for this lead"
           }
           className="rounded-lg border border-blue-400/35 bg-blue-400/10 hover:bg-blue-400/20 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-blue-100 transition-colors"
@@ -1254,16 +1326,28 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
           </button>
         )}
 
-        {/* Copy SMS template */}
+        {/* Legacy soft SMS template — collapsed under "More" */}
         <button
           type="button"
           onClick={() => copyToClipboard(smsTemplate)}
-          title="Copy a personalized SMS — paste into your phone and send from your number"
-          className="rounded-lg border border-purple-400/35 bg-purple-400/10 hover:bg-purple-400/20 px-3 py-1.5 text-sm text-purple-100 transition-colors"
+          title="Soft 'left you a vm' template. The opener text above is preferred for first contact."
+          className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 text-[11px] text-white/55 transition-colors"
         >
-          {copied ? "✓ Copied — paste in your phone" : "💬 Copy text template"}
+          {copied ? "✓ soft vm template copied" : "soft vm template"}
         </button>
       </div>
+
+      {/* Live preview of the opener after fetch */}
+      {openerPreview && (
+        <div className="mt-3 rounded-md bg-amber-950/30 border border-amber-400/20 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-wider text-amber-300/70 mb-1.5 font-semibold">
+            Opener (copied to clipboard)
+          </div>
+          <pre className="whitespace-pre-wrap text-[12px] text-amber-50/90 leading-relaxed font-sans">
+            {openerPreview}
+          </pre>
+        </div>
+      )}
 
       {showCustom && hasEmail && (
         <div className="mt-3">

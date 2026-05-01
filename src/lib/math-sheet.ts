@@ -37,25 +37,34 @@ export type MathInputs = {
 }
 
 /**
- * Default deductions scale with property value. The old static defaults
- * ($25K / $10K / $40K) were tuned for the $500K Davidson example and
- * produced nonsense on lower-priced properties (cash offer < $0).
+ * Defaults — RECALIBRATED 2026-04-30 to match what TN distressed
+ * wholesalers ACTUALLY offer (not the textbook 70% MAO formula).
  *
- * Real wholesaler behavior:
- *   - Repairs deducted typically 5% of ARV with floor/ceiling
- *   - Assignment fee scales with deal size: ~$5K low, $10K mid, $15K high
- *   - Investor margin: ~8% of ARV with floor (investor needs minimum return)
+ * Why the change: the old model (0.70 MAO minus assignmentFee minus
+ * investorMargin) showed homeowners wholesaler take-home of $50-150K
+ * on properties where actual wholesalers were quoting them $20-40K.
+ * Result: homeowners held out for the inflated FALCO-modeled wholesale
+ * number, missed the trustee sale, netted $0. The "70% rule" is what
+ * an INVESTOR pays the wholesaler — the wholesaler offers BELOW that
+ * to capture margin. Real TN distressed cash offers run 45-55% of ARV.
+ *
+ * New model: cash_offer_to_homeowner = ARV × wholesalerMaoPct (0.55).
+ * Repairs/assignment/margin are baked into the spread between offer
+ * and resale value. Those line items default to 0 to keep schema
+ * compat with admin-overrideable inputs.
+ *
+ * On a $500K distressed home: cash offer = $275K. After $250K mortgage
+ * payoff, homeowner pockets $25K. Matches what wholesalers in Memphis,
+ * Nashville, and Knoxville quote.
  */
-function defaultRepairs(arv: number): number {
-  return Math.max(8000, Math.min(60000, Math.round((arv * 0.05) / 1000) * 1000))
+function defaultRepairs(_arv: number): number {
+  return 0  // Baked into the 45% wholesale-spread
 }
-function defaultAssignmentFee(arv: number): number {
-  if (arv < 200000) return 5000
-  if (arv > 750000) return 15000
-  return 10000
+function defaultAssignmentFee(_arv: number): number {
+  return 0  // Baked into the 45% wholesale-spread
 }
-function defaultInvestorMargin(arv: number): number {
-  return Math.max(15000, Math.min(80000, Math.round((arv * 0.08) / 1000) * 1000))
+function defaultInvestorMargin(_arv: number): number {
+  return 0  // Baked into the 45% wholesale-spread
 }
 
 /** Build sensible defaults for a given property value. */
@@ -71,8 +80,13 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     auctionMinPct: 0.80,
     auctionMaxPct: 0.88,
     auctionWorstPct: 0.70,
-    wholesalerMaoPct: 0.70,
-    wholesalerStretchPct: 0.78,
+    // Real-world TN distressed wholesale cap, NOT the textbook 70% rule.
+    // 70% is what investors pay; wholesalers offer below that. 55% matches
+    // actual cash-offer reality on distressed properties in Middle TN.
+    wholesalerMaoPct: 0.55,
+    // Stretched: wholesaler reaches if they really want the deal.
+    // Still well below the textbook 78%.
+    wholesalerStretchPct: 0.62,
   }
 }
 

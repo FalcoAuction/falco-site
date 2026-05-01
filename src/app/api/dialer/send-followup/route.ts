@@ -14,8 +14,10 @@ import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt as fmtMath } from "@/lib/math-sheet"
 import { distressTypeLabel } from "@/lib/dialer-types"
+import { buildMathPdf } from "@/lib/math-pdf"
 
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs" // pdfkit needs Node, not edge
 
 const resendClient = (() => {
   const key = process.env.RESEND_API_KEY?.trim()
@@ -175,17 +177,14 @@ export async function POST(req: NextRequest) {
     mathBlock = `
 <!-- WHOLESALER PATH -->
 <div style="${sectionStyle}">
-  <div style="${headerStyle}">Path 1 · If you sold to a wholesaler today</div>
+  <div style="${headerStyle}">Path 1 · Cash wholesaler offer</div>
   <table style="${tableStyle}">
     <tr><td style="${labelStyle}">Property value (AVM)</td><td style="${valStyle}">${esc(fmtMath(arv))}</td></tr>
-    <tr><td style="${labelStyle}">Wholesaler max offer (70% rule)</td><td style="${valStyle}">${esc(fmtMath(arv * 0.7))}</td></tr>
-    <tr><td style="${labelStyle}">Less repairs estimate</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.repairs))}</td></tr>
-    <tr><td style="${labelStyle}">Less assignment fee</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.assignmentFee))}</td></tr>
-    <tr><td style="${labelStyle}">Less investor margin</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(inputs.investorMargin))}</td></tr>
-    <tr><td style="${labelStyle}">Cash offer to you</td><td style="${valStyle}">${esc(fmtMath(m.wholesaler.cashOfferStandard))}</td></tr>
+    <tr><td style="${labelStyle}">Cash offer to you (real distressed comps)</td><td style="${valStyle}">${esc(fmtMath(m.wholesaler.cashOfferStandard))}</td></tr>
     <tr><td style="${labelStyle}">Less mortgage payoff (est.)</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(payoff))}</td></tr>
     <tr><td style="${totalLabelStyle}">Your take-home</td><td style="${totalValStyle}">${esc(fmtMath(wholesaleNet))}</td></tr>
   </table>
+  <div style="padding:8px 14px 12px;color:#94a3b8;font-size:11px;line-height:1.5">Reflects what TN cash buyers actually offer on distressed properties (45-55% of market). Not the textbook 70%-rule formula — that's what investors pay wholesalers, not what wholesalers pay you.</div>
 </div>
 
 <!-- TRUSTEE PATH -->
@@ -223,15 +222,14 @@ export async function POST(req: NextRequest) {
 </div>`
 
     mathTextBlock = `
-  PATH 1 · If you sold to a wholesaler today
+  PATH 1 · Cash wholesaler offer
     Property value (AVM):              ${fmtMath(arv)}
-    Wholesaler max offer (70%):        ${fmtMath(arv * 0.7)}
-    Less repairs estimate:           - ${fmtMath(inputs.repairs)}
-    Less assignment fee:             - ${fmtMath(inputs.assignmentFee)}
-    Less investor margin:            - ${fmtMath(inputs.investorMargin)}
-    Cash offer to you:                 ${fmtMath(m.wholesaler.cashOfferStandard)}
+    Cash offer (real distressed comps): ${fmtMath(m.wholesaler.cashOfferStandard)}
     Less mortgage payoff (est.):     - ${fmtMath(payoff)}
     Your take-home:                    ${fmtMath(wholesaleNet)}
+    (Reflects what TN cash buyers actually offer — 45-55% of market.
+     Not the textbook 70% rule — that's what investors pay wholesalers,
+     not what wholesalers pay you.)
 
   PATH 2 · If the trustee sale runs (no listing)
     Sells at courthouse for whatever the bank needs to recover.
@@ -346,55 +344,47 @@ export async function POST(req: NextRequest) {
 
   // ─────────────────────────────────────────────────────────────────────
   // BODY VARIANT B: Distressed (TRUSTEE_NOTICE / LIS_PENDENS / NOD / etc.)
-  // Math sheet leads. Three paths broken out. Worst-case auction beats
-  // wholesaler. Soft close.
+  // Brute-honest opener: three numbers up front, named the trap, full
+  // math sheet attached as PDF + embedded for inline reading. No soft
+  // intro, no "no pressure" close — homeowners in distress want clarity,
+  // not a hand on the shoulder.
   // ─────────────────────────────────────────────────────────────────────
-  const distressedMathIntro =
+
+  // Brutal opener: state the situation, name the wholesale trap, give
+  // the three numbers in a one-line summary. Math detail follows below.
+  const distressedOpener =
     arv > 0
-      ? `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
-        Pulled the math on ${esc(address)} for you, three ways:
-      </p>`
-      : `<p style="margin:14px 0;color:#1e293b;font-size:15px;line-height:1.6">
-        Wanted to put something in front of you about ${esc(address)} before any decisions get rushed.
-      </p>`
+      ? `<p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
+          The wholesale offers calling you don't get better — they get worse as the sale date gets closer. Here's what your house actually clears via marketed sale vs. what they're offering vs. doing nothing:
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin:8px 0 18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+          <tr><td style="padding:10px 14px;color:#475569;font-size:13px;width:65%">Cash wholesaler — your take-home</td><td style="padding:10px 14px;color:#991b1b;font-size:14px;font-weight:600;text-align:right">${esc(fmtMath(wholesaleNet))}</td></tr>
+          <tr><td style="padding:10px 14px;color:#475569;font-size:13px;border-top:1px solid #e2e8f0">Trustee sale (do nothing)</td><td style="padding:10px 14px;color:#52525b;font-size:14px;font-weight:600;text-align:right;border-top:1px solid #e2e8f0">$0</td></tr>
+          <tr><td style="padding:10px 14px;color:#475569;font-size:13px;border-top:1px solid #e2e8f0">Marketed sale — your take-home</td><td style="padding:10px 14px;color:#15803d;font-size:14px;font-weight:700;text-align:right;border-top:1px solid #e2e8f0">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td></tr>
+        </table>
+        <p style="margin:0 0 18px;color:#475569;font-size:13px;line-height:1.6">One-page PDF attached with the full breakdown. Numbers below are the same data in case the PDF doesn't render in your client.</p>`
+      : `<p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
+          You're on the trustee-sale list for ${esc(address)}. We can't model your numbers without the AVM yet — but the wholesale offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.
+        </p>`
 
   const distressedHtml = `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:32px 16px;background:#ffffff;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<div style="max-width:560px;margin:0 auto">
+<div style="max-width:580px;margin:0 auto">
 
-  <p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">Hi ${esc(greetingName)},</p>
-
-  ${distressedMathIntro}
+  ${distressedOpener}
 
   ${mathBlock}
 
-  ${
-    arv > 0
-      ? `<p style="margin:14px 0;color:#475569;font-size:13px;line-height:1.6">
-    Numbers are estimates from public data — they get sharper once we
-    pull your actual mortgage payoff. The spread between Path 1 and
-    Path 3 is where most homeowners leave money. The courthouse
-    outcome (Path 2) is the one most folks don't see coming until
-    it's too late to do anything about it.
-  </p>`
-      : ""
-  }
-
   ${customLine}
 
-  <p style="margin:18px 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
-    If anything in there looks off, or you want to talk through your
-    specific situation, just reply to this email or text the number
-    that called you. No pressure either way — I'd rather you have the
-    math than not.
+  <p style="margin:18px 0 14px;color:#1e293b;font-size:14px;line-height:1.55">
+    Reply or text back if you want to talk through it. If you don't, I'm not going to keep emailing — wanted you to have the actual math once.
   </p>
 
-  <p style="margin:18px 0 8px;color:#1e293b;font-size:15px;line-height:1.6">
-    — ${esc(callerName)}
-  </p>
-  <p style="margin:0;color:#64748b;font-size:12px">
-    FALCO · falco@falco.llc
+  <p style="margin:18px 0 8px;color:#1e293b;font-size:14px;line-height:1.6">
+    — ${esc(callerName)}<br/>
+    <span style="color:#64748b;font-size:12px">FALCO · falco@falco.llc</span>
   </p>
 
 </div>
@@ -402,23 +392,24 @@ export async function POST(req: NextRequest) {
 </html>`
 
   const distressedText = [
-    `Hi ${greetingName},`,
-    ``,
     arv > 0
-      ? `Pulled the math on ${address} for you, three ways:`
-      : `Wanted to put something in front of you about ${address} before any decisions get rushed.`,
+      ? `The wholesale offers calling you don't get better — they get worse as the sale date gets closer. Here's what your house actually clears, three ways:`
+      : `You're on the trustee-sale list for ${address}. We can't model your numbers without the AVM yet — but the wholesale offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.`,
+    arv > 0 ? `` : null,
+    arv > 0 ? `  Cash wholesaler — your take-home:  ${fmtMath(wholesaleNet)}` : null,
+    arv > 0 ? `  Trustee sale (do nothing):         $0` : null,
+    arv > 0 ? `  Marketed sale — your take-home:    ${fmtMath(auctionLow)} – ${fmtMath(auctionHigh)}` : null,
+    arv > 0 ? `` : null,
+    arv > 0 ? `One-page PDF attached with the full breakdown.` : null,
     mathTextBlock,
-    arv > 0
-      ? `Numbers are estimates from public data — they get sharper once we pull your actual mortgage payoff. The spread between Path 1 and Path 3 is where most homeowners leave money. The courthouse outcome (Path 2) is the one most folks don't see coming until it's too late.`
-      : "",
     body.customMessage?.trim() ? `\n${body.customMessage.trim()}` : "",
     ``,
-    `If anything in there looks off, or you want to talk through your specific situation, just reply to this email or text the number that called you. No pressure either way — I'd rather you have the math than not.`,
+    `Reply or text back if you want to talk through it. If you don't, I'm not going to keep emailing — wanted you to have the actual math once.`,
     ``,
     `— ${callerName}`,
     `FALCO · falco@falco.llc`,
   ]
-    .filter((line) => line !== "")
+    .filter((line): line is string => line !== null && line !== "")
     .join("\n")
 
   // ─────────────────────────────────────────────────────────────────────
@@ -499,6 +490,33 @@ export async function POST(req: NextRequest) {
   const html = isUnderwater ? underwaterHtml : isFSBO ? fsboHtml : distressedHtml
   const text = isUnderwater ? underwaterText : isFSBO ? fsboText : distressedText
 
+  // Build the math PDF for distressed leads — attach so the homeowner has
+  // the print-ready one-pager in addition to the inline numbers. FSBO and
+  // underwater branches don't include math (different pitch), so no PDF.
+  let pdfAttachment: { filename: string; content: string } | null = null
+  if (!isFSBO && !isUnderwater && arv > 0) {
+    try {
+      const pdfBuf = await buildMathPdf({
+        address,
+        saleDate: inventory?.currentSaleDate || null,
+        arv,
+        payoff,
+      })
+      const filenameBase = address
+        .toLowerCase()
+        .replace(/,.*$/, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 60)
+      pdfAttachment = {
+        filename: `math-${filenameBase}.pdf`,
+        content: pdfBuf.toString("base64"),
+      }
+    } catch (err) {
+      console.error("send-followup PDF build failed (sending without):", err)
+    }
+  }
+
   // Send via Resend
   const result = await resendClient.emails.send({
     from: fromAddress(),
@@ -507,6 +525,7 @@ export async function POST(req: NextRequest) {
     subject,
     html,
     text,
+    ...(pdfAttachment ? { attachments: [pdfAttachment] } : {}),
   })
 
   if (result.error) {
