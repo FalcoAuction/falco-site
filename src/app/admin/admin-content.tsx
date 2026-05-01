@@ -182,6 +182,13 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
             </div>
           </div>
           <div className="flex items-center gap-4 text-[12px]">
+            <a
+              href="/admin/today"
+              className="text-emerald-300 hover:text-emerald-200 transition-colors font-semibold"
+              title="Daily focus page — what to do right now"
+            >
+              ★ Today
+            </a>
             {needsAttention > 0 && (
               <button
                 onClick={() => {
