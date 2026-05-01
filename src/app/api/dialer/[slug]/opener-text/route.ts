@@ -138,16 +138,12 @@ export async function GET(
         ? `Your trustee sale already ran — call before another fires.`
         : `Pre-foreclosure on ${streetOnly}.`
 
-    // "We're not wholesalers" gets unicode combining-underline (U+0332)
-    // for emphasis — SMS / iMessage don't support real formatting, but
-    // U+0332 renders as an underline on iOS Messages + modern Android RCS.
-    // Period after "wholesalers" replaces the prior em-dash, which read
-    // a touch AI-ish (em-dashes joining two complete clauses are a tell).
-    const underlinedDisclaimer = "We're not wholesalers"
-      .split("")
-      .map((c) => (c === " " ? c : c + "̲"))
-      .join("")
-    text = `${greetTag}${hook} ${underlinedDisclaimer}. We work to keep your equity in your hands, not extract it. Math attached. — Patrick / FALCO`
+    // No formatting on "We're not wholesalers" — the short standalone
+    // sentence carries its own emphasis through placement. Real people
+    // texting real people don't underline / italicize / bold; the moment
+    // we format anything, the message reads as marketing not human.
+    // Period (not em-dash) keeps the cadence human, not AI-ish.
+    text = `${greetTag}${hook} We're not wholesalers. We work to keep your equity in your hands, not extract it. Math attached. — Patrick / FALCO`
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses
