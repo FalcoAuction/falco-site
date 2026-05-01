@@ -1307,15 +1307,18 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
             : "📲 2. Send opener text"}
         </button>
 
-        {/* Optional: PDF version for email follow-up / desk reference */}
-        <button
+        {/* Hidden by default — PDF is currently flaky on serverless.
+            The PNG image (button 1) covers SMS, email attachment, AND
+            print just as well, so the PDF is non-essential. Re-enable
+            if/when pdfkit-on-Vercel is fixed. */}
+        {/* <button
           type="button"
           onClick={downloadMathPdf}
-          title="PDF version — for email attachments or printing. Use the image (button 1) for SMS."
-          className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 text-[11px] text-white/55 transition-colors"
+          title="PDF version — currently disabled (use the image instead)."
+          className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 text-[11px] text-white/40 transition-colors"
         >
-          📄 PDF (for email/print)
-        </button>
+          📄 PDF (legacy)
+        </button> */}
 
         {/* Send follow-up email — for warm leads who already replied */}
         <button

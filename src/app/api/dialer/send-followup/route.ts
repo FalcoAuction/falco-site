@@ -14,10 +14,9 @@ import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt as fmtMath } from "@/lib/math-sheet"
 import { distressTypeLabel } from "@/lib/dialer-types"
-import { buildMathPdf } from "@/lib/math-pdf"
 
 export const dynamic = "force-dynamic"
-export const runtime = "nodejs" // pdfkit needs Node, not edge
+export const runtime = "nodejs"
 
 const resendClient = (() => {
   const key = process.env.RESEND_API_KEY?.trim()
@@ -490,30 +489,41 @@ export async function POST(req: NextRequest) {
   const html = isUnderwater ? underwaterHtml : isFSBO ? fsboHtml : distressedHtml
   const text = isUnderwater ? underwaterText : isFSBO ? fsboText : distressedText
 
-  // Build the math PDF for distressed leads — attach so the homeowner has
-  // the print-ready one-pager in addition to the inline numbers. FSBO and
-  // underwater branches don't include math (different pitch), so no PDF.
-  let pdfAttachment: { filename: string; content: string } | null = null
+  // Build the math PNG for distressed leads. Same image the dialer
+  // attaches to SMS — keeps the homeowner's view of the math identical
+  // across channels (SMS image inline + email image attachment + future
+  // print). One asset, not two — and PNG renders reliably in every
+  // email client (PDF inline rendering is patchy in Outlook + Gmail).
+  let pngAttachment: { filename: string; content: string } | null = null
   if (!isFSBO && !isUnderwater && arv > 0) {
     try {
-      const pdfBuf = await buildMathPdf({
-        address,
-        saleDate: inventory?.currentSaleDate || null,
-        arv,
-        payoff,
+      // Internal fetch to our own /math-png route. Vercel keeps this
+      // in-region so latency is ~50ms. Forwards the dialer cookie so
+      // the route's auth check passes.
+      const origin =
+        process.env.FALCO_PUBLIC_BASE_URL?.trim().replace(/\/$/, "") ||
+        new URL(req.url).origin
+      const cookieHeader = req.headers.get("cookie") || ""
+      const pngRes = await fetch(`${origin}/api/dialer/${slug}/math-png`, {
+        headers: { cookie: cookieHeader },
       })
-      const filenameBase = address
-        .toLowerCase()
-        .replace(/,.*$/, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
-        .slice(0, 60)
-      pdfAttachment = {
-        filename: `math-${filenameBase}.pdf`,
-        content: pdfBuf.toString("base64"),
+      if (pngRes.ok) {
+        const pngBuf = Buffer.from(await pngRes.arrayBuffer())
+        const filenameBase = address
+          .toLowerCase()
+          .replace(/,.*$/, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 60)
+        pngAttachment = {
+          filename: `math-${filenameBase}.png`,
+          content: pngBuf.toString("base64"),
+        }
+      } else {
+        console.error("send-followup PNG fetch failed:", pngRes.status)
       }
     } catch (err) {
-      console.error("send-followup PDF build failed (sending without):", err)
+      console.error("send-followup PNG build failed (sending without):", err)
     }
   }
 
@@ -525,7 +535,7 @@ export async function POST(req: NextRequest) {
     subject,
     html,
     text,
-    ...(pdfAttachment ? { attachments: [pdfAttachment] } : {}),
+    ...(pngAttachment ? { attachments: [pngAttachment] } : {}),
   })
 
   if (result.error) {

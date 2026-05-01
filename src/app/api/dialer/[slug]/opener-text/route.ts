@@ -118,14 +118,19 @@ export async function GET(
   let text: string
 
   if (isFSBO) {
-    // FSBO: no foreclosure framing, no math comparison. Value prop only.
-    text = `${greetTag}saw the FSBO on ${streetOnly}. Marketed sale: defined date 30-45 days out, broad buyer pool, buyer pays the premium. Reply if it's worth a conversation. — Patrick / FALCO`
+    // FSBO: no foreclosure framing. Purpose-hint: we help FSBO sellers
+    // keep what their listing is worth without giving it up to an agent.
+    text = `${greetTag}saw the FSBO on ${streetOnly}. We work with FSBO sellers who want a defined sale date and a broad buyer market without losing 6% to an agent commission. Reply if it's worth a conversation. — Patrick / FALCO`
   } else if (isUnderwater) {
-    // Underwater: no math image (we can't compute accurately). Action ask.
-    text = `${greetTag}public records show your loan payoff at or above market on ${streetOnly}. Recorded number is usually $30-80K stale. Text back your actual payoff and I'll run the real numbers. — Patrick / FALCO`
+    // Underwater: no math image (can't compute accurately). Purpose-hint:
+    // even if the payoff is real, we work to get them walking away with
+    // SOMETHING instead of $0 at the courthouse.
+    text = `${greetTag}public records show your loan payoff at or above market on ${streetOnly}. Recorded balance is usually $30-80K stale. We work to keep something in your pocket instead of $0 at the courthouse. Text back the actual payoff. — Patrick / FALCO`
   } else {
-    // Distressed default: brutal short. Math image accompanies (Patrick
-    // attaches from camera roll). Text body = hook + disqualifier + sign.
+    // Distressed default: hook + disqualifier + purpose-line + delivery.
+    // The "extract" verb is precise — that's exactly what wholesalers do
+    // via the assignment fee. Naming the contrast in plain English makes
+    // us the opposite without any "save your home" scam-language traps.
     const hook =
       dts !== null && dts > 0
         ? `${dts} days to your trustee sale.`
@@ -133,7 +138,7 @@ export async function GET(
         ? `Your trustee sale already ran — call before another fires.`
         : `Pre-foreclosure on ${streetOnly}.`
 
-    text = `${greetTag}${hook} We're not wholesalers. Math attached. — Patrick / FALCO`
+    text = `${greetTag}${hook} We're not wholesalers — we work to keep your equity in your hands, not extract it. Math attached. — Patrick / FALCO`
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses
