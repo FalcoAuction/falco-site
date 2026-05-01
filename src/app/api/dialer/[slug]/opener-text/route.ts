@@ -99,44 +99,33 @@ export async function GET(
     ? `+${phoneDigits}`
     : ""
 
-  // Compute math — needed inline in the text body. Distressed homeowners
-  // won't click a link from an unknown number (that's exactly how every
-  // phishing scam they ignore looks). The numbers themselves are the
-  // credibility — they're verifiable against the homeowner's own knowledge
-  // of their property and can be screenshotted/forwarded as-is.
-  let wholesaleNet = 0
-  let auctionLow = 0
-  let auctionHigh = 0
-  if (arv > 0) {
-    const m = computeMath(defaultInputsFor(arv, payoff))
-    wholesaleNet = Math.max(0, m.wholesaler.realisticNet)
-    auctionLow = Math.max(0, m.auction.low.netToHomeowner)
-    auctionHigh = Math.max(0, m.auction.high.netToHomeowner)
-  }
+  // Math is delivered as an IMAGE attachment Patrick adds from his phone
+  // (downloaded via the Send opener button → math-png endpoint). The text
+  // body stays brutally short — no link (phishing pattern), no math wall
+  // (numbers without context confuse), no permission ask.
+  // Avoid the unused-import linter noise:
+  void fmt; void computeMath; void defaultInputsFor; void payoff; void arv
 
   const greetTag = greeting ? `${greeting} — ` : ""
-  // Pull just the street name for compact reference
   const streetOnly = (() => {
     const m = address.match(/^[\d-]+\s+([^,]+)/)
     return m ? m[1].trim() : address.split(",")[0]
   })()
 
   // ─── Variant selection ───────────────────────────────────────────────
-  // Math IN the text body. No links. No "want it?" — they have it.
+  // Brutal short. Math sheet attached as IMAGE (Patrick adds from camera
+  // roll after opener-png download). The text just sets the context.
   let text: string
 
   if (isFSBO) {
-    // FSBO: no foreclosure framing, no math (no comparison to make).
-    // Value prop + soft ask. Patrick can deliver the PDF in a follow-up
-    // if they reply.
-    text = `${greetTag}saw the FSBO on ${streetOnly}. Marketed sale: defined date 30-45 days out, broad buyer pool, buyer pays the premium. Reply if you want me to model what your house would clear. — Patrick / FALCO`
+    // FSBO: no foreclosure framing, no math comparison. Value prop only.
+    text = `${greetTag}saw the FSBO on ${streetOnly}. Marketed sale: defined date 30-45 days out, broad buyer pool, buyer pays the premium. Reply if it's worth a conversation. — Patrick / FALCO`
   } else if (isUnderwater) {
-    // Underwater: no math (can't compute accurately). The ASK IS the
-    // action — text back the actual payoff so we can run real numbers.
+    // Underwater: no math image (we can't compute accurately). Action ask.
     text = `${greetTag}public records show your loan payoff at or above market on ${streetOnly}. Recorded number is usually $30-80K stale. Text back your actual payoff and I'll run the real numbers. — Patrick / FALCO`
   } else {
-    // Distressed default: math right in the body. Three numbers,
-    // line-broken so they scan. No link. No ask.
+    // Distressed default: brutal short. Math image accompanies (Patrick
+    // attaches from camera roll). Text body = hook + disqualifier + sign.
     const hook =
       dts !== null && dts > 0
         ? `${dts} days to your trustee sale.`
@@ -144,24 +133,7 @@ export async function GET(
         ? `Your trustee sale already ran — call before another fires.`
         : `Pre-foreclosure on ${streetOnly}.`
 
-    if (arv > 0) {
-      // The credibility play: three numbers, prefixed, easy to scan in
-      // notification preview. Disqualifier is the closer — leaves them
-      // with the question "wait, who's not a wholesaler?" rather than
-      // assuming we are one.
-      text = [
-        `${greetTag}${hook} The math:`,
-        ``,
-        `Cash wholesalers → ~${fmt(wholesaleNet)} take-home`,
-        `Trustee sale runs → $0`,
-        `Marketed sale → ${fmt(auctionLow)}–${fmt(auctionHigh)} take-home`,
-        ``,
-        `We're not wholesalers. Reply if you want to talk it through. — Patrick / FALCO`,
-      ].join("\n")
-    } else {
-      // No AVM yet — can't compute. Short ask for the data we need.
-      text = `${greetTag}${hook} Public records don't have a value estimate yet on ${streetOnly}. Text back the rough market value and I'll run the math (wholesale vs marketed sale vs trustee sale). — Patrick / FALCO`
-    }
+    text = `${greetTag}${hook} We're not wholesalers. Math attached. — Patrick / FALCO`
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses

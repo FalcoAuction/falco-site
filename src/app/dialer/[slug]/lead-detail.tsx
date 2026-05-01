@@ -1227,6 +1227,14 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
     window.open(`/api/dialer/${lead.slug}/math-pdf`, "_blank")
   }
 
+  // Open the math sheet as a PNG in a new tab. Patrick saves to camera
+  // roll (long-press on iOS, "Download image" on desktop), then attaches
+  // to the iMessage when sending the opener. Image renders inline in the
+  // conversation — no link, no tap-to-load, no phishing pattern.
+  function downloadMathImage() {
+    window.open(`/api/dialer/${lead.slug}/math-png`, "_blank")
+  }
+
   function sendEmail() {
     setEmailMsg(null)
     startEmail(async () => {
@@ -1271,30 +1279,42 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {/* Brute-honest opener — primary CTA. Generates live numbers, copies
-            to clipboard, opens SMS app pre-filled when phone is on file. */}
+        {/* Step 1: Download the math sheet AS AN IMAGE.
+            On iPhone: long-press the image → Save to Photos.
+            On desktop: right-click → Save image. AirDrop / share to phone. */}
+        <button
+          type="button"
+          onClick={downloadMathImage}
+          title="Step 1 — opens the math sheet as a PNG. Long-press on iPhone to Save to Photos. This is what you'll attach to the opener text."
+          className="rounded-lg border border-emerald-400/40 bg-emerald-400/15 hover:bg-emerald-400/25 px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
+        >
+          🖼️ 1. Download math image
+        </button>
+
+        {/* Step 2: Open the opener text — short, no math, attach the image
+            from camera roll when iMessage opens. */}
         <button
           type="button"
           onClick={fetchAndCopyOpener}
           disabled={openerLoading}
-          title="Generates the brute-honest opener with live numbers, copies it, and opens your SMS app pre-filled."
+          title="Step 2 — copies the brutal-short opener text and opens iMessage. After it opens, tap the camera/photo icon and attach the math image you just saved."
           className="rounded-lg border border-amber-400/40 bg-amber-400/15 hover:bg-amber-400/25 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-amber-100 font-semibold transition-colors"
         >
           {openerLoading
             ? "Building..."
             : openerCopied
-            ? "✓ Copied & SMS opened"
-            : "📲 Send opener text"}
+            ? "✓ Text copied & SMS opened — attach the image"
+            : "📲 2. Send opener text"}
         </button>
 
-        {/* Download math PDF — primary attachment for the opener text */}
+        {/* Optional: PDF version for email follow-up / desk reference */}
         <button
           type="button"
           onClick={downloadMathPdf}
-          title="Download the one-page PDF math sheet. Attach to the opener text or save for sharing."
-          className="rounded-lg border border-emerald-400/35 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-1.5 text-sm text-emerald-100 transition-colors"
+          title="PDF version — for email attachments or printing. Use the image (button 1) for SMS."
+          className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 text-[11px] text-white/55 transition-colors"
         >
-          📄 Download math PDF
+          📄 PDF (for email/print)
         </button>
 
         {/* Send follow-up email — for warm leads who already replied */}
