@@ -17,6 +17,8 @@ import {
   type DialerActivity,
 } from "@/lib/dialer-types"
 import { classifyTier } from "@/lib/tier-classification"
+import ContactLayer from "./contact-layer"
+import type { SkiptraceData } from "./contact-layer"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -92,9 +94,11 @@ const OUTCOME_OPTIONS: DialerOutcome[] = [
 export default function LeadDetail({
   lead,
   caller,
+  skiptraceData,
 }: {
   lead: DialerLeadView
   caller: string
+  skiptraceData?: SkiptraceData | null
 }) {
   const router = useRouter()
   const dts = daysToSale(lead.currentSaleDate)
@@ -160,28 +164,37 @@ export default function LeadDetail({
         </div>
       </header>
 
-      {/* Quick action / phone block */}
-      <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-        <div className="text-[10px] uppercase tracking-wider text-white/45 mb-2">Tap to call</div>
-        <div className="flex flex-wrap gap-2">
-          {phones.length === 0 && <div className="text-xs text-white/45">No phone on file.</div>}
-          {phones.map((p) => (
-            <a
-              key={p.number}
-              href={`tel:${(p.number ?? "").replace(/\D/g, "")}`}
-              className="inline-flex flex-col rounded-xl border border-emerald-400/30 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-2 transition-colors"
-            >
-              <span className="text-[10px] uppercase tracking-wider text-emerald-300/80">
-                {p.label}
-                {p.dnc && p.dnc !== "CLEAR" && (
-                  <span className="ml-1.5 text-amber-300/90">[{p.dnc}]</span>
-                )}
-              </span>
-              <span className="text-sm font-medium text-emerald-100">{fmtPhone(p.number)}</span>
-            </a>
-          ))}
-        </div>
-      </section>
+      {/* PRIMARY contact panel — full skip-trace data with type/validation badges.
+          Replaces the old simplistic "tap to call" buttons. Chris should look
+          here FIRST: best mobile phones at top, deliverable emails next,
+          fallback contacts collapsed. */}
+      <ContactLayer data={skiptraceData ?? null} />
+
+      {/* Legacy quick-action panel — kept as a backup when no skip-trace data
+          is available (new bot leads pre-enrichment). Falls through to the
+          old phone list pulled from the dialer inventory snapshot. */}
+      {(!skiptraceData || !skiptraceData.persons || skiptraceData.persons.length === 0) && phones.length > 0 && (
+        <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[10px] uppercase tracking-wider text-white/45 mb-2">Tap to call (snapshot)</div>
+          <div className="flex flex-wrap gap-2">
+            {phones.map((p) => (
+              <a
+                key={p.number}
+                href={`tel:${(p.number ?? "").replace(/\D/g, "")}`}
+                className="inline-flex flex-col rounded-xl border border-emerald-400/30 bg-emerald-400/10 hover:bg-emerald-400/20 px-3 py-2 transition-colors"
+              >
+                <span className="text-[10px] uppercase tracking-wider text-emerald-300/80">
+                  {p.label}
+                  {p.dnc && p.dnc !== "CLEAR" && (
+                    <span className="ml-1.5 text-amber-300/90">[{p.dnc}]</span>
+                  )}
+                </span>
+                <span className="text-sm font-medium text-emerald-100">{fmtPhone(p.number)}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Snapshot */}
       <section className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
