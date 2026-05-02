@@ -20,6 +20,25 @@ async function loadSkiptraceData(slug: string): Promise<SkiptraceData | null> {
   return row?.skiptrace_data ?? null
 }
 
+/** Bad phones (cross-lead, never serve again) + junk fallback phones
+ *  (appear on 3+ unrelated leads = BatchData garbage). Returned as a
+ *  set of normalized 10-digit numbers. */
+async function loadBadPhones(): Promise<Set<string>> {
+  if (!supabaseAdmin) return new Set()
+  const out = new Set<string>()
+  const [bad, junk] = await Promise.all([
+    supabaseAdmin.from("dialer_bad_phones").select("phone"),
+    supabaseAdmin.from("junk_fallback_phones").select("phone"),
+  ])
+  for (const r of (bad.data as { phone: string }[]) || []) {
+    out.add(String(r.phone).replace(/\D/g, "").slice(-10))
+  }
+  for (const r of (junk.data as { phone: string }[]) || []) {
+    out.add(String(r.phone).replace(/\D/g, "").slice(-10))
+  }
+  return out
+}
+
 export default async function DialerLeadPage({
   params,
 }: {
@@ -27,9 +46,10 @@ export default async function DialerLeadPage({
 }) {
   const { slug } = await params
   const session = await requireDialerSession(`/dialer/${slug}`)
-  const [lead, skiptraceData] = await Promise.all([
+  const [lead, skiptraceData, badPhones] = await Promise.all([
     getDialerLead(slug),
     loadSkiptraceData(slug),
+    loadBadPhones(),
   ])
   if (!lead) notFound()
 
@@ -45,6 +65,7 @@ export default async function DialerLeadPage({
         lead={lead}
         caller={session?.caller ?? "caller"}
         skiptraceData={skiptraceData}
+        badPhones={Array.from(badPhones)}
       />
     </main>
   )

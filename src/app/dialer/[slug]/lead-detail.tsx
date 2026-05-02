@@ -95,10 +95,12 @@ export default function LeadDetail({
   lead,
   caller,
   skiptraceData,
+  badPhones,
 }: {
   lead: DialerLeadView
   caller: string
   skiptraceData?: SkiptraceData | null
+  badPhones?: string[]
 }) {
   const router = useRouter()
   const dts = daysToSale(lead.currentSaleDate)
@@ -167,8 +169,9 @@ export default function LeadDetail({
       {/* PRIMARY contact panel — full skip-trace data with type/validation badges.
           Replaces the old simplistic "tap to call" buttons. Chris should look
           here FIRST: best mobile phones at top, deliverable emails next,
-          fallback contacts collapsed. */}
-      <ContactLayer data={skiptraceData ?? null} />
+          fallback contacts collapsed. badPhones list excludes flagged
+          numbers cross-lead. */}
+      <ContactLayer data={skiptraceData ?? null} badPhones={badPhones ?? []} />
 
       {/* Legacy quick-action panel — kept as a backup when no skip-trace data
           is available (new bot leads pre-enrichment). Falls through to the
