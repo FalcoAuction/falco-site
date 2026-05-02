@@ -189,6 +189,13 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
             >
               ★ Today
             </a>
+            <a
+              href="/admin/staging"
+              className="text-amber-300 hover:text-amber-200 transition-colors"
+              title="Review new scraper output before it hits Chris's queue"
+            >
+              ⌛ Staging
+            </a>
             {needsAttention > 0 && (
               <button
                 onClick={() => {
