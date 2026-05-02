@@ -144,10 +144,14 @@ export async function getPriorityOutreach(limit = 10): Promise<TodayLead[]> {
     }
   })
 
-  // Filter: skip closed_lost, skip recently-contacted, skip already-booked
+  // Filter: skip closed_lost, skip recently-contacted, skip already-booked,
+  // and skip leads where the trustee sale already ran (>7 days past = the
+  // house foreclosed; we can't help anymore). 7-day grace covers postponed
+  // sales that still show old date in our data.
   const eligible = enriched.filter((l) => {
     if (l.status === "closed_lost" || l.status === "auction_booked") return false
     if (l.status === "closed_won") return false
+    if (l.daysToSale !== null && l.daysToSale < -7) return false
     if (l.lastContactAt && new Date(l.lastContactAt).getTime() > fourteenDaysAgo) {
       return false
     }

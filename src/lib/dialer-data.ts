@@ -7,6 +7,7 @@ import {
 import {
   loadDialerInventory,
   findDialerInventoryLead,
+  isLeadActive,
   type DialerInventoryLead,
 } from "@/lib/dialer-inventory"
 import type {
@@ -452,9 +453,14 @@ export async function listDialerLeads(): Promise<DialerLead[]> {
   let listings: VaultListing[]
   let completenessByKey: Map<string, { level: "full" | "solid" | "thin"; missing: string[] }>
   if (snapshot && snapshot.leads.length > 0) {
-    listings = snapshot.leads.map(inventoryToListing)
+    // Filter to active leads only — exclude properties where the trustee
+    // sale ran more than 7 days ago (already foreclosed; can't help).
+    // Direct lead-detail navigation still resolves these via getDialerLead
+    // so Chris can close them out in the workflow.
+    const activeLeads = snapshot.leads.filter(isLeadActive)
+    listings = activeLeads.map(inventoryToListing)
     completenessByKey = new Map(
-      snapshot.leads.map((l) => [
+      activeLeads.map((l) => [
         l.key,
         {
           level: (l.dataCompleteness ?? "thin") as "full" | "solid" | "thin",

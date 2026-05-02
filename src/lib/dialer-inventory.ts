@@ -227,6 +227,9 @@ export async function loadDialerInventory(): Promise<DialerInventorySnapshot | n
 
   // For every HR bot row, build the merged lead. HR is the source of truth
   // for which leads exist (post-dedup) and for fresh contact/AVM data.
+  // No filtering here — direct lead-detail navigation must still resolve
+  // foreclosed leads so Chris can close them out in the workflow. Queue
+  // views filter via isLeadActive() below.
   const merged: DialerInventoryLead[] = hrRows
     .filter((r) => !!r.pipeline_lead_key)
     .map((r) => {
@@ -238,6 +241,20 @@ export async function loadDialerInventory(): Promise<DialerInventorySnapshot | n
     generatedAt: new Date().toISOString(),
     leads: merged,
   }
+}
+
+/** Returns true if a lead should appear in active queues (dialer index,
+ *  /admin/today priority list, etc). Excludes properties where the
+ *  trustee sale ran more than 7 days ago — the house has already
+ *  foreclosed; we can't help anymore. 7-day grace covers postponed sales
+ *  that still show the old date in scraped data. Pre-foreclosure leads
+ *  (no sale date) and future-dated sales always pass through. */
+export function isLeadActive(lead: DialerInventoryLead): boolean {
+  if (!lead.currentSaleDate) return true
+  const t = new Date(lead.currentSaleDate).getTime()
+  if (Number.isNaN(t)) return true
+  const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000
+  return t > sevenDaysAgoMs
 }
 
 export async function findDialerInventoryLead(

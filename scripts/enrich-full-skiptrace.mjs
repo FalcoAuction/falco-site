@@ -71,17 +71,44 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false },
 })
 
-// ─── Address splitter (mirror of refresh-dialer) ────────────────────────
+// ─── Address splitter — robust to bot-scraped messes ──────────────────
 function splitAddress(full) {
   if (!full) return null
-  // "1234 Foo St, City, ST 12345" or "1234 Foo St City ST 12345"
-  const m = full.match(/^([^,]+?),\s*([^,]+?),\s*([A-Z]{2})\s*(\d{5})/)
+  // Clean: strip CRLF, normalize whitespace, normalize "Tennessee" → TN
+  let s = String(full)
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\bTennessee\b/gi, "TN")
+    .replace(/\s+/g, " ")
+    .trim()
+  // Strip apartment / unit suffixes that confuse the parser
+  s = s.replace(/,\s*(?:#|apt\.?|unit|suite|ste\.?)\s*[\w-]+/gi, "")
+  // De-duplicate trailing "City, ST [zip]" if the bot doubled it (common scrape glitch)
+  // e.g. "98 Randy Road, Madison, TN, Madison, TN 37115" → "98 Randy Road, Madison, TN 37115"
+  const dupeMatch = s.match(
+    /^(.*?),\s*([A-Za-z .]+?),\s*([A-Z]{2})\s*(?:\d{5}(?:-\d{4})?)?\s*,\s*([A-Za-z .]+?),\s*([A-Z]{2})\s*(\d{5})/
+  )
+  if (dupeMatch) {
+    const [, street, city1, state1, city2, state2, zip] = dupeMatch
+    if (city1.trim().toLowerCase() === city2.trim().toLowerCase() && state1 === state2) {
+      s = `${street.trim()}, ${city1.trim()}, ${state1} ${zip}`
+    } else {
+      s = `${street.trim()}, ${city2.trim()}, ${state2} ${zip}`
+    }
+  }
+  // Standard form: "street, city, ST zip"
+  const m = s.match(/^([^,]+?),\s*([^,]+?),\s*([A-Z]{2})\s*(\d{5})/)
   if (m) {
     return { street: m[1].trim(), city: m[2].trim(), state: m[3], zip: m[4] }
   }
-  const m2 = full.match(/^(.+?)\s+([A-Za-z .]+?)\s+([A-Z]{2})\s+(\d{5})/)
+  // Fallback: no comma between street and city, e.g. "104 Creighton Ave Nashville, TN 37206"
+  const m2 = s.match(/^(.+?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*,?\s*([A-Z]{2})\s+(\d{5})/)
   if (m2) {
     return { street: m2[1].trim(), city: m2[2].trim(), state: m2[3], zip: m2[4] }
+  }
+  // Last resort: just street + zip, no city
+  const m3 = s.match(/^(.+?)\s+([A-Z]{2})\s+(\d{5})/)
+  if (m3) {
+    return { street: m3[1].trim(), city: "", state: m3[2], zip: m3[3] }
   }
   return null
 }
