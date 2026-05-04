@@ -38,7 +38,18 @@ function fmtDateHuman(iso: string | null): string {
   return `${months[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`
 }
 
-export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSnapshot }) {
+export default function MathSheetContent({
+  homeowner,
+  backHref = "/admin",
+  backLabel = "← Admin",
+}: {
+  homeowner: HomeownerSnapshot
+  /** Where the chrome back-link goes. Defaults to /admin so the
+   *  /admin/math-sheet/[id] route works without changes. The dialer
+   *  passes the lead URL so callers don't get bounced to admin. */
+  backHref?: string
+  backLabel?: string
+}) {
   // ARV default priority:
   //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
   //   2. Loan balance × 1.6 (60% LTV guess) when no AVM yet
@@ -93,10 +104,10 @@ export default function MathSheetContent({ homeowner }: { homeowner: HomeownerSn
         <div className="mx-auto max-w-5xl px-5 md:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Link
-              href="/admin"
+              href={backHref}
               className="text-[12px] tracking-[0.22em] text-white/55 hover:text-white transition-colors whitespace-nowrap"
             >
-              ← Admin
+              {backLabel}
             </Link>
             <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/70 truncate">
               Math sheet · {homeowner.fullName || "(no name)"}
