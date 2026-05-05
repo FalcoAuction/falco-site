@@ -57,5 +57,11 @@ export default async function DialerMathSheetPage({
     propertyValueSource: avmMid ? "AVM" : null,
   }
 
-  return <MathSheetContent homeowner={snapshot} />
+  return (
+    <MathSheetContent
+      homeowner={snapshot}
+      backHref={`/dialer/${slug}`}
+      backLabel="← Lead"
+    />
+  )
 }
