@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { requireDialerSession } from "./require-session"
 import { listDialerLeads, STATUS_LABELS, type DialerLead } from "@/lib/dialer-data"
-import { distressTypeLabel } from "@/lib/dialer-inventory"
 import { PhoneLink } from "./phone-link"
+import { ScrollRestorer } from "./scroll-restorer"
+import { CountyFilter } from "./county-filter"
 
 export const dynamic = "force-dynamic"
 
@@ -10,7 +11,7 @@ function fmtDate(iso?: string | null): string {
   if (!iso) return "—"
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" })
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
 function fmtPhone(raw?: string | null): string {
@@ -25,9 +26,11 @@ function fmtPhone(raw?: string | null): string {
   return raw
 }
 
-function fmtCurrency(n?: number | null): string {
+function fmtCurrencyShort(n?: number | null): string {
   if (n === null || n === undefined) return "—"
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (Math.abs(n) >= 1_000) return `$${Math.round(n / 1_000)}K`
+  return `$${n.toFixed(0)}`
 }
 
 function daysToSale(saleIso?: string): number | null {
@@ -37,9 +40,17 @@ function daysToSale(saleIso?: string): number | null {
   return Math.ceil(ms / (1000 * 60 * 60 * 24))
 }
 
+function dtsClass(dts: number | null): string {
+  if (dts === null) return "text-white/35"
+  if (dts <= 14) return "text-red-300 font-semibold"
+  if (dts <= 30) return "text-amber-200"
+  if (dts <= 60) return "text-white/85"
+  return "text-white/55"
+}
+
 function statusPill(status: DialerLead["workflow"]["status"]) {
   const map: Record<string, string> = {
-    new: "bg-white/10 text-white/70 border-white/15",
+    new: "bg-white/8 text-white/65 border-white/12",
     attempting_contact: "bg-amber-400/15 text-amber-200 border-amber-400/30",
     rpc_made: "bg-blue-400/15 text-blue-200 border-blue-400/30",
     auction_booked: "bg-emerald-400/20 text-emerald-200 border-emerald-400/40",
@@ -48,41 +59,51 @@ function statusPill(status: DialerLead["workflow"]["status"]) {
     closed_won: "bg-emerald-600/40 text-white border-emerald-600/60",
     closed_lost: "bg-red-400/15 text-red-200 border-red-400/30",
   }
-  return map[status] ?? "bg-white/10 text-white/70 border-white/15"
+  return map[status] ?? "bg-white/8 text-white/65 border-white/12"
 }
 
-function distressPill(category: ReturnType<typeof distressTypeLabel>["category"]) {
-  const map: Record<string, string> = {
-    lis_pendens: "bg-violet-400/15 text-violet-200 border-violet-400/30",
-    pre_foreclosure: "bg-amber-400/15 text-amber-200 border-amber-400/30",
-    foreclosure: "bg-red-400/15 text-red-200 border-red-400/30",
-    fsbo: "bg-blue-400/15 text-blue-200 border-blue-400/30",
-    other: "bg-white/8 text-white/60 border-white/12",
-  }
-  return map[category] ?? map.other
+// Middle TN — the pilot geography. Default queue is filtered to this set.
+const MIDDLE_TN_COUNTIES = new Set([
+  "davidson",
+  "williamson",
+  "wilson",
+  "sumner",
+  "rutherford",
+  "cheatham",
+  "robertson",
+  "dickson",
+  "maury",
+  "montgomery",
+])
+
+function normalizeCounty(c: string | null | undefined): string {
+  return (c || "").toLowerCase().replace(/\s+county$/i, "").trim()
 }
 
-function dtsClass(dts: number | null): string {
-  if (dts === null) return "text-white/40"
-  if (dts <= 14) return "text-red-300 font-semibold"
-  if (dts <= 30) return "text-amber-200"
-  if (dts <= 60) return "text-white/85"
-  return "text-white/55"
+function inMiddleTN(county: string | null | undefined): boolean {
+  return MIDDLE_TN_COUNTIES.has(normalizeCounty(county))
 }
 
 export default async function DialerQueuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; data?: string }>
+  searchParams: Promise<{ filter?: string; county?: string }>
 }) {
   await requireDialerSession("/dialer")
   const params = await searchParams
   const filter = params.filter ?? "open"
-  const dataFilter = params.data ?? "ready"  // "ready" | "needs" | "all"
+  const countyFilter = params.county ?? ""
+
   const leads = await listDialerLeads()
 
-  // Status-based filter
-  const byStatus = leads.filter((l) => {
+  // Geographic filter — Middle TN by default; specific county drills in
+  const byRegion = leads.filter((l) => {
+    if (countyFilter) return normalizeCounty(l.county) === normalizeCounty(countyFilter)
+    return inMiddleTN(l.county)
+  })
+
+  // Status filter
+  const byStatus = byRegion.filter((l) => {
     const s = l.workflow.status
     if (filter === "all") return true
     if (filter === "open") return s !== "closed_lost" && s !== "closed_won"
@@ -93,103 +114,93 @@ export default async function DialerQueuePage({
     return true
   })
 
-  // Data-completeness filter (the new split)
-  const filtered = byStatus.filter((l) => {
-    const c = l.dataCompleteness ?? "thin"
-    if (dataFilter === "all") return true
-    if (dataFilter === "ready") return c === "full" || c === "solid"
-    if (dataFilter === "needs") return c === "thin"
-    return true
+  // Sort: nearest sale date first (urgency); leads without sale date last
+  const filtered = byStatus.slice().sort((a, b) => {
+    const ad = a.currentSaleDate ? new Date(a.currentSaleDate).getTime() : Infinity
+    const bd = b.currentSaleDate ? new Date(b.currentSaleDate).getTime() : Infinity
+    return ad - bd
   })
 
+  // County options for the dropdown — only Middle TN counties with at
+  // least one lead, sorted by count desc.
+  const countyMap = new Map<string, number>()
+  for (const l of leads) {
+    const c = normalizeCounty(l.county)
+    if (!c || !MIDDLE_TN_COUNTIES.has(c)) continue
+    countyMap.set(c, (countyMap.get(c) || 0) + 1)
+  }
+  const countyOptions = Array.from(countyMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([c, n]) => ({
+      value: c,
+      label: c.replace(/\b\w/g, (m) => m.toUpperCase()),
+      count: n,
+    }))
+
+  // Status tabs — counts respect the current geo filter so they're meaningful
   const counts = {
-    all: leads.length,
-    open: leads.filter((l) => l.workflow.status !== "closed_lost" && l.workflow.status !== "closed_won").length,
-    new: leads.filter((l) => l.workflow.status === "new").length,
-    in_progress: leads.filter(
+    open: byRegion.filter(
+      (l) => l.workflow.status !== "closed_lost" && l.workflow.status !== "closed_won"
+    ).length,
+    new: byRegion.filter((l) => l.workflow.status === "new").length,
+    in_progress: byRegion.filter(
       (l) => l.workflow.status === "attempting_contact" || l.workflow.status === "rpc_made"
     ).length,
-    booked: leads.filter(
+    booked: byRegion.filter(
       (l) =>
         l.workflow.status === "auction_booked" ||
         l.workflow.status === "listing_signed" ||
         l.workflow.status === "auction_live"
     ).length,
-    closed: leads.filter((l) => l.workflow.status === "closed_won" || l.workflow.status === "closed_lost").length,
+    closed: byRegion.filter(
+      (l) => l.workflow.status === "closed_won" || l.workflow.status === "closed_lost"
+    ).length,
+    all: byRegion.length,
   }
 
-  const dataCounts = {
-    ready: leads.filter((l) => (l.dataCompleteness ?? "thin") !== "thin").length,
-    needs: leads.filter((l) => (l.dataCompleteness ?? "thin") === "thin").length,
-    all: leads.length,
-  }
-
-  const tabs: Array<{ key: string; label: string; count: number }> = [
+  const tabs = [
     { key: "open", label: "Open", count: counts.open },
     { key: "new", label: "New", count: counts.new },
-    { key: "in_progress", label: "In Progress", count: counts.in_progress },
-    { key: "booked", label: "Booked / Listed", count: counts.booked },
+    { key: "in_progress", label: "Working", count: counts.in_progress },
+    { key: "booked", label: "Booked", count: counts.booked },
     { key: "closed", label: "Closed", count: counts.closed },
     { key: "all", label: "All", count: counts.all },
-  ]
-
-  const dataTabs: Array<{ key: string; label: string; count: number; tone: string }> = [
-    { key: "ready", label: "Ready to Dial", count: dataCounts.ready, tone: "emerald" },
-    { key: "needs", label: "Needs Data", count: dataCounts.needs, tone: "amber" },
-    { key: "all", label: "All Leads", count: dataCounts.all, tone: "neutral" },
-  ]
+  ] as const
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <main className="mx-auto max-w-5xl px-4 py-6">
+      <ScrollRestorer />
+
+      {/* Header — minimal */}
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Call Queue</h1>
-          <p className="mt-1 text-sm text-white/55">
-            Sorted by sale date — soonest first. Click any lead to log a call.
+          <h1 className="text-xl font-semibold tracking-tight">Call Queue</h1>
+          <p className="mt-0.5 text-xs text-white/45">
+            Sorted by sale date · click any lead to log a call
           </p>
         </div>
+        <CountyFilter options={countyOptions} selected={countyFilter} />
       </div>
 
-      {/* Primary split — data completeness */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        {dataTabs.map((tab) => {
-          const active = dataFilter === tab.key
-          const toneActive = tab.tone === "emerald"
-            ? "border-emerald-400/55 bg-emerald-400/15 text-emerald-100"
-            : tab.tone === "amber"
-            ? "border-amber-400/55 bg-amber-400/15 text-amber-100"
-            : "border-white/30 bg-white/[0.08] text-white"
-          return (
-            <Link
-              key={tab.key}
-              href={`/dialer?filter=${filter}&data=${tab.key}`}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
-                active ? toneActive : "border-white/12 bg-white/[0.03] text-white/60 hover:bg-white/[0.06]"
-              }`}
-            >
-              {tab.label}{" "}
-              <span className={active ? "opacity-80" : "text-white/35"}>{tab.count}</span>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Secondary filter — workflow status */}
-      <div className="mt-3 flex flex-wrap gap-2">
+      {/* Status tabs */}
+      <div className="mt-4 flex flex-wrap gap-1.5">
         {tabs.map((tab) => {
           const active = filter === tab.key
+          const href = countyFilter
+            ? `/dialer?filter=${tab.key}&county=${countyFilter}`
+            : `/dialer?filter=${tab.key}`
           return (
             <Link
               key={tab.key}
-              href={`/dialer?filter=${tab.key}&data=${dataFilter}`}
-              className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-wider transition-colors ${
+              href={href}
+              className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-wider transition-colors ${
                 active
-                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
+                  ? "border-emerald-400/45 bg-emerald-400/12 text-emerald-100"
                   : "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06]"
               }`}
             >
               {tab.label}{" "}
-              <span className={active ? "text-emerald-200/70" : "text-white/35"}>
+              <span className={active ? "text-emerald-200/75" : "text-white/35"}>
                 {tab.count}
               </span>
             </Link>
@@ -197,15 +208,14 @@ export default async function DialerQueuePage({
         })}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-white/10 overflow-hidden">
-        <div className="hidden sm:grid grid-cols-[1fr_130px_140px_130px_120px_150px_110px] gap-4 border-b border-white/10 bg-white/[0.03] px-4 py-2.5 text-[10px] uppercase tracking-wider text-white/45">
-          <div>Property / Owner</div>
+      {/* Lead list */}
+      <div className="mt-5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="hidden sm:grid grid-cols-[80px_1fr_140px_80px_120px] gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-2 text-[10px] uppercase tracking-wider text-white/40">
+          <div>Sale</div>
+          <div>Property · Owner</div>
           <div>Phone</div>
-          <div>Type</div>
-          <div>Sale Date</div>
-          <div>Mortgage</div>
+          <div className="text-right">Equity</div>
           <div>Status</div>
-          <div className="text-right">Last Activity</div>
         </div>
         {filtered.length === 0 && (
           <div className="px-6 py-12 text-center text-sm text-white/55">
@@ -216,45 +226,61 @@ export default async function DialerQueuePage({
           {filtered.map((lead) => {
             const dts = daysToSale(lead.currentSaleDate)
             const phone = lead.ownerPhonePrimary ?? lead.saleControllerPhonePrimary
+            // avmMid is stashed at runtime in inventoryToListing extras
+            // but not declared on DialerLead; access through a cast.
+            const avm = (lead as DialerLead & { avmMid?: number | null }).avmMid
             const mortgage = lead.mortgageAmount
-            const dt = distressTypeLabel(lead.distressType)
+            const equity = avm && mortgage ? avm - mortgage : null
+            const equityClass =
+              equity === null
+                ? "text-white/35"
+                : equity < 0
+                ? "text-red-300"
+                : equity >= 100_000
+                ? "text-emerald-300 font-semibold"
+                : equity >= 30_000
+                ? "text-emerald-200"
+                : "text-white/75"
+            const county = normalizeCounty(lead.county)
+            const countyLabel = county.replace(/\b\w/g, (m) => m.toUpperCase())
             return (
               <li key={lead.slug}>
                 <Link
                   href={`/dialer/${lead.slug}`}
                   className="block hover:bg-white/[0.04] transition-colors"
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px_140px_130px_120px_150px_110px] gap-2 sm:gap-4 px-4 py-3 text-sm">
-                    <div className="min-w-0">
-                      <div className="font-medium text-white truncate flex items-center gap-2">
-                        <span className="truncate">{lead.address ?? lead.title}</span>
-                        {(lead.dataCompleteness ?? "thin") === "thin" && (
-                          <span
-                            title={`Missing: ${(lead.missingFields ?? []).join(", ") || "data"}`}
-                            className="shrink-0 inline-flex items-center rounded-full border border-amber-400/35 bg-amber-400/10 text-amber-200 text-[9px] uppercase tracking-wider px-1.5 py-0.5"
-                          >
-                            Thin
-                          </span>
-                        )}
-                        {(lead.dataCompleteness ?? "thin") === "solid" && (
-                          <span
-                            title="Has phone + valuation or mortgage"
-                            className="shrink-0 inline-flex items-center rounded-full border border-blue-400/30 bg-blue-400/10 text-blue-200 text-[9px] uppercase tracking-wider px-1.5 py-0.5"
-                          >
-                            Solid
-                          </span>
-                        )}
+                  <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_140px_80px_120px] gap-2 sm:gap-3 px-4 py-3 text-sm">
+                    {/* Sale date / DTS */}
+                    <div className={`text-xs sm:self-center ${dtsClass(dts)}`}>
+                      {dts !== null ? (
+                        <>
+                          <div className="font-semibold text-[13px]">
+                            {dts}d
+                          </div>
+                          <div className="text-[10px] opacity-75">
+                            {fmtDate(lead.currentSaleDate)}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
+                    </div>
+
+                    {/* Property + owner + county */}
+                    <div className="min-w-0 sm:self-center">
+                      <div className="font-medium text-white truncate">
+                        {lead.address ?? lead.title}
                       </div>
-                      <div className="text-xs text-white/55 truncate">
-                        {lead.ownerName || "Owner unknown"} · {lead.county}
-                        {(lead.dataCompleteness ?? "thin") === "thin" && lead.missingFields && lead.missingFields.length > 0 && (
-                          <span className="ml-2 text-amber-300/70 text-[10px]">
-                            (missing: {lead.missingFields.slice(0, 2).join(", ")})
-                          </span>
+                      <div className="text-[11px] text-white/55 truncate">
+                        {lead.ownerName || "Owner unknown"}
+                        {countyLabel && (
+                          <span className="text-white/35"> · {countyLabel}</span>
                         )}
                       </div>
                     </div>
-                    <div className="text-xs text-white/75 sm:self-center">
+
+                    {/* Phone */}
+                    <div className="text-xs sm:self-center">
                       {phone ? (
                         <PhoneLink
                           number={phone}
@@ -262,29 +288,16 @@ export default async function DialerQueuePage({
                           className="text-emerald-300 hover:underline"
                         />
                       ) : (
-                        <span className="text-white/35">no phone</span>
+                        <span className="text-white/30">no phone</span>
                       )}
                     </div>
-                    <div className="sm:self-center">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${distressPill(
-                          dt.category
-                        )}`}
-                      >
-                        {dt.label}
-                      </span>
+
+                    {/* Equity */}
+                    <div className={`text-right text-xs sm:self-center ${equityClass}`}>
+                      {fmtCurrencyShort(equity)}
                     </div>
-                    <div className={`text-xs sm:self-center ${dtsClass(dts)}`}>
-                      {fmtDate(lead.currentSaleDate)}
-                      {dts !== null && (
-                        <span className="ml-1.5 text-[11px] opacity-75">
-                          ({dts}d)
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-white/75 sm:self-center">
-                      {fmtCurrency(mortgage)}
-                    </div>
+
+                    {/* Status */}
                     <div className="sm:self-center">
                       <span
                         className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${statusPill(
@@ -294,15 +307,6 @@ export default async function DialerQueuePage({
                         {STATUS_LABELS[lead.workflow.status]}
                       </span>
                     </div>
-                    <div className="text-[11px] text-white/45 sm:text-right sm:self-center">
-                      {fmtDate(lead.workflow.lastContactAt)}
-                      {lead.workflow.attemptCount > 0 && (
-                        <div className="text-[10px] text-white/35">
-                          {lead.workflow.attemptCount} attempt
-                          {lead.workflow.attemptCount === 1 ? "" : "s"}
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </Link>
               </li>
@@ -311,8 +315,8 @@ export default async function DialerQueuePage({
         </ul>
       </div>
 
-      <p className="mt-6 text-[11px] text-white/35 text-center">
-        {leads.length} total leads · showing {filtered.length}
+      <p className="mt-4 text-[11px] text-white/35 text-center">
+        {filtered.length} of {byRegion.length} {countyFilter ? countyFilter : "Middle TN"} leads
       </p>
     </main>
   )

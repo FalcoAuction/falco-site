@@ -199,9 +199,9 @@ export default function LeadDetail({
         </section>
       )}
 
-      {/* Snapshot */}
-      <section className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Card label="Distress" value={lead.distressType ?? "—"} />
+      {/* Snapshot — 3 cards (Distress moved into header pill above to
+          avoid redundancy). Order: urgency → market value → loan. */}
+      <section className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
         <Card
           label="Sale Date"
           value={fmtDate(lead.currentSaleDate)}
@@ -258,50 +258,42 @@ export default function LeadDetail({
       {/* Qualified Lead delivery — operational handoff to Dale */}
       <QualifiedLeadSection lead={lead} caller={caller} onDelivered={() => router.refresh()} />
 
-      {/* Tactical callouts (absentee, urgency, owned-since) */}
-      <Tactical lead={lead} />
-
-      {/* Sale notice details */}
-      {(lead.saleControllerName || lead.trusteePhonePublic) && (
-        <SaleNoticeSection lead={lead} />
-      )}
-
-      {/* Workflow controls */}
+      {/* Workflow controls — primary action area (status + summary). */}
       <WorkflowSection lead={lead} caller={caller} onChange={() => router.refresh()} />
 
-      {/* Activity log + form */}
+      {/* Activity log + form — log every call here. */}
       <ActivitySection lead={lead} caller={caller} onAdded={() => router.refresh()} />
 
-      {/* All FALCO context */}
-      <DetailsSection lead={lead} />
-
-      {/* Packet link or no-packet note */}
-      {lead.packetUrl ? (
-        <a
-          href={lead.packetUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-6 mb-12 block rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] p-4 text-center transition-colors"
-        >
-          <div className="text-[10px] uppercase tracking-wider text-emerald-300/80">
-            Full Packet (PDF)
-          </div>
-          <div className="text-sm text-white mt-1">{lead.packetLabel ?? "Open packet"}</div>
-          <div className="text-[11px] text-white/45 mt-1">
-            Includes AVM range, equity math, suggested play
-          </div>
-        </a>
-      ) : (
-        <div className="mt-6 mb-12 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-4 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-white/45">
-            Packet pending
-          </div>
-          <div className="text-xs text-white/55 mt-1">
-            No PDF generated yet for this lead. Use the data above for the call —
-            packet will be available on next sync.
-          </div>
+      {/* MORE INFO — secondary context behind a disclosure to keep the
+          primary call surface tight. Tactical callouts, sale-notice
+          contacts, full FALCO data dump, and packet PDF link all live
+          here. Open only when needed. */}
+      <details className="mt-4 mb-12 rounded-2xl border border-white/10 bg-white/[0.02] group">
+        <summary className="cursor-pointer list-none px-4 py-3 text-xs uppercase tracking-wider text-white/55 hover:text-white/80 transition-colors flex items-center justify-between">
+          <span>More info · tactical, sale notice, details, packet</span>
+          <span className="text-white/30 group-open:rotate-90 transition-transform">›</span>
+        </summary>
+        <div className="px-1 pb-1">
+          <Tactical lead={lead} />
+          {(lead.saleControllerName || lead.trusteePhonePublic) && (
+            <SaleNoticeSection lead={lead} />
+          )}
+          <DetailsSection lead={lead} />
+          {lead.packetUrl ? (
+            <a
+              href={lead.packetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 block rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] p-3 text-center transition-colors"
+            >
+              <div className="text-[10px] uppercase tracking-wider text-emerald-300/80">
+                Full Packet (PDF)
+              </div>
+              <div className="text-sm text-white mt-1">{lead.packetLabel ?? "Open packet"}</div>
+            </a>
+          ) : null}
         </div>
-      )}
+      </details>
     </>
   )
 }
