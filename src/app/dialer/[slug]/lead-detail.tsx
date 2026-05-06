@@ -1319,12 +1319,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     window.open(`/api/dialer/${lead.slug}/math-pdf`, "_blank")
   }
 
-  // Open the math sheet as a PNG in a new tab. Patrick saves to camera
-  // roll (long-press on iOS, "Download image" on desktop), then attaches
-  // to the iMessage when sending the opener. Image renders inline in the
-  // conversation — no link, no tap-to-load, no phishing pattern.
+  // Open the math sheet PAGE in a new tab. Patrick screenshots the
+  // printable layout (Cmd+Shift+4 on Mac, Win+Shift+S on Windows,
+  // volume+power on iOS) and attaches that to the iMessage when
+  // sending the opener.
+  //
+  // Was: /api/dialer/[slug]/math-png returning a server-rendered PNG
+  // via next/og ImageResponse. That endpoint started 500'ing in Next
+  // 16 (streaming-time error inside ImageResponse, not catchable from
+  // user code). Falling back to manual screenshot is a 5-second
+  // operation that produces the same image with full crop control.
   function downloadMathImage() {
-    window.open(`/api/dialer/${lead.slug}/math-png`, "_blank")
+    window.open(`/dialer/${lead.slug}/math-sheet`, "_blank")
   }
 
   function sendEmail() {
@@ -1377,10 +1383,10 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         <button
           type="button"
           onClick={downloadMathImage}
-          title="Step 1 — opens the math sheet as a PNG. Long-press on iPhone to Save to Photos. This is what you'll attach to the opener text."
+          title="Step 1 — opens the printable math sheet in a new tab. Take a screenshot (Cmd+Shift+4 / Win+Shift+S / phone screenshot button) and that's what you attach to the opener text."
           className="rounded-lg border border-emerald-400/40 bg-emerald-400/15 hover:bg-emerald-400/25 px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
         >
-          🖼️ 1. Download math image
+          🖼️ 1. Open math sheet (screenshot it)
         </button>
 
         {/* Step 2: Open the opener text — short, no math, attach the image
