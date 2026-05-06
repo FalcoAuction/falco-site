@@ -19,6 +19,7 @@ import {
 import { classifyTier } from "@/lib/tier-classification"
 import ContactLayer from "./contact-layer"
 import type { SkiptraceData } from "./contact-layer"
+import { PitchPanel } from "./pitch-panel"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -241,7 +242,14 @@ export default function LeadDetail({
         })()}
       </section>
 
-      {/* Equity Math — the centerpiece for the seller pitch */}
+      {/* Pitch panel — bucket-aware opener + key numbers per sales motion.
+          For EQUITY_PROTECT (foreclosure with equity) the CTA opens the
+          math sheet. For other buckets renders bucket-specific framing
+          since math sheet would deflate those calls. */}
+      <PitchPanel lead={lead as Parameters<typeof PitchPanel>[0]["lead"]} />
+
+      {/* Equity Math — kept as deeper view below the pitch panel for
+          when the rep wants to walk a homeowner through path-by-path. */}
       <EquityWorkup lead={lead} />
 
       {/* Math sheet — printable 3-path comparison to send the homeowner */}

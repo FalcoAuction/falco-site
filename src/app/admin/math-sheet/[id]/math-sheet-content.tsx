@@ -154,23 +154,21 @@ export default function MathSheetContent({
 
       {/* PRINTABLE SHEET */}
       <article className="print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14">
-        {/* Header */}
-        <header className="border-b border-neutral-300 pb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Header — minimal: who, when, key facts */}
+        <header className="border-b border-neutral-300 pb-5">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="text-[11px] tracking-[0.32em] uppercase font-bold text-emerald-700">
-                FALCO
+                FALCO · YOUR OPTIONS
               </div>
-              <h1 className="mt-2 text-[26px] md:text-[30px] font-semibold tracking-tight leading-tight">
-                Your three options, in real numbers.
-              </h1>
+              <div className="mt-1 text-[15px] text-neutral-700 leading-tight">
+                Prepared for{" "}
+                <span className="text-neutral-900 font-semibold">
+                  {homeowner.fullName || "—"}
+                </span>
+              </div>
             </div>
             <div className="text-right text-[11px] text-neutral-500 leading-[1.6]">
-              Prepared for<br />
-              <span className="text-neutral-900 font-medium text-[13px]">
-                {homeowner.fullName || "—"}
-              </span>
-              <br />
               {new Date().toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
@@ -178,7 +176,7 @@ export default function MathSheetContent({
               })}
             </div>
           </div>
-          <dl className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
+          <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
             <Field label="Property" value={homeowner.propertyAddress || "—"} />
             <Field label="County" value={homeowner.county || "—"} />
             <Field label="Trustee sale" value={fmtDateHuman(homeowner.trusteeSaleDate)} />
@@ -186,21 +184,72 @@ export default function MathSheetContent({
           </dl>
         </header>
 
-        {/* Three big stat cards */}
-        <section className="mt-7 grid grid-cols-3 gap-3">
+        {/* HERO — the single number a homeowner needs to see in 5 seconds.
+            The whole point of the page is to make this comparison
+            unmistakable. Everything below is supporting evidence. */}
+        <section className="mt-6 rounded-xl border-2 border-emerald-500 bg-emerald-50 p-6 md:p-8">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-700 font-bold">
+            The bottom line
+          </div>
+          <div className="mt-3 text-[22px] md:text-[28px] font-semibold tracking-tight leading-tight text-neutral-900">
+            By taking your home to a marketed auction instead of letting the
+            trustee sale close, you stand to walk away with{" "}
+            <span className="text-emerald-700 font-bold whitespace-nowrap">
+              {out.auction.netRangeLabel}
+            </span>
+            .
+          </div>
+          {out.spreadEstimate.midpointGain > 0 && (
+            <div className="mt-3 text-[14px] md:text-[15px] text-neutral-700 leading-snug">
+              That&apos;s roughly{" "}
+              <span className="text-emerald-700 font-semibold">
+                {fmt(out.spreadEstimate.midpointGain)}
+              </span>{" "}
+              more than a wholesaler offer
+              {out.spreadEstimate.bestCaseGain > out.spreadEstimate.midpointGain * 1.1 && (
+                <>
+                  {" "}
+                  (up to{" "}
+                  <span className="text-emerald-700 font-semibold">
+                    {fmt(out.spreadEstimate.bestCaseGain)}
+                  </span>{" "}
+                  in a strong campaign)
+                </>
+              )}
+              , and{" "}
+              <span className="text-emerald-700 font-semibold">
+                {fmt(
+                  Math.max(
+                    0,
+                    Math.round(
+                      (out.auction.low.netToHomeowner +
+                        out.auction.high.netToHomeowner) /
+                        2
+                    ) - (out.trusteeNetToHomeowner ?? 0)
+                  )
+                )}
+              </span>{" "}
+              more than letting the bank take it.
+            </div>
+          )}
+        </section>
+
+        {/* Three paths — color-coded so the comparison is instant.
+            Loss / meh / win pattern reinforces the hero number above. */}
+        <section className="mt-6 grid grid-cols-3 gap-3">
           <PathCard
-            label="If the trustee sale closes"
+            label="Do nothing"
             value={fmt(out.trusteeNetToHomeowner)}
-            sub="Bank takes the property for the loan balance. Equity vaporized."
+            sub="Bank takes the property for the loan balance on the trustee sale date. Your equity is wiped out."
             tone="loss"
           />
           <PathCard
             label={
               out.wholesaler.scenario === "walks"
-                ? "Wholesaler typically walks"
+                ? "Wholesaler offer"
                 : out.wholesaler.scenario === "stretched"
-                ? "Wholesaler offer (stretched)"
-                : "Wholesaler offer (typical)"
+                ? "Wholesaler offer"
+                : "Wholesaler offer"
             }
             value={
               out.wholesaler.scenario === "walks"
@@ -209,39 +258,19 @@ export default function MathSheetContent({
             }
             sub={
               out.wholesaler.scenario === "walks"
-                ? "No offer makes economic sense for the wholesaler at this loan-to-value. Most walk; some try seller-financing or 'subject-to' deals."
+                ? "Most wholesalers walk at this LTV; some try seller-financing or 'subject-to' deals."
                 : out.wholesaler.scenario === "stretched"
-                ? "The strict 70% rule doesn't pencil here, so the wholesaler eats some margin (~78% MAO) to close a thinner deal."
-                : "Built on the wholesale industry's standard 70% rule."
+                ? "Strict 70% rule doesn't pencil here. ~78% MAO on a thinner deal."
+                : "Built on the wholesale industry's standard 70% rule (below)."
             }
             tone="meh"
           />
           <PathCard
             label="Marketed auction"
             value={out.auction.netRangeLabel}
-            sub="Open competitive bidding through a state-licensed TN auction firm."
+            sub="Open competitive bidding through a state-licensed TN auction firm. Closes in 30–45 days."
             tone="win"
           />
-        </section>
-
-        {/* Spread headline */}
-        <section className="mt-7 rounded-lg border border-emerald-300/60 bg-emerald-50 p-5">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-700 font-semibold">
-            What this means for you
-          </div>
-          <div className="mt-2 text-[20px] md:text-[24px] font-semibold tracking-tight leading-tight text-neutral-900">
-            A marketed auction nets you roughly{" "}
-            <span className="text-emerald-700">{fmt(out.spreadEstimate.midpointGain)}</span>{" "}
-            more than the typical wholesaler offer
-            {out.spreadEstimate.bestCaseGain > out.spreadEstimate.midpointGain * 1.1 && (
-              <>
-                {" "}
-                — up to{" "}
-                <span className="text-emerald-700">{fmt(out.spreadEstimate.bestCaseGain)}</span>{" "}
-                in a strong campaign.
-              </>
-            )}
-          </div>
         </section>
 
         {/* Wholesaler walkthrough */}
