@@ -395,6 +395,23 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     avmMid: inv.avmMid ?? null,
     avmHigh: inv.avmHigh ?? null,
     saleStatus: inv.saleStatus || undefined,
+    // Enrichment fields derived from phone_metadata (Twilio Lookup,
+    // ROD scrape, HMDA match, amortizer). Surfaced on queue + detail
+    // pages so reps see source quality + line type at a glance.
+    phoneLineType: inv.phoneLineType,
+    phoneCarrier: inv.phoneCarrier,
+    phoneValidated: inv.phoneValidated,
+    phoneDnc: inv.phoneDnc,
+    alternatePhoneCount: inv.alternatePhoneCount,
+    mortgageDefensible: inv.mortgageDefensible,
+    mortgageLenderResolved: inv.mortgageLenderResolved,
+    mortgageOriginationYear: inv.mortgageOriginationYear,
+    mortgageOriginalPrincipal: inv.mortgageOriginalPrincipal,
+    mortgageRatePct: inv.mortgageRatePct,
+    mortgageConfidence: inv.mortgageConfidence,
+    equityAmount: inv.equityAmount,
+    distressSignalCount: inv.distressSignalCount,
+    decisionAction: inv.decisionAction,
   }
   return {
     ...(extras as Partial<VaultListing>),

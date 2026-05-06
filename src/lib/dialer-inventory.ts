@@ -45,6 +45,35 @@ export type DialerInventoryLead = {
   packetLabel: string | null
   dataCompleteness?: "full" | "solid" | "thin"
   missingFields?: string[]
+  /** Twilio Lookup line type: 'mobile' | 'landline' | 'fixedVoip' | 'nonFixedVoip' | 'fixed_line_or_mobile' | etc. Empty if unvalidated. */
+  phoneLineType?: string
+  /** Twilio Lookup carrier name (e.g. 'T-Mobile USA'). */
+  phoneCarrier?: string
+  /** True if Twilio Lookup confirmed the number is valid (carrier known). */
+  phoneValidated?: boolean
+  /** True if the primary phone is on BatchData's DNC list. */
+  phoneDnc?: boolean
+  /** Count of additional candidate phones in BatchData skip-trace
+   *  beyond the primary. Useful when primary doesn't ring. */
+  alternatePhoneCount?: number
+  /** True if mortgage_balance came from a defensible source (ROD-verified, HMDA-anchored, nashville_ledger). */
+  mortgageDefensible?: boolean
+  /** Lender name from ROD or HMDA (with FFIEC panel fallback). */
+  mortgageLenderResolved?: string
+  /** Year the original loan was originated (HMDA match_year or ROD doc date). */
+  mortgageOriginationYear?: number
+  /** Original principal at origination (vs. mortgageAmount which is current/amortized). */
+  mortgageOriginalPrincipal?: number
+  /** Annual interest rate % from HMDA (when available). */
+  mortgageRatePct?: number
+  /** Source confidence 0–1 for the mortgage signal (0.85 ROD, 0.65–0.85 HMDA). */
+  mortgageConfidence?: number
+  /** Estimated equity = AVM − amortized current balance. */
+  equityAmount?: number
+  /** Distress signal count from distress_stack (how many distress flags fire). */
+  distressSignalCount?: number
+  /** Decision-engine action: PROMOTE_HOT / PROMOTE_WARM / REJECT / etc. */
+  decisionAction?: string
 }
 
 export type DialerInventorySnapshot = {
@@ -112,6 +141,143 @@ type HomeownerRequestRow = {
   last_sale_date: string | null
   pipeline_score: number | null
   submitted_at: string | null
+  phone_metadata: Record<string, unknown> | null
+}
+
+/** Inspect phone_metadata to derive every field surfaced on the queue
+ *  + lead-detail UI: phone validation, line type, mortgage source,
+ *  amortized balance, lender, equity, etc. Source-of-truth derivation
+ *  so callers don't re-implement these rules. */
+type PhoneMetaDerived = {
+  phoneLineType?: string
+  phoneCarrier?: string
+  phoneValidated?: boolean
+  phoneDnc?: boolean
+  alternatePhoneCount?: number
+  mortgageDefensible?: boolean
+  mortgageLenderResolved?: string
+  mortgageOriginationYear?: number
+  mortgageOriginalPrincipal?: number
+  mortgageRatePct?: number
+  mortgageConfidence?: number
+  equityAmount?: number
+  distressSignalCount?: number
+  decisionAction?: string
+}
+
+function deriveFromPhoneMetadata(
+  pm: Record<string, unknown> | null | undefined,
+  avmMid: number | null
+): PhoneMetaDerived & { amortizedCurrentBalance?: number } {
+  if (!pm || typeof pm !== "object") return {}
+  const obj = pm as Record<string, unknown>
+  const out: ReturnType<typeof deriveFromPhoneMetadata> = {}
+
+  // Phone validation (Twilio Lookup)
+  const tl = obj.twilio_lookup as Record<string, unknown> | undefined
+  if (tl && typeof tl === "object") {
+    out.phoneValidated = tl.valid === true
+    if (typeof tl.line_type === "string") out.phoneLineType = tl.line_type
+    if (typeof tl.carrier_name === "string") out.phoneCarrier = tl.carrier_name as string
+  }
+
+  // BatchData primary DNC + alternate count
+  const bd = obj.batchdata_skip_trace as Record<string, unknown> | undefined
+  if (bd && typeof bd === "object") {
+    if (bd.primary_dnc === true) out.phoneDnc = true
+    const all = bd.all_phones as unknown[] | undefined
+    if (Array.isArray(all)) {
+      // Count alternates (any non-DNC phone other than the primary).
+      out.alternatePhoneCount = Math.max(0, all.length - 1)
+    }
+  }
+
+  // Mortgage source — ROD wins, then HMDA-anchored, then nashville_ledger
+  const rod = obj.rod_lookup as Record<string, unknown> | undefined
+  const sig = obj.mortgage_signal as Record<string, unknown> | undefined
+  if (rod && typeof rod === "object") {
+    out.mortgageDefensible = true
+    out.mortgageConfidence = 0.85
+    if (typeof rod.lender === "string") out.mortgageLenderResolved = rod.lender as string
+    if (typeof rod.original_principal === "number") {
+      out.mortgageOriginalPrincipal = rod.original_principal as number
+    }
+    if (typeof rod.rate_pct === "number") {
+      out.mortgageRatePct = rod.rate_pct as number
+    }
+    const docDate = rod.document_date as string | undefined
+    if (docDate && typeof docDate === "string") {
+      const m = /^(\d{4})/.exec(docDate)
+      if (m) out.mortgageOriginationYear = parseInt(m[1], 10)
+    }
+  }
+  if (sig && typeof sig === "object") {
+    const src = sig.source as string | undefined
+    const saleAnchored = !!sig.sale_anchored
+    const yearAnchored = !!sig.year_anchored
+    if (
+      src === "ustitlesearch_rod" ||
+      src === "nashville_ledger_extracted" ||
+      (src === "hmda_match" && (saleAnchored || yearAnchored))
+    ) {
+      out.mortgageDefensible = true
+    }
+    if (!out.mortgageLenderResolved && typeof sig.lender === "string") {
+      out.mortgageLenderResolved = sig.lender as string
+    }
+    if (!out.mortgageOriginationYear && sig.match_year) {
+      const mm = parseInt(String(sig.match_year), 10)
+      if (!Number.isNaN(mm)) out.mortgageOriginationYear = mm
+    }
+    if (!out.mortgageOriginalPrincipal && typeof sig.amount === "number") {
+      out.mortgageOriginalPrincipal = sig.amount as number
+    }
+    if (!out.mortgageRatePct && sig.interest_rate) {
+      const rr = parseFloat(String(sig.interest_rate))
+      if (!Number.isNaN(rr)) out.mortgageRatePct = rr
+    }
+    if (typeof sig.confidence === "number") {
+      out.mortgageConfidence = Math.max(out.mortgageConfidence ?? 0, sig.confidence as number)
+    }
+  }
+
+  // Amortized current balance (from mortgage_amortizer_bot)
+  const amort = obj.mortgage_balance_amortized as Record<string, unknown> | undefined
+  if (amort && typeof amort === "object") {
+    if (typeof amort.current_balance === "number") {
+      out.amortizedCurrentBalance = amort.current_balance as number
+    }
+    if (!out.mortgageOriginalPrincipal && typeof amort.original_principal === "number") {
+      out.mortgageOriginalPrincipal = amort.original_principal as number
+    }
+    if (!out.mortgageRatePct && typeof amort.rate_pct === "number") {
+      out.mortgageRatePct = amort.rate_pct as number
+    }
+    if (!out.mortgageOriginationYear && typeof amort.origination_year === "number") {
+      out.mortgageOriginationYear = amort.origination_year as number
+    }
+    if (typeof amort.equity_estimate === "number") {
+      out.equityAmount = amort.equity_estimate as number
+    }
+  }
+  // Fallback equity calc when amortizer hasn't run
+  if (out.equityAmount === undefined && avmMid && out.amortizedCurrentBalance) {
+    out.equityAmount = avmMid - out.amortizedCurrentBalance
+  }
+
+  // Distress stack (signal count)
+  const stack = obj.distress_stack as Record<string, unknown> | undefined
+  if (stack && typeof stack === "object" && typeof stack.signal_count === "number") {
+    out.distressSignalCount = stack.signal_count as number
+  }
+
+  // Decision-engine action
+  const de = obj.decision_engine as Record<string, unknown> | undefined
+  if (de && typeof de === "object" && typeof de.action === "string") {
+    out.decisionAction = de.action as string
+  }
+
+  return out
 }
 
 async function loadHomeownerRequestsBots(): Promise<HomeownerRequestRow[]> {
@@ -119,7 +285,7 @@ async function loadHomeownerRequestsBots(): Promise<HomeownerRequestRow[]> {
   const { data, error } = await supabaseAdmin
     .from("homeowner_requests")
     .select(
-      "pipeline_lead_key, property_address, county, email, phone, full_name, owner_name_records, property_value, beds, baths, sqft, year_built, trustee_sale_date, distress_type, mortgage_balance, last_sale_date, pipeline_score, submitted_at"
+      "pipeline_lead_key, property_address, county, email, phone, full_name, owner_name_records, property_value, beds, baths, sqft, year_built, trustee_sale_date, distress_type, mortgage_balance, last_sale_date, pipeline_score, submitted_at, phone_metadata"
     )
     .eq("source", "bot")
   if (error) {
@@ -192,6 +358,16 @@ function buildLeadFromHR(
     packetLabel: snap?.packetLabel ?? null,
     dataCompleteness: snap?.dataCompleteness,
     missingFields: snap?.missingFields,
+    // Phone validation + mortgage source + amortization, all derived
+    // from the HR row's phone_metadata blob (single source of truth).
+    // Strip amortizedCurrentBalance — that's already in mortgageAmount
+    // because the amortizer wrote it back to the column.
+    ...((): PhoneMetaDerived => {
+      const d = deriveFromPhoneMetadata(hr.phone_metadata, hr.property_value)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { amortizedCurrentBalance: _, ...rest } = d
+      return rest
+    })(),
   }
 }
 

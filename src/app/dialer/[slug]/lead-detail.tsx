@@ -218,11 +218,24 @@ export default function LeadDetail({
           }
           tone={lead.avmMid ? "good" : "default"}
         />
-        <Card
-          label="Loan Amount"
-          value={fmtCurrency(lead.mortgageAmount)}
-          subtitle={lead.mortgageLender ?? ""}
-        />
+        {(() => {
+          const x = lead as DialerLeadView & {
+            mortgageDefensible?: boolean
+            mortgageLenderResolved?: string
+            mortgageOriginationYear?: number
+          }
+          const lender = x.mortgageLenderResolved ?? lead.mortgageLender ?? ""
+          const year = x.mortgageOriginationYear
+          const subtitle = lender + (year ? ` (${year})` : "")
+          return (
+            <Card
+              label={x.mortgageDefensible ? "Current Balance" : "Loan Amount"}
+              value={fmtCurrency(lead.mortgageAmount)}
+              subtitle={subtitle}
+              tone={x.mortgageDefensible ? "good" : "default"}
+            />
+          )
+        })()}
       </section>
 
       {/* Equity Math — the centerpiece for the seller pitch */}
@@ -321,8 +334,25 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
   const avmLow = lead.avmLow ?? null
   const avmMid = lead.avmMid ?? null
   const avmHigh = lead.avmHigh ?? null
+  // Enrichment fields stashed via inventoryToListing extras.
+  const x = lead as DialerLeadView & {
+    mortgageDefensible?: boolean
+    mortgageLenderResolved?: string
+    mortgageOriginationYear?: number
+    mortgageOriginalPrincipal?: number
+    mortgageRatePct?: number
+    mortgageConfidence?: number
+    equityAmount?: number
+  }
+  // mortgageAmount holds the AMORTIZED current balance (post-mortgage_
+  // amortizer_bot run). When available, prefer it over the heuristic
+  // estimatePayoff fallback. Same for the equity amount.
   const loan = lead.mortgageAmount ?? null
-  const payoffEst = estimatePayoff(loan, lead.mortgageDate ?? null)
+  const verified = x.mortgageDefensible === true
+  const payoffEst = verified
+    ? loan
+    : estimatePayoff(loan, lead.mortgageDate ?? null)
+  const originalPrincipal = x.mortgageOriginalPrincipal ?? null
 
   if (!avmMid && !loan) {
     return (
@@ -343,7 +373,11 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
   const equityHigh = avmHigh && payoffEst !== null
     ? Math.max(0, Math.round(avmHigh * (1 - auctionCommissionPct) - payoffEst))
     : null
-  const equityMid = avmMid && payoffEst !== null
+  // Mid equity prefers the amortizer's pre-computed equity_estimate
+  // when verified; falls back to AVM mid - payoff - commission.
+  const equityMid = (verified && x.equityAmount !== undefined && x.equityAmount !== null)
+    ? Math.max(0, Math.round(x.equityAmount - (avmMid ?? 0) * auctionCommissionPct))
+    : avmMid && payoffEst !== null
     ? Math.max(0, Math.round(avmMid * (1 - auctionCommissionPct) - payoffEst))
     : null
 
@@ -377,13 +411,41 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
           )}
         </div>
         <div className="rounded-lg bg-black/20 border border-white/8 p-3">
-          <div className="text-[10px] uppercase tracking-wider text-white/55">Est. Loan Payoff</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/55 flex items-center gap-1.5">
+            <span>{verified ? "Current Balance" : "Est. Loan Payoff"}</span>
+            {verified && (
+              <span
+                title={`Verified from public record · ${
+                  x.mortgageLenderResolved ?? "lender confirmed"
+                }`}
+                className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 text-emerald-200 text-[8px] uppercase tracking-wider px-1 py-px"
+              >
+                ✓ verified
+              </span>
+            )}
+          </div>
           <div className="mt-1 text-base font-semibold text-white">
             {payoffEst !== null ? fmtCurrency(payoffEst) : "—"}
           </div>
-          {loan && (
+          {/* Verified line: original principal + rate + year (if any
+              of those known). Falls back to the legacy "orig + date"
+              line when only mortgageDate is available. */}
+          {verified && (originalPrincipal || x.mortgageOriginationYear || x.mortgageRatePct) && (
             <div className="text-[11px] text-white/45 mt-0.5">
-              orig {fmtCurrency(loan)} · {lead.mortgageDate ? `mortgaged ${fmtDate(lead.mortgageDate)}` : "date unknown"}
+              {originalPrincipal && `orig ${fmtCurrency(originalPrincipal)}`}
+              {x.mortgageOriginationYear && ` · ${x.mortgageOriginationYear}`}
+              {x.mortgageRatePct && ` @ ${x.mortgageRatePct.toFixed(2)}%`}
+            </div>
+          )}
+          {!verified && loan && (
+            <div className="text-[11px] text-white/45 mt-0.5">
+              orig {fmtCurrency(loan)} ·{" "}
+              {lead.mortgageDate ? `mortgaged ${fmtDate(lead.mortgageDate)}` : "date unknown"}
+            </div>
+          )}
+          {x.mortgageLenderResolved && (
+            <div className="text-[11px] text-emerald-200/70 mt-0.5 truncate">
+              {x.mortgageLenderResolved}
             </div>
           )}
         </div>
