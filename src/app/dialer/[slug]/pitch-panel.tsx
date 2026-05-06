@@ -238,7 +238,7 @@ const SPECS: Record<PitchBucket, (l: Lead, a: SpecArgs) => BucketSpec> = {
 
   PROBATE: (lead, a) => ({
     label: "Probate · Estate Net to Heirs",
-    opener: `"Hi, I'm calling about the estate property at ${lead.address}. As executor you're balancing the probate close-out clock and net to the heirs. Most estates lose 8–12% to MLS commission, holding costs, and family disagreement. We can close clean in 30 days at a competitive number — attorney-friendly, no showings. Estate nets approximately ${fmtCurrency(a.equity)}. Time to look at numbers?"`,
+    opener: `"Hi, I'm calling about the estate property at ${lead.address}. As executor you're balancing the probate close-out clock and net to the heirs. Most estates lose 8–12% to MLS commission, holding costs, and family disagreement. We don't charge seller commission — buyer pays the 10% premium on top — and we close clean in 30 days, attorney-friendly, no showings. Estate nets approximately ${fmtCurrency(a.equity)}. Time to look at numbers?"`,
     keyNumbers: [
       { label: "Estimated Estate Net", value: fmtCurrency(a.equity), tone: "text-violet-200" },
       { label: "Market Value", value: fmtCurrency(a.avm) },
@@ -275,23 +275,23 @@ const SPECS: Record<PitchBucket, (l: Lead, a: SpecArgs) => BucketSpec> = {
   FSBO: (lead, a) => ({
     label: "FSBO · Auction-vs-MLS",
     opener: a.fname
-      ? `"Hi ${a.fname}, I see your property at ${lead.address} is for sale. Most FSBOs sit 60–120 days. Auction can close in 30 with a guaranteed close date and net comparable to MLS after commission. Want to compare numbers?"`
-      : `"Hi, your property at ${lead.address} is FSBO. Auction is faster than MLS, comparable net. Worth comparing?"`,
+      ? `"Hi ${a.fname}, I see your property at ${lead.address} is for sale. Most FSBOs sit 60–120 days. Auction can close in 30 with a guaranteed close date — and we don't charge seller commission. The 10% buyer's premium is paid by the buyer on top of the hammer price. Want to compare numbers?"`
+      : `"Hi, your property at ${lead.address} is FSBO. Auction closes in 30 days, no seller commission — buyer pays the 10% premium. Worth comparing?"`,
     keyNumbers: [
       { label: "Auction Close", value: "30 days", subtitle: "vs MLS 60–120" },
       { label: "Market Value", value: fmtCurrency(a.avm) },
-      { label: "Net @ Auction", value: fmtCurrency(a.avm ? Math.round(a.avm * 0.91) : null), subtitle: "after 9% commission" },
+      { label: "Net to Seller", value: fmtCurrency(a.avm), subtitle: "no seller commission" },
     ],
     tone: TONE_BLUE,
   }),
 
   LLC_INVESTOR: (lead, a) => ({
     label: "LLC / Investor · Net Comparator",
-    opener: `"Hi, this is FALCO. I see ${lead.ownerName} owns ${lead.address}. We move distressed properties through certified auction in 21–30 days at competitive net. ${a.dts !== null ? `Trustee sale's ${a.dts} days out — ` : ""}worth comparing numbers?"`,
+    opener: `"Hi, this is FALCO. I see ${lead.ownerName} owns ${lead.address}. We move distressed properties through certified auction in 21–30 days — no seller-side commission, buyer pays the 10% premium on top. ${a.dts !== null ? `Trustee sale's ${a.dts} days out — ` : ""}worth comparing numbers?"`,
     keyNumbers: [
       { label: "Market Value", value: fmtCurrency(a.avm) },
       { label: "Loan Balance", value: fmtCurrency(a.balance), subtitle: a.lender ?? "" },
-      { label: "Net @ Auction", value: fmtCurrency(a.avm && a.balance ? Math.round(a.avm * 0.91 - a.balance) : null), subtitle: "after 9% commission" },
+      { label: "Net to Seller", value: fmtCurrency(a.avm && a.balance ? a.avm - a.balance : null), subtitle: "no seller commission" },
       { label: "Close Speed", value: "21–30 days" },
     ],
     tone: TONE_BLUE,
