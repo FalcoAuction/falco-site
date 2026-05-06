@@ -376,20 +376,24 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
     )
   }
 
-  const auctionCommissionPct = 0.09
-  // Conservative equity range: low AVM minus payoff and commission, vs high AVM.
+  // FALCO charges NO seller-side commission or fees. The 10% Buyer's
+  // Premium is paid by the buyer on top of the hammer price — seller
+  // receives the FULL hammer price minus loan payoff and standard
+  // closing costs. Estimate uses standard $5K closing.
+  const closingCosts = 5_000
   const equityLow = avmLow && payoffEst !== null
-    ? Math.max(0, Math.round(avmLow * (1 - auctionCommissionPct) - payoffEst))
+    ? Math.max(0, Math.round(avmLow - payoffEst - closingCosts))
     : null
   const equityHigh = avmHigh && payoffEst !== null
-    ? Math.max(0, Math.round(avmHigh * (1 - auctionCommissionPct) - payoffEst))
+    ? Math.max(0, Math.round(avmHigh - payoffEst - closingCosts))
     : null
   // Mid equity prefers the amortizer's pre-computed equity_estimate
-  // when verified; falls back to AVM mid - payoff - commission.
+  // (already AVM mid - balance, no commission). Falls back to direct
+  // calc minus closing.
   const equityMid = (verified && x.equityAmount !== undefined && x.equityAmount !== null)
-    ? Math.max(0, Math.round(x.equityAmount - (avmMid ?? 0) * auctionCommissionPct))
+    ? Math.max(0, Math.round(x.equityAmount - closingCosts))
     : avmMid && payoffEst !== null
-    ? Math.max(0, Math.round(avmMid * (1 - auctionCommissionPct) - payoffEst))
+    ? Math.max(0, Math.round(avmMid - payoffEst - closingCosts))
     : null
 
   // Wholesaler comparison — typical 65% offer
@@ -405,7 +409,7 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
           Equity Math — what to walk the seller through
         </div>
         <div className="text-[10px] uppercase tracking-wider text-white/35">
-          assumes 9% auction commission
+          no seller commission · 10% buyer's premium
         </div>
       </div>
 
@@ -470,7 +474,7 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
               : "—"}
           </div>
           <div className="text-[11px] text-emerald-200/70 mt-0.5">
-            after payoff & commission
+            after payoff & closing
           </div>
         </div>
       </div>
