@@ -36,6 +36,21 @@ export type MathInputs = {
   wholesalerMaoPct: number
   /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
   wholesalerStretchPct: number
+  /** MLS clearance — what an agent-listed property typically closes at as a
+   *  fraction of asking. Default 0.95 (agents over-list ~5%). */
+  mlsClearancePct: number
+  /** Agent commission percentage on MLS gross sale price. Default 0.06
+   *  (3% listing + 3% buy-side, the TN norm). Buyer-side commission is
+   *  legally negotiable post-NAR settlement but most TN deals still end up
+   *  ~6% total. */
+  mlsCommissionPct: number
+  /** Carrying cost per month while a property is on MLS — taxes,
+   *  insurance, utilities, lawn care, and (for non-probate) mortgage
+   *  payment. Default $1,500/mo. */
+  mlsCarryingPerMonth: number
+  /** Months a typical MLS listing sits before closing in TN. Default 3
+   *  (60-120 day mid-point). */
+  mlsCarryingMonths: number
 }
 
 /**
@@ -89,6 +104,13 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     // Stretched: wholesaler reaches if they really want the deal.
     // Still well below the textbook 78%.
     wholesalerStretchPct: 0.62,
+    // MLS — what most homeowners (or executors) think is their default option.
+    // 95% of asking is the typical clearance; 6% commission is TN norm;
+    // ~$1,500/mo carrying for ~3 months exposure is a representative bleed.
+    mlsClearancePct: 0.95,
+    mlsCommissionPct: 0.06,
+    mlsCarryingPerMonth: 1500,
+    mlsCarryingMonths: 3,
   }
 }
 
@@ -99,12 +121,16 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   assignmentFee: 10000,
   investorMargin: 40000,
   closingCosts: 5000,
-  buyerPremiumPct: 0.08,
+  buyerPremiumPct: 0.10,
   auctionMinPct: 0.80,
   auctionMaxPct: 0.88,
   auctionWorstPct: 0.70,
   wholesalerMaoPct: 0.70,
   wholesalerStretchPct: 0.78,
+  mlsClearancePct: 0.95,
+  mlsCommissionPct: 0.06,
+  mlsCarryingPerMonth: 1500,
+  mlsCarryingMonths: 3,
 }
 
 /** Three possible wholesaler outcomes for a given property. */
@@ -162,11 +188,38 @@ export type AuctionBreakdown = {
   worstStillBeatsWholesaler: boolean
 }
 
+/** MLS / agent-listing path. Most homeowners and probate executors think
+ *  this is their "real" alternative to FALCO; it's the comparison that
+ *  closes them. */
+export type MlsBreakdown = {
+  /** What the agent realistically lists at, given ARV. */
+  listPrice: number
+  /** Hammer price after typical clearance haircut (default 95% of asking). */
+  closedPrice: number
+  /** 6% agent commission on closed price. */
+  agentCommission: number
+  /** Total carrying cost during exposure (taxes, insurance, mortgage if
+   *  any, lawn, utilities). */
+  carryingCost: number
+  /** Loan payoff (same as the other paths). */
+  loanBalance: number
+  /** Standard closing costs (title, recording, attorney). */
+  closingCosts: number
+  /** Months of exposure modeled. */
+  carryingMonths: number
+  /** Net to seller after all of the above. */
+  netToSeller: number
+}
+
 export type MathOutput = {
   inputs: MathInputs
   trusteeNetToHomeowner: number  // = 0
   wholesaler: WholesalerBreakdown
   auction: AuctionBreakdown
+  /** MLS path — present in every output but only RENDERED on scenarios
+   *  where the agent listing is the homeowner's real default option
+   *  (probate, FSBO). */
+  mls: MlsBreakdown
   /** The headline number we feature most prominently. */
   spreadEstimate: {
     /** Auction midpoint - realistic wholesaler net. */
@@ -250,6 +303,20 @@ export function computeMath(inputs: MathInputs): MathOutput {
   }
   const worstStillBeatsWholesaler = worst.netToHomeowner > realisticNet
 
+  // MLS path. Agent over-lists ~5%; typical TN clearance ~95% of asking
+  // ≈ 0.95 × 1.05 ≈ retail. Net is closed price − commission − carrying −
+  // loan − closing.
+  const mlsListPrice = inputs.arv * (1 + (1 - inputs.mlsClearancePct))  // typical over-list
+  const mlsClosedPrice = inputs.arv  // 95% of (105% of arv) ≈ arv
+  const mlsAgentCommission = mlsClosedPrice * inputs.mlsCommissionPct
+  const mlsCarryingCost = inputs.mlsCarryingPerMonth * inputs.mlsCarryingMonths
+  const mlsNet =
+    mlsClosedPrice -
+    mlsAgentCommission -
+    mlsCarryingCost -
+    inputs.loanBalance -
+    inputs.closingCosts
+
   return {
     inputs,
     trusteeNetToHomeowner: 0,
@@ -276,6 +343,16 @@ export function computeMath(inputs: MathInputs): MathOutput {
       netRangeLabel,
       breakevenPct,
       worstStillBeatsWholesaler,
+    },
+    mls: {
+      listPrice: mlsListPrice,
+      closedPrice: mlsClosedPrice,
+      agentCommission: mlsAgentCommission,
+      carryingCost: mlsCarryingCost,
+      loanBalance: inputs.loanBalance,
+      closingCosts: inputs.closingCosts,
+      carryingMonths: inputs.mlsCarryingMonths,
+      netToSeller: mlsNet,
     },
     spreadEstimate: {
       midpointGain: auctionMidpointNet - realisticNet,
