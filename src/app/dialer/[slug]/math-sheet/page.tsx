@@ -100,7 +100,6 @@ export default async function DialerMathSheetPage({
       backHref={`/dialer/${slug}`}
       backLabel="← Lead"
       scenarioOverride={view as Scenario | null}
-      toggleHrefBuilder={(s) => `/dialer/${slug}/math-sheet?view=${s}`}
     />
   )
 }

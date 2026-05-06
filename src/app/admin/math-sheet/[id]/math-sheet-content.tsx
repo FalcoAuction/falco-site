@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   computeMath,
   DEFAULT_INPUTS,
@@ -56,7 +57,6 @@ export default function MathSheetContent({
   backHref = "/admin",
   backLabel = "← Admin",
   scenarioOverride,
-  toggleHrefBuilder,
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /admin so the
@@ -67,10 +67,11 @@ export default function MathSheetContent({
   /** Force a specific scenario regardless of homeowner.distressType.
    *  Used by the BK pre-petition / § 363 toggle (?view=...). */
   scenarioOverride?: Scenario | null
-  /** Builds the URL for the view-toggle button. The page passes a
-   *  function so the math-sheet stays unaware of which route owns it. */
-  toggleHrefBuilder?: (scenario: Scenario) => string
 }) {
+  // Toggle URL is built client-side from the current pathname — passing
+  // a function from the server page would crash the RSC boundary
+  // ("Functions cannot be passed directly to Client Components").
+  const pathname = usePathname()
   // ARV default priority:
   //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
   //   2. Loan balance × 1.6 (60% LTV guess) when no AVM yet
@@ -178,9 +179,9 @@ export default function MathSheetContent({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px]">
-            {scenarioCfg.viewToggle && toggleHrefBuilder && (
+            {scenarioCfg.viewToggle && pathname && (
               <Link
-                href={toggleHrefBuilder(scenarioCfg.viewToggle.scenario)}
+                href={`${pathname}?view=${scenarioCfg.viewToggle.scenario}`}
                 className="rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
               >
                 {scenarioCfg.viewToggle.label}

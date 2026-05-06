@@ -71,7 +71,6 @@ export default async function MathSheetPage({
     <MathSheetContent
       homeowner={snapshot}
       scenarioOverride={view as Scenario | null}
-      toggleHrefBuilder={(s) => `/admin/math-sheet/${id}?view=${s}`}
     />
   )
 }
