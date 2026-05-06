@@ -83,6 +83,7 @@ export default function MathSheetContent({
   const [closingCosts, setClosingCosts] = useState<number>(DEFAULT_INPUTS.closingCosts)
   const [auctionMinPct, setAuctionMinPct] = useState<number>(DEFAULT_INPUTS.auctionMinPct)
   const [auctionMaxPct, setAuctionMaxPct] = useState<number>(DEFAULT_INPUTS.auctionMaxPct)
+  const [taxLienAmount, setTaxLienAmount] = useState<number>(0)
 
   // Per-scenario framing (probate / code violation / FSBO / etc.) drives
   // the eyebrow, hero line, Path 1 card, and section intros. The math
@@ -102,6 +103,7 @@ export default function MathSheetContent({
     auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
     wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
+    taxLienAmount,
     applyTrusteeFee: scenarioCfg.applyTrusteeFee,
     mlsClearancePct: DEFAULT_INPUTS.mlsClearancePct,
     mlsCommissionPct: DEFAULT_INPUTS.mlsCommissionPct,
@@ -166,9 +168,10 @@ export default function MathSheetContent({
           <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 mb-3">
             Inputs (override before printing)
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
             <NumInput label="ARV ($)" value={arv} onChange={setArv} />
             <NumInput label="Loan ($)" value={loanBalance} onChange={setLoanBalance} />
+            <NumInput label="Tax lien ($)" value={taxLienAmount} onChange={setTaxLienAmount} />
             <NumInput label="Repairs ($)" value={repairs} onChange={setRepairs} />
             <NumInput label="Assign. fee ($)" value={assignmentFee} onChange={setAssignmentFee} />
             <NumInput label="Inv. margin ($)" value={investorMargin} onChange={setInvestorMargin} />
@@ -271,6 +274,8 @@ export default function MathSheetContent({
             value={
               scenarioCfg.scenario === "foreclosure"
                 ? fmt(out.trusteeNetToHomeowner)
+                : scenarioCfg.scenario === "tax_lien"
+                ? fmt(out.taxSale.netToHomeowner)
                 : scenarioCfg.path1.valueText
             }
             sub={scenarioCfg.path1.sub}
@@ -333,6 +338,9 @@ export default function MathSheetContent({
                 bold
               />
               <Row label="− Loan payoff" value={fmtSigned(-out.wholesaler.loanBalance)} />
+              {out.wholesaler.taxLien > 0 && (
+                <Row label="− Tax lien payoff" value={fmtSigned(-out.wholesaler.taxLien)} />
+              )}
               <Row
                 label={
                   out.wholesaler.netStandard < 0
@@ -422,6 +430,9 @@ export default function MathSheetContent({
                   />
                 )}
                 <Row label="− Loan payoff" value={fmtSigned(-out.mls.loanBalance)} />
+                {out.mls.taxLien > 0 && (
+                  <Row label="− Tax lien payoff" value={fmtSigned(-out.mls.taxLien)} />
+                )}
                 <Row label="− Closing costs" value={fmtSigned(-out.mls.closingCosts)} />
                 <Row
                   label={scenarioCfg.applyTrusteeFee ? "Net to estate" : "Net to seller"}
@@ -489,6 +500,15 @@ export default function MathSheetContent({
                 hi={-out.auction.high.closingCosts}
                 negative
               />
+              {out.auction.low.taxLien > 0 && (
+                <RowTriple
+                  label="− Tax lien payoff"
+                  w={-out.auction.worst.taxLien}
+                  lo={-out.auction.low.taxLien}
+                  hi={-out.auction.high.taxLien}
+                  negative
+                />
+              )}
               {scenarioCfg.applyTrusteeFee && (
                 <RowTriple
                   label="− Trustee fee (11 USC § 326)"

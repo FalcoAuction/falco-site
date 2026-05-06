@@ -36,6 +36,10 @@ export type MathInputs = {
   wholesalerMaoPct: number
   /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
   wholesalerStretchPct: number
+  /** Outstanding property-tax lien (back taxes + interest + costs). Paid
+   *  at close out of proceeds on every sale path; deducted alongside loan
+   *  payoff. 0 for non-tax-lien properties. */
+  taxLienAmount: number
   /** Apply 11 USC § 326 statutory trustee compensation tier to all path
    *  gross proceeds. Used for the bankruptcy_363_sale scenario where a
    *  Chapter 7 / 11 trustee is selling and is compensated out of the
@@ -109,6 +113,9 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     // Stretched: wholesaler reaches if they really want the deal.
     // Still well below the textbook 78%.
     wholesalerStretchPct: 0.62,
+    // Tax lien — most leads have $0 here. The TAX_LIEN scenario expects
+    // the rep to override this on the input panel before printing.
+    taxLienAmount: 0,
     // BK trustee compensation — only applied when scenario is § 363 sale
     // (post-petition). Default off.
     applyTrusteeFee: false,
@@ -135,6 +142,7 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   auctionWorstPct: 0.70,
   wholesalerMaoPct: 0.70,
   wholesalerStretchPct: 0.78,
+  taxLienAmount: 0,
   applyTrusteeFee: false,
   mlsClearancePct: 0.95,
   mlsCommissionPct: 0.06,
@@ -162,6 +170,8 @@ export type WholesalerBreakdown = {
   netStretched: number        // cashOfferStretched - loanBalance
   // Loan + scenario summary
   loanBalance: number
+  /** Property tax lien paid at close (only when taxLienAmount > 0). */
+  taxLien: number
   /** Trustee fee under 11 USC § 326 on the realistic offer
    *  (only set when applyTrusteeFee is true). */
   trusteeFee: number
@@ -180,10 +190,27 @@ export type AuctionScenario = {
   winningBid: number
   loanBalance: number   // negative
   closingCosts: number  // negative
+  /** Property tax lien paid at close (only when taxLienAmount > 0). */
+  taxLien: number
   /** Trustee fee under 11 USC § 326 (only set when applyTrusteeFee is true). */
   trusteeFee: number
   netToHomeowner: number
   buyerPremium: number  // paid by buyer ON TOP of bid (does not affect seller)
+}
+
+/** Tax sale path — what happens if the homeowner does nothing and the
+ *  property goes to chancery court tax sale. TN-specific math. */
+export type TaxSaleScenario = {
+  /** Modeled winning bid: max(lien × 1.3, ARV × 0.20). The first term is
+   *  what investors will pay just to clear back taxes + small overage on
+   *  low-equity properties; the second is the typical investor ceiling
+   *  (they need their own margin to flip). */
+  winningBid: number
+  taxLienPayoff: number
+  /** Chancery court costs, sheriff's deed prep, statutory fees. */
+  saleCosts: number
+  /** What the original owner walks away with after lien + costs. */
+  netToHomeowner: number
 }
 
 export type AuctionBreakdown = {
@@ -221,6 +248,8 @@ export type MlsBreakdown = {
   closingCosts: number
   /** Months of exposure modeled. */
   carryingMonths: number
+  /** Property tax lien paid at close (only when taxLienAmount > 0). */
+  taxLien: number
   /** Trustee fee under 11 USC § 326 (only set when applyTrusteeFee is true). */
   trusteeFee: number
   /** Net to seller (or estate, if applyTrusteeFee) after all of the above. */
@@ -232,6 +261,9 @@ export type MathOutput = {
   trusteeNetToHomeowner: number  // = 0
   wholesaler: WholesalerBreakdown
   auction: AuctionBreakdown
+  /** Modeled chancery court tax sale outcome. Always computed (cheap)
+   *  but only RENDERED in tax_lien scenario as Path 1. */
+  taxSale: TaxSaleScenario
   /** MLS path — present in every output but only RENDERED on scenarios
    *  where the agent listing is the homeowner's real default option
    *  (probate, FSBO). */
@@ -278,17 +310,22 @@ export function computeTrusteeFee(grossProceeds: number): number {
 export function computeMath(inputs: MathInputs): MathOutput {
   const totalDeductions = inputs.repairs + inputs.assignmentFee + inputs.investorMargin
 
+  // Property tax lien gets paid at close on every sale path (it's a
+  // superior lien — has to clear before the title transfers). Treated
+  // alongside loan payoff. 0 for non-tax-lien properties.
+  const taxLien = Math.max(0, inputs.taxLienAmount || 0)
+
   // Standard 70% rule: max(0, MAO - all the deductions)
   const maoCeiling = inputs.arv * inputs.wholesalerMaoPct
   const cashOfferStandard = Math.max(0, maoCeiling - totalDeductions)
-  const netStandard = cashOfferStandard - inputs.loanBalance
+  const netStandard = cashOfferStandard - inputs.loanBalance - taxLien
 
   // Stretched scenario: wholesaler accepts thinner margin (e.g. 78% MAO)
   // to close a deal that wouldn't pencil at the strict 70% rule. Their
   // own profit is smaller but they get a deal vs. nothing.
   const stretchedCeiling = inputs.arv * inputs.wholesalerStretchPct
   const cashOfferStretched = Math.max(0, stretchedCeiling - totalDeductions)
-  const netStretched = cashOfferStretched - inputs.loanBalance
+  const netStretched = cashOfferStretched - inputs.loanBalance - taxLien
 
   // Determine which scenario actually plays out:
   // - If standard rule clears the floor → wholesaler offers it
@@ -336,12 +373,17 @@ export function computeMath(inputs: MathInputs): MathOutput {
       ? computeTrusteeFee(winningBid)
       : 0
     const netToHomeowner =
-      winningBid - inputs.loanBalance - inputs.closingCosts - trusteeFee
+      winningBid -
+      inputs.loanBalance -
+      inputs.closingCosts -
+      taxLien -
+      trusteeFee
     return {
       retailPct,
       winningBid,
       loanBalance: inputs.loanBalance,
       closingCosts: inputs.closingCosts,
+      taxLien,
       trusteeFee,
       netToHomeowner,
       buyerPremium,
@@ -381,8 +423,16 @@ export function computeMath(inputs: MathInputs): MathOutput {
     mlsAgentCommission -
     mlsCarryingCost -
     mlsTrusteeFee -
+    taxLien -
     inputs.loanBalance -
     inputs.closingCosts
+
+  // Tax sale path. Modeled bid: max(lien × 1.3, ARV × 0.20). Conservative
+  // — actual bids vary widely. Owner walks away with whatever's left
+  // after lien payoff and chancery court costs (~$5K).
+  const taxSaleBid = Math.max(taxLien * 1.3, inputs.arv * 0.20)
+  const taxSaleCosts = 5000
+  const taxSaleNet = Math.max(0, taxSaleBid - taxLien - taxSaleCosts)
 
   return {
     inputs,
@@ -398,6 +448,7 @@ export function computeMath(inputs: MathInputs): MathOutput {
       cashOfferStretched,
       netStretched,
       loanBalance: inputs.loanBalance,
+      taxLien,
       trusteeFee: wholesalerTrusteeFee,
       scenario,
       realisticNet: realisticNetAfterFee,
@@ -420,8 +471,15 @@ export function computeMath(inputs: MathInputs): MathOutput {
       loanBalance: inputs.loanBalance,
       closingCosts: inputs.closingCosts,
       carryingMonths: inputs.mlsCarryingMonths,
+      taxLien,
       trusteeFee: mlsTrusteeFee,
       netToSeller: mlsNet,
+    },
+    taxSale: {
+      winningBid: taxSaleBid,
+      taxLienPayoff: taxLien,
+      saleCosts: taxSaleCosts,
+      netToHomeowner: taxSaleNet,
     },
     spreadEstimate: {
       midpointGain: auctionMidpointNet - realisticNet,

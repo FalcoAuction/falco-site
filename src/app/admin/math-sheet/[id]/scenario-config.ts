@@ -227,22 +227,22 @@ const TAX_LIEN: ScenarioConfig = {
   headerEyebrow: "FALCO · TAX LIEN OPTIONS",
   dateFieldLabel: "Lien recorded",
   heroLine:
-    "Marketed auction nets {range} after the lien is paid at close — clean title, no out-of-pocket lien resolution.",
-  spreadComparator: "paying off the lien yourself before listing",
+    "Marketed auction nets {range} after the lien is paid at close — clean title, no out-of-pocket lien resolution, sale clears before the next tax sale date.",
+  spreadComparator: "letting it go to tax sale",
   path1: {
-    label: "Pay off lien yourself",
-    valueText: "Lien + repairs",
-    sub: "Bring the tax lien current out of pocket, then list. Few owners in this position have the cash on hand; most properties end up at tax sale.",
+    label: "Let it go to tax sale",
+    valueText: "—",  // overridden by computed taxSale.netToHomeowner in renderer
+    sub: "TN chancery court tax sale: minimum bid = back taxes + costs. Investors typically bid 130% of lien or up to ~20% of ARV (whichever is higher). Homeowner walks with whatever's left after the lien clears — usually a fraction of true equity.",
     tone: "loss",
   },
   wholesalerIntro:
-    "Wholesalers who target tax-distressed properties bake the lien payoff into their offer (and discount accordingly). The 70%-rule math:",
+    "Wholesalers target tax-distressed properties hard because the time pressure converts. They bake the lien payoff into their offer (and discount accordingly). The 70%-rule math:",
   auctionIntro:
-    "Marketed auction handles the lien at close: the title company pays the county directly out of proceeds, you sign a clean deed, the buyer takes free-and-clear title.",
+    "Marketed auction handles the lien at close: the title company pays the county directly out of proceeds, you sign a clean deed, the buyer takes free-and-clear title. 30–45 day campaign, generally fits before the next tax sale date.",
   methodologyPath1:
-    "\"Pay off lien yourself\" path assumes the homeowner has cash on hand to clear the lien before listing.",
+    "Tax sale model: minimum bid = back taxes + statutory costs; investors competing typically push to 130% of lien or up to ~20% of ARV (whichever is higher). Net to original owner = bid − lien − chancery court costs (~$5K). After tax sale, TN gives the original owner a 1-year right of redemption (Tenn. Code Ann. § 67-5-2701) at the bid price + 10% per annum + costs.",
   ctaHeader: "If you want clean title at close",
-  showMls: false,
+  showMls: true,
   applyTrusteeFee: false,
 }
 
