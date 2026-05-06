@@ -366,11 +366,11 @@ export default function MathSheetContent({
             label={scenarioCfg.path1.label}
             value={
               scenarioCfg.scenario === "foreclosure"
-                ? fmt(out.trusteeNetToHomeowner)
+                ? fmt(out.trusteeNetToHomeowner ?? 0)
                 : scenarioCfg.scenario === "tax_lien"
-                ? fmt(out.taxSale.netToHomeowner)
+                ? fmt(out.taxSale?.netToHomeowner ?? 0)
                 : scenarioCfg.scenario === "code_violation"
-                ? fmt(out.selfRemediate.netToHomeowner)
+                ? fmt(out.selfRemediate?.netToHomeowner ?? 0)
                 : scenarioCfg.path1.valueText
             }
             sub={scenarioCfg.path1.sub}
