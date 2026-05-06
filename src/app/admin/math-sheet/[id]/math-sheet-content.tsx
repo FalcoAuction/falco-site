@@ -5,7 +5,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   computeMath,
-  DEFAULT_INPUTS,
   defaultInputsFor,
   fmt,
   fmtSigned,
@@ -52,6 +51,10 @@ function fmtDateHuman(iso: string | null): string {
   return `${months[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}`
 }
 
+function fmtPct(n: number): string {
+  return `${Math.round(n * 100)}%`
+}
+
 export default function MathSheetContent({
   homeowner,
   backHref = "/admin",
@@ -76,15 +79,25 @@ export default function MathSheetContent({
   //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
   //   2. Loan balance × 1.6 (60% LTV guess) when no AVM yet
   //   3. $400K when neither is known
+  const pipelineArv =
+    homeowner.propertyValue && homeowner.propertyValue > 0 ? homeowner.propertyValue : null
+  const hasPipelineArv = pipelineArv !== null
   const arvDefault =
-    homeowner.propertyValue && homeowner.propertyValue > 0
-      ? Math.round(homeowner.propertyValue / 1000) * 1000
+    hasPipelineArv
+      ? Math.round(pipelineArv / 1000) * 1000
       : homeowner.mortgageBalance
       ? Math.round((homeowner.mortgageBalance * 1.6) / 1000) * 1000
       : 400000
+  const arvSourceLabel = hasPipelineArv
+    ? homeowner.propertyValueSource || "Pipeline property value"
+    : homeowner.mortgageBalance
+    ? "Fallback estimate: loan balance / 0.60"
+    : "Fallback estimate: default $400K"
   // Compute property-aware defaults (deductions scale with ARV so the
   // model is sensible across $100K Memphis properties → $1M Nashville).
   const seed = defaultInputsFor(arvDefault, homeowner.mortgageBalance ?? 0)
+  const baseWholesalePct = fmtPct(seed.wholesalerMaoPct)
+  const stretchWholesalePct = fmtPct(seed.wholesalerStretchPct)
 
   // Per-scenario framing + scenario-aware default seeds. Need to compute
   // these BEFORE useState so the seeds can flow in. Code-violation auction
@@ -105,16 +118,17 @@ export default function MathSheetContent({
     : null
 
   const [arv, setArv] = useState<number>(arvDefault)
+  const [arvManuallyEdited, setArvManuallyEdited] = useState<boolean>(false)
   const [loanBalance, setLoanBalance] = useState<number>(homeowner.mortgageBalance ?? 0)
   const [repairs, setRepairs] = useState<number>(cvDefaults?.repairs ?? seed.repairs)
   const [assignmentFee, setAssignmentFee] = useState<number>(seed.assignmentFee)
   const [investorMargin, setInvestorMargin] = useState<number>(seed.investorMargin)
-  const [closingCosts, setClosingCosts] = useState<number>(DEFAULT_INPUTS.closingCosts)
+  const [closingCosts, setClosingCosts] = useState<number>(seed.closingCosts)
   const [auctionMinPct, setAuctionMinPct] = useState<number>(
-    cvDefaults?.auctionMin ?? DEFAULT_INPUTS.auctionMinPct
+    cvDefaults?.auctionMin ?? seed.auctionMinPct
   )
   const [auctionMaxPct, setAuctionMaxPct] = useState<number>(
-    cvDefaults?.auctionMax ?? DEFAULT_INPUTS.auctionMaxPct
+    cvDefaults?.auctionMax ?? seed.auctionMaxPct
   )
   const [taxLienAmount, setTaxLienAmount] = useState<number>(0)
   const [monthlyFineAccrual, setMonthlyFineAccrual] = useState<number>(
@@ -136,22 +150,32 @@ export default function MathSheetContent({
     assignmentFee,
     investorMargin,
     closingCosts,
-    buyerPremiumPct: DEFAULT_INPUTS.buyerPremiumPct,
+    buyerPremiumPct: seed.buyerPremiumPct,
     auctionMinPct,
     auctionMaxPct,
-    auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
-    wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
-    wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
+    auctionWorstPct: seed.auctionWorstPct,
+    wholesalerMaoPct: seed.wholesalerMaoPct,
+    wholesalerStretchPct: seed.wholesalerStretchPct,
     taxLienAmount,
     monthlyFineAccrual,
     repairMonths,
     applyTrusteeFee: scenarioCfg.applyTrusteeFee,
-    mlsClearancePct: DEFAULT_INPUTS.mlsClearancePct,
-    mlsCommissionPct: DEFAULT_INPUTS.mlsCommissionPct,
-    mlsCarryingPerMonth: DEFAULT_INPUTS.mlsCarryingPerMonth,
-    mlsCarryingMonths: DEFAULT_INPUTS.mlsCarryingMonths,
+    mlsClearancePct: seed.mlsClearancePct,
+    mlsCommissionPct: seed.mlsCommissionPct,
+    mlsCarryingPerMonth: seed.mlsCarryingPerMonth,
+    mlsCarryingMonths: seed.mlsCarryingMonths,
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
+  const arvNeedsVerification = !hasPipelineArv && !arvManuallyEdited
+  const handlePrint = () => {
+    if (arvNeedsVerification) {
+      window.alert(
+        "Verify ARV before sending: this sheet is using a fallback value, not a pipeline AVM or comp."
+      )
+      return
+    }
+    window.print()
+  }
 
   return (
     <main className="min-h-screen bg-white text-neutral-900 print:bg-white">
@@ -196,10 +220,14 @@ export default function MathSheetContent({
               Email →
             </a>
             <button
-              onClick={() => window.print()}
-              className="rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold px-3.5 py-1.5 transition-colors"
+              onClick={handlePrint}
+              className={`rounded-md font-semibold px-3.5 py-1.5 transition-colors ${
+                arvNeedsVerification
+                  ? "bg-amber-300 hover:bg-amber-200 text-black"
+                  : "bg-emerald-400 hover:bg-emerald-300 text-black"
+              }`}
             >
-              Print / Save PDF
+              {arvNeedsVerification ? "Verify ARV before PDF" : "Print / Save PDF"}
             </button>
           </div>
         </div>
@@ -210,7 +238,14 @@ export default function MathSheetContent({
             Inputs (override before printing)
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-            <NumInput label="ARV ($)" value={arv} onChange={setArv} />
+            <NumInput
+              label="ARV ($)"
+              value={arv}
+              onChange={(v) => {
+                setArv(v)
+                setArvManuallyEdited(true)
+              }}
+            />
             <NumInput label="Loan ($)" value={loanBalance} onChange={setLoanBalance} />
             <NumInput label="Tax lien ($)" value={taxLienAmount} onChange={setTaxLienAmount} />
             <NumInput label="Repairs ($)" value={repairs} onChange={setRepairs} />
@@ -226,8 +261,9 @@ export default function MathSheetContent({
             </div>
           )}
           <div className="mt-2 text-[10px] text-white/35 leading-[1.5]">
-            ARV defaulted from loan ÷ 0.60 — replace with your actual comp.
-            Closing costs default {fmt(closingCosts)}, buyer&apos;s premium 10% (paid by buyer), 70% rule.
+            ARV source: {arvSourceLabel}. Replace fallback values with a real AVM or comp before sending.
+            <br />
+            Closing costs default {fmt(closingCosts)}, buyer&apos;s premium {fmtPct(seed.buyerPremiumPct)} (paid by buyer), wholesale model {baseWholesalePct} base / {stretchWholesalePct} stretch.
           </div>
         </div>
       </div>
@@ -262,6 +298,13 @@ export default function MathSheetContent({
             <Field label={scenarioCfg.dateFieldLabel} value={fmtDateHuman(homeowner.trusteeSaleDate)} />
             <Field label="Mortgage balance" value={fmt(loanBalance)} />
           </dl>
+          {arvNeedsVerification && (
+            <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-[11px] leading-[1.5] text-amber-950">
+              <strong>Verify before seller use:</strong> this sheet is using an ARV fallback
+              ({arvSourceLabel}), not a pipeline AVM or checked comp. Replace the ARV input before
+              printing or sending.
+            </div>
+          )}
         </header>
 
         {/* Code violations specifics — visible only on code_violation
@@ -388,8 +431,8 @@ export default function MathSheetContent({
               out.wholesaler.scenario === "walks"
                 ? "Most wholesalers walk at this LTV; some try seller-financing or 'subject-to' deals."
                 : out.wholesaler.scenario === "stretched"
-                ? "Strict 70% rule doesn't pencil here. ~78% MAO on a thinner deal."
-                : "Built on the wholesale industry's standard 70% rule (below)."
+                ? `Base ${baseWholesalePct} offer doesn't pencil here. ${stretchWholesalePct} stretch on a thinner deal.`
+                : `Modeled at ${baseWholesalePct} of ARV, matching distressed cash-offer reality.`
             }
             tone="meh"
           />
@@ -424,7 +467,7 @@ export default function MathSheetContent({
           <table className="mt-3 w-full text-[13px] border border-neutral-200">
             <tbody>
               <Row label="After-repair value (ARV)" value={fmt(out.wholesaler.arv)} />
-              <Row label="× 70% — wholesaler MAO ceiling" value={fmt(out.wholesaler.maoCeiling)} />
+              <Row label={`× ${baseWholesalePct} - distressed cash-offer ceiling`} value={fmt(out.wholesaler.maoCeiling)} />
               <Row label="− Estimated repairs (assumed)" value={fmtSigned(-out.wholesaler.repairs)} />
               <Row label="− Wholesaler assignment fee" value={fmtSigned(-out.wholesaler.assignmentFee)} />
               <Row label="− Investor's required profit margin" value={fmtSigned(-out.wholesaler.investorMargin)} />
@@ -461,13 +504,13 @@ export default function MathSheetContent({
                 What the wholesaler actually does on this property
               </div>
               <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
-                The strict 70% rule doesn&apos;t leave them margin to close. To
-                make a deal happen, they stretch up to ~78% of ARV (eating some
+                The base {baseWholesalePct} distressed offer doesn&apos;t leave them margin to close. To
+                make a deal happen, they stretch up to {stretchWholesalePct} of ARV (eating some
                 of their own profit). Realistic offer math:
               </p>
               <table className="mt-2 w-full text-[12px] border border-amber-200/60 bg-white">
                 <tbody>
-                  <Row label="× 78% — stretched MAO" value={fmt(out.wholesaler.arv * 0.78)} />
+                  <Row label={`× ${stretchWholesalePct} - stretched offer`} value={fmt(out.wholesaler.arv * seed.wholesalerStretchPct)} />
                   <Row label="− Same deductions (repairs / fee / margin)" value={fmtSigned(-(out.wholesaler.repairs + out.wholesaler.assignmentFee + out.wholesaler.investorMargin))} />
                   <Row label="Stretched cash offer" value={fmt(out.wholesaler.cashOfferStretched)} bold />
                   <Row label="− Loan payoff" value={fmtSigned(-out.wholesaler.loanBalance)} />
@@ -483,7 +526,7 @@ export default function MathSheetContent({
                 What actually happens here
               </div>
               <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
-                Even stretched to 78% of ARV, the wholesaler can&apos;t cover
+                Even stretched to {stretchWholesalePct} of ARV, the wholesaler can&apos;t cover
                 your loan and still earn enough to bother. <strong>Most walk
                 away.</strong> A few try creative deals — &quot;subject-to,&quot;
                 seller financing, novation — that take the property without
@@ -754,7 +797,7 @@ export default function MathSheetContent({
             Methodology &amp; sources
           </div>
           <ul className="space-y-1">
-            <li>• Wholesaler offer derived from the published &quot;70% rule&quot; (Maximum Allowable Offer = ARV × 0.70 less repairs less assignment fee less investor margin).</li>
+            <li>• Wholesaler offer modeled at {baseWholesalePct} of ARV, with a {stretchWholesalePct} reach scenario when a cash buyer gives up margin to close. The published 70% rule is treated as the investor-side ceiling, not the homeowner&apos;s actual cash offer.</li>
             <li>• Marketed auction net modeled at {Math.round(out.auction.low.retailPct * 100)}–{Math.round(out.auction.high.retailPct * 100)}% of retail less loan payoff less typical closing costs.</li>
             <li>• {scenarioCfg.methodologyPath1}</li>
             <li>• Numbers are estimates based on the inputs above. Final auction outcome depends on market conditions, buyer turnout, and property condition.</li>

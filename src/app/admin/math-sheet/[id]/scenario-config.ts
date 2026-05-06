@@ -77,7 +77,7 @@ const FORECLOSURE: ScenarioConfig = {
     tone: "loss",
   },
   wholesalerIntro:
-    "The wholesale industry uses a published formula — the \"70% rule.\" They aren't pulling numbers out of a hat; they're pulling them out of YOU.",
+    "The wholesale industry talks about the published \"70% rule,\" but the homeowner cash offer usually lands below that so the wholesaler can capture spread. This is the practical offer math:",
   auctionIntro:
     "Same property. Different process: photos, advertising, a 30–60 day campaign, a defined sale day, and buyers competing openly on price.",
   methodologyPath1:
