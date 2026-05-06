@@ -20,7 +20,9 @@ export type MathInputs = {
   investorMargin: number
   /** Closing costs at marketed sale (title, recording, etc.). Default $5,000. */
   closingCosts: number
-  /** Buyer's premium percentage paid by buyer on top of bid. Default 8%. */
+  /** Buyer's premium percentage paid by buyer on top of bid. Default 10% —
+   *  FALCO's standard BP. The seller never sees this; it sits on top of
+   *  the hammer price and covers the auction firm + FALCO. */
   buyerPremiumPct: number
   /** Marketed auction modeled clearance — low end. Default 0.80. */
   auctionMinPct: number
@@ -76,7 +78,7 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     assignmentFee: defaultAssignmentFee(arv),
     investorMargin: defaultInvestorMargin(arv),
     closingCosts: 5000,
-    buyerPremiumPct: 0.08,
+    buyerPremiumPct: 0.10,
     auctionMinPct: 0.80,
     auctionMaxPct: 0.88,
     auctionWorstPct: 0.70,

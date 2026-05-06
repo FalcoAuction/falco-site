@@ -45,6 +45,7 @@ export default async function MathSheetPage({
     // Pipeline-enriched fields used to pre-populate the math sheet inputs
     propertyValue: (data.property_value as number | null) ?? null,
     propertyValueSource: (data.property_value_source as string | null) ?? null,
+    distressType: (data.distress_type as string | null) ?? null,
   }
 
   return <MathSheetContent homeowner={snapshot} />

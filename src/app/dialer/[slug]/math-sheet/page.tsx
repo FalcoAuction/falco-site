@@ -55,6 +55,7 @@ export default async function DialerMathSheetPage({
     // Pipeline AVM (from ATTOM) — pre-populates ARV in the math sheet
     propertyValue: avmMid,
     propertyValueSource: avmMid ? "AVM" : null,
+    distressType: lead.distressType ?? null,
   }
 
   return (

@@ -3,22 +3,23 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTransition } from "react"
 
-type CountyOption = {
+type DistressOption = {
   value: string
   label: string
   count: number
 }
 
 type Props = {
-  options: CountyOption[]
+  options: DistressOption[]
   selected: string
 }
 
 /**
- * County dropdown — narrows the queue to a single county. Empty
- * selection ("") means "all of selected region" (Middle TN by default).
+ * Distress-type dropdown — narrows the queue to one motion category
+ * (TRUSTEE_NOTICE, PRE_FORECLOSURE, CODE_VIOLATION, PROBATE, …). Empty
+ * selection ("") means "all distress types".
  */
-export function CountyFilter({ options, selected }: Props) {
+export function DistressFilter({ options, selected }: Props) {
   const router = useRouter()
   const params = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -26,8 +27,8 @@ export function CountyFilter({ options, selected }: Props) {
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value
     const next = new URLSearchParams(params.toString())
-    if (value) next.set("county", value)
-    else next.delete("county")
+    if (value) next.set("distress", value)
+    else next.delete("distress")
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("dialer:queue:scroll")
     }
@@ -38,17 +39,14 @@ export function CountyFilter({ options, selected }: Props) {
 
   return (
     <label className="inline-flex items-center gap-2 text-xs text-white/60">
-      <span className="uppercase tracking-wider">County</span>
+      <span className="uppercase tracking-wider">Distress</span>
       <select
         value={selected}
         onChange={onChange}
         disabled={isPending}
-        // Native <option>s render in OS chrome (white bg by default).
-        // Force a dark background + light text on options so the open
-        // dropdown is readable against the dark site theme.
         className="rounded-md border border-white/12 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-400/50 disabled:opacity-60 [&>option]:bg-neutral-900 [&>option]:text-white"
       >
-        <option value="">All Middle TN</option>
+        <option value="">All distress</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label} ({o.count})

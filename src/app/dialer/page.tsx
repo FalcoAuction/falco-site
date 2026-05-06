@@ -4,6 +4,19 @@ import { listDialerLeads, STATUS_LABELS, type DialerLead } from "@/lib/dialer-da
 import { PhoneLink } from "./phone-link"
 import { ScrollRestorer } from "./scroll-restorer"
 import { CountyFilter } from "./county-filter"
+import { DistressFilter } from "./distress-filter"
+
+const DISTRESS_LABELS: Record<string, string> = {
+  TRUSTEE_NOTICE: "Trustee Notice",
+  PRE_FORECLOSURE: "Pre-foreclosure",
+  CODE_VIOLATION: "Code Violation",
+  PROBATE: "Probate",
+  TAX_LIEN: "Tax Lien",
+  FSBO: "FSBO",
+  BANKRUPTCY: "Bankruptcy",
+  LIS_PENDENS: "Lis Pendens",
+  PREFORECLOSURE: "Pre-foreclosure",
+}
 
 export const dynamic = "force-dynamic"
 
@@ -131,7 +144,7 @@ function inMiddleTN(county: string | null | undefined): boolean {
 export default async function DialerQueuePage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; county?: string }>
+  searchParams: Promise<{ filter?: string; county?: string; distress?: string }>
 }) {
   await requireDialerSession("/dialer")
   const params = await searchParams
@@ -139,6 +152,7 @@ export default async function DialerQueuePage({
   // first thing every morning. "open" / "new" / etc. are still one click.
   const filter = params.filter ?? "ready"
   const countyFilter = params.county ?? ""
+  const distressFilter = params.distress ?? ""
 
   const leads = await listDialerLeads()
 
@@ -148,9 +162,21 @@ export default async function DialerQueuePage({
     return inMiddleTN(l.county)
   })
 
+  // Distress filter — applied on top of region. PREFORECLOSURE and
+  // PRE_FORECLOSURE are the same bucket in older vs newer data.
+  const byDistress = distressFilter
+    ? byRegion.filter((l) => {
+        const dt = (l.distressType || "").toUpperCase()
+        if (distressFilter === "PRE_FORECLOSURE") {
+          return dt === "PRE_FORECLOSURE" || dt === "PREFORECLOSURE" || dt === "LIS_PENDENS"
+        }
+        return dt === distressFilter
+      })
+    : byRegion
+
   // Status filter — "ready" is special: defensible + validated phone
   // + complete profile, regardless of workflow status.
-  const byStatus = byRegion.filter((l) => {
+  const byStatus = byDistress.filter((l) => {
     const s = l.workflow.status
     if (filter === "ready") return isReadyToDial(l as unknown as ReadyDialLead)
     if (filter === "all") return true
@@ -185,26 +211,45 @@ export default async function DialerQueuePage({
       count: n,
     }))
 
-  // Status tabs — counts respect the current geo filter so they're meaningful
+  // Distress options — counts respect region+county scope (so the
+  // dropdown reflects what's actually visible after geo filter).
+  const distressMap = new Map<string, number>()
+  for (const l of byRegion) {
+    let dt = (l.distressType || "").toUpperCase()
+    if (!dt) continue
+    // Collapse duplicates
+    if (dt === "PREFORECLOSURE" || dt === "LIS_PENDENS") dt = "PRE_FORECLOSURE"
+    distressMap.set(dt, (distressMap.get(dt) || 0) + 1)
+  }
+  const distressOptions = Array.from(distressMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([dt, n]) => ({
+      value: dt,
+      label: DISTRESS_LABELS[dt] ?? dt,
+      count: n,
+    }))
+
+  // Status tabs — counts respect the current geo + distress filter so
+  // they're meaningful (clicking a tab won't surprise with 0 results).
   const counts = {
-    ready: byRegion.filter((l) => isReadyToDial(l as unknown as ReadyDialLead)).length,
-    open: byRegion.filter(
+    ready: byDistress.filter((l) => isReadyToDial(l as unknown as ReadyDialLead)).length,
+    open: byDistress.filter(
       (l) => l.workflow.status !== "closed_lost" && l.workflow.status !== "closed_won"
     ).length,
-    new: byRegion.filter((l) => l.workflow.status === "new").length,
-    in_progress: byRegion.filter(
+    new: byDistress.filter((l) => l.workflow.status === "new").length,
+    in_progress: byDistress.filter(
       (l) => l.workflow.status === "attempting_contact" || l.workflow.status === "rpc_made"
     ).length,
-    booked: byRegion.filter(
+    booked: byDistress.filter(
       (l) =>
         l.workflow.status === "auction_booked" ||
         l.workflow.status === "listing_signed" ||
         l.workflow.status === "auction_live"
     ).length,
-    closed: byRegion.filter(
+    closed: byDistress.filter(
       (l) => l.workflow.status === "closed_won" || l.workflow.status === "closed_lost"
     ).length,
-    all: byRegion.length,
+    all: byDistress.length,
   }
 
   const tabs = [
@@ -229,16 +274,21 @@ export default async function DialerQueuePage({
             Sorted by sale date · click any lead to log a call
           </p>
         </div>
-        <CountyFilter options={countyOptions} selected={countyFilter} />
+        <div className="flex items-center gap-3 flex-wrap">
+          <CountyFilter options={countyOptions} selected={countyFilter} />
+          <DistressFilter options={distressOptions} selected={distressFilter} />
+        </div>
       </div>
 
       {/* Status tabs */}
       <div className="mt-4 flex flex-wrap gap-1.5">
         {tabs.map((tab) => {
           const active = filter === tab.key
-          const href = countyFilter
-            ? `/dialer?filter=${tab.key}&county=${countyFilter}`
-            : `/dialer?filter=${tab.key}`
+          const qs = new URLSearchParams()
+          qs.set("filter", tab.key)
+          if (countyFilter) qs.set("county", countyFilter)
+          if (distressFilter) qs.set("distress", distressFilter)
+          const href = `/dialer?${qs.toString()}`
           return (
             <Link
               key={tab.key}
@@ -419,7 +469,8 @@ export default async function DialerQueuePage({
       </div>
 
       <p className="mt-4 text-[11px] text-white/35 text-center">
-        {filtered.length} of {byRegion.length} {countyFilter ? countyFilter : "Middle TN"} leads
+        {filtered.length} of {byDistress.length} {countyFilter ? countyFilter : "Middle TN"}
+        {distressFilter && ` · ${(DISTRESS_LABELS[distressFilter] ?? distressFilter).toLowerCase()}`} leads
       </p>
     </main>
   )
