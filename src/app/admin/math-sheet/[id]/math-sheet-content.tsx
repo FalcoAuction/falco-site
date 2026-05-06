@@ -10,6 +10,7 @@ import {
   fmtSigned,
   type MathInputs,
 } from "@/lib/math-sheet"
+import { resolveScenario } from "./scenario-config"
 
 export type HomeownerSnapshot = {
   id: string
@@ -25,6 +26,9 @@ export type HomeownerSnapshot = {
    *  when present, falling back to mortgage × 1.6 when absent. */
   propertyValue: number | null
   propertyValueSource: string | null
+  /** Pipeline distress_type — drives per-scenario framing on the printed
+   *  sheet. Null/unknown falls back to foreclosure (the default flow). */
+  distressType?: string | null
 }
 
 function fmtDateHuman(iso: string | null): string {
@@ -71,6 +75,11 @@ export default function MathSheetContent({
   const [closingCosts, setClosingCosts] = useState<number>(DEFAULT_INPUTS.closingCosts)
   const [auctionMinPct, setAuctionMinPct] = useState<number>(DEFAULT_INPUTS.auctionMinPct)
   const [auctionMaxPct, setAuctionMaxPct] = useState<number>(DEFAULT_INPUTS.auctionMaxPct)
+
+  // Per-scenario framing (probate / code violation / FSBO / etc.) drives
+  // the eyebrow, hero line, Path 1 card, and section intros. The math
+  // engine is unchanged — only the copy and labels swap.
+  const scenarioCfg = resolveScenario(homeowner.distressType)
 
   const inputs: MathInputs = {
     arv,
@@ -159,7 +168,7 @@ export default function MathSheetContent({
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="text-[11px] tracking-[0.32em] uppercase font-bold text-emerald-700">
-                FALCO · YOUR OPTIONS
+                {scenarioCfg.headerEyebrow}
               </div>
               <div className="mt-1 text-[15px] text-neutral-700 leading-tight">
                 Prepared for{" "}
@@ -179,7 +188,7 @@ export default function MathSheetContent({
           <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
             <Field label="Property" value={homeowner.propertyAddress || "—"} />
             <Field label="County" value={homeowner.county || "—"} />
-            <Field label="Trustee sale" value={fmtDateHuman(homeowner.trusteeSaleDate)} />
+            <Field label={scenarioCfg.dateFieldLabel} value={fmtDateHuman(homeowner.trusteeSaleDate)} />
             <Field label="Mortgage balance" value={fmt(loanBalance)} />
           </dl>
         </header>
@@ -192,12 +201,16 @@ export default function MathSheetContent({
             The bottom line
           </div>
           <div className="mt-3 text-[22px] md:text-[28px] font-semibold tracking-tight leading-tight text-neutral-900">
-            By taking your home to a marketed auction instead of letting the
-            trustee sale close, you stand to walk away with{" "}
-            <span className="text-emerald-700 font-bold whitespace-nowrap">
-              {out.auction.netRangeLabel}
-            </span>
-            .
+            {scenarioCfg.heroLine.split("{range}").map((chunk, i, arr) => (
+              <span key={i}>
+                {chunk}
+                {i < arr.length - 1 && (
+                  <span className="text-emerald-700 font-bold whitespace-nowrap">
+                    {out.auction.netRangeLabel}
+                  </span>
+                )}
+              </span>
+            ))}
           </div>
           {out.spreadEstimate.midpointGain > 0 && (
             <div className="mt-3 text-[14px] md:text-[15px] text-neutral-700 leading-snug">
@@ -216,20 +229,7 @@ export default function MathSheetContent({
                   in a strong campaign)
                 </>
               )}
-              , and{" "}
-              <span className="text-emerald-700 font-semibold">
-                {fmt(
-                  Math.max(
-                    0,
-                    Math.round(
-                      (out.auction.low.netToHomeowner +
-                        out.auction.high.netToHomeowner) /
-                        2
-                    ) - (out.trusteeNetToHomeowner ?? 0)
-                  )
-                )}
-              </span>{" "}
-              more than letting the bank take it.
+              , and meaningfully more than {scenarioCfg.spreadComparator}.
             </div>
           )}
         </section>
@@ -238,10 +238,14 @@ export default function MathSheetContent({
             Loss / meh / win pattern reinforces the hero number above. */}
         <section className="mt-6 grid grid-cols-3 gap-3">
           <PathCard
-            label="Do nothing"
-            value={fmt(out.trusteeNetToHomeowner)}
-            sub="Bank takes the property for the loan balance on the trustee sale date. Your equity is wiped out."
-            tone="loss"
+            label={scenarioCfg.path1.label}
+            value={
+              scenarioCfg.scenario === "foreclosure"
+                ? fmt(out.trusteeNetToHomeowner)
+                : scenarioCfg.path1.valueText
+            }
+            sub={scenarioCfg.path1.sub}
+            tone={scenarioCfg.path1.tone}
           />
           <PathCard
             label={
@@ -279,8 +283,7 @@ export default function MathSheetContent({
             How a wholesaler arrives at their offer
           </h2>
           <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
-            The wholesale industry uses a published formula — the &quot;70% rule.&quot; They
-            aren&apos;t pulling numbers out of a hat; they&apos;re pulling them out of YOU.
+            {scenarioCfg.wholesalerIntro}
           </p>
           <table className="mt-3 w-full text-[13px] border border-neutral-200">
             <tbody>
@@ -360,8 +363,7 @@ export default function MathSheetContent({
             How a marketed auction arrives at its number
           </h2>
           <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
-            Same property. Different process: photos, advertising, a 30–60 day
-            campaign, a defined sale day, and buyers competing openly on price.
+            {scenarioCfg.auctionIntro}
           </p>
           <table className="mt-3 w-full text-[13px] border border-neutral-200">
             <thead>
@@ -453,9 +455,9 @@ export default function MathSheetContent({
                 The auction is your real path to equity
               </div>
               <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
-                With the wholesaler walking away and the trustee sale paying
-                you nothing, the auction is the only route that puts money
-                in your pocket. Even at our worst-case scenario ({Math.round(out.auction.worst.retailPct * 100)}%
+                With the wholesaler walking away and {scenarioCfg.scenario === "foreclosure" ? "the trustee sale paying you nothing" : `${scenarioCfg.path1.label.toLowerCase()} netting nothing`},
+                the auction is the only route that puts money in your pocket.
+                Even at our worst-case scenario ({Math.round(out.auction.worst.retailPct * 100)}%
                 of retail), you&apos;d walk away with{" "}
                 <strong>{fmt(out.auction.worst.netToHomeowner)}</strong>.
                 {out.auction.worst.netToHomeowner < 5000 && " That's still tight; we'd want to see strong comparables before committing to list."}
@@ -467,7 +469,7 @@ export default function MathSheetContent({
         {/* What we'll do next */}
         <section className="mt-8 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
           <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-700 font-semibold">
-            If you want to move forward
+            {scenarioCfg.ctaHeader}
           </div>
           <ol className="mt-3 space-y-2 text-[13px] text-neutral-800 leading-[1.6] list-decimal pl-5">
             <li>We&apos;ll introduce you to our state-licensed Tennessee auction partner who&apos;ll run the sale.</li>
@@ -490,7 +492,7 @@ export default function MathSheetContent({
           <ul className="space-y-1">
             <li>• Wholesaler offer derived from the published &quot;70% rule&quot; (Maximum Allowable Offer = ARV × 0.70 less repairs less assignment fee less investor margin).</li>
             <li>• Marketed auction net modeled at {Math.round(out.auction.low.retailPct * 100)}–{Math.round(out.auction.high.retailPct * 100)}% of retail less loan payoff less typical closing costs.</li>
-            <li>• Trustee sale closes at the loan balance — homeowner equity is consumed by the foreclosing lender.</li>
+            <li>• {scenarioCfg.methodologyPath1}</li>
             <li>• Numbers are estimates based on the inputs above. Final auction outcome depends on market conditions, buyer turnout, and property condition.</li>
             <li>• Full sourcing for industry assumptions: <span className="text-emerald-700">falco.llc/manifesto#sources</span></li>
           </ul>
