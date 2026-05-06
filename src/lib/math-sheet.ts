@@ -60,6 +60,13 @@ export type MathInputs = {
   /** Months a typical MLS listing sits before closing in TN. Default 3
    *  (60-120 day mid-point). */
   mlsCarryingMonths: number
+  /** Monthly fine accrual rate in dollars — used by the code_violation
+   *  scenario's self-remediate path. 0 elsewhere. */
+  monthlyFineAccrual: number
+  /** Months of self-remediation work modeled (permits + contractors +
+   *  re-inspection). Used to compute fines accrued during the cure
+   *  period. 0 elsewhere; default 3 for code_violation. */
+  repairMonths: number
 }
 
 /**
@@ -126,6 +133,11 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     mlsCommissionPct: 0.06,
     mlsCarryingPerMonth: 1500,
     mlsCarryingMonths: 3,
+    // Code-violation self-remediate path defaults to 0 fines / 0 months
+    // (no-op for non-CV scenarios). The renderer seeds non-zero defaults
+    // when scenarioCfg.scenario === "code_violation".
+    monthlyFineAccrual: 0,
+    repairMonths: 0,
   }
 }
 
@@ -148,6 +160,8 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   mlsCommissionPct: 0.06,
   mlsCarryingPerMonth: 1500,
   mlsCarryingMonths: 3,
+  monthlyFineAccrual: 0,
+  repairMonths: 0,
 }
 
 /** Three possible wholesaler outcomes for a given property. */
@@ -196,6 +210,31 @@ export type AuctionScenario = {
   trusteeFee: number
   netToHomeowner: number
   buyerPremium: number  // paid by buyer ON TOP of bid (does not affect seller)
+}
+
+/** Self-remediate-then-sell path — the highest-net option for a
+ *  code-violation property IF the homeowner has the capital, capacity,
+ *  and patience to actually pull it off (most don't). Math models a
+ *  typical TN sequence: pay for repairs, eat fines for `repairMonths`,
+ *  then list on MLS, pay agent commission, close. */
+export type SelfRemediateScenario = {
+  /** Closed price (≈ ARV for residential MLS at 95% clearance). */
+  closedPrice: number
+  /** Out-of-pocket repair budget. */
+  repairCost: number
+  /** Fines accrued during the cure window (monthly × months). */
+  finesAccrued: number
+  /** 6% MLS agent commission on closed price. */
+  agentCommission: number
+  /** Carrying costs during cure period (taxes, insurance, mortgage if
+   *  any) — same monthly rate as the standard MLS carry. */
+  carryingCost: number
+  loanBalance: number
+  taxLien: number
+  closingCosts: number
+  repairMonths: number
+  /** What the homeowner walks with after everything resolves. */
+  netToHomeowner: number
 }
 
 /** Tax sale path — what happens if the homeowner does nothing and the
@@ -264,6 +303,9 @@ export type MathOutput = {
   /** Modeled chancery court tax sale outcome. Always computed (cheap)
    *  but only RENDERED in tax_lien scenario as Path 1. */
   taxSale: TaxSaleScenario
+  /** Modeled self-remediate-then-sell outcome. Always computed but
+   *  only RENDERED in code_violation scenario as Path 1. */
+  selfRemediate: SelfRemediateScenario
   /** MLS path — present in every output but only RENDERED on scenarios
    *  where the agent listing is the homeowner's real default option
    *  (probate, FSBO). */
@@ -434,6 +476,24 @@ export function computeMath(inputs: MathInputs): MathOutput {
   const taxSaleCosts = 5000
   const taxSaleNet = Math.max(0, taxSaleBid - taxLien - taxSaleCosts)
 
+  // Self-remediate-then-sell path. Models: pay for repairs, eat fines
+  // for `repairMonths`, list on MLS, pay agent commission, close.
+  // ARV is post-repair value, so closed price ≈ ARV at 95% clearance.
+  const srRepairCost = inputs.repairs
+  const srFinesAccrued = inputs.monthlyFineAccrual * inputs.repairMonths
+  const srClosedPrice = inputs.arv
+  const srCommission = srClosedPrice * inputs.mlsCommissionPct
+  const srCarryingCost = inputs.mlsCarryingPerMonth * inputs.repairMonths
+  const srNet =
+    srClosedPrice -
+    srRepairCost -
+    srFinesAccrued -
+    srCommission -
+    srCarryingCost -
+    inputs.closingCosts -
+    inputs.loanBalance -
+    taxLien
+
   return {
     inputs,
     trusteeNetToHomeowner: 0,
@@ -480,6 +540,18 @@ export function computeMath(inputs: MathInputs): MathOutput {
       taxLienPayoff: taxLien,
       saleCosts: taxSaleCosts,
       netToHomeowner: taxSaleNet,
+    },
+    selfRemediate: {
+      closedPrice: srClosedPrice,
+      repairCost: srRepairCost,
+      finesAccrued: srFinesAccrued,
+      agentCommission: srCommission,
+      carryingCost: srCarryingCost,
+      loanBalance: inputs.loanBalance,
+      taxLien,
+      closingCosts: inputs.closingCosts,
+      repairMonths: inputs.repairMonths,
+      netToHomeowner: srNet,
     },
     spreadEstimate: {
       midpointGain: auctionMidpointNet - realisticNet,

@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation"
 import { requireDialerSession } from "../../require-session"
 import { getDialerLead } from "@/lib/dialer-data"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import MathSheetContent, {
   type HomeownerSnapshot,
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 import { type Scenario } from "@/app/admin/math-sheet/[id]/scenario-config"
+import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
 
 export const dynamic = "force-dynamic"
 export const metadata = {
@@ -45,6 +47,34 @@ export default async function DialerMathSheetPage({
   }
   const avmMid = avmFields.avmMid ?? null
 
+  // For code-violation leads we need raw_payload + admin_notes from the
+  // homeowner_requests row to surface the violation list / case number /
+  // received date on the math sheet. The dialer query doesn't pull those
+  // (heavy payloads), so we do a one-off fetch here keyed off the lead's
+  // pipeline_lead_key.
+  let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
+  if ((lead.distressType || "").toUpperCase() === "CODE_VIOLATION" && supabaseAdmin) {
+    try {
+      const sourceKey = (lead as unknown as { sourceLeadKey?: string }).sourceLeadKey
+      if (sourceKey) {
+        const { data: hr } = await supabaseAdmin
+          .from("homeowner_requests")
+          .select("raw_payload, admin_notes")
+          .eq("pipeline_lead_key", sourceKey)
+          .eq("source", "bot")
+          .maybeSingle()
+        if (hr) {
+          codeViolation = extractCodeViolationData(
+            hr.raw_payload,
+            (hr.admin_notes as string | null) ?? null,
+          )
+        }
+      }
+    } catch {
+      // Non-fatal — the math sheet renders fine without the panel.
+    }
+  }
+
   // Map the dialer/vault lead into the HomeownerSnapshot shape MathSheetContent
   // expects. Falls back gracefully when fields are missing.
   const snapshot: HomeownerSnapshot = {
@@ -61,6 +91,7 @@ export default async function DialerMathSheetPage({
     propertyValue: avmMid,
     propertyValueSource: avmMid ? "AVM" : null,
     distressType: lead.distressType ?? null,
+    codeViolation,
   }
 
   return (

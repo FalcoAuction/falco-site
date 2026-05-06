@@ -116,20 +116,20 @@ const CODE_VIOLATION: ScenarioConfig = {
   headerEyebrow: "FALCO · LIABILITY OPTIONS",
   dateFieldLabel: "Violation issued",
   heroLine:
-    "Selling through a marketed auction transfers the violations and clears the liability — net to you: {range}, closed in 30–45 days.",
-  spreadComparator: "self-remediating and waiting for a buyer who'll accept it",
+    "Investor auction transfers the violations to the buyer and clears the liability — net to you {range}, closed in 30–45 days, no out-of-pocket repair, no commission.",
+  spreadComparator: "self-remediating: paying for repairs out of pocket while fines accrue every day",
   path1: {
-    label: "Self-remediate",
-    valueText: "Cost + time",
-    sub: "Cure the violations yourself: contractor estimates, permits, re-inspections, fines compounding while you wait. Most owners stall and condemnation timelines run.",
-    tone: "loss",
+    label: "Self-remediate then sell",
+    valueText: "—",  // overridden by computed selfRemediate.netToHomeowner
+    sub: "Pay for repairs out of pocket, eat fines while permits and contractors arrange (typically 2–4 months), then list on MLS. Best dollar outcome IF you have the capital, capacity, and patience — most owners in this position don't.",
+    tone: "meh",
   },
   wholesalerIntro:
-    "Wholesalers love code-violation properties because the price discount is often steep. Here is the math behind a typical offer:",
+    "Wholesalers target code-violation properties hard because the discount opportunity is steep. They deduct repair cost AND their margin from the offer. Math behind a typical cash offer:",
   auctionIntro:
-    "Auction takes the property as-is. We resolve the open violations after close and the buyer accepts that risk in their bid. 30–45 day campaign with photos and aggressive marketing to investor buyers.",
+    "Investor auction means buyers who specialize in rehab compete on price. Property sold as-is — open violations transfer with the deed and the buyer takes responsibility for cure post-close. Realistic clearance is 65–75% of post-repair ARV (lower than standard auction, because investors price in their repair budget). 30–45 day campaign with photos and aggressive investor-pool marketing.",
   methodologyPath1:
-    "\"Self-remediate\" assumes the homeowner pays out of pocket to bring the property into compliance and then sells normally. Path 1 net excludes that capital outlay and the months it takes to clear.",
+    "Self-remediate model: closed price ≈ ARV × 95% (MLS clearance). Subtract out-of-pocket repair budget, fines accrued during cure period (monthly fine × cure months), 6% MLS commission, carrying costs (taxes/insurance/mortgage), and standard closing. MLS-as-is is functionally unavailable because conventional buyer lenders won't lend on properties with open violations — the cure has to happen first.",
   ctaHeader: "If you want this off your hands",
   showMls: false,
   applyTrusteeFee: false,
