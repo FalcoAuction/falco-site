@@ -412,6 +412,7 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     equityAmount: inv.equityAmount,
     distressSignalCount: inv.distressSignalCount,
     decisionAction: inv.decisionAction,
+    pitchBucket: inv.pitchBucket,
   }
   return {
     ...(extras as Partial<VaultListing>),
