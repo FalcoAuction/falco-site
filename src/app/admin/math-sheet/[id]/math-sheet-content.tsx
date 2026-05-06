@@ -94,6 +94,10 @@ export default function MathSheetContent({
     auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
     wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
+    mlsClearancePct: DEFAULT_INPUTS.mlsClearancePct,
+    mlsCommissionPct: DEFAULT_INPUTS.mlsCommissionPct,
+    mlsCarryingPerMonth: DEFAULT_INPUTS.mlsCarryingPerMonth,
+    mlsCarryingMonths: DEFAULT_INPUTS.mlsCarryingMonths,
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
 
@@ -234,9 +238,17 @@ export default function MathSheetContent({
           )}
         </section>
 
-        {/* Three paths — color-coded so the comparison is instant.
-            Loss / meh / win pattern reinforces the hero number above. */}
-        <section className="mt-6 grid grid-cols-3 gap-3">
+        {/* Three or four paths — color-coded so the comparison is instant.
+            Loss / meh / win pattern reinforces the hero number above.
+            For probate + FSBO we render a 4th MLS column because that's
+            the homeowner's actual default option. */}
+        <section
+          className={`mt-6 grid gap-3 ${
+            scenarioCfg.showMls
+              ? "grid-cols-2 md:grid-cols-4"
+              : "grid-cols-3"
+          }`}
+        >
           <PathCard
             label={scenarioCfg.path1.label}
             value={
@@ -248,13 +260,7 @@ export default function MathSheetContent({
             tone={scenarioCfg.path1.tone}
           />
           <PathCard
-            label={
-              out.wholesaler.scenario === "walks"
-                ? "Wholesaler offer"
-                : out.wholesaler.scenario === "stretched"
-                ? "Wholesaler offer"
-                : "Wholesaler offer"
-            }
+            label="Wholesaler offer"
             value={
               out.wholesaler.scenario === "walks"
                 ? "$0 / no deal"
@@ -269,10 +275,22 @@ export default function MathSheetContent({
             }
             tone="meh"
           />
+          {scenarioCfg.showMls && (
+            <PathCard
+              label="MLS / agent listing"
+              value={fmt(out.mls.netToSeller)}
+              sub={`6% agent commission on ${fmt(out.mls.closedPrice)}, ~${out.mls.carryingMonths} months exposure with carrying costs of ${fmt(out.mls.carryingCost)}.`}
+              tone="meh"
+            />
+          )}
           <PathCard
             label="Marketed auction"
             value={out.auction.netRangeLabel}
-            sub="Open competitive bidding through a state-licensed TN auction firm. Closes in 30–45 days."
+            sub={
+              scenarioCfg.showMls
+                ? "Same retail clearance as MLS but no seller commission, 30–45 days, no showings."
+                : "Open competitive bidding through a state-licensed TN auction firm. Closes in 30–45 days."
+            }
             tone="win"
           />
         </section>
@@ -356,6 +374,55 @@ export default function MathSheetContent({
             </div>
           )}
         </section>
+
+        {/* MLS walkthrough — probate + FSBO scenarios only.
+            This is the seller's actual mental default. We're not
+            attacking agents; we're laying out the math so the
+            comparison to auction is honest and complete. */}
+        {scenarioCfg.showMls && (
+          <section className="mt-8">
+            <h2 className="text-[16px] font-semibold tracking-tight">
+              How an MLS listing arrives at its number
+            </h2>
+            <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
+              An agent lists at a slight premium (~5% above ARV), the property
+              clears at roughly retail, then commission and carrying costs come
+              out of the proceeds.
+            </p>
+            <table className="mt-3 w-full text-[13px] border border-neutral-200">
+              <tbody>
+                <Row label="Listed at (~5% over ARV)" value={fmt(out.mls.listPrice)} />
+                <Row label="Closed price (typical 95% clearance)" value={fmt(out.mls.closedPrice)} />
+                <Row label="− Agent commission (6%)" value={fmtSigned(-out.mls.agentCommission)} />
+                <Row
+                  label={`− Carrying costs (~${out.mls.carryingMonths} mo: taxes, insurance, mortgage if any)`}
+                  value={fmtSigned(-out.mls.carryingCost)}
+                />
+                <Row label="− Loan payoff" value={fmtSigned(-out.mls.loanBalance)} />
+                <Row label="− Closing costs" value={fmtSigned(-out.mls.closingCosts)} />
+                <Row label="Net to seller" value={fmt(out.mls.netToSeller)} bold />
+              </tbody>
+            </table>
+            <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
+              MLS often delivers the highest gross price, but pays for it in
+              60–120 days of exposure, 6% agent commission, and the showings/
+              negotiation cycle. Auction trades a small clearance haircut for
+              <strong> no seller commission, 30–45 day close, and no showings</strong> —
+              the spread between MLS net and auction midpoint here is{" "}
+              <strong>
+                {fmt(
+                  Math.abs(
+                    out.mls.netToSeller -
+                      (out.auction.low.netToHomeowner +
+                        out.auction.high.netToHomeowner) /
+                        2
+                  )
+                )}
+              </strong>
+              .
+            </p>
+          </section>
+        )}
 
         {/* Marketed auction walkthrough */}
         <section className="mt-8">

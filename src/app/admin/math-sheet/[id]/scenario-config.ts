@@ -48,6 +48,10 @@ export type ScenarioConfig = {
   methodologyPath1: string
   /** Section header above the next-steps list. */
   ctaHeader: string
+  /** True for scenarios where MLS is the homeowner/executor's REAL default
+   *  alternative (probate, FSBO). When true the math sheet renders a 4th
+   *  path card and a dedicated MLS walkthrough section. */
+  showMls: boolean
 }
 
 const FORECLOSURE: ScenarioConfig = {
@@ -70,6 +74,7 @@ const FORECLOSURE: ScenarioConfig = {
   methodologyPath1:
     "Trustee sale closes at the loan balance — homeowner equity is consumed by the foreclosing lender.",
   ctaHeader: "If you want to move forward",
+  showMls: false,
 }
 
 const PROBATE: ScenarioConfig = {
@@ -92,6 +97,7 @@ const PROBATE: ScenarioConfig = {
   methodologyPath1:
     "\"Hold the estate\" assumes the property is not sold; the estate continues to absorb taxes, insurance, and maintenance until probate closes.",
   ctaHeader: "If the estate wants to move forward",
+  showMls: true,
 }
 
 const CODE_VIOLATION: ScenarioConfig = {
@@ -114,6 +120,7 @@ const CODE_VIOLATION: ScenarioConfig = {
   methodologyPath1:
     "\"Self-remediate\" assumes the homeowner pays out of pocket to bring the property into compliance and then sells normally. Path 1 net excludes that capital outlay and the months it takes to clear.",
   ctaHeader: "If you want this off your hands",
+  showMls: false,
 }
 
 const BANKRUPTCY: ScenarioConfig = {
@@ -136,6 +143,7 @@ const BANKRUPTCY: ScenarioConfig = {
   methodologyPath1:
     "Trustee liquidation values reflect the discount typically applied when a BK trustee sells through their channels under timeline pressure.",
   ctaHeader: "If you want a § 363 sale",
+  showMls: false,
 }
 
 const FSBO: ScenarioConfig = {
@@ -158,6 +166,7 @@ const FSBO: ScenarioConfig = {
   methodologyPath1:
     "MLS path assumes a 6% agent commission and a typical 60–120 day market exposure for TN FSBO listings.",
   ctaHeader: "If you want a faster close",
+  showMls: true,
 }
 
 const TAX_LIEN: ScenarioConfig = {
@@ -180,6 +189,7 @@ const TAX_LIEN: ScenarioConfig = {
   methodologyPath1:
     "\"Pay off lien yourself\" path assumes the homeowner has cash on hand to clear the lien before listing.",
   ctaHeader: "If you want clean title at close",
+  showMls: false,
 }
 
 const SCENARIO_CONFIGS: Record<Scenario, ScenarioConfig> = {
