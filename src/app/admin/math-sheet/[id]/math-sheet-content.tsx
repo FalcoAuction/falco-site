@@ -156,7 +156,7 @@ export default function MathSheetContent({
           </div>
           <div className="mt-2 text-[10px] text-white/35 leading-[1.5]">
             ARV defaulted from loan ÷ 0.60 — replace with your actual comp.
-            Closing costs default {fmt(closingCosts)}, premium 8%, 70% rule.
+            Closing costs default {fmt(closingCosts)}, buyer&apos;s premium 10% (paid by buyer), 70% rule.
           </div>
         </div>
       </div>
@@ -350,8 +350,8 @@ export default function MathSheetContent({
                 seller financing, novation — that take the property without
                 paying off the loan. Those are highly situational and often
                 end badly for the homeowner. <strong>If a wholesaler walks,
-                your real choice is between the trustee sale and a marketed
-                auction. Wholesale isn&apos;t actually on the table.</strong>
+                your real choice is between {scenarioCfg.path1.label.toLowerCase()} and a
+                marketed auction. Wholesale isn&apos;t actually on the table.</strong>
               </p>
             </div>
           )}
@@ -405,9 +405,10 @@ export default function MathSheetContent({
             </tbody>
           </table>
           <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
-            The buyer pays an 8% premium on top of their winning bid. That premium
-            covers the auction firm and FALCO. You don&apos;t pay it. You don&apos;t see it.
-            Your only cost is the closing fees above.
+            The buyer pays a 10% premium on top of their winning bid. That premium
+            covers the auction firm and FALCO. You don&apos;t pay it, and you don&apos;t pay
+            seller&apos;s commission either — you just see the hammer price minus loan
+            payoff and standard closing fees.
           </p>
 
           {/* Worst-case-still-beats-wholesaler callout — strongest pitch when true */}
