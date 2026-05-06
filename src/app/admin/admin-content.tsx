@@ -10,6 +10,7 @@ import {
   type LeadsBundle,
   type LeadStatus,
 } from "@/lib/admin-leads"
+import type { BotFreshness } from "@/lib/bot-freshness"
 
 const TABS: Array<{ key: LeadKind; label: string; emoji: string }> = [
   { key: "pipeline", label: "Pipeline", emoji: "🛰" },
@@ -99,7 +100,13 @@ function replySubject(lead: Lead): string {
   }
 }
 
-export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
+export default function AdminContent({
+  bundle,
+  botFreshness = [],
+}: {
+  bundle: LeadsBundle
+  botFreshness?: BotFreshness[]
+}) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<LeadKind>("pipeline")
   const [query, setQuery] = useState("")
@@ -220,6 +227,35 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
             </button>
           </div>
         </div>
+        {/* Freshness banner — shows when any tracked scraper hasn't run
+            in 28h (= missed 2 scheduled passes). The daily.yml workflow
+            fires twice a day; anything older means something silently
+            broke and the dialer is running on stale data. */}
+        {(() => {
+          const stale = botFreshness.filter((b) => b.isStale)
+          if (stale.length === 0) return null
+          const names = stale.map((b) => b.bot).join(", ")
+          return (
+            <div className="bg-red-500/15 border-t border-red-400/30 text-red-100 text-[12px] px-5 md:px-8 py-2">
+              <strong className="uppercase tracking-wider text-[11px] mr-2">
+                ⚠ {stale.length} bot{stale.length > 1 ? "s" : ""} stale:
+              </strong>
+              <span className="text-red-200/90">{names}</span>
+              <span className="ml-2 text-red-200/60">
+                — last run &gt; 28h ago. Check{" "}
+                <a
+                  href="https://github.com/FalcoAuction/falco-distress-bots/actions/workflows/daily.yml"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline hover:text-red-100"
+                >
+                  GitHub Actions
+                </a>
+                .
+              </span>
+            </div>
+          )
+        })()}
       </header>
 
       <section className="mx-auto max-w-6xl px-5 md:px-8 py-6">

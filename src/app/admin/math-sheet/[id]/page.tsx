@@ -52,10 +52,19 @@ export default async function MathSheetPage({
     propertyValue: (data.property_value as number | null) ?? null,
     propertyValueSource: (data.property_value_source as string | null) ?? null,
     distressType: (data.distress_type as string | null) ?? null,
-    codeViolation: extractCodeViolationData(
-      data.raw_payload,
-      (data.admin_notes as string | null) ?? null,
-    ),
+    // Wrap in try/catch — if a single lead has malformed raw_payload it
+    // shouldn't crash the entire math sheet render.
+    codeViolation: (() => {
+      try {
+        return extractCodeViolationData(
+          data.raw_payload,
+          (data.admin_notes as string | null) ?? null,
+        )
+      } catch (e) {
+        console.error("extractCodeViolationData failed for", id, e)
+        return null
+      }
+    })(),
   }
 
   return (
