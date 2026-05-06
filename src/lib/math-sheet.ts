@@ -32,9 +32,9 @@ export type MathInputs = {
    *  comparison. Default 0.70 — substantially below the typical range,
    *  modeling a poorly-attended sale day or weak market. */
   auctionWorstPct: number
-  /** 70% rule MAO cap. Default 0.70. */
+  /** Distressed cash-offer cap to the homeowner. Default 0.55. */
   wholesalerMaoPct: number
-  /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
+  /** Stretched cash-offer cap when a wholesaler reaches to close. Default 0.62. */
   wholesalerStretchPct: number
   /** Outstanding property-tax lien (back taxes + interest + costs). Paid
    *  at close out of proceeds on every sale path; deducted alongside loan
@@ -141,19 +141,19 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
   }
 }
 
-/** Legacy static defaults — kept for backwards compat with the old admin UI.
- *  Prefer defaultInputsFor() for new callers. */
+/** Static defaults for callers that cannot seed from a specific property.
+ *  Prefer defaultInputsFor() when ARV and payoff are known. */
 export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
-  repairs: 25000,
-  assignmentFee: 10000,
-  investorMargin: 40000,
+  repairs: 0,
+  assignmentFee: 0,
+  investorMargin: 0,
   closingCosts: 5000,
   buyerPremiumPct: 0.10,
   auctionMinPct: 0.80,
   auctionMaxPct: 0.88,
   auctionWorstPct: 0.70,
-  wholesalerMaoPct: 0.70,
-  wholesalerStretchPct: 0.78,
+  wholesalerMaoPct: 0.55,
+  wholesalerStretchPct: 0.62,
   taxLienAmount: 0,
   applyTrusteeFee: false,
   mlsClearancePct: 0.95,
@@ -166,21 +166,21 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
 
 /** Three possible wholesaler outcomes for a given property. */
 export type WholesalerScenario =
-  | "standard"   // pure 70% rule works; this is what they'd offer
-  | "stretched"  // standard rule underwater; wholesaler stretches to ~78% to close
+  | "standard"   // base distressed-offer model works; this is what they'd offer
+  | "stretched"  // base offer underwater; wholesaler stretches to close
   | "walks"      // even stretched is underwater; wholesaler doesn't make an offer
 
 export type WholesalerBreakdown = {
   arv: number
-  // Standard 70% rule chain
-  maoCeiling: number          // ARV × 0.70
+  // Base distressed cash-offer chain
+  maoCeiling: number          // ARV * wholesalerMaoPct
   repairs: number             // shown as deduction
   assignmentFee: number       // shown as deduction
   investorMargin: number      // shown as deduction
   cashOfferStandard: number   // = max(0, MAO - repairs - fee - margin)
   netStandard: number         // cashOfferStandard - loanBalance (may be negative)
-  // Stretched scenario — wholesaler at ~78% MAO to close a thinner deal
-  cashOfferStretched: number  // = max(0, ARV * 0.78 - repairs - fee - margin)
+  // Stretched scenario - wholesaler reaches to close a thinner deal
+  cashOfferStretched: number  // = max(0, ARV * wholesalerStretchPct - repairs - fee - margin)
   netStretched: number        // cashOfferStretched - loanBalance
   // Loan + scenario summary
   loanBalance: number
@@ -357,13 +357,16 @@ export function computeMath(inputs: MathInputs): MathOutput {
   // alongside loan payoff. 0 for non-tax-lien properties.
   const taxLien = Math.max(0, inputs.taxLienAmount || 0)
 
-  // Standard 70% rule: max(0, MAO - all the deductions)
+  const baseOfferPct = Math.round(inputs.wholesalerMaoPct * 100)
+  const stretchOfferPct = Math.round(inputs.wholesalerStretchPct * 100)
+
+  // Base distressed-offer model: max(0, MAO - all deductions)
   const maoCeiling = inputs.arv * inputs.wholesalerMaoPct
   const cashOfferStandard = Math.max(0, maoCeiling - totalDeductions)
   const netStandard = cashOfferStandard - inputs.loanBalance - taxLien
 
-  // Stretched scenario: wholesaler accepts thinner margin (e.g. 78% MAO)
-  // to close a deal that wouldn't pencil at the strict 70% rule. Their
+  // Stretched scenario: wholesaler accepts thinner margin to close a deal
+  // that would not pencil at the base distressed-offer model. Their
   // own profit is smaller but they get a deal vs. nothing.
   const stretchedCeiling = inputs.arv * inputs.wholesalerStretchPct
   const cashOfferStretched = Math.max(0, stretchedCeiling - totalDeductions)
@@ -379,11 +382,11 @@ export function computeMath(inputs: MathInputs): MathOutput {
   if (netStandard >= WHOLESALER_MIN_NET_TO_CLOSE) {
     scenario = "standard"
     realisticNet = netStandard
-    scenarioLabel = "Standard 70% rule offer"
+    scenarioLabel = `Base ${baseOfferPct}% distressed cash offer`
   } else if (netStretched >= WHOLESALER_MIN_NET_TO_CLOSE) {
     scenario = "stretched"
     realisticNet = netStretched
-    scenarioLabel = "Stretched offer (wholesaler eats margin to close)"
+    scenarioLabel = `Stretched ${stretchOfferPct}% offer (wholesaler eats margin to close)`
   } else {
     scenario = "walks"
     realisticNet = 0
