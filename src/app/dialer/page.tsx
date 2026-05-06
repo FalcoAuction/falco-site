@@ -33,6 +33,50 @@ function fmtCurrencyShort(n?: number | null): string {
   return `$${n.toFixed(0)}`
 }
 
+/** Phone line-type badge: short, color-coded for scannability.
+ *  Mobile is highest-conversion; landline second; VoIP often a forwarder
+ *  (lower priority); unvalidated means Twilio Lookup hasn't run yet. */
+function phoneTypeBadge(lineType?: string, validated?: boolean) {
+  if (!validated) return null
+  const lt = (lineType || "").toLowerCase()
+  if (lt === "mobile") {
+    return { label: "MOB", tone: "border-emerald-400/40 bg-emerald-400/12 text-emerald-200" }
+  }
+  if (lt === "landline" || lt === "fixed_line_or_mobile") {
+    return { label: "LAND", tone: "border-blue-400/35 bg-blue-400/10 text-blue-200" }
+  }
+  if (lt.includes("voip")) {
+    return { label: "VOIP", tone: "border-amber-400/35 bg-amber-400/10 text-amber-200" }
+  }
+  return null
+}
+
+/** Returns true if a lead is fully ready for outreach: defensible
+ *  mortgage source + valid mobile/landline phone + name + addr.
+ *  Mirrors the gate used by middle_tn_dial_probe_bot. */
+function isReadyToDial(lead: ReadyDialLead): boolean {
+  if (!lead.mortgageDefensible) return false
+  if (!lead.phoneValidated) return false
+  const phone = lead.ownerPhonePrimary || lead.saleControllerPhonePrimary
+  if (!phone) return false
+  const lt = (lead.phoneLineType || "").toLowerCase()
+  if (lt.includes("voip")) return false  // forwarders skipped
+  if (!(lead.ownerName || lead.title)) return false
+  if (!lead.address) return false
+  return true
+}
+
+type ReadyDialLead = {
+  ownerPhonePrimary?: string | null
+  saleControllerPhonePrimary?: string | null
+  ownerName?: string | null
+  title?: string | null
+  address?: string | null
+  mortgageDefensible?: boolean
+  phoneValidated?: boolean
+  phoneLineType?: string
+}
+
 function daysToSale(saleIso?: string): number | null {
   if (!saleIso) return null
   const ms = new Date(saleIso).getTime() - Date.now()
@@ -91,7 +135,9 @@ export default async function DialerQueuePage({
 }) {
   await requireDialerSession("/dialer")
   const params = await searchParams
-  const filter = params.filter ?? "open"
+  // Default to "ready" — the validated dial-ready set is what reps want
+  // first thing every morning. "open" / "new" / etc. are still one click.
+  const filter = params.filter ?? "ready"
   const countyFilter = params.county ?? ""
 
   const leads = await listDialerLeads()
@@ -102,9 +148,11 @@ export default async function DialerQueuePage({
     return inMiddleTN(l.county)
   })
 
-  // Status filter
+  // Status filter — "ready" is special: defensible + validated phone
+  // + complete profile, regardless of workflow status.
   const byStatus = byRegion.filter((l) => {
     const s = l.workflow.status
+    if (filter === "ready") return isReadyToDial(l as unknown as ReadyDialLead)
     if (filter === "all") return true
     if (filter === "open") return s !== "closed_lost" && s !== "closed_won"
     if (filter === "new") return s === "new"
@@ -139,6 +187,7 @@ export default async function DialerQueuePage({
 
   // Status tabs — counts respect the current geo filter so they're meaningful
   const counts = {
+    ready: byRegion.filter((l) => isReadyToDial(l as unknown as ReadyDialLead)).length,
     open: byRegion.filter(
       (l) => l.workflow.status !== "closed_lost" && l.workflow.status !== "closed_won"
     ).length,
@@ -159,6 +208,7 @@ export default async function DialerQueuePage({
   }
 
   const tabs = [
+    { key: "ready", label: "Ready", count: counts.ready },
     { key: "open", label: "Open", count: counts.open },
     { key: "new", label: "New", count: counts.new },
     { key: "in_progress", label: "Working", count: counts.in_progress },
@@ -226,11 +276,24 @@ export default async function DialerQueuePage({
           {filtered.map((lead) => {
             const dts = daysToSale(lead.currentSaleDate)
             const phone = lead.ownerPhonePrimary ?? lead.saleControllerPhonePrimary
-            // avmMid is stashed at runtime in inventoryToListing extras
-            // but not declared on DialerLead; access through a cast.
-            const avm = (lead as DialerLead & { avmMid?: number | null }).avmMid
+            // Enrichment fields stashed via inventoryToListing extras
+            // (not declared on DialerLead). Cast once to access.
+            const x = lead as DialerLead & {
+              avmMid?: number | null
+              phoneLineType?: string
+              phoneValidated?: boolean
+              phoneDnc?: boolean
+              mortgageDefensible?: boolean
+              mortgageLenderResolved?: string
+              mortgageOriginationYear?: number
+              equityAmount?: number
+            }
+            const avm = x.avmMid
             const mortgage = lead.mortgageAmount
-            const equity = avm && mortgage ? avm - mortgage : null
+            // Prefer amortizer's exact equity calc; fall back to AVM−balance.
+            const equity = x.equityAmount ?? (avm && mortgage ? avm - mortgage : null)
+            const phoneBadge = phoneTypeBadge(x.phoneLineType, x.phoneValidated)
+            const lender = x.mortgageLenderResolved ?? lead.mortgageLender ?? null
             const equityClass =
               equity === null
                 ? "text-white/35"
@@ -266,27 +329,67 @@ export default async function DialerQueuePage({
                       )}
                     </div>
 
-                    {/* Property + owner + county */}
+                    {/* Property + owner + county + lender. Lender on
+                        sub-line so rep can verify "you have a loan with
+                        Wells Fargo, right?" before pitching. */}
                     <div className="min-w-0 sm:self-center">
-                      <div className="font-medium text-white truncate">
-                        {lead.address ?? lead.title}
+                      <div className="font-medium text-white truncate flex items-center gap-1.5">
+                        <span className="truncate">{lead.address ?? lead.title}</span>
+                        {x.mortgageDefensible && (
+                          <span
+                            title="Mortgage data verified from public record (ROD or HMDA)"
+                            className="shrink-0 inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 text-emerald-200 text-[9px] uppercase tracking-wider px-1 py-px"
+                          >
+                            ✓
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-white/55 truncate">
                         {lead.ownerName || "Owner unknown"}
                         {countyLabel && (
                           <span className="text-white/35"> · {countyLabel}</span>
                         )}
+                        {lender && (
+                          <span className="text-white/45">
+                            {" · "}
+                            <span className="text-white/70">{lender}</span>
+                            {x.mortgageOriginationYear && (
+                              <span className="text-white/40"> ({x.mortgageOriginationYear})</span>
+                            )}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Phone */}
+                    {/* Phone — with line-type badge so rep prioritizes
+                        mobile numbers + can skip VoIP forwarders. */}
                     <div className="text-xs sm:self-center">
                       {phone ? (
-                        <PhoneLink
-                          number={phone}
-                          display={fmtPhone(phone)}
-                          className="text-emerald-300 hover:underline"
-                        />
+                        <div className="flex flex-col gap-0.5">
+                          <PhoneLink
+                            number={phone}
+                            display={fmtPhone(phone)}
+                            className={`hover:underline ${
+                              x.phoneDnc
+                                ? "text-red-300 line-through"
+                                : "text-emerald-300"
+                            }`}
+                          />
+                          <div className="flex items-center gap-1">
+                            {phoneBadge && (
+                              <span
+                                className={`inline-flex items-center rounded border px-1 py-px text-[9px] uppercase tracking-wider ${phoneBadge.tone}`}
+                              >
+                                {phoneBadge.label}
+                              </span>
+                            )}
+                            {x.phoneDnc && (
+                              <span className="text-[9px] uppercase tracking-wider text-red-300/80">
+                                DNC
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       ) : (
                         <span className="text-white/30">no phone</span>
                       )}
