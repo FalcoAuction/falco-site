@@ -166,12 +166,15 @@ export default function LeadDetail({
         </div>
       </header>
 
-      {/* PRIMARY contact panel — full skip-trace data with type/validation badges.
-          Replaces the old simplistic "tap to call" buttons. Chris should look
-          here FIRST: best mobile phones at top, deliverable emails next,
-          fallback contacts collapsed. badPhones list excludes flagged
-          numbers cross-lead. */}
-      <ContactLayer data={skiptraceData ?? null} badPhones={badPhones ?? []} />
+      {/* PRIMARY contact panel — full skip-trace data with type/validation
+          badges. Renders only when we have rich legacy skiptrace_data
+          (from scripts/enrich-full-skiptrace.mjs, with persons/emails/
+          relatives). When that's empty, the snapshot panel below carries
+          the same phones from BatchData/inventory — no need to nag the
+          rep about "missing skip-trace" when phones are already visible. */}
+      {skiptraceData && skiptraceData.persons && skiptraceData.persons.length > 0 && (
+        <ContactLayer data={skiptraceData} badPhones={badPhones ?? []} />
+      )}
 
       {/* Legacy quick-action panel — kept as a backup when no skip-trace data
           is available (new bot leads pre-enrichment). Falls through to the
