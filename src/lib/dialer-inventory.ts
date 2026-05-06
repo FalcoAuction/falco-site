@@ -494,7 +494,7 @@ export async function loadDialerInventory(): Promise<DialerInventorySnapshot | n
   // For every HR bot row, build the merged lead. HR is the source of truth
   // for which leads exist (post-dedup) and for fresh contact/AVM data.
   // No filtering here — direct lead-detail navigation must still resolve
-  // foreclosed leads so Chris can close them out in the workflow. Queue
+  // foreclosed leads so the caller can close them out in the workflow. Queue
   // views filter via isLeadActive() below.
   const merged: DialerInventoryLead[] = hrRows
     .filter((r) => !!r.pipeline_lead_key)

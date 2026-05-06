@@ -4,7 +4,7 @@
  * NOTE 2026-04-30: The data-services per-QL pricing model
  * (T0=$4K, T1=$6K, T2=$8K, T3=$10K) is RETIRED. FALCO compensation
  * now flows via the standard 65/20/15 commission split on close
- * (Parks / Chris-via-Benchmark / FALCO). The tier label is kept as
+ * (Parks / Caller-via-Benchmark / FALCO). The tier label is kept as
  * a property-size descriptor for UI grouping; `feeUSD` is preserved
  * in the type for schema compatibility but always returns 0.
  *

@@ -1,5 +1,5 @@
 // /admin/staging — staging-table review and bulk-promotion UI.
-// Where Patrick verifies new scraper output before it hits Chris's queue.
+// Where Patrick verifies new scraper output before it hits the dialer queue.
 
 import Link from "next/link"
 import { redirect } from "next/navigation"

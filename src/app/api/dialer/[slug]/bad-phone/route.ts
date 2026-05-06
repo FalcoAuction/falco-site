@@ -1,8 +1,8 @@
 // POST /api/dialer/[slug]/bad-phone
 // DELETE /api/dialer/[slug]/bad-phone?phone=...
 //
-// Chris's feedback loop. When he marks a phone bad on a lead, we record
-// it cross-lead so it never gets surfaced anywhere again. Catches:
+// Caller feedback loop. When the caller marks a phone bad on a lead, we
+// record it cross-lead so it never gets surfaced anywhere again. Catches:
 //   - Disconnected numbers
 //   - Wrong-person numbers (number reassigned to someone else)
 //   - Voicemail-only numbers (homeowner doesn't pick up)

@@ -192,7 +192,7 @@ export default function AdminContent({ bundle }: { bundle: LeadsBundle }) {
             <a
               href="/admin/staging"
               className="text-amber-300 hover:text-amber-200 transition-colors"
-              title="Review new scraper output before it hits Chris's queue"
+              title="Review new scraper output before it hits the dialer queue"
             >
               ⌛ Staging
             </a>

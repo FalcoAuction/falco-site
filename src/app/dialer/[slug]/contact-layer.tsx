@@ -5,12 +5,12 @@
 // Renders the FULL skip-trace pull from BatchData, layered with Twilio
 // validation (line type, carrier, caller name match, line status) and
 // NeverBounce email deliverability. Each phone gets a composite
-// confidence score (0-100) so Chris knows what to dial first.
+// confidence score (0-100) so the caller knows what to dial first.
 //
 // Cross-lead bad-phone filter: phones marked bad anywhere (or appearing
 // on 3+ unrelated leads = junk fallback) are excluded by default.
 //
-// Mark-as-bad button feeds back into the system — Chris's daily
+// Mark-as-bad button feeds back into the system — the caller's daily
 // feedback compounds, the system gets smarter.
 
 import { useState, useMemo } from "react"
@@ -94,7 +94,7 @@ function normalizeNumber(n: string): string {
 }
 
 // ─── Composite confidence score (0-100) ─────────────────────────────────
-// Combines all signals into a single number Chris can scan-and-trust.
+// Combines all signals into a single number the caller can scan-and-trust.
 function computePhoneScore(p: SkiptracePhone, isBad: boolean): number {
   if (isBad) return 0
   let s = 0

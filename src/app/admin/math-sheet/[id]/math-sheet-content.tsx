@@ -10,7 +10,12 @@ import {
   fmtSigned,
   type MathInputs,
 } from "@/lib/math-sheet"
-import { resolveScenario } from "./scenario-config"
+import { resolveScenario, type Scenario } from "./scenario-config"
+import {
+  daysSince,
+  estimateFineAccrual,
+  type CodeViolationData,
+} from "./code-violation-data"
 
 export type HomeownerSnapshot = {
   id: string
@@ -29,6 +34,10 @@ export type HomeownerSnapshot = {
   /** Pipeline distress_type — drives per-scenario framing on the printed
    *  sheet. Null/unknown falls back to foreclosure (the default flow). */
   distressType?: string | null
+  /** Code-violation specifics extracted from raw_payload (Nashville
+   *  Metro Codes / Memphis 311 / etc.) by extractCodeViolationData().
+   *  Null for non-CV leads. */
+  codeViolation?: CodeViolationData | null
 }
 
 function fmtDateHuman(iso: string | null): string {
@@ -46,6 +55,8 @@ export default function MathSheetContent({
   homeowner,
   backHref = "/admin",
   backLabel = "← Admin",
+  scenarioOverride,
+  toggleHrefBuilder,
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /admin so the
@@ -53,6 +64,12 @@ export default function MathSheetContent({
    *  passes the lead URL so callers don't get bounced to admin. */
   backHref?: string
   backLabel?: string
+  /** Force a specific scenario regardless of homeowner.distressType.
+   *  Used by the BK pre-petition / § 363 toggle (?view=...). */
+  scenarioOverride?: Scenario | null
+  /** Builds the URL for the view-toggle button. The page passes a
+   *  function so the math-sheet stays unaware of which route owns it. */
+  toggleHrefBuilder?: (scenario: Scenario) => string
 }) {
   // ARV default priority:
   //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
@@ -67,19 +84,49 @@ export default function MathSheetContent({
   // Compute property-aware defaults (deductions scale with ARV so the
   // model is sensible across $100K Memphis properties → $1M Nashville).
   const seed = defaultInputsFor(arvDefault, homeowner.mortgageBalance ?? 0)
+
+  // Per-scenario framing + scenario-aware default seeds. Need to compute
+  // these BEFORE useState so the seeds can flow in. Code-violation auction
+  // clears at 65–75% (vs 80–88% standard) because investors price in
+  // their repair budget; repair / fine defaults seed the self-remediate
+  // model. (The framing-level scenarioCfg is resolved again below for
+  // copy purposes — it's pure, so the duplicate compute is fine.)
+  const scenarioCfgInit = resolveScenario(homeowner.distressType, scenarioOverride)
+  const isCodeViolation = scenarioCfgInit.scenario === "code_violation"
+  const cvDefaults = isCodeViolation
+    ? {
+        auctionMin: 0.65,
+        auctionMax: 0.75,
+        repairs: 30000,
+        monthlyFineAccrual: 1500,
+        repairMonths: 3,
+      }
+    : null
+
   const [arv, setArv] = useState<number>(arvDefault)
   const [loanBalance, setLoanBalance] = useState<number>(homeowner.mortgageBalance ?? 0)
-  const [repairs, setRepairs] = useState<number>(seed.repairs)
+  const [repairs, setRepairs] = useState<number>(cvDefaults?.repairs ?? seed.repairs)
   const [assignmentFee, setAssignmentFee] = useState<number>(seed.assignmentFee)
   const [investorMargin, setInvestorMargin] = useState<number>(seed.investorMargin)
   const [closingCosts, setClosingCosts] = useState<number>(DEFAULT_INPUTS.closingCosts)
-  const [auctionMinPct, setAuctionMinPct] = useState<number>(DEFAULT_INPUTS.auctionMinPct)
-  const [auctionMaxPct, setAuctionMaxPct] = useState<number>(DEFAULT_INPUTS.auctionMaxPct)
+  const [auctionMinPct, setAuctionMinPct] = useState<number>(
+    cvDefaults?.auctionMin ?? DEFAULT_INPUTS.auctionMinPct
+  )
+  const [auctionMaxPct, setAuctionMaxPct] = useState<number>(
+    cvDefaults?.auctionMax ?? DEFAULT_INPUTS.auctionMaxPct
+  )
+  const [taxLienAmount, setTaxLienAmount] = useState<number>(0)
+  const [monthlyFineAccrual, setMonthlyFineAccrual] = useState<number>(
+    cvDefaults?.monthlyFineAccrual ?? 0
+  )
+  const [repairMonths, setRepairMonths] = useState<number>(
+    cvDefaults?.repairMonths ?? 0
+  )
 
   // Per-scenario framing (probate / code violation / FSBO / etc.) drives
   // the eyebrow, hero line, Path 1 card, and section intros. The math
   // engine is unchanged — only the copy and labels swap.
-  const scenarioCfg = resolveScenario(homeowner.distressType)
+  const scenarioCfg = scenarioCfgInit
 
   const inputs: MathInputs = {
     arv,
@@ -94,6 +141,10 @@ export default function MathSheetContent({
     auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
     wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
+    taxLienAmount,
+    monthlyFineAccrual,
+    repairMonths,
+    applyTrusteeFee: scenarioCfg.applyTrusteeFee,
     mlsClearancePct: DEFAULT_INPUTS.mlsClearancePct,
     mlsCommissionPct: DEFAULT_INPUTS.mlsCommissionPct,
     mlsCarryingPerMonth: DEFAULT_INPUTS.mlsCarryingPerMonth,
@@ -127,6 +178,14 @@ export default function MathSheetContent({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px]">
+            {scenarioCfg.viewToggle && toggleHrefBuilder && (
+              <Link
+                href={toggleHrefBuilder(scenarioCfg.viewToggle.scenario)}
+                className="rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
+              >
+                {scenarioCfg.viewToggle.label}
+              </Link>
+            )}
             <a
               href={`mailto:${homeowner.email}?subject=${encodeURIComponent(
                 `Your FALCO math — ${homeowner.propertyAddress || "your property"}`
@@ -149,15 +208,22 @@ export default function MathSheetContent({
           <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 mb-3">
             Inputs (override before printing)
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
             <NumInput label="ARV ($)" value={arv} onChange={setArv} />
             <NumInput label="Loan ($)" value={loanBalance} onChange={setLoanBalance} />
+            <NumInput label="Tax lien ($)" value={taxLienAmount} onChange={setTaxLienAmount} />
             <NumInput label="Repairs ($)" value={repairs} onChange={setRepairs} />
             <NumInput label="Assign. fee ($)" value={assignmentFee} onChange={setAssignmentFee} />
             <NumInput label="Inv. margin ($)" value={investorMargin} onChange={setInvestorMargin} />
             <NumInput label="Auction low %" value={auctionMinPct * 100} step={1} onChange={(v) => setAuctionMinPct(v / 100)} />
             <NumInput label="Auction high %" value={auctionMaxPct * 100} step={1} onChange={(v) => setAuctionMaxPct(v / 100)} />
           </div>
+          {isCodeViolation && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
+              <NumInput label="Monthly fines ($)" value={monthlyFineAccrual} step={100} onChange={setMonthlyFineAccrual} />
+              <NumInput label="Cure months" value={repairMonths} step={1} onChange={setRepairMonths} />
+            </div>
+          )}
           <div className="mt-2 text-[10px] text-white/35 leading-[1.5]">
             ARV defaulted from loan ÷ 0.60 — replace with your actual comp.
             Closing costs default {fmt(closingCosts)}, buyer&apos;s premium 10% (paid by buyer), 70% rule.
@@ -196,6 +262,53 @@ export default function MathSheetContent({
             <Field label="Mortgage balance" value={fmt(loanBalance)} />
           </dl>
         </header>
+
+        {/* Code violations specifics — visible only on code_violation
+            scenario when we have data extracted from the city's
+            citation system. Surfaces the actual violation list,
+            days outstanding, and an estimated fine accrual range. */}
+        {isCodeViolation && homeowner.codeViolation && (homeowner.codeViolation.violations || homeowner.codeViolation.caseNumber) && (() => {
+          const cv = homeowner.codeViolation
+          const days = daysSince(cv.receivedDate)
+          const accrual = estimateFineAccrual(days, cv.violationCount)
+          return (
+            <section className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 md:p-5">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-amber-700 font-bold">
+                Active code violations
+                {cv.caseNumber && (
+                  <span className="ml-2 text-amber-900/70 normal-case tracking-normal font-normal">
+                    Case {cv.caseNumber}
+                    {cv.city && ` · ${cv.city}`}
+                  </span>
+                )}
+              </div>
+              {cv.violations && (
+                <div className="mt-2 text-[12px] text-neutral-800 leading-[1.55]">
+                  {cv.violations}
+                </div>
+              )}
+              <dl className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-[12px]">
+                {cv.receivedDate && (
+                  <Field label="Citation filed" value={fmtDateHuman(cv.receivedDate)} />
+                )}
+                {days !== null && (
+                  <Field label="Days outstanding" value={`${days.toLocaleString()} days`} />
+                )}
+                {accrual && (
+                  <Field
+                    label="Estimated fines accrued"
+                    value={`${fmt(accrual.low)} – ${fmt(accrual.high)}`}
+                  />
+                )}
+              </dl>
+              <p className="mt-2 text-[10px] text-amber-900/70 leading-[1.5]">
+                Fine range estimate uses TN-typical $50–$250 per day per violation
+                ({cv.violationCount} distinct citations × {days ?? "—"} days outstanding).
+                Actual fines may differ — confirm with city codes office.
+              </p>
+            </section>
+          )
+        })()}
 
         {/* HERO — the single number a homeowner needs to see in 5 seconds.
             The whole point of the page is to make this comparison
@@ -254,6 +367,10 @@ export default function MathSheetContent({
             value={
               scenarioCfg.scenario === "foreclosure"
                 ? fmt(out.trusteeNetToHomeowner)
+                : scenarioCfg.scenario === "tax_lien"
+                ? fmt(out.taxSale.netToHomeowner)
+                : scenarioCfg.scenario === "code_violation"
+                ? fmt(out.selfRemediate.netToHomeowner)
                 : scenarioCfg.path1.valueText
             }
             sub={scenarioCfg.path1.sub}
@@ -316,6 +433,9 @@ export default function MathSheetContent({
                 bold
               />
               <Row label="− Loan payoff" value={fmtSigned(-out.wholesaler.loanBalance)} />
+              {out.wholesaler.taxLien > 0 && (
+                <Row label="− Tax lien payoff" value={fmtSigned(-out.wholesaler.taxLien)} />
+              )}
               <Row
                 label={
                   out.wholesaler.netStandard < 0
@@ -375,6 +495,50 @@ export default function MathSheetContent({
           )}
         </section>
 
+        {/* Self-remediate walkthrough — code_violation only. The owner
+            could fix it themselves and list normally; we model that
+            honestly so the comparison to auction is real. */}
+        {isCodeViolation && (
+          <section className="mt-8">
+            <h2 className="text-[16px] font-semibold tracking-tight">
+              How &quot;self-remediate then sell&quot; arrives at its number
+            </h2>
+            <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
+              Owner pays for repairs out of pocket, eats fines while permits and contractors
+              arrange ({out.selfRemediate.repairMonths} months modeled), then lists on MLS.
+              Highest dollar outcome IF the owner has the capital, capacity, and patience.
+              Most owners in citation status don&apos;t — but the math is here so you can compare.
+            </p>
+            <table className="mt-3 w-full text-[13px] border border-neutral-200">
+              <tbody>
+                <Row label="Closed price (MLS, ~95% clearance)" value={fmt(out.selfRemediate.closedPrice)} />
+                <Row label="− Out-of-pocket repair budget" value={fmtSigned(-out.selfRemediate.repairCost)} />
+                <Row
+                  label={`− Fines accrued during cure (${out.selfRemediate.repairMonths} mo × ${fmt(out.selfRemediate.finesAccrued / Math.max(1, out.selfRemediate.repairMonths))}/mo)`}
+                  value={fmtSigned(-out.selfRemediate.finesAccrued)}
+                />
+                <Row label="− Agent commission (6%)" value={fmtSigned(-out.selfRemediate.agentCommission)} />
+                <Row
+                  label={`− Carrying costs (${out.selfRemediate.repairMonths} mo)`}
+                  value={fmtSigned(-out.selfRemediate.carryingCost)}
+                />
+                <Row label="− Loan payoff" value={fmtSigned(-out.selfRemediate.loanBalance)} />
+                {out.selfRemediate.taxLien > 0 && (
+                  <Row label="− Tax lien payoff" value={fmtSigned(-out.selfRemediate.taxLien)} />
+                )}
+                <Row label="− Closing costs" value={fmtSigned(-out.selfRemediate.closingCosts)} />
+                <Row label="Net to you" value={fmt(out.selfRemediate.netToHomeowner)} bold />
+              </tbody>
+            </table>
+            <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
+              Conventional buyer lenders won&apos;t lend on properties with open code
+              violations — the cure has to happen <strong>before</strong> the sale closes.
+              That&apos;s why &quot;list as-is on MLS&quot; isn&apos;t a real path here, and
+              why most code-violation properties exit through wholesale or auction.
+            </p>
+          </section>
+        )}
+
         {/* MLS walkthrough — probate + FSBO scenarios only.
             This is the seller's actual mental default. We're not
             attacking agents; we're laying out the math so the
@@ -398,9 +562,22 @@ export default function MathSheetContent({
                   label={`− Carrying costs (~${out.mls.carryingMonths} mo: taxes, insurance, mortgage if any)`}
                   value={fmtSigned(-out.mls.carryingCost)}
                 />
+                {scenarioCfg.applyTrusteeFee && (
+                  <Row
+                    label="− Trustee fee (11 USC § 326 cap)"
+                    value={fmtSigned(-out.mls.trusteeFee)}
+                  />
+                )}
                 <Row label="− Loan payoff" value={fmtSigned(-out.mls.loanBalance)} />
+                {out.mls.taxLien > 0 && (
+                  <Row label="− Tax lien payoff" value={fmtSigned(-out.mls.taxLien)} />
+                )}
                 <Row label="− Closing costs" value={fmtSigned(-out.mls.closingCosts)} />
-                <Row label="Net to seller" value={fmt(out.mls.netToSeller)} bold />
+                <Row
+                  label={scenarioCfg.applyTrusteeFee ? "Net to estate" : "Net to seller"}
+                  value={fmt(out.mls.netToSeller)}
+                  bold
+                />
               </tbody>
             </table>
             <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
@@ -462,8 +639,26 @@ export default function MathSheetContent({
                 hi={-out.auction.high.closingCosts}
                 negative
               />
+              {out.auction.low.taxLien > 0 && (
+                <RowTriple
+                  label="− Tax lien payoff"
+                  w={-out.auction.worst.taxLien}
+                  lo={-out.auction.low.taxLien}
+                  hi={-out.auction.high.taxLien}
+                  negative
+                />
+              )}
+              {scenarioCfg.applyTrusteeFee && (
+                <RowTriple
+                  label="− Trustee fee (11 USC § 326)"
+                  w={-out.auction.worst.trusteeFee}
+                  lo={-out.auction.low.trusteeFee}
+                  hi={-out.auction.high.trusteeFee}
+                  negative
+                />
+              )}
               <RowTriple
-                label="Net to you"
+                label={scenarioCfg.applyTrusteeFee ? "Net to estate" : "Net to you"}
                 w={out.auction.worst.netToHomeowner}
                 lo={out.auction.low.netToHomeowner}
                 hi={out.auction.high.netToHomeowner}

@@ -474,7 +474,7 @@ export async function listDialerLeads(): Promise<DialerLead[]> {
     // Filter to active leads only — exclude properties where the trustee
     // sale ran more than 7 days ago (already foreclosed; can't help).
     // Direct lead-detail navigation still resolves these via getDialerLead
-    // so Chris can close them out in the workflow.
+    // so the caller can close them out in the workflow.
     const activeLeads = snapshot.leads.filter(isLeadActive)
     listings = activeLeads.map(inventoryToListing)
     completenessByKey = new Map(
