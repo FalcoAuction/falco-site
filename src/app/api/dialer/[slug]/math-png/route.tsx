@@ -39,6 +39,22 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  return await renderMathPng(req, params).catch((err: unknown) => {
+    // Surface the actual error in the response body so we can debug
+    // without needing Vercel runtime logs (which are CLI-flaky).
+    const msg = err instanceof Error ? `${err.name}: ${err.message}\n${err.stack || ""}` : String(err)
+    console.error("math-png crashed:", msg)
+    return new NextResponse(`math-png error: ${msg}`, {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  })
+}
+
+async function renderMathPng(
+  req: NextRequest,
+  params: Promise<{ slug: string }>,
+) {
   const session = getDialerOrOperatorSession(req)
   if (!session) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
