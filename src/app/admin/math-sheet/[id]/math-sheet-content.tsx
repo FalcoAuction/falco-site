@@ -10,7 +10,7 @@ import {
   fmtSigned,
   type MathInputs,
 } from "@/lib/math-sheet"
-import { resolveScenario } from "./scenario-config"
+import { resolveScenario, type Scenario } from "./scenario-config"
 
 export type HomeownerSnapshot = {
   id: string
@@ -46,6 +46,8 @@ export default function MathSheetContent({
   homeowner,
   backHref = "/admin",
   backLabel = "← Admin",
+  scenarioOverride,
+  toggleHrefBuilder,
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /admin so the
@@ -53,6 +55,12 @@ export default function MathSheetContent({
    *  passes the lead URL so callers don't get bounced to admin. */
   backHref?: string
   backLabel?: string
+  /** Force a specific scenario regardless of homeowner.distressType.
+   *  Used by the BK pre-petition / § 363 toggle (?view=...). */
+  scenarioOverride?: Scenario | null
+  /** Builds the URL for the view-toggle button. The page passes a
+   *  function so the math-sheet stays unaware of which route owns it. */
+  toggleHrefBuilder?: (scenario: Scenario) => string
 }) {
   // ARV default priority:
   //   1. Pipeline-synced property_value (best — already an AVM from ATTOM)
@@ -79,7 +87,7 @@ export default function MathSheetContent({
   // Per-scenario framing (probate / code violation / FSBO / etc.) drives
   // the eyebrow, hero line, Path 1 card, and section intros. The math
   // engine is unchanged — only the copy and labels swap.
-  const scenarioCfg = resolveScenario(homeowner.distressType)
+  const scenarioCfg = resolveScenario(homeowner.distressType, scenarioOverride)
 
   const inputs: MathInputs = {
     arv,
@@ -94,6 +102,7 @@ export default function MathSheetContent({
     auctionWorstPct: DEFAULT_INPUTS.auctionWorstPct,
     wholesalerMaoPct: DEFAULT_INPUTS.wholesalerMaoPct,
     wholesalerStretchPct: DEFAULT_INPUTS.wholesalerStretchPct,
+    applyTrusteeFee: scenarioCfg.applyTrusteeFee,
     mlsClearancePct: DEFAULT_INPUTS.mlsClearancePct,
     mlsCommissionPct: DEFAULT_INPUTS.mlsCommissionPct,
     mlsCarryingPerMonth: DEFAULT_INPUTS.mlsCarryingPerMonth,
@@ -127,6 +136,14 @@ export default function MathSheetContent({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px]">
+            {scenarioCfg.viewToggle && toggleHrefBuilder && (
+              <Link
+                href={toggleHrefBuilder(scenarioCfg.viewToggle.scenario)}
+                className="rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
+              >
+                {scenarioCfg.viewToggle.label}
+              </Link>
+            )}
             <a
               href={`mailto:${homeowner.email}?subject=${encodeURIComponent(
                 `Your FALCO math — ${homeowner.propertyAddress || "your property"}`
@@ -398,9 +415,19 @@ export default function MathSheetContent({
                   label={`− Carrying costs (~${out.mls.carryingMonths} mo: taxes, insurance, mortgage if any)`}
                   value={fmtSigned(-out.mls.carryingCost)}
                 />
+                {scenarioCfg.applyTrusteeFee && (
+                  <Row
+                    label="− Trustee fee (11 USC § 326 cap)"
+                    value={fmtSigned(-out.mls.trusteeFee)}
+                  />
+                )}
                 <Row label="− Loan payoff" value={fmtSigned(-out.mls.loanBalance)} />
                 <Row label="− Closing costs" value={fmtSigned(-out.mls.closingCosts)} />
-                <Row label="Net to seller" value={fmt(out.mls.netToSeller)} bold />
+                <Row
+                  label={scenarioCfg.applyTrusteeFee ? "Net to estate" : "Net to seller"}
+                  value={fmt(out.mls.netToSeller)}
+                  bold
+                />
               </tbody>
             </table>
             <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
@@ -462,8 +489,17 @@ export default function MathSheetContent({
                 hi={-out.auction.high.closingCosts}
                 negative
               />
+              {scenarioCfg.applyTrusteeFee && (
+                <RowTriple
+                  label="− Trustee fee (11 USC § 326)"
+                  w={-out.auction.worst.trusteeFee}
+                  lo={-out.auction.low.trusteeFee}
+                  hi={-out.auction.high.trusteeFee}
+                  negative
+                />
+              )}
               <RowTriple
-                label="Net to you"
+                label={scenarioCfg.applyTrusteeFee ? "Net to estate" : "Net to you"}
                 w={out.auction.worst.netToHomeowner}
                 lo={out.auction.low.netToHomeowner}
                 hi={out.auction.high.netToHomeowner}

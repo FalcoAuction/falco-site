@@ -36,6 +36,11 @@ export type MathInputs = {
   wholesalerMaoPct: number
   /** Stretched MAO when wholesaler eats margin to close a thinner deal. Default 0.78. */
   wholesalerStretchPct: number
+  /** Apply 11 USC § 326 statutory trustee compensation tier to all path
+   *  gross proceeds. Used for the bankruptcy_363_sale scenario where a
+   *  Chapter 7 / 11 trustee is selling and is compensated out of the
+   *  estate before any net is computed. False elsewhere. */
+  applyTrusteeFee: boolean
   /** MLS clearance — what an agent-listed property typically closes at as a
    *  fraction of asking. Default 0.95 (agents over-list ~5%). */
   mlsClearancePct: number
@@ -104,6 +109,9 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     // Stretched: wholesaler reaches if they really want the deal.
     // Still well below the textbook 78%.
     wholesalerStretchPct: 0.62,
+    // BK trustee compensation — only applied when scenario is § 363 sale
+    // (post-petition). Default off.
+    applyTrusteeFee: false,
     // MLS — what most homeowners (or executors) think is their default option.
     // 95% of asking is the typical clearance; 6% commission is TN norm;
     // ~$1,500/mo carrying for ~3 months exposure is a representative bleed.
@@ -127,6 +135,7 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   auctionWorstPct: 0.70,
   wholesalerMaoPct: 0.70,
   wholesalerStretchPct: 0.78,
+  applyTrusteeFee: false,
   mlsClearancePct: 0.95,
   mlsCommissionPct: 0.06,
   mlsCarryingPerMonth: 1500,
@@ -153,6 +162,9 @@ export type WholesalerBreakdown = {
   netStretched: number        // cashOfferStretched - loanBalance
   // Loan + scenario summary
   loanBalance: number
+  /** Trustee fee under 11 USC § 326 on the realistic offer
+   *  (only set when applyTrusteeFee is true). */
+  trusteeFee: number
   scenario: WholesalerScenario
   /** What the homeowner most realistically nets, scenario-aware:
    *  - standard:   netStandard
@@ -168,6 +180,8 @@ export type AuctionScenario = {
   winningBid: number
   loanBalance: number   // negative
   closingCosts: number  // negative
+  /** Trustee fee under 11 USC § 326 (only set when applyTrusteeFee is true). */
+  trusteeFee: number
   netToHomeowner: number
   buyerPremium: number  // paid by buyer ON TOP of bid (does not affect seller)
 }
@@ -207,7 +221,9 @@ export type MlsBreakdown = {
   closingCosts: number
   /** Months of exposure modeled. */
   carryingMonths: number
-  /** Net to seller after all of the above. */
+  /** Trustee fee under 11 USC § 326 (only set when applyTrusteeFee is true). */
+  trusteeFee: number
+  /** Net to seller (or estate, if applyTrusteeFee) after all of the above. */
   netToSeller: number
 }
 
@@ -233,6 +249,31 @@ export type MathOutput = {
  *  homeowner less than this; they'd walk instead. Realistic threshold based
  *  on the friction cost of any closing (lawyer, title, etc.). */
 const WHOLESALER_MIN_NET_TO_CLOSE = 5000
+
+/** 11 USC § 326(a) — statutory trustee compensation cap.
+ *  25% on first $5K, 10% on next $45K, 5% on next $950K, 3% above $1M.
+ *  This is the CAP; actual fees are billed on Form 4 fee applications and
+ *  may run lower, but the cap is the right number to model in homeowner-
+ *  facing math (conservative ceiling on what creditors lose to trustee). */
+export function computeTrusteeFee(grossProceeds: number): number {
+  if (!Number.isFinite(grossProceeds) || grossProceeds <= 0) return 0
+  let fee = 0
+  let remaining = grossProceeds
+  const t1 = Math.min(remaining, 5_000)
+  fee += t1 * 0.25
+  remaining -= t1
+  if (remaining <= 0) return Math.round(fee)
+  const t2 = Math.min(remaining, 45_000)
+  fee += t2 * 0.10
+  remaining -= t2
+  if (remaining <= 0) return Math.round(fee)
+  const t3 = Math.min(remaining, 950_000)
+  fee += t3 * 0.05
+  remaining -= t3
+  if (remaining <= 0) return Math.round(fee)
+  fee += remaining * 0.03
+  return Math.round(fee)
+}
 
 export function computeMath(inputs: MathInputs): MathOutput {
   const totalDeductions = inputs.repairs + inputs.assignmentFee + inputs.investorMargin
@@ -270,16 +311,38 @@ export function computeMath(inputs: MathInputs): MathOutput {
     scenarioLabel = "Wholesaler walks — no offer makes economic sense"
   }
 
+  // Wholesaler trustee fee — only on the realistic offer (standard or
+  // stretched cash offer if there's one; 0 if wholesaler walks).
+  const wholesalerGross =
+    scenario === "standard"
+      ? cashOfferStandard
+      : scenario === "stretched"
+      ? cashOfferStretched
+      : 0
+  const wholesalerTrusteeFee = inputs.applyTrusteeFee
+    ? computeTrusteeFee(wholesalerGross)
+    : 0
+  // When trustee fee applies, it comes out of net (between sale and
+  // distribution to estate). We back it out of realisticNet here.
+  const realisticNetAfterFee = inputs.applyTrusteeFee
+    ? Math.max(0, realisticNet - wholesalerTrusteeFee)
+    : realisticNet
+
   // Auction scenarios
   function scenarioCalc(retailPct: number): AuctionScenario {
     const winningBid = inputs.arv * retailPct
     const buyerPremium = winningBid * inputs.buyerPremiumPct
-    const netToHomeowner = winningBid - inputs.loanBalance - inputs.closingCosts
+    const trusteeFee = inputs.applyTrusteeFee
+      ? computeTrusteeFee(winningBid)
+      : 0
+    const netToHomeowner =
+      winningBid - inputs.loanBalance - inputs.closingCosts - trusteeFee
     return {
       retailPct,
       winningBid,
       loanBalance: inputs.loanBalance,
       closingCosts: inputs.closingCosts,
+      trusteeFee,
       netToHomeowner,
       buyerPremium,
     }
@@ -310,10 +373,14 @@ export function computeMath(inputs: MathInputs): MathOutput {
   const mlsClosedPrice = inputs.arv  // 95% of (105% of arv) ≈ arv
   const mlsAgentCommission = mlsClosedPrice * inputs.mlsCommissionPct
   const mlsCarryingCost = inputs.mlsCarryingPerMonth * inputs.mlsCarryingMonths
+  const mlsTrusteeFee = inputs.applyTrusteeFee
+    ? computeTrusteeFee(mlsClosedPrice)
+    : 0
   const mlsNet =
     mlsClosedPrice -
     mlsAgentCommission -
     mlsCarryingCost -
+    mlsTrusteeFee -
     inputs.loanBalance -
     inputs.closingCosts
 
@@ -331,8 +398,9 @@ export function computeMath(inputs: MathInputs): MathOutput {
       cashOfferStretched,
       netStretched,
       loanBalance: inputs.loanBalance,
+      trusteeFee: wholesalerTrusteeFee,
       scenario,
-      realisticNet,
+      realisticNet: realisticNetAfterFee,
       scenarioLabel,
     },
     auction: {
@@ -352,6 +420,7 @@ export function computeMath(inputs: MathInputs): MathOutput {
       loanBalance: inputs.loanBalance,
       closingCosts: inputs.closingCosts,
       carryingMonths: inputs.mlsCarryingMonths,
+      trusteeFee: mlsTrusteeFee,
       netToSeller: mlsNet,
     },
     spreadEstimate: {

@@ -2,14 +2,17 @@ import { redirect, notFound } from "next/navigation"
 import { readAdminSessionFromCookies } from "@/lib/admin-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import MathSheetContent, { type HomeownerSnapshot } from "./math-sheet-content"
+import { type Scenario } from "./scenario-config"
 
 export const dynamic = "force-dynamic"
 export const metadata = { title: "Math sheet · FALCO Admin", robots: "noindex, nofollow" }
 
 export default async function MathSheetPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ view?: string }>
 }) {
   const session = await readAdminSessionFromCookies()
   if (!session) redirect("/admin/login")
@@ -22,6 +25,8 @@ export default async function MathSheetPage({
   }
 
   const { id } = await params
+  const sp = await searchParams
+  const view = sp.view ?? null
   const { data, error } = await supabaseAdmin
     .from("homeowner_requests")
     .select("*")
@@ -48,5 +53,11 @@ export default async function MathSheetPage({
     distressType: (data.distress_type as string | null) ?? null,
   }
 
-  return <MathSheetContent homeowner={snapshot} />
+  return (
+    <MathSheetContent
+      homeowner={snapshot}
+      scenarioOverride={view as Scenario | null}
+      toggleHrefBuilder={(s) => `/admin/math-sheet/${id}?view=${s}`}
+    />
+  )
 }

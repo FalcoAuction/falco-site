@@ -16,7 +16,8 @@ export type Scenario =
   | "foreclosure"
   | "probate"
   | "code_violation"
-  | "bankruptcy"
+  | "bankruptcy_pre_petition"
+  | "bankruptcy_363_sale"
   | "fsbo"
   | "tax_lien"
 
@@ -49,9 +50,17 @@ export type ScenarioConfig = {
   /** Section header above the next-steps list. */
   ctaHeader: string
   /** True for scenarios where MLS is the homeowner/executor's REAL default
-   *  alternative (probate, FSBO). When true the math sheet renders a 4th
-   *  path card and a dedicated MLS walkthrough section. */
+   *  alternative (probate, FSBO, bankruptcy 363-sale). When true the math
+   *  sheet renders a 4th path card and a dedicated MLS walkthrough. */
   showMls: boolean
+  /** True when the audience is a BK trustee/court — applies 11 USC § 326
+   *  trustee fee to every path and re-labels paths in trustee terms.
+   *  Only set on bankruptcy_363_sale today. */
+  applyTrusteeFee: boolean
+  /** When set, the chrome shows a toggle linking to the sibling scenario
+   *  for one-click view switching (e.g. "View as: § 363 sale"). Both
+   *  bankruptcy scenarios point at each other. */
+  viewToggle?: { label: string; scenario: Scenario }
 }
 
 const FORECLOSURE: ScenarioConfig = {
@@ -75,6 +84,7 @@ const FORECLOSURE: ScenarioConfig = {
     "Trustee sale closes at the loan balance — homeowner equity is consumed by the foreclosing lender.",
   ctaHeader: "If you want to move forward",
   showMls: false,
+  applyTrusteeFee: false,
 }
 
 const PROBATE: ScenarioConfig = {
@@ -98,6 +108,7 @@ const PROBATE: ScenarioConfig = {
     "\"Hold the estate\" assumes the property is not sold; the estate continues to absorb taxes, insurance, and maintenance until probate closes.",
   ctaHeader: "If the estate wants to move forward",
   showMls: true,
+  applyTrusteeFee: false,
 }
 
 const CODE_VIOLATION: ScenarioConfig = {
@@ -121,29 +132,70 @@ const CODE_VIOLATION: ScenarioConfig = {
     "\"Self-remediate\" assumes the homeowner pays out of pocket to bring the property into compliance and then sells normally. Path 1 net excludes that capital outlay and the months it takes to clear.",
   ctaHeader: "If you want this off your hands",
   showMls: false,
+  applyTrusteeFee: false,
 }
 
-const BANKRUPTCY: ScenarioConfig = {
-  scenario: "bankruptcy",
-  headerEyebrow: "FALCO · § 363 / PRE-PETITION OPTIONS",
-  dateFieldLabel: "Petition filed",
+// Two BK flavors with very different audiences and math.
+// PRE-PETITION: debtor still controls. They want to sell BEFORE filing
+// to avoid losing equity above the TN $7,500 homestead exemption.
+// 363 SALE: trustee/attorney post-filing. Trustee will sell. The
+// question is "via MLS or via § 363 auction." Trustee fees (11 USC
+// § 326) come out of every path's gross.
+
+const BANKRUPTCY_PRE_PETITION: ScenarioConfig = {
+  scenario: "bankruptcy_pre_petition",
+  headerEyebrow: "FALCO · PRE-PETITION OPTIONS",
+  dateFieldLabel: "BK filing planned",
   heroLine:
-    "Through a court-approved § 363 sale, the asset clears at {range} — maximizing recovery before discharge.",
-  spreadComparator: "letting the trustee liquidate at fire-sale pricing",
+    "Selling pre-petition through a marketed auction nets you {range} — full proceeds minus loan payoff and closing. Once you file, the BK trustee takes everything above the TN $7,500 homestead exemption.",
+  spreadComparator: "filing first and letting the trustee sell post-petition",
   path1: {
-    label: "Trustee liquidation",
-    valueText: "Trustee fee + low",
-    sub: "BK trustee sells through their own channels. Standard trustee fees apply, and the timeline often pulls below-market pricing.",
+    label: "File BK first",
+    valueText: "$7,500 (exemption only)",
+    sub: "TN homestead exemption is $5,000 individual / $7,500 joint. Above that, the BK trustee captures all proceeds for creditors. You see only the exemption, regardless of equity.",
     tone: "loss",
   },
   wholesalerIntro:
-    "Wholesalers approach BK debtors and trustees aggressively. Math behind a typical pre-petition offer:",
+    "Pre-petition wholesalers target debtors aggressively. Math behind a typical cash offer:",
   auctionIntro:
-    "Marketed auction can be structured as a court-approved § 363 sale (Chapter 11) or coordinated with the BK trustee (Chapter 7). 30–45 day campaign, attorney-coordinated, transparent pricing.",
+    "Pre-petition marketed auction means YOU control the sale. Full proceeds pass through to you minus loan payoff and closing — no trustee, no creditors at the table. 30–45 day campaign, defined sale day. After you receive funds, you can fund the BK plan or, with debt-counseling guidance, potentially avoid filing entirely.",
   methodologyPath1:
-    "Trustee liquidation values reflect the discount typically applied when a BK trustee sells through their channels under timeline pressure.",
+    "\"File BK first\" reflects TN's $5K individual / $7,500 joint homestead exemption (Tenn. Code Ann. § 26-2-301). Above that, the bankruptcy estate keeps proceeds for creditors.",
+  ctaHeader: "If you want to sell pre-petition",
+  showMls: true,
+  applyTrusteeFee: false,
+  viewToggle: {
+    label: "View as: § 363 sale (post-petition)",
+    scenario: "bankruptcy_363_sale",
+  },
+}
+
+const BANKRUPTCY_363_SALE: ScenarioConfig = {
+  scenario: "bankruptcy_363_sale",
+  headerEyebrow: "FALCO · § 363 SALE OPTIONS",
+  dateFieldLabel: "Petition filed",
+  heroLine:
+    "A court-approved § 363 marketed auction nets the estate {range} — comparable to MLS recovery without 6% agent commission and 60–90 days of carrying.",
+  spreadComparator: "trustee MLS listing through a court-approved broker",
+  path1: {
+    label: "Trustee MLS listing",
+    valueText: "—",
+    sub: "Trustee lists through a court-approved broker. 6% commission, 3 months exposure on average, plus statutory trustee fees off the top.",
+    tone: "meh",
+  },
+  wholesalerIntro:
+    "Wholesalers occasionally approach BK trustees with cash offers. Most trustees decline (fiduciary duty to maximize recovery), but the math is here for completeness:",
+  auctionIntro:
+    "§ 363 marketed auction is the BK code's transparent-sale mechanism. Court-approved bidder procedures, 30–45 day exposure, defined sale day, no agent commission. Higher recovery to creditors and faster case closure.",
+  methodologyPath1:
+    "All paths reflect 11 USC § 326(a) statutory trustee compensation tier (25% / 10% / 5% / 3%). Real fees are billed via Form 4 fee applications and may be lower; the cap is the conservative ceiling.",
   ctaHeader: "If you want a § 363 sale",
-  showMls: false,
+  showMls: true,
+  applyTrusteeFee: true,
+  viewToggle: {
+    label: "View as: pre-petition (debtor)",
+    scenario: "bankruptcy_pre_petition",
+  },
 }
 
 const FSBO: ScenarioConfig = {
@@ -167,6 +219,7 @@ const FSBO: ScenarioConfig = {
     "MLS path assumes a 6% agent commission and a typical 60–120 day market exposure for TN FSBO listings.",
   ctaHeader: "If you want a faster close",
   showMls: true,
+  applyTrusteeFee: false,
 }
 
 const TAX_LIEN: ScenarioConfig = {
@@ -190,19 +243,32 @@ const TAX_LIEN: ScenarioConfig = {
     "\"Pay off lien yourself\" path assumes the homeowner has cash on hand to clear the lien before listing.",
   ctaHeader: "If you want clean title at close",
   showMls: false,
+  applyTrusteeFee: false,
 }
 
 const SCENARIO_CONFIGS: Record<Scenario, ScenarioConfig> = {
   foreclosure: FORECLOSURE,
   probate: PROBATE,
   code_violation: CODE_VIOLATION,
-  bankruptcy: BANKRUPTCY,
+  bankruptcy_pre_petition: BANKRUPTCY_PRE_PETITION,
+  bankruptcy_363_sale: BANKRUPTCY_363_SALE,
   fsbo: FSBO,
   tax_lien: TAX_LIEN,
 }
 
-/** Map the pipeline distress_type code → math-sheet scenario. */
-export function resolveScenario(distressType: string | null | undefined): ScenarioConfig {
+/** Map the pipeline distress_type code → math-sheet scenario.
+ *
+ * `viewOverride` lets the page route an explicit scenario (e.g. via a
+ * ?view=363 query param when toggling between the two BK flows). When
+ * provided AND valid, the override wins.
+ */
+export function resolveScenario(
+  distressType: string | null | undefined,
+  viewOverride?: string | null,
+): ScenarioConfig {
+  if (viewOverride && viewOverride in SCENARIO_CONFIGS) {
+    return SCENARIO_CONFIGS[viewOverride as Scenario]
+  }
   const t = (distressType || "").toUpperCase()
   switch (t) {
     case "PROBATE":
@@ -210,7 +276,9 @@ export function resolveScenario(distressType: string | null | undefined): Scenar
     case "CODE_VIOLATION":
       return CODE_VIOLATION
     case "BANKRUPTCY":
-      return BANKRUPTCY
+      // Default BK distress to pre-petition (debtor audience). The 363
+      // sale view is reachable via the chrome toggle / ?view=...
+      return BANKRUPTCY_PRE_PETITION
     case "FSBO":
       return FSBO
     case "TAX_LIEN":

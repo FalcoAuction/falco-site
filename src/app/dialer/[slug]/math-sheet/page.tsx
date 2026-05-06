@@ -4,6 +4,7 @@ import { getDialerLead } from "@/lib/dialer-data"
 import MathSheetContent, {
   type HomeownerSnapshot,
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
+import { type Scenario } from "@/app/admin/math-sheet/[id]/scenario-config"
 
 export const dynamic = "force-dynamic"
 export const metadata = {
@@ -22,10 +23,14 @@ export const metadata = {
  */
 export default async function DialerMathSheetPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ view?: string }>
 }) {
   const { slug } = await params
+  const sp = await searchParams
+  const view = sp.view ?? null
   await requireDialerSession(`/dialer/${slug}/math-sheet`)
   const lead = await getDialerLead(slug)
   if (!lead) notFound()
@@ -63,6 +68,8 @@ export default async function DialerMathSheetPage({
       homeowner={snapshot}
       backHref={`/dialer/${slug}`}
       backLabel="← Lead"
+      scenarioOverride={view as Scenario | null}
+      toggleHrefBuilder={(s) => `/dialer/${slug}/math-sheet?view=${s}`}
     />
   )
 }
