@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     // Full math sheet inline. Reads like someone showed you their
     // calculation — three sections, line-item breakdown, monospace
     // numbers so they line up. Same data the homeowner would see if
-    // Chris walked them through the printed math sheet on a call.
+    // we walked them through the printed math sheet on a call.
     const sectionStyle =
       "margin:0 0 16px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden"
     const headerStyle =

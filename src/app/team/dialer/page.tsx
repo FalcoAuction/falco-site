@@ -3,17 +3,18 @@ import PrintButton from "../../pilot/parks/economics/print-button"
 
 export const dynamic = "force-static"
 export const metadata = {
-  title: "FALCO — For Chris",
+  title: "FALCO — For the Caller",
   description:
-    "Why FALCO needs you specifically, what we're building together, and the questions only you can answer.",
+    "Why FALCO needs the right caller, what we're building together, and the questions a serious operator should be asking before they sign on.",
   robots: "noindex, nofollow",
 }
 
 // ============================================================================
-// PUBLIC mission/alignment doc for Chris Lannotti.
+// PUBLIC mission/alignment doc for whoever's stepping into the caller seat.
 // URL: /team/dialer
-// Peer-to-peer pitch. Chris already knows the operational mechanics — this
-// doc is about mission, personal fit, commitment, and what we're playing for.
+// Peer-to-peer pitch — the doc assumes the reader already knows operational
+// mechanics (cold-calling, distress conversations). This is about mission,
+// personal fit, commitment, and what we're playing for.
 // ============================================================================
 
 export default function DialerRolePage() {
@@ -36,7 +37,7 @@ export default function DialerRolePage() {
             ← FALCO
           </Link>
           <div className="text-[11px] uppercase tracking-[0.22em] text-white/55 hidden sm:block">
-            For Chris
+            For the Caller
           </div>
           <PrintButton />
         </div>
@@ -46,7 +47,7 @@ export default function DialerRolePage() {
         {/* Header */}
         <header className="border-b-2 border-emerald-600 pb-6">
           <div className="text-[11px] tracking-[0.32em] uppercase font-bold text-emerald-700">
-            FALCO · For Chris
+            FALCO · For the Caller
           </div>
           <h1 className="mt-3 text-[30px] md:text-[42px] font-semibold tracking-tight leading-[1.05]">
             We don&apos;t need you to learn the job. We need you to mean it.
@@ -289,7 +290,7 @@ export default function DialerRolePage() {
         <footer className="mt-10 pt-5 border-t border-neutral-300 text-[11px] text-neutral-500">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>FALCO LLC · Tennessee · falco@falco.llc · falco.llc</div>
-            <div>Drafted April 22, 2026 · For Chris Lannotti</div>
+            <div>Drafted April 22, 2026</div>
           </div>
         </footer>
       </article>

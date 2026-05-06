@@ -277,7 +277,7 @@ export default function LeadDetail({
       </Link>
 
       {/* Outreach helpers — email follow-up + SMS template */}
-      <OutreachHelpers lead={lead} />
+      <OutreachHelpers lead={lead} caller={caller} />
 
       {/* Qualified Lead delivery — operational handoff to Dale */}
       <QualifiedLeadSection lead={lead} caller={caller} onDelivered={() => router.refresh()} />
@@ -1047,11 +1047,12 @@ function toLocalInput(iso: string): string {
 /** ============================================================================
  *  QualifiedLeadSection
  *  ----------------------------------------------------------------------------
- *  Operational handoff to Dale at Parks. When Chris confirms an appointment,
- *  this fires the QL email to Dale with the full seller package (math sheet,
- *  contact, sale timeline, equity math). Logs the handoff for tracking.
+ *  Operational handoff to Dale at Parks. When the caller confirms an
+ *  appointment, this fires the QL email to Dale with the full seller package
+ *  (math sheet, contact, sale timeline, equity math). Logs the handoff for
+ *  tracking.
  *
- *  Compensation is commission-based on close (65 Parks / 20 Chris / 15 FALCO),
+ *  Compensation is commission-based on close (65 Parks / 20 Caller / 15 FALCO),
  *  not per-QL — this action is the operational trigger, not a billing event.
  *
  *  Required to deliver:
@@ -1227,15 +1228,15 @@ function QualifiedLeadSection({
 /** ============================================================================
  *  OutreachHelpers
  *  ----------------------------------------------------------------------------
- *  Free outreach actions Chris uses after a call:
+ *  Free outreach actions the caller uses after a call:
  *    - "Send follow-up email" — fires a personalized email with the math
  *      sheet via Resend (only enabled if email on file).
  *    - "Copy text template" — pre-fills a personalized SMS, copies to
- *      clipboard. Chris pastes into his own phone and sends — no Twilio.
+ *      clipboard. Caller pastes into their own phone and sends — no Twilio.
  *
  *  Auto-logs the email send as a dialer_activity for audit trail.
  *  ========================================================================= */
-function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
+function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: string }) {
   const [emailing, startEmail] = useTransition()
   const [emailMsg, setEmailMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -1254,7 +1255,13 @@ function OutreachHelpers({ lead }: { lead: DialerLeadView }) {
   // Legacy soft "left you a vm" template — kept for back-compat / familiarity.
   // The brute-honest opener (preferred) is fetched live via /opener-text so
   // it always reflects current numbers + lead variant (distressed/FSBO/underwater).
-  const smsTemplate = `Hi ${titleCasedFirst}, Chris with FALCO — left you a vm about ${
+  // Caller name is whatever the user typed at login (pulled from the dialer
+  // session); falls back to "FALCO" if the session caller field is empty.
+  const callerNamePart = (caller || "").trim().split(/\s+/)[0] || ""
+  const senderLabel = callerNamePart
+    ? `${callerNamePart} with FALCO`
+    : "FALCO"
+  const smsTemplate = `Hi ${titleCasedFirst}, ${senderLabel} — left you a vm about ${
     lead.address ?? "your property"
   }. Worth a 5-min talk about your auction options before any decisions get made. When's good?`
 

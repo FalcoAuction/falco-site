@@ -19,7 +19,7 @@ export const metadata = {
  * comparison the /admin route renders, but loaded from dialer + vault data
  * instead of the homeowner_requests table.
  *
- * Workflow Chris uses:
+ * Caller workflow:
  *   /dialer → click a lead → "Math sheet" button → opens this page →
  *   tweak ARV/loan inputs if needed → Print/Save PDF → email to homeowner.
  */

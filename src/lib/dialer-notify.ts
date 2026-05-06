@@ -126,8 +126,8 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
     // Use the SAME math-sheet engine as the QL email + dialer math sheet.
     // Previously this function had its own simplified equity model
     // (90% of AVM minus 9% commission, 65% wholesaler) which produced
-    // different numbers from what Chris walked the seller through. Now
-    // unified — Dale never sees two conflicting "official" numbers.
+    // different numbers from what the caller walked the seller through.
+    // Now unified — Dale never sees two conflicting "official" numbers.
     let equityLow: number | null = null
     let equityHigh: number | null = null
     let wholesalerNet: number | null = null
@@ -357,9 +357,9 @@ function daysFromNow(iso: string | null | undefined): number | null {
  *   3. Sale timeline (date + countdown)
  *   4. Property snapshot (beds/baths/sqft/year)
  *   5. Seller contact (name, phones, email)
- *   6. Equity math — same numbers Chris walked seller through
+ *   6. Equity math — same numbers the caller walked seller through
  *   7. Title workflow (Lindsey Hahn / authorization form)
- *   8. Chris's delivery notes
+ *   8. Caller's delivery notes
  *   9. Next steps for Parks
  *  10. Billable delivery summary (tier, fee, billing terms)
  *
@@ -519,7 +519,7 @@ export async function notifyQualifiedLeadDelivered(
     mathSummary
       ? `
   <div style="padding:18px 0;border-bottom:1px solid #1f2937">
-    <div style="font-size:11px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;font-weight:600;margin-bottom:8px">Equity Math <span style="color:#6b7280;font-weight:400;letter-spacing:normal;text-transform:none">— same numbers Chris walked the seller through</span></div>
+    <div style="font-size:11px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;font-weight:600;margin-bottom:8px">Equity Math <span style="color:#6b7280;font-weight:400;letter-spacing:normal;text-transform:none">— same numbers we walked the seller through</span></div>
     <table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:6px;overflow:hidden">
       <tr><td style="padding:10px 14px;color:#9ca3af;font-size:12px;width:200px">Property value (AVM)</td><td style="padding:10px 14px;color:#fff;font-size:14px;font-weight:600">${esc(mathSummary.arvStr)}</td></tr>
       <tr><td style="padding:10px 14px;color:#9ca3af;font-size:12px;border-top:1px solid rgba(255,255,255,0.04)">Estimated mortgage payoff</td><td style="padding:10px 14px;color:#fff;font-size:13px;border-top:1px solid rgba(255,255,255,0.04)">${esc(mathSummary.payoffStr)}${lead.mortgageLender ? ` <span style="color:#6b7280">· ${esc(lead.mortgageLender)}</span>` : ""}</td></tr>
@@ -583,7 +583,7 @@ export async function notifyQualifiedLeadDelivered(
       ? `
   <!-- DELIVERY NOTES -->
   <div style="padding:18px 0;border-bottom:1px solid #1f2937">
-    <div style="font-size:11px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:600;margin-bottom:8px">Chris's Notes</div>
+    <div style="font-size:11px;letter-spacing:1.5px;color:#888;text-transform:uppercase;font-weight:600;margin-bottom:8px">Caller Notes</div>
     <div style="background:#111827;padding:12px 14px;border-radius:5px;color:#e5e7eb;font-size:13px;white-space:pre-wrap;line-height:1.55">${esc(ctx.notes)}</div>
   </div>
   `
@@ -595,10 +595,10 @@ export async function notifyQualifiedLeadDelivered(
     <div style="font-size:11px;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;font-weight:700;margin-bottom:10px">Next Steps</div>
     <ol style="margin:0;padding-left:20px;color:#e5e7eb;font-size:13px;line-height:1.7">
       <li>Take the appointment with the seller at the time confirmed above</li>
-      <li>Reference the math sheet — same numbers Chris already shared with them</li>
+      <li>Reference the math sheet — same numbers we already shared with them</li>
       <li>Send the seller the authorization form so Lindsey at Signature Title can pull payoff</li>
       <li>Run listing solicitation and execute the listing agreement</li>
-      <li>Standard 65/20/15 commission split applies on close (Parks / Chris-via-Benchmark / FALCO)</li>
+      <li>Standard 65/20/15 commission split applies on close (Parks / Caller-via-Benchmark / FALCO)</li>
     </ol>
   </div>
 
@@ -648,7 +648,7 @@ export async function notifyQualifiedLeadDelivered(
       lead.phoneSecondary ? `  Secondary: ${fmtPhone(lead.phoneSecondary)}` : "",
       lead.email ? `  Email: ${lead.email}` : "",
       ``,
-      mathSummary ? `EQUITY MATH (same numbers Chris walked seller through)` : "",
+      mathSummary ? `EQUITY MATH (same numbers we walked seller through)` : "",
       mathSummary ? `  Property value (AVM): ${mathSummary.arvStr}` : "",
       mathSummary ? `  Est. mortgage payoff: ${mathSummary.payoffStr}${lead.mortgageLender ? " · " + lead.mortgageLender : ""}` : "",
       mathSummary ? `` : "",
@@ -668,15 +668,15 @@ export async function notifyQualifiedLeadDelivered(
       `  Send seller the authorization form so Lindsey can contact lender`,
       `  [Auth form attachment pending — coordinate with Lindsey]`,
       ``,
-      ctx.notes ? `CHRIS'S NOTES` : "",
+      ctx.notes ? `CALLER NOTES` : "",
       ctx.notes ? ctx.notes : "",
       ctx.notes ? `` : "",
       `NEXT STEPS`,
       `  1. Take the appointment at confirmed time`,
-      `  2. Reference the math sheet — same numbers Chris shared`,
+      `  2. Reference the math sheet — same numbers we shared with the seller`,
       `  3. Send authorization form to seller; loop in Lindsey for payoff`,
       `  4. Run listing solicitation, execute listing agreement`,
-      `  5. Standard 65/20/15 commission split on close (Parks / Chris-via-Benchmark / FALCO)`,
+      `  5. Standard 65/20/15 commission split on close (Parks / Caller-via-Benchmark / FALCO)`,
       ``,
       `LEAD CONTEXT`,
       `  Property tier: ${tierLabel}`,
