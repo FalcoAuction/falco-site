@@ -76,6 +76,11 @@ export type DialerInventoryLead = {
   decisionAction?: string
   /** Pitch bucket — which sales motion fits this lead. See classifyPitchBucket. */
   pitchBucket?: PitchBucket
+  /** Manual trustee-sale status flag set via /api/dialer/[slug]/sale-status.
+   *  Distinct from the auction-listing `saleStatus` field above. */
+  trusteeSaleStatus?: "cancelled" | "postponed" | "ran" | "reinstated"
+  trusteeSaleStatusNote?: string
+  trusteeSaleStatusUpdatedAt?: string
 }
 
 /**
@@ -246,6 +251,18 @@ type PhoneMetaDerived = {
   equityAmount?: number
   distressSignalCount?: number
   decisionAction?: string
+  /** Manual trustee-sale status flag set via
+   *  /api/dialer/[slug]/sale-status. Distinct from the auction-listing
+   *  saleStatus on DialerInventoryLead.
+   *
+   *  "cancelled" = lender withdrew the notice (deprioritize from
+   *  urgency pitches, neutral math sheet hero).
+   *  "postponed" = pushed to a new date (trustee_sale_date is updated).
+   *  "ran" = trustee sale already happened.
+   *  "reinstated" = borrower brought arrears current. */
+  trusteeSaleStatus?: "cancelled" | "postponed" | "ran" | "reinstated"
+  trusteeSaleStatusNote?: string
+  trusteeSaleStatusUpdatedAt?: string
 }
 
 function deriveFromPhoneMetadata(
@@ -358,6 +375,24 @@ function deriveFromPhoneMetadata(
   const de = obj.decision_engine as Record<string, unknown> | undefined
   if (de && typeof de === "object" && typeof de.action === "string") {
     out.decisionAction = de.action as string
+  }
+
+  // Manual sale-status flag (set via /api/dialer/[slug]/sale-status)
+  const ss = obj.sale_status as Record<string, unknown> | undefined
+  if (ss && typeof ss === "object") {
+    const status = ss.status
+    if (
+      status === "cancelled" ||
+      status === "postponed" ||
+      status === "ran" ||
+      status === "reinstated"
+    ) {
+      out.trusteeSaleStatus = status
+    }
+    if (typeof ss.note === "string") out.trusteeSaleStatusNote = ss.note
+    if (typeof ss.updated_at === "string") {
+      out.trusteeSaleStatusUpdatedAt = ss.updated_at
+    }
   }
 
   return out

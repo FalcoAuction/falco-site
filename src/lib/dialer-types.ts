@@ -91,6 +91,11 @@ export type DialerLeadView = {
   avmMid?: number | null
   avmHigh?: number | null
   saleStatus?: string
+  /** Manual trustee-sale status set via /api/dialer/[slug]/sale-status.
+   *  Distinct from `saleStatus` above (auction-listing status). */
+  trusteeSaleStatus?: "cancelled" | "postponed" | "ran" | "reinstated"
+  trusteeSaleStatusNote?: string
+  trusteeSaleStatusUpdatedAt?: string
   yearBuilt?: number | null
   buildingAreaSqft?: number | null
   beds?: number | null

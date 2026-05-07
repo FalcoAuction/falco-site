@@ -413,6 +413,9 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     distressSignalCount: inv.distressSignalCount,
     decisionAction: inv.decisionAction,
     pitchBucket: inv.pitchBucket,
+    trusteeSaleStatus: inv.trusteeSaleStatus,
+    trusteeSaleStatusNote: inv.trusteeSaleStatusNote,
+    trusteeSaleStatusUpdatedAt: inv.trusteeSaleStatusUpdatedAt,
   }
   return {
     ...(extras as Partial<VaultListing>),

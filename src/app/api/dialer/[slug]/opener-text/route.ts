@@ -15,7 +15,7 @@ import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt } from "@/lib/math-sheet"
-import { foreclosureSmsHook } from "@/lib/foreclosure-language"
+import { foreclosureSmsBody } from "@/lib/foreclosure-language"
 
 export const dynamic = "force-dynamic"
 
@@ -67,12 +67,13 @@ export async function GET(
     owner_name_records: string | null
     property_value: number | null
     phone: string | null
+    phone_metadata: Record<string, unknown> | null
   }
   let hr: HRSnap | null = null
   if (supabaseAdmin) {
     const { data } = await supabaseAdmin
       .from("homeowner_requests")
-      .select("full_name, owner_name_records, property_value, phone")
+      .select("full_name, owner_name_records, property_value, phone, phone_metadata")
       .eq("source", "bot")
       .eq("pipeline_lead_key", slug)
       .maybeSingle()
@@ -86,7 +87,21 @@ export async function GET(
   const arv = hr?.property_value ?? inventory?.avmMid ?? 0
   const loan = inventory?.mortgageAmount ?? 0
   const payoff = estimatePayoff(loan, inventory?.mortgageDate || null)
-  const dts = daysToSale(inventory?.currentSaleDate)
+  let dts = daysToSale(inventory?.currentSaleDate)
+
+  // Manual sale-status flag (set via /api/dialer/[slug]/sale-status)
+  // overrides the urgency. "cancelled" / "reinstated" → no urgency pitch
+  // (treat like unscheduled). "ran" → past. "postponed" already
+  // updated trustee_sale_date so dts already reflects the new date.
+  const ss = hr?.phone_metadata?.sale_status as
+    | { status?: string }
+    | undefined
+  const trusteeSaleStatus = ss?.status
+  if (trusteeSaleStatus === "cancelled" || trusteeSaleStatus === "reinstated") {
+    dts = null
+  } else if (trusteeSaleStatus === "ran") {
+    dts = -1
+  }
   const distressType = (inventory?.distressType || "").toUpperCase()
   const isFSBO = distressType === "FSBO"
   const isUnderwater = arv > 0 && payoff > arv * 0.9
@@ -128,18 +143,12 @@ export async function GET(
     // SOMETHING instead of $0 at the courthouse.
     text = `${greetTag}public records show your loan payoff at or above market on ${streetOnly}. Recorded balance is usually $30-80K stale. We work to keep something in your pocket instead of $0 at the courthouse. Text back the actual payoff. — Patrick / FALCO`
   } else {
-    // Distressed default — sale-date-aware. The hook now includes the
-    // postponement / equity-walk angle so the homeowner reads the path
-    // (not just the urgency) before glancing at the attached math image.
-    // foreclosureSmsHook returns the full lead sentence; we append the
-    // wholesaler disqualifier + signature.
-    //
-    // No formatting on "We're not wholesalers" — short standalone
-    // sentence carries its own emphasis through placement. Real people
-    // texting real people don't underline / italicize / bold; the moment
-    // we format anything, the message reads as marketing not human.
-    const hook = foreclosureSmsHook(dts, streetOnly)
-    text = `${greetTag}${hook} We're not wholesalers. Math attached. — Patrick / FALCO`
+    // Distressed default — full multi-line body from foreclosureSmsBody.
+    // No greeting prefix (the urgency hook leads cold), no separate
+    // signature appended (the helper includes "— Patrick Armour /
+    // FALCO" at the end). Voice + format calibrated from the text
+    // that drew the first homeowner response.
+    text = foreclosureSmsBody(dts, streetOnly)
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses

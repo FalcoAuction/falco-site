@@ -279,6 +279,11 @@ export default function LeadDetail({
       {/* Outreach helpers — email follow-up + SMS template */}
       <OutreachHelpers lead={lead} caller={caller} />
 
+      {/* Manual trustee-sale status — caller flips this after talking to
+          the homeowner. Suppresses urgency framing in the math sheet
+          + opener when the sale was cancelled / borrower reinstated. */}
+      <TrusteeSaleStatusPanel lead={lead} onChanged={() => router.refresh()} />
+
       {/* Qualified Lead delivery — operational handoff to Dale */}
       <QualifiedLeadSection lead={lead} caller={caller} onDelivered={() => router.refresh()} />
 
@@ -1226,6 +1231,161 @@ function QualifiedLeadSection({
 }
 
 /** ============================================================================
+ *  TrusteeSaleStatusPanel
+ *  ----------------------------------------------------------------------------
+ *  Caller-facing flag for what actually happened with the trustee sale —
+ *  set after talking to the homeowner / lender / trustee. Suppresses the
+ *  urgency framing in the opener + math sheet when the sale is no longer
+ *  active. Persisted in homeowner_requests.phone_metadata.sale_status.
+ *  ========================================================================= */
+function TrusteeSaleStatusPanel({
+  lead,
+  onChanged,
+}: {
+  lead: DialerLeadView
+  onChanged: () => void
+}) {
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [postponedDate, setPostponedDate] = useState("")
+
+  const current = lead.trusteeSaleStatus
+  const updatedAt = lead.trusteeSaleStatusUpdatedAt
+
+  async function setStatus(
+    status: "cancelled" | "postponed" | "ran" | "reinstated" | "scheduled",
+    extra: { newSaleDate?: string; note?: string } = {}
+  ) {
+    if (status === "postponed" && !extra.newSaleDate) {
+      setMsg({ kind: "err", text: "Pick a new sale date before marking postponed." })
+      return
+    }
+    setSaving(true)
+    setMsg(null)
+    try {
+      const res = await fetch(`/api/dialer/${lead.slug}/sale-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, ...extra }),
+      })
+      const json = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok || !json.ok) {
+        setMsg({ kind: "err", text: json.error || `Failed (HTTP ${res.status}).` })
+        return
+      }
+      setMsg({
+        kind: "ok",
+        text:
+          status === "scheduled"
+            ? "Cleared — back to default urgency."
+            : `Marked ${status}. Math sheet + opener will skip urgency pitch.`,
+      })
+      setPostponedDate("")
+      onChanged()
+    } catch (err) {
+      setMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Network error.",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+        <div className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
+          Trustee sale status
+        </div>
+        {current ? (
+          <div className="text-[11px] text-amber-200">
+            Currently: <span className="font-semibold uppercase">{current}</span>
+            {updatedAt ? (
+              <span className="text-white/40"> · {fmtDateTime(updatedAt)}</span>
+            ) : null}
+          </div>
+        ) : (
+          <div className="text-[11px] text-white/40">No manual override</div>
+        )}
+      </div>
+
+      <div className="text-[11px] text-white/50 mb-2 leading-relaxed">
+        Flip this after the homeowner / lender / trustee tells you what
+        actually happened. Cancelled or reinstated drops the urgency
+        framing from the opener + math sheet.
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setStatus("cancelled")}
+          disabled={saving}
+          className="rounded-lg border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 disabled:opacity-40 px-3 py-1.5 text-[12px] text-amber-100"
+        >
+          Cancelled
+        </button>
+        <button
+          type="button"
+          onClick={() => setStatus("reinstated")}
+          disabled={saving}
+          className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20 disabled:opacity-40 px-3 py-1.5 text-[12px] text-emerald-100"
+        >
+          Reinstated
+        </button>
+        <button
+          type="button"
+          onClick={() => setStatus("ran")}
+          disabled={saving}
+          className="rounded-lg border border-red-400/40 bg-red-400/10 hover:bg-red-400/20 disabled:opacity-40 px-3 py-1.5 text-[12px] text-red-100"
+        >
+          Sale ran
+        </button>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={postponedDate}
+            onChange={(e) => setPostponedDate(e.target.value)}
+            className="rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[12px] text-white"
+          />
+          <button
+            type="button"
+            onClick={() => setStatus("postponed", { newSaleDate: postponedDate })}
+            disabled={saving || !postponedDate}
+            className="rounded-lg border border-blue-400/40 bg-blue-400/10 hover:bg-blue-400/20 disabled:opacity-40 px-3 py-1.5 text-[12px] text-blue-100"
+          >
+            Postponed →
+          </button>
+        </div>
+        {current && (
+          <button
+            type="button"
+            onClick={() => setStatus("scheduled")}
+            disabled={saving}
+            title="Clear the manual override and restore default urgency."
+            className="rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 disabled:opacity-40 px-2.5 py-1.5 text-[11px] text-white/55"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {msg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            msg.kind === "ok"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-red-400/30 bg-red-400/10 text-red-200"
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** ============================================================================
  *  OutreachHelpers
  *  ----------------------------------------------------------------------------
  *  Free outreach actions the caller uses after a call:
@@ -1351,10 +1511,14 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         throw new Error(opener?.error || "Couldn't build opener text")
       }
 
-      // 2. Off-screen iframe with the math sheet in embed mode
+      // 2. Off-screen iframe with the math sheet in embed mode.
+      //    The print-page uses max-w-3xl (768px) + md:px-10 padding (80px
+      //    each side) → 928px total width. Iframe must be wider than
+      //    that so nothing clips on the right edge of the iMessage
+      //    attachment. 1100px gives slack for any wider-grid scenarios.
       iframe = document.createElement("iframe")
       iframe.style.cssText =
-        "position:fixed;left:-99999px;top:0;width:900px;height:1600px;border:0;background:#fff"
+        "position:fixed;left:-99999px;top:0;width:1100px;height:2200px;border:0;background:#fff"
       iframe.src = `/dialer/${lead.slug}/math-sheet?embed=1`
       document.body.appendChild(iframe)
 
@@ -1384,12 +1548,22 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         throw new Error("Could not find printable area in iframe")
       }
 
-      // 3. Capture as PNG. html-to-image returns a data URL; convert to blob.
+      // 3. Capture as PNG. Pin width/height to the target's full layout
+      //    box (incl. padding) so html-to-image doesn't crop overflowing
+      //    grids or right-edge content — that was the "right side cut
+      //    off" symptom in iMessage previews.
+      const rect = target.getBoundingClientRect()
+      const captureWidth = Math.max(target.scrollWidth, Math.ceil(rect.width))
+      const captureHeight = Math.max(target.scrollHeight, Math.ceil(rect.height))
       const { toBlob } = await import("html-to-image")
       const blob = await toBlob(target, {
         backgroundColor: "#ffffff",
         pixelRatio: 2,
         cacheBust: true,
+        width: captureWidth,
+        height: captureHeight,
+        canvasWidth: captureWidth,
+        canvasHeight: captureHeight,
       })
       if (!blob) throw new Error("html-to-image returned no blob")
 
