@@ -15,6 +15,7 @@ import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt } from "@/lib/math-sheet"
+import { foreclosureSmsHook } from "@/lib/foreclosure-language"
 
 export const dynamic = "force-dynamic"
 
@@ -127,23 +128,18 @@ export async function GET(
     // SOMETHING instead of $0 at the courthouse.
     text = `${greetTag}public records show your loan payoff at or above market on ${streetOnly}. Recorded balance is usually $30-80K stale. We work to keep something in your pocket instead of $0 at the courthouse. Text back the actual payoff. — Patrick / FALCO`
   } else {
-    // Distressed default: hook + disqualifier + purpose-line + delivery.
-    // The "extract" verb is precise — that's exactly what wholesalers do
-    // via the assignment fee. Naming the contrast in plain English makes
-    // us the opposite without any "save your home" scam-language traps.
-    const hook =
-      dts !== null && dts > 0
-        ? `${dts} days to your trustee sale.`
-        : dts !== null && dts <= 0
-        ? `Your trustee sale already ran — call before another fires.`
-        : `Pre-foreclosure on ${streetOnly}.`
-
-    // No formatting on "We're not wholesalers" — the short standalone
+    // Distressed default — sale-date-aware. The hook now includes the
+    // postponement / equity-walk angle so the homeowner reads the path
+    // (not just the urgency) before glancing at the attached math image.
+    // foreclosureSmsHook returns the full lead sentence; we append the
+    // wholesaler disqualifier + signature.
+    //
+    // No formatting on "We're not wholesalers" — short standalone
     // sentence carries its own emphasis through placement. Real people
     // texting real people don't underline / italicize / bold; the moment
     // we format anything, the message reads as marketing not human.
-    // Period (not em-dash) keeps the cadence human, not AI-ish.
-    text = `${greetTag}${hook} We're not wholesalers. We work to keep your equity in your hands, not extract it. Math attached. — Patrick / FALCO`
+    const hook = foreclosureSmsHook(dts, streetOnly)
+    text = `${greetTag}${hook} We're not wholesalers. Math attached. — Patrick / FALCO`
   }
 
   // sms: URI for one-tap iMessage compose. iOS uses ?body=, Android uses

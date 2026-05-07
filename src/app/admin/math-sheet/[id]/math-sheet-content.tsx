@@ -16,6 +16,10 @@ import {
   estimateFineAccrual,
   type CodeViolationData,
 } from "./code-violation-data"
+import {
+  foreclosureHeroLine,
+  foreclosureSpreadComparator,
+} from "@/lib/foreclosure-language"
 
 export type HomeownerSnapshot = {
   id: string
@@ -147,6 +151,24 @@ export default function MathSheetContent({
   // the eyebrow, hero line, Path 1 card, and section intros. The math
   // engine is unchanged — only the copy and labels swap.
   const scenarioCfg = scenarioCfgInit
+
+  // Foreclosure hero is sale-date-aware: a homeowner with 60 days to
+  // sale needs different framing than one with 12 days. We override
+  // scenarioCfg.heroLine + spreadComparator only for foreclosure
+  // scenarios (the others — probate, BK, etc. — are sale-date-agnostic).
+  const daysToSale = (() => {
+    if (!homeowner.trusteeSaleDate) return null
+    const ms = new Date(homeowner.trusteeSaleDate).getTime() - Date.now()
+    if (Number.isNaN(ms)) return null
+    return Math.ceil(ms / (1000 * 60 * 60 * 24))
+  })()
+  const isForeclosure = scenarioCfg.scenario === "foreclosure"
+  const effectiveHeroLine = isForeclosure
+    ? foreclosureHeroLine(daysToSale)
+    : scenarioCfg.heroLine
+  const effectiveSpreadComparator = isForeclosure
+    ? foreclosureSpreadComparator(daysToSale)
+    : scenarioCfg.spreadComparator
 
   const inputs: MathInputs = {
     arv,
@@ -369,7 +391,7 @@ export default function MathSheetContent({
             The bottom line
           </div>
           <div className="mt-3 text-[22px] md:text-[28px] font-semibold tracking-tight leading-tight text-neutral-900">
-            {scenarioCfg.heroLine.split("{range}").map((chunk, i, arr) => (
+            {effectiveHeroLine.split("{range}").map((chunk, i, arr) => (
               <span key={i}>
                 {chunk}
                 {i < arr.length - 1 && (
@@ -397,7 +419,7 @@ export default function MathSheetContent({
                   in a strong campaign)
                 </>
               )}
-              , and meaningfully more than {scenarioCfg.spreadComparator}.
+              , and meaningfully more than {effectiveSpreadComparator}.
             </div>
           )}
         </section>
