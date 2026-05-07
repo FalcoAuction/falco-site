@@ -224,6 +224,39 @@ export default function MathSheetContent({
           .print-page { padding: 0 !important; max-width: 100% !important; }
           body { background: white !important; }
         }
+        /* SHARE-NARROW MODE
+         * Used by the inline-render share flow on lead-detail. iOS Safari
+         * clamps offscreen / unusual layouts to device width when html-to-image
+         * captures, so the PNG was clipping on the right when the article
+         * was rendered at 768px. Forcing a single-column ~380px layout
+         * means the captured PNG is narrow enough to fit any iPhone
+         * viewport — the recipient sees everything regardless of how iOS
+         * decides to render the offscreen container. */
+        .embed-narrow {
+          padding: 14px 12px !important;
+          max-width: 380px !important;
+        }
+        .embed-narrow .grid { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; }
+        .embed-narrow .text-3xl, .embed-narrow .md\\:text-3xl { font-size: 18px !important; line-height: 1.25 !important; }
+        .embed-narrow .text-2xl, .embed-narrow .md\\:text-2xl { font-size: 16px !important; line-height: 1.25 !important; }
+        .embed-narrow .text-xl,  .embed-narrow .md\\:text-xl  { font-size: 15px !important; line-height: 1.3  !important; }
+        .embed-narrow .text-lg,  .embed-narrow .md\\:text-lg  { font-size: 14px !important; line-height: 1.3  !important; }
+        .embed-narrow .text-\\[26px\\], .embed-narrow .md\\:text-\\[26px\\] { font-size: 16px !important; }
+        .embed-narrow .text-\\[20px\\], .embed-narrow .md\\:text-\\[20px\\] { font-size: 14px !important; }
+        .embed-narrow .text-\\[15px\\] { font-size: 13px !important; }
+        .embed-narrow .text-\\[14px\\] { font-size: 12px !important; }
+        .embed-narrow .text-\\[13px\\] { font-size: 12px !important; }
+        .embed-narrow .text-\\[12px\\] { font-size: 11px !important; }
+        .embed-narrow .text-\\[11px\\] { font-size: 10px !important; }
+        .embed-narrow .py-10, .embed-narrow .md\\:py-14 { padding-top: 10px !important; padding-bottom: 10px !important; }
+        .embed-narrow .px-6,  .embed-narrow .md\\:px-10 { padding-left: 0 !important; padding-right: 0 !important; }
+        .embed-narrow .mt-8 { margin-top: 18px !important; }
+        .embed-narrow .mt-6 { margin-top: 14px !important; }
+        .embed-narrow .mt-4 { margin-top: 10px !important; }
+        .embed-narrow table { font-size: 11px !important; }
+        .embed-narrow th, .embed-narrow td { padding: 6px 6px !important; word-break: break-word !important; }
+        .embed-narrow * { word-wrap: break-word !important; overflow-wrap: anywhere !important; }
+        .embed-narrow .truncate { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
       `}</style>
 
       {/* CHROME (hidden on print + embed mode) */}
@@ -309,7 +342,11 @@ export default function MathSheetContent({
       )}
 
       {/* PRINTABLE SHEET */}
-      <article className="print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14">
+      <article
+        className={`print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14 ${
+          embed ? "embed-narrow" : ""
+        }`}
+      >
         {/* Header — minimal: who, when, key facts */}
         <header className="border-b border-neutral-300 pb-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
