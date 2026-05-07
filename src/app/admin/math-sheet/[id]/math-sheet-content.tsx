@@ -42,6 +42,12 @@ export type HomeownerSnapshot = {
    *  Metro Codes / Memphis 311 / etc.) by extractCodeViolationData().
    *  Null for non-CV leads. */
   codeViolation?: CodeViolationData | null
+  /** Manual trustee-sale status override set via /api/dialer/[slug]/sale-status.
+   *  When `cancelled` or `reinstated`, the foreclosure hero falls back to the
+   *  unscheduled framing (no urgency pitch). When `ran`, it falls back to
+   *  past-sale framing. `postponed` is a no-op here because the underlying
+   *  trustee_sale_date column has already been updated to the new date. */
+  trusteeSaleStatus?: "cancelled" | "postponed" | "ran" | "reinstated" | null
 }
 
 function fmtDateHuman(iso: string | null): string {
@@ -157,6 +163,11 @@ export default function MathSheetContent({
   // scenarioCfg.heroLine + spreadComparator only for foreclosure
   // scenarios (the others — probate, BK, etc. — are sale-date-agnostic).
   const daysToSale = (() => {
+    // Manual overrides win — caller talked to the homeowner and confirmed
+    // the sale was cancelled / borrower reinstated / sale already ran.
+    const ts = homeowner.trusteeSaleStatus
+    if (ts === "cancelled" || ts === "reinstated") return null
+    if (ts === "ran") return -1
     if (!homeowner.trusteeSaleDate) return null
     const ms = new Date(homeowner.trusteeSaleDate).getTime() - Date.now()
     if (Number.isNaN(ms)) return null

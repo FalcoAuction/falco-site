@@ -96,6 +96,9 @@ export default async function DialerMathSheetPage({
     propertyValueSource: avmMid ? "AVM" : null,
     distressType: lead.distressType ?? null,
     codeViolation,
+    trusteeSaleStatus:
+      (lead as unknown as { trusteeSaleStatus?: HomeownerSnapshot["trusteeSaleStatus"] })
+        .trusteeSaleStatus ?? null,
   }
 
   return (

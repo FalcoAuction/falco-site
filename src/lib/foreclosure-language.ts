@@ -1,28 +1,37 @@
 /**
  * Foreclosure outreach language — sale-date-aware.
  *
- * The trustee-sale clock changes the conversation. A homeowner with 60
- * days has time to run a full marketed auction. A homeowner with 12 days
- * needs a postponement request to the lender first. Same brand voice,
- * different urgency + path.
+ * Voice + format calibrated from the text Patrick sent that drew the
+ * first homeowner response. Multi-line, no greeting, the disqualifier
+ * + commission line lead, then the path, then the math, then full sig.
  *
- * Both the SMS opener (api/dialer/[slug]/opener-text) and the math
- * sheet hero (math-sheet-content.tsx) read from these helpers so the
- * language is consistent across channels — text and printable both
- * say the same thing about the equity path.
+ *   "{N} days to your trustee sale. We're not wholesalers. We do not
+ *    charge commissions. We work to keep your equity in your hands,
+ *    not extract it.
+ *
+ *    If you're willing to speak to our auction partner, we could
+ *    possibly expedite a postponement of the sale. Options are
+ *    narrow, but they exist.
+ *
+ *    Math sheet attached.
+ *
+ *    — Patrick Armour / FALCO"
+ *
+ * The SMS opener route + math sheet hero both read from these helpers
+ * so what the homeowner sees on their phone matches the printable.
  *
  * Pure functions — no React, no server imports. Safe in client + server.
  */
 
-/** Urgency tier driven by days-to-sale. Used internally to pick copy. */
+/** Urgency tier driven by days-to-sale. */
 export type SaleUrgency =
-  | "unscheduled"  // pre-foreclosure, no sale date set
-  | "far"          // 45+ days — comfortable to run an auction
-  | "comfortable"  // 30-45 days — postponement straightforward
-  | "tight"        // 14-30 days — postponement viable, urgency rising
-  | "urgent"       // 7-14 days — last reasonable window
-  | "critical"     // 1-7 days — narrow options
-  | "past"         // sale already ran — redemption or next-sale conversation
+  | "unscheduled"
+  | "far"
+  | "comfortable"
+  | "tight"
+  | "urgent"
+  | "critical"
+  | "past"
 
 export function classifySaleUrgency(daysToSale: number | null): SaleUrgency {
   if (daysToSale === null) return "unscheduled"
@@ -35,55 +44,81 @@ export function classifySaleUrgency(daysToSale: number | null): SaleUrgency {
   return "far"
 }
 
+const STANDARD_DISQUALIFIER =
+  "We're not wholesalers. We do not charge commissions. We work to keep your equity in your hands, not extract it."
+
+const SIGNATURE = "— Patrick Armour / FALCO"
+
 /**
- * SMS opener hook — the lead sentence in the brutal-honest text.
- * Caller wraps this with greeting + signature.
- *
- * Example output for 36-day-out lead:
- *   "36 days to your trustee sale. We can request a postponement from
- *    your lender and run an auction — equity stays with you, not the
- *    bank."
+ * Full SMS body for foreclosure leads — multi-line, no greeting,
+ * paragraphs separated by blank lines. Caller does not add a greeting
+ * prefix or signature; this returns the complete body verbatim.
  */
-export function foreclosureSmsHook(
+export function foreclosureSmsBody(
   daysToSale: number | null,
   streetOnly: string,
 ): string {
   const urgency = classifySaleUrgency(daysToSale)
   const dts = daysToSale ?? 0
+  const open = foreclosureOpener(urgency, dts, streetOnly)
+  const path = foreclosurePathLine(urgency)
+  return [
+    `${open} ${STANDARD_DISQUALIFIER}`,
+    "",
+    path,
+    "",
+    "Math sheet attached.",
+    "",
+    SIGNATURE,
+  ].join("\n")
+}
 
+function foreclosureOpener(
+  urgency: SaleUrgency,
+  dts: number,
+  streetOnly: string,
+): string {
   switch (urgency) {
     case "far":
-      return `${dts} days to your trustee sale. Plenty of room to run a marketed auction inside that window and walk away with your equity instead of zero at the courthouse.`
     case "comfortable":
-      return `${dts} days to your trustee sale. We can request a postponement from your lender and run an auction — equity stays with you, not the bank.`
     case "tight":
-      return `${dts} days to your trustee sale. Tight window — but with a postponement request to your lender we can still run a marketed auction and protect your equity.`
     case "urgent":
-      return `${dts} days to your trustee sale. Tight, but not over. Could mean walking away with your equity instead of zero.`
+      return `${dts} days to your trustee sale.`
     case "critical":
       return dts === 0
-        ? `Sale's today. Last-window options are narrow but real — equity-protection paths exist if we move now.`
-        : `Sale's ${dts} days out. Options are narrow this close but real. Equity-protection paths exist.`
+        ? `Your trustee sale is today.`
+        : `${dts} days to your trustee sale.`
     case "past":
-      return `Your trustee sale already ran. If there's still equity to recover or another sale coming, worth a conversation.`
+      return `Your trustee sale already ran.`
     case "unscheduled":
-      return `Pre-foreclosure on ${streetOnly}. Best window to act — run a marketed auction and walk with your equity before the sale gets scheduled.`
+      return `Pre-foreclosure on ${streetOnly}.`
+  }
+}
+
+function foreclosurePathLine(urgency: SaleUrgency): string {
+  switch (urgency) {
+    case "far":
+      return "If you're willing to speak to our auction partner, there's room to run a marketed auction inside that window — homeowner walks away with the equity instead of zero at the courthouse."
+    case "comfortable":
+      return "If you're willing to speak to our auction partner, we can request a postponement from your lender and run a marketed auction. Equity stays in your hands."
+    case "tight":
+      return "If you're willing to speak to our auction partner, we could possibly expedite a postponement of the sale and run a marketed auction. Window's tight, but it exists."
+    case "urgent":
+      return "If you're willing to speak to our auction partner, we could possibly expedite a postponement. Options are narrow, but they exist."
+    case "critical":
+      return "If you're willing to speak to our auction partner, an emergency postponement could still be possible. Options are narrow, but they exist."
+    case "past":
+      return "If there's still equity to recover or another sale coming, our auction partner can walk you through the math — what's possible, what isn't."
+    case "unscheduled":
+      return "Best window to act is before a sale gets scheduled. Our auction partner can run a marketed auction and have you walking away with the equity, on your timeline."
   }
 }
 
 /**
- * Math sheet hero line — same idea, full sentence, with a {range}
- * placeholder where the auction net range is substituted.
+ * Math sheet hero line — same path messaging, sentence form, with a
+ * {range} placeholder for the auction net range.
  *
  * Used by math-sheet-content.tsx for foreclosure scenario only.
- * Other scenarios (probate, code violation, BK) use scenario-config's
- * static heroLine — the sale-date dimension only matters for trustee
- * sales.
- *
- * Example output for 36-day-out lead:
- *   "We can request a postponement from your lender and run a 30-day
- *    marketed auction. Net to you instead of zero at the courthouse:
- *    {range}."
  */
 export function foreclosureHeroLine(daysToSale: number | null): string {
   const urgency = classifySaleUrgency(daysToSale)
@@ -91,29 +126,27 @@ export function foreclosureHeroLine(daysToSale: number | null): string {
 
   switch (urgency) {
     case "far":
-      return `Plenty of room to run a marketed auction before your trustee sale date. By auction instead of trustee sale, you walk away with {range}.`
+      return `Plenty of room to run a marketed auction before your trustee sale date — net to you instead of zero at the courthouse: {range}.`
     case "comfortable":
-      return `We can request a postponement from your lender and run a 30-day marketed auction. Net to you instead of zero at the courthouse: {range}.`
+      return `With a postponement request to your lender, we can run a 30-day marketed auction. Net to you instead of zero at the courthouse: {range}.`
     case "tight":
-      return `Tight window — but with a postponement request to your lender we can still run a marketed auction. Net to you: {range}, instead of zero at the trustee sale.`
+      return `Tight window — but with a postponement request we could still run a marketed auction. Net to you: {range}, instead of zero at the trustee sale.`
     case "urgent":
-      return `${dts} days out. Limited options, but the auction route — with a postponement on your loan — could still net you {range}.`
+      return `${dts} days out. Limited options — but the auction route, with an expedited postponement, could still net you {range}.`
     case "critical":
       return dts === 0
-        ? `Sale is today. Last-window options are narrow, but the auction route with an emergency postponement request could still net {range}.`
-        : `Sale is days away. Last-window options are narrow but worth knowing — auction with a postponement request could net {range}.`
+        ? `Sale is today. Last-window options are narrow — an emergency postponement + marketed auction could still net {range}.`
+        : `Sale is days away. Last-window options are narrow — an expedited postponement + marketed auction could still net {range}.`
     case "past":
       return `Your trustee sale already ran. If there's redemption time or another sale coming, the marketed auction route could net {range}.`
     case "unscheduled":
-      return `Sale's not scheduled yet — best window to run a marketed auction. Net to you: {range}.`
+      return `Sale's not scheduled yet — the strongest window to run a marketed auction. Net to you: {range}.`
   }
 }
 
 /**
  * Comparator phrase for the secondary spread line ("X more than Y").
- * Used by the math sheet hero to complete the sentence.
- *
- * Foreclosure-only. Other scenarios use scenario-config's spreadComparator.
+ * Foreclosure-only.
  */
 export function foreclosureSpreadComparator(daysToSale: number | null): string {
   const urgency = classifySaleUrgency(daysToSale)

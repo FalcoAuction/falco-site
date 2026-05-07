@@ -52,6 +52,17 @@ export default async function MathSheetPage({
     propertyValue: (data.property_value as number | null) ?? null,
     propertyValueSource: (data.property_value_source as string | null) ?? null,
     distressType: (data.distress_type as string | null) ?? null,
+    trusteeSaleStatus: (() => {
+      const pm = data.phone_metadata as Record<string, unknown> | null | undefined
+      const ss = pm && typeof pm === "object"
+        ? (pm.sale_status as Record<string, unknown> | undefined)
+        : undefined
+      const s = ss?.status
+      if (s === "cancelled" || s === "postponed" || s === "ran" || s === "reinstated") {
+        return s
+      }
+      return null
+    })(),
     // Wrap in try/catch — if a single lead has malformed raw_payload it
     // shouldn't crash the entire math sheet render.
     codeViolation: (() => {
