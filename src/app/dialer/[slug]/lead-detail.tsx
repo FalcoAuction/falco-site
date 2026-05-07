@@ -20,6 +20,9 @@ import { classifyTier } from "@/lib/tier-classification"
 import ContactLayer from "./contact-layer"
 import type { SkiptraceData } from "./contact-layer"
 import { PitchPanel } from "./pitch-panel"
+import MathSheetContent, {
+  type HomeownerSnapshot,
+} from "@/app/admin/math-sheet/[id]/math-sheet-content"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -1484,22 +1487,30 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   // a file + text in a single payload. The OS share sheet opens; user
   // picks Messages, picks contact, hits send. Both items already attached.
   //
+  // INLINE RENDER (no iframe). iOS Safari ignores the CSS width on
+  // hidden/offscreen iframes and renders inner content at device width,
+  // which clipped the right side of the captured PNG on iPhone. Rendering
+  // MathSheetContent inline in a hidden, fixed-width container puts the
+  // math sheet in the SAME document — iOS honors the container's width
+  // (1100px) regardless of the device viewport.
+  //
   // Flow:
   //   1. Fetch the brute-honest opener text from /opener-text
-  //   2. Off-screen iframe loads /math-sheet?embed=1 (chrome stripped)
-  //   3. html-to-image captures the .print-page DOM as PNG blob
-  //   4. navigator.share({ files: [pngFile], text: opener })
+  //   2. setCapturing(true) → React mounts the hidden math sheet
+  //   3. Wait for layout + fonts
+  //   4. html-to-image captures the .print-page DOM as PNG blob
+  //   5. navigator.share({ files: [pngFile], text: opener })
   //
   // Requires Web Share API with file support — works on iOS Safari 15+,
-  // Chrome Android, Chrome/Edge desktop. Falls back to the 2-button
-  // flow (download image + open SMS) when not supported.
+  // Chrome Android, Chrome/Edge desktop. Falls back to data-URL window.open
+  // + clipboard when not supported.
   const [shareLoading, setShareLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [capturing, setCapturing] = useState(false)
 
   async function shareOpenerWithMath() {
     setShareMsg(null)
     setShareLoading(true)
-    let iframe: HTMLIFrameElement | null = null
     try {
       // 1. Opener text
       const openerRes = await fetch(`/api/dialer/${lead.slug}/opener-text`)
@@ -1511,81 +1522,33 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         throw new Error(opener?.error || "Couldn't build opener text")
       }
 
-      // 2. Off-screen iframe with the math sheet in embed mode.
-      //    The print-page uses max-w-3xl (768px) + md:px-10 padding (80px
-      //    each side) → 928px total width. Iframe must be wider than
-      //    that so nothing clips on the right edge of the iMessage
-      //    attachment. 1100px gives slack for any wider-grid scenarios.
-      iframe = document.createElement("iframe")
-      iframe.style.cssText =
-        "position:fixed;left:-99999px;top:0;width:1100px;height:2400px;border:0;background:#fff"
-      iframe.src = `/dialer/${lead.slug}/math-sheet?embed=1`
-      document.body.appendChild(iframe)
-
-      await new Promise<void>((resolve, reject) => {
-        const t = setTimeout(
-          () => reject(new Error("Math sheet iframe load timed out")),
-          12000
-        )
-        if (iframe) {
-          iframe.onload = () => {
-            clearTimeout(t)
-            resolve()
-          }
-          iframe.onerror = () => {
-            clearTimeout(t)
-            reject(new Error("Math sheet iframe failed to load"))
-          }
-        }
-      })
-      // Belt-and-suspenders: iOS Safari ignores the iframe's CSS width
-      // for the inner viewport and renders at device-width (e.g. 390px
-      // on iPhone) unless the inner document's <meta name="viewport">
-      // forces a fixed pixel width. Inject one after load + force a
-      // reflow before capture so the article renders at 768px max-w-3xl
-      // instead of squashing to phone width.
-      try {
-        const idoc = iframe.contentDocument
-        if (idoc) {
-          let m = idoc.querySelector(
-            'meta[name="viewport"]'
-          ) as HTMLMetaElement | null
-          if (!m) {
-            m = idoc.createElement("meta")
-            m.setAttribute("name", "viewport")
-            idoc.head.appendChild(m)
-          }
-          m.setAttribute("content", "width=1100, initial-scale=1")
-          // Touch the body to trigger a reflow at the new viewport
-          void idoc.body.offsetWidth
-        }
-      } catch {
-        // contentDocument may be null in odd cases — fall through.
-      }
-      // Wait for fonts + relayout. iOS needs a longer settle than desktop.
-      await new Promise((r) => setTimeout(r, 1500))
-      try {
-        const idoc = iframe.contentDocument
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fonts = (idoc as any)?.fonts
-        if (fonts && typeof fonts.ready?.then === "function") {
+      // 2. Mount the hidden math sheet inline
+      setCapturing(true)
+      // Wait for React to commit + browser to lay out + fonts to load.
+      // On iOS this needs to be longer than desktop.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+      await new Promise((r) => setTimeout(r, 800))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fonts = (document as any).fonts
+      if (fonts && typeof fonts.ready?.then === "function") {
+        try {
           await fonts.ready
+        } catch {
+          // Non-fatal.
         }
-      } catch {
-        // Non-fatal.
       }
 
-      const target = iframe.contentDocument?.querySelector(
-        ".print-page"
+      const target = document.querySelector(
+        "[data-share-capture] .print-page"
       ) as HTMLElement | null
       if (!target) {
-        throw new Error("Could not find printable area in iframe")
+        throw new Error("Could not find inline math sheet to capture")
       }
 
-      // 3. Capture as PNG. Pin width/height to the target's full layout
-      //    box (incl. padding) so html-to-image doesn't crop overflowing
-      //    grids or right-edge content — that was the "right side cut
-      //    off" symptom in iMessage previews.
+      // 3. Capture as PNG. Pin to target's full layout box; pixelRatio:2
+      //    keeps text crisp at high-DPI message previews.
       const rect = target.getBoundingClientRect()
       const captureWidth = Math.max(target.scrollWidth, Math.ceil(rect.width))
       const captureHeight = Math.max(target.scrollHeight, Math.ceil(rect.height))
@@ -1635,11 +1598,30 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         text: err instanceof Error ? err.message : "Share failed.",
       })
     } finally {
-      if (iframe && iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe)
-      }
+      setCapturing(false)
       setShareLoading(false)
     }
+  }
+
+  // Build the HomeownerSnapshot for inline math-sheet rendering from
+  // the data already on the dialer lead view. Code-violation extraction
+  // only happens server-side, so CV-specific UI on the captured PNG
+  // won't render — acceptable for now (CV leads are rare in foreclosure
+  // outreach).
+  const captureSnapshot: HomeownerSnapshot = {
+    id: lead.slug,
+    fullName: lead.ownerName ?? "",
+    email: lead.ownerMail ?? "",
+    phone: lead.ownerPhonePrimary ?? "",
+    propertyAddress: lead.address ?? lead.title ?? "",
+    county: lead.county ?? "",
+    trusteeSaleDate: lead.currentSaleDate ?? null,
+    mortgageBalance: lead.mortgageAmount ?? null,
+    submittedAt: new Date().toISOString(),
+    propertyValue: lead.avmMid ?? null,
+    propertyValueSource: lead.avmMid ? "AVM" : null,
+    distressType: lead.distressType ?? null,
+    trusteeSaleStatus: lead.trusteeSaleStatus ?? null,
   }
 
   // Open the math sheet PAGE in a new tab. Patrick screenshots the
@@ -1695,6 +1677,30 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
 
   return (
     <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      {/* Hidden inline math sheet — only mounted while capturing. Fixed
+          1100px container forces a desktop-width layout regardless of
+          device viewport (the iframe approach failed on iOS Safari
+          because Safari ignores iframe CSS width for the inner
+          viewport). aria-hidden + pointer-events:none keeps it out of
+          tab order and click handling. */}
+      {capturing && (
+        <div
+          data-share-capture=""
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: "-99999px",
+            top: 0,
+            width: "1100px",
+            background: "#fff",
+            pointerEvents: "none",
+            zIndex: -1,
+          }}
+        >
+          <MathSheetContent homeowner={captureSnapshot} embed />
+        </div>
+      )}
+
       <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2 font-semibold">
         Quick Outreach
       </div>
