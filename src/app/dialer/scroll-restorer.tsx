@@ -2,24 +2,27 @@
 
 import { useEffect } from "react"
 
-const STORAGE_KEY = "dialer:queue:scroll"
+const SCROLL_KEY = "dialer:queue:scroll"
+export const QUEUE_SEARCH_KEY = "dialer:queue:search"
 
 /**
- * Preserves the dialer-queue scroll position across navigation.
+ * Preserves the dialer-queue scroll position AND the current filter
+ * query string across navigation. The scroll part runs on every
+ * scroll event; the search-params snapshot is taken on mount of the
+ * queue page so child routes (e.g. /dialer/[slug]) can read the
+ * caller's last filter set when rendering "Back to queue."
  *
- * Saves window.scrollY to sessionStorage on every scroll. On mount,
- * restores scrollY if a saved value exists. Clearing happens
- * implicitly when the user navigates away from the dialer.
- *
- * Usage: drop into the queue page server component as the first child.
+ * Drop into the queue page server component as the first child.
  */
 export function ScrollRestorer() {
   useEffect(() => {
-    // Restore — but only if user came back from a child route (e.g.,
-    // /dialer/[slug]) rather than a fresh load. We always try to
-    // restore; if scrollY > 0 was set, this puts the user back where
-    // they were.
-    const saved = sessionStorage.getItem(STORAGE_KEY)
+    // Save the queue's current filter query string. Children read
+    // sessionStorage[QUEUE_SEARCH_KEY] when constructing back-links
+    // so the caller lands on the same filter set they left.
+    sessionStorage.setItem(QUEUE_SEARCH_KEY, window.location.search)
+
+    // Restore scroll position from previous queue visit.
+    const saved = sessionStorage.getItem(SCROLL_KEY)
     if (saved) {
       const y = parseInt(saved, 10)
       if (!Number.isNaN(y) && y > 0) {
@@ -33,7 +36,7 @@ export function ScrollRestorer() {
       if (raf) return
       raf = requestAnimationFrame(() => {
         raf = 0
-        sessionStorage.setItem(STORAGE_KEY, String(window.scrollY))
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY))
       })
     }
     window.addEventListener("scroll", onScroll, { passive: true })

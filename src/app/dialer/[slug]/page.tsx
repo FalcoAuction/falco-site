@@ -1,10 +1,10 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { requireDialerSession } from "../require-session"
 import { getDialerLead } from "@/lib/dialer-data"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import LeadDetail from "./lead-detail"
 import type { SkiptraceData } from "./contact-layer"
+import { BackToQueueLink } from "./back-to-queue-link"
 
 export const dynamic = "force-dynamic"
 
@@ -55,12 +55,9 @@ export default async function DialerLeadPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-5">
-      <Link
-        href="/dialer"
-        className="inline-flex items-center text-xs text-white/55 hover:text-white/85"
-      >
+      <BackToQueueLink className="inline-flex items-center text-xs text-white/55 hover:text-white/85">
         ← Back to queue
-      </Link>
+      </BackToQueueLink>
       <LeadDetail
         lead={lead}
         caller={session?.caller ?? "caller"}
