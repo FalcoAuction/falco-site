@@ -1319,6 +1319,121 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     window.open(`/api/dialer/${lead.slug}/math-pdf`, "_blank")
   }
 
+  // ─── One-click share: opener text + math sheet PNG together ──────────
+  // Uses navigator.share() (Web Share API Level 2) which lets us attach
+  // a file + text in a single payload. The OS share sheet opens; user
+  // picks Messages, picks contact, hits send. Both items already attached.
+  //
+  // Flow:
+  //   1. Fetch the brute-honest opener text from /opener-text
+  //   2. Off-screen iframe loads /math-sheet?embed=1 (chrome stripped)
+  //   3. html-to-image captures the .print-page DOM as PNG blob
+  //   4. navigator.share({ files: [pngFile], text: opener })
+  //
+  // Requires Web Share API with file support — works on iOS Safari 15+,
+  // Chrome Android, Chrome/Edge desktop. Falls back to the 2-button
+  // flow (download image + open SMS) when not supported.
+  const [shareLoading, setShareLoading] = useState(false)
+  const [shareMsg, setShareMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+
+  async function shareOpenerWithMath() {
+    setShareMsg(null)
+    setShareLoading(true)
+    let iframe: HTMLIFrameElement | null = null
+    try {
+      // 1. Opener text
+      const openerRes = await fetch(`/api/dialer/${lead.slug}/opener-text`)
+      const opener = (await openerRes.json()) as {
+        text?: string
+        error?: string
+      }
+      if (!opener?.text) {
+        throw new Error(opener?.error || "Couldn't build opener text")
+      }
+
+      // 2. Off-screen iframe with the math sheet in embed mode
+      iframe = document.createElement("iframe")
+      iframe.style.cssText =
+        "position:fixed;left:-99999px;top:0;width:900px;height:1600px;border:0;background:#fff"
+      iframe.src = `/dialer/${lead.slug}/math-sheet?embed=1`
+      document.body.appendChild(iframe)
+
+      await new Promise<void>((resolve, reject) => {
+        const t = setTimeout(
+          () => reject(new Error("Math sheet iframe load timed out")),
+          12000
+        )
+        if (iframe) {
+          iframe.onload = () => {
+            clearTimeout(t)
+            resolve()
+          }
+          iframe.onerror = () => {
+            clearTimeout(t)
+            reject(new Error("Math sheet iframe failed to load"))
+          }
+        }
+      })
+      // Allow React inside the iframe to settle one paint after load
+      await new Promise((r) => setTimeout(r, 600))
+
+      const target = iframe.contentDocument?.querySelector(
+        ".print-page"
+      ) as HTMLElement | null
+      if (!target) {
+        throw new Error("Could not find printable area in iframe")
+      }
+
+      // 3. Capture as PNG. html-to-image returns a data URL; convert to blob.
+      const { toBlob } = await import("html-to-image")
+      const blob = await toBlob(target, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+      })
+      if (!blob) throw new Error("html-to-image returned no blob")
+
+      const file = new File([blob], "falco-math-sheet.png", {
+        type: "image/png",
+      })
+
+      // 4. Share. canShare() is required to verify file support before share().
+      const navAny = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean
+      }
+      if (!navAny.canShare?.({ files: [file] }) || !navigator.share) {
+        // Fallback: open the image in a new tab + copy opener
+        const url = URL.createObjectURL(blob)
+        window.open(url, "_blank")
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(opener.text).catch(() => {})
+        }
+        setShareMsg({
+          kind: "err",
+          text:
+            "Web Share not supported here — opened image in new tab and copied opener to clipboard. Use the manual flow.",
+        })
+        return
+      }
+
+      await navigator.share({
+        files: [file],
+        text: opener.text,
+      })
+      setShareMsg({ kind: "ok", text: "Shared. Pick Messages → contact → send." })
+    } catch (err) {
+      setShareMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Share failed.",
+      })
+    } finally {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe)
+      }
+      setShareLoading(false)
+    }
+  }
+
   // Open the math sheet PAGE in a new tab. Patrick screenshots the
   // printable layout (Cmd+Shift+4 on Mac, Win+Shift+S on Windows,
   // volume+power on iOS) and attaches that to the iMessage when
@@ -1377,7 +1492,22 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {/* Step 1: Download the math sheet AS AN IMAGE.
+        {/* RAPID-FIRE: one-click share — opener text + math image in
+            a single share-sheet payload. On iOS Safari / Chrome / Edge
+            the OS share sheet opens with both already attached; user
+            picks Messages, picks contact, hits send.
+            Falls back to manual flow on browsers without Web Share + files. */}
+        <button
+          type="button"
+          onClick={shareOpenerWithMath}
+          disabled={shareLoading}
+          title="One-click share. Opens iOS / Android share sheet with opener text + math sheet PNG already attached. Pick Messages, pick contact, send."
+          className="rounded-lg border border-emerald-400/45 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
+        >
+          {shareLoading ? "Building math sheet..." : "📲 Share opener + math (one-click)"}
+        </button>
+
+        {/* Step 1 (manual fallback): Download / view the math sheet AS AN IMAGE.
             On iPhone: long-press the image → Save to Photos.
             On desktop: right-click → Save image. AirDrop / share to phone. */}
         <button
@@ -1493,6 +1623,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           }`}
         >
           {emailMsg.text}
+        </div>
+      )}
+
+      {shareMsg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            shareMsg.kind === "ok"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-amber-400/30 bg-amber-400/10 text-amber-200"
+          }`}
+        >
+          {shareMsg.text}
         </div>
       )}
 

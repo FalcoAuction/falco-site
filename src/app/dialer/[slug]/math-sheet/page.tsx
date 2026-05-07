@@ -28,11 +28,15 @@ export default async function DialerMathSheetPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ view?: string }>
+  searchParams: Promise<{ view?: string; embed?: string }>
 }) {
   const { slug } = await params
   const sp = await searchParams
   const view = sp.view ?? null
+  // ?embed=1 strips the dark chrome bar (back link, email/print buttons,
+  // input override panel) and renders only the printable sheet — used by
+  // the off-screen iframe in the SMS share flow on lead-detail.
+  const embed = sp.embed === "1"
   await requireDialerSession(`/dialer/${slug}/math-sheet`)
   const lead = await getDialerLead(slug)
   if (!lead) notFound()
@@ -100,6 +104,7 @@ export default async function DialerMathSheetPage({
       backHref={`/dialer/${slug}`}
       backLabel="← Lead"
       scenarioOverride={view as Scenario | null}
+      embed={embed}
     />
   )
 }
