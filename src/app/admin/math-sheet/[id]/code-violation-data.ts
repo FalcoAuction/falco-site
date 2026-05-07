@@ -161,18 +161,99 @@ export function daysSince(iso: string | null | undefined): number | null {
   return days >= 0 ? days : null
 }
 
-/** Estimated fine accrual range for a code violation lead.
- *  TN cities typically fine $50–$250 per day per violation while a
- *  citation is open. We multiply by violationCount so leads with
- *  multiple distinct violations show the compounded estimate. */
+/**
+ * Severity tier for fine accrual rates. Different cities and different
+ * violation types accrue at very different rates.
+ *
+ *   minor    — lawn-only / single maintenance citation. $25–50/day.
+ *              Tenn. Code Ann. § 13-21-105 effectively caps most
+ *              municipalities at $50/day for property-maintenance
+ *              violations, and most stay near the lower end.
+ *   standard — typical property-maintenance with structural / exterior
+ *              elements (roof, siding, debris accumulation, broken
+ *              windows). $50–100/day. Common Nashville Metro Codes
+ *              practice after the cure window.
+ *   severe   — declared dangerous building / unfit for habitation /
+ *              demolition order / condemned / boarded-vacant.
+ *              $100–500/day. Environmental Court can stack additional
+ *              penalties under nuisance-abatement statutes.
+ */
+export type CvSeverityTier = "minor" | "standard" | "severe"
+
+const RATES_BY_TIER: Record<CvSeverityTier, { low: number; high: number }> = {
+  minor: { low: 25, high: 50 },
+  standard: { low: 50, high: 100 },
+  severe: { low: 100, high: 500 },
+}
+
+/**
+ * Classify the severity tier from the actual citation text. Severe
+ * keywords win over standard, which win over minor. If no signal is
+ * detected, default to "standard" — most enforcement-engaged
+ * properties have something beyond a lawn violation.
+ */
+export function classifyCvSeverity(violationsString: string | null | undefined): CvSeverityTier {
+  const text = (violationsString || "").toUpperCase()
+  if (!text) return "standard"
+
+  // Severe — dangerous-building, unfit, demolition, condemned, vacant
+  if (/UNFIT|DEMOLITION|DANGEROUS|UNSAFE|CONDEMN|BOARDED VACANT|OPEN VACANT/.test(text)) {
+    return "severe"
+  }
+
+  // Minor — only when EVERY signal is lawn-bucket. If anything
+  // structural is also present, it's standard at minimum.
+  const hasStructural = /STRUCTURAL|ROOF|FOUNDATION|EXTERIOR|JUNK|TRASH|DEBRIS|REPAIR|INOP|UNLIC|BROKEN|BOARDED|MOLD|PLUMBING|ELECTRICAL|MECHANICAL/.test(text)
+  const hasLawn = /HIGH WEEDS|TALL GRASS|WEEDS|GRASS|MOW|OVERGROWN/.test(text)
+  if (hasLawn && !hasStructural) {
+    return "minor"
+  }
+
+  return "standard"
+}
+
+/**
+ * Estimated fine accrual range for a code-violation lead.
+ *
+ *   - First 30 days = cure window (TN-typical). No fines accrue. The
+ *     citation is just a "you have 30 days to fix it" notice; the
+ *     fine clock starts only if it stays open past then.
+ *   - Daily rate set by severity tier from the violation text — NOT
+ *     multiplied by violation count. The previous version stacked
+ *     fines per cited code, which dramatically overstated accruals
+ *     for properties with multiple minor citations. Property is
+ *     fined daily as a whole; multiple violations can push toward the
+ *     high end of the tier, not multiply the rate.
+ *   - Capped at 365 days of accrual. Even years-old cases settle in
+ *     hearings/Environmental Court for fractions of theoretical max.
+ *     Showing $50K+ on a 5-year-old case implies a precision the
+ *     system doesn't actually deliver.
+ */
 export function estimateFineAccrual(
   daysOutstanding: number | null,
-  violationCount: number,
-): { low: number; high: number } | null {
+  /** Reserved for future use — currently ignored to avoid the
+   *  per-violation multiplier bug. Keep param for caller compat. */
+  _violationCount: number,
+  violationsString?: string | null,
+): { low: number; high: number; tier: CvSeverityTier; accrualDays: number; cureDays: number } | null {
   if (daysOutstanding == null || daysOutstanding <= 0) return null
-  const count = Math.max(1, violationCount)
+
+  const CURE_WINDOW_DAYS = 30
+  const accrualDays = Math.max(0, daysOutstanding - CURE_WINDOW_DAYS)
+  if (accrualDays <= 0) return null
+
+  const tier = classifyCvSeverity(violationsString)
+  const { low: lowRate, high: highRate } = RATES_BY_TIER[tier]
+
+  // Cap at 365 accrual days. Real-world settlements rarely reflect
+  // longer than a year of straight accrual.
+  const cappedDays = Math.min(accrualDays, 365)
+
   return {
-    low: Math.round(daysOutstanding * count * 50),
-    high: Math.round(daysOutstanding * count * 250),
+    low: Math.round(cappedDays * lowRate),
+    high: Math.round(cappedDays * highRate),
+    tier,
+    accrualDays: cappedDays,
+    cureDays: CURE_WINDOW_DAYS,
   }
 }
