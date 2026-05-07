@@ -1678,11 +1678,13 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   return (
     <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       {/* Hidden inline math sheet — only mounted while capturing. Fixed
-          1100px container forces a desktop-width layout regardless of
-          device viewport (the iframe approach failed on iOS Safari
-          because Safari ignores iframe CSS width for the inner
-          viewport). aria-hidden + pointer-events:none keeps it out of
-          tab order and click handling. */}
+          380px container + .embed-narrow CSS in MathSheetContent forces
+          a single-column iPhone-friendly layout. iOS Safari was clamping
+          offscreen-rendered content to ~device width, clipping the right
+          edge when we tried to render at 1100px desktop width — so we
+          render at 380px (≈ iPhone width) and stack everything vertically
+          so nothing overflows. The captured PNG fits any iPhone preview
+          without clipping. */}
       {capturing && (
         <div
           data-share-capture=""
@@ -1691,7 +1693,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
             position: "fixed",
             left: "-99999px",
             top: 0,
-            width: "1100px",
+            width: "380px",
             background: "#fff",
             pointerEvents: "none",
             zIndex: -1,
