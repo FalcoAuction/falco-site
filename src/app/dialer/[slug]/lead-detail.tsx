@@ -23,6 +23,7 @@ import { PitchPanel } from "./pitch-panel"
 import MathSheetContent, {
   type HomeownerSnapshot,
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
+import DaleBriefSheet, { type DaleBrief } from "./dale-brief-sheet"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -1603,6 +1604,106 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     }
   }
 
+  // ─── Dale-side share: operator brief PNG ─────────────────────────────
+  // Same inline-render + Web Share API plumbing as the homeowner
+  // share, but renders DaleBriefSheet (numbers only) and shares
+  // without an opener text body — Dale already knows what FALCO is.
+  const [daleLoading, setDaleLoading] = useState(false)
+  const [daleMsg, setDaleMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [capturingDale, setCapturingDale] = useState(false)
+
+  async function shareToDale() {
+    setDaleMsg(null)
+    setDaleLoading(true)
+    try {
+      setCapturingDale(true)
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+      await new Promise((r) => setTimeout(r, 500))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fonts = (document as any).fonts
+      if (fonts && typeof fonts.ready?.then === "function") {
+        try {
+          await fonts.ready
+        } catch {
+          // Non-fatal.
+        }
+      }
+
+      const target = document.querySelector(
+        "[data-dale-capture] .dale-sheet"
+      ) as HTMLElement | null
+      if (!target) {
+        throw new Error("Could not find Dale brief to capture")
+      }
+
+      const rect = target.getBoundingClientRect()
+      const captureWidth = Math.max(target.scrollWidth, Math.ceil(rect.width))
+      const captureHeight = Math.max(target.scrollHeight, Math.ceil(rect.height))
+      const { toBlob } = await import("html-to-image")
+      const blob = await toBlob(target, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+        width: captureWidth,
+        height: captureHeight,
+        canvasWidth: captureWidth,
+        canvasHeight: captureHeight,
+      })
+      if (!blob) throw new Error("html-to-image returned no blob")
+
+      const file = new File([blob], "falco-lead-brief.png", {
+        type: "image/png",
+      })
+
+      const navAny = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean
+      }
+      if (!navAny.canShare?.({ files: [file] }) || !navigator.share) {
+        const url = URL.createObjectURL(blob)
+        window.open(url, "_blank")
+        setDaleMsg({
+          kind: "err",
+          text:
+            "Web Share not supported — opened image in new tab. Save and attach manually.",
+        })
+        return
+      }
+
+      await navigator.share({ files: [file] })
+      setDaleMsg({
+        kind: "ok",
+        text: "Shared. Pick Messages → Dale → send.",
+      })
+    } catch (err) {
+      setDaleMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Share failed.",
+      })
+    } finally {
+      setCapturingDale(false)
+      setDaleLoading(false)
+    }
+  }
+
+  const daleBrief: DaleBrief = {
+    propertyAddress: lead.address ?? lead.title ?? "",
+    county: lead.county ?? "",
+    trusteeSaleDate: lead.currentSaleDate ?? null,
+    arv: lead.avmMid ?? null,
+    mortgageBalance: lead.mortgageAmount ?? null,
+    // amortizedBalance not yet surfaced on DialerLeadView — when it
+    // diverges from mortgageBalance by >15% the brief surfaces it as
+    // a "verify w/ servicer" row. For now, omit so the brief stays
+    // single-column.
+    amortizedBalance: null,
+    ownerPhone: lead.ownerPhonePrimary ?? null,
+    // Servicer is a free-text we don't track yet; surface only if it
+    // ever lands on the lead view.
+    servicer: null,
+  }
+
   // Build the HomeownerSnapshot for inline math-sheet rendering from
   // the data already on the dialer lead view. Code-violation extraction
   // only happens server-side, so CV-specific UI on the captured PNG
@@ -1703,6 +1804,28 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         </div>
       )}
 
+      {/* Hidden inline Dale brief — same offscreen-380px pattern as
+          the homeowner share so iOS Safari doesn't clip the captured
+          PNG on the right edge. */}
+      {capturingDale && (
+        <div
+          data-dale-capture=""
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: "-99999px",
+            top: 0,
+            width: "380px",
+            background: "#fff",
+            pointerEvents: "none",
+            zIndex: -1,
+            padding: "14px 12px",
+          }}
+        >
+          <DaleBriefSheet brief={daleBrief} />
+        </div>
+      )}
+
       <div className="text-[10px] uppercase tracking-wider text-white/55 mb-2 font-semibold">
         Quick Outreach
       </div>
@@ -1721,6 +1844,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           className="rounded-lg border border-emerald-400/45 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
         >
           {shareLoading ? "Building math sheet..." : "📲 Share opener + math (one-click)"}
+        </button>
+
+        {/* Operator-side share — numbers-only brief for the auction
+            partner (Dale). No opener body, no homeowner framing. */}
+        <button
+          type="button"
+          onClick={shareToDale}
+          disabled={daleLoading}
+          title="Numbers-only brief for Dale: ARV, mortgage, auction nets at 70/80/88%, wholesaler/trustee comparators, buyer-premium revenue."
+          className="rounded-lg border border-cyan-400/45 bg-cyan-400/15 hover:bg-cyan-400/25 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-cyan-100 font-semibold transition-colors"
+        >
+          {daleLoading ? "Building brief..." : "📊 Share to Dale (numbers only)"}
         </button>
 
         {/* Step 1 (manual fallback): Download / view the math sheet AS AN IMAGE.
@@ -1851,6 +1986,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           }`}
         >
           {shareMsg.text}
+        </div>
+      )}
+
+      {daleMsg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            daleMsg.kind === "ok"
+              ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-100"
+              : "border-amber-400/30 bg-amber-400/10 text-amber-200"
+          }`}
+        >
+          {daleMsg.text}
         </div>
       )}
 
