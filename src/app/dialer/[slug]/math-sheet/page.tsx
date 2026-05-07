@@ -14,6 +14,23 @@ export const metadata = {
   robots: "noindex, nofollow",
 }
 
+// When the page is loaded inside the off-screen iframe used by the
+// "Share opener + math (one-click)" flow on the lead-detail page
+// (?embed=1), pin the viewport to a fixed 1100px wide. iOS Safari
+// otherwise renders an iframe's inner document at device-width (e.g.
+// 390px on iPhone), which causes the captured PNG to clip on the right.
+export async function generateViewport({
+  searchParams,
+}: {
+  searchParams: Promise<{ embed?: string }>
+}) {
+  const sp = await searchParams
+  if (sp.embed === "1") {
+    return { width: 1100, initialScale: 1, userScalable: false }
+  }
+  return {}
+}
+
 /**
  * Dialer-side math sheet for a specific listing. Same printable 3-path
  * comparison the /admin route renders, but loaded from dialer + vault data

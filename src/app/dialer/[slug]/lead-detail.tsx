@@ -1518,7 +1518,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
       //    attachment. 1100px gives slack for any wider-grid scenarios.
       iframe = document.createElement("iframe")
       iframe.style.cssText =
-        "position:fixed;left:-99999px;top:0;width:1100px;height:2200px;border:0;background:#fff"
+        "position:fixed;left:-99999px;top:0;width:1100px;height:2400px;border:0;background:#fff"
       iframe.src = `/dialer/${lead.slug}/math-sheet?embed=1`
       document.body.appendChild(iframe)
 
@@ -1538,8 +1538,42 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           }
         }
       })
-      // Allow React inside the iframe to settle one paint after load
-      await new Promise((r) => setTimeout(r, 600))
+      // Belt-and-suspenders: iOS Safari ignores the iframe's CSS width
+      // for the inner viewport and renders at device-width (e.g. 390px
+      // on iPhone) unless the inner document's <meta name="viewport">
+      // forces a fixed pixel width. Inject one after load + force a
+      // reflow before capture so the article renders at 768px max-w-3xl
+      // instead of squashing to phone width.
+      try {
+        const idoc = iframe.contentDocument
+        if (idoc) {
+          let m = idoc.querySelector(
+            'meta[name="viewport"]'
+          ) as HTMLMetaElement | null
+          if (!m) {
+            m = idoc.createElement("meta")
+            m.setAttribute("name", "viewport")
+            idoc.head.appendChild(m)
+          }
+          m.setAttribute("content", "width=1100, initial-scale=1")
+          // Touch the body to trigger a reflow at the new viewport
+          void idoc.body.offsetWidth
+        }
+      } catch {
+        // contentDocument may be null in odd cases — fall through.
+      }
+      // Wait for fonts + relayout. iOS needs a longer settle than desktop.
+      await new Promise((r) => setTimeout(r, 1500))
+      try {
+        const idoc = iframe.contentDocument
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fonts = (idoc as any)?.fonts
+        if (fonts && typeof fonts.ready?.then === "function") {
+          await fonts.ready
+        }
+      } catch {
+        // Non-fatal.
+      }
 
       const target = iframe.contentDocument?.querySelector(
         ".print-page"
