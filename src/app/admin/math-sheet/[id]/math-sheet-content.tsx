@@ -60,6 +60,7 @@ export default function MathSheetContent({
   backHref = "/admin",
   backLabel = "← Admin",
   scenarioOverride,
+  embed = false,
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /admin so the
@@ -70,6 +71,10 @@ export default function MathSheetContent({
   /** Force a specific scenario regardless of homeowner.distressType.
    *  Used by the BK pre-petition / § 363 toggle (?view=...). */
   scenarioOverride?: Scenario | null
+  /** When true (?embed=1), strips the dark chrome bar + input panel and
+   *  renders only the printable sheet. Used by the off-screen iframe in
+   *  the lead-page share flow so html-to-image captures a clean PNG. */
+  embed?: boolean
 }) {
   // Toggle URL is built client-side from the current pathname — passing
   // a function from the server page would crash the RSC boundary
@@ -188,7 +193,8 @@ export default function MathSheetContent({
         }
       `}</style>
 
-      {/* CHROME (hidden on print) */}
+      {/* CHROME (hidden on print + embed mode) */}
+      {!embed && (
       <div className="no-print bg-[#060606] text-white border-b border-white/[0.08]">
         <div className="mx-auto max-w-5xl px-5 md:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
@@ -267,6 +273,7 @@ export default function MathSheetContent({
           </div>
         </div>
       </div>
+      )}
 
       {/* PRINTABLE SHEET */}
       <article className="print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14">
