@@ -15,7 +15,11 @@ import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import { findDialerInventoryLead } from "@/lib/dialer-inventory"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { defaultInputsFor, computeMath, fmt } from "@/lib/math-sheet"
-import { foreclosureSmsBody } from "@/lib/foreclosure-language"
+import {
+  foreclosureSmsBody,
+  codeViolationSmsBody,
+} from "@/lib/foreclosure-language"
+import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
 
 export const dynamic = "force-dynamic"
 
@@ -68,12 +72,16 @@ export async function GET(
     property_value: number | null
     phone: string | null
     phone_metadata: Record<string, unknown> | null
+    raw_payload: unknown
+    admin_notes: string | null
   }
   let hr: HRSnap | null = null
   if (supabaseAdmin) {
     const { data } = await supabaseAdmin
       .from("homeowner_requests")
-      .select("full_name, owner_name_records, property_value, phone, phone_metadata")
+      .select(
+        "full_name, owner_name_records, property_value, phone, phone_metadata, raw_payload, admin_notes"
+      )
       .eq("source", "bot")
       .eq("pipeline_lead_key", slug)
       .maybeSingle()
@@ -104,6 +112,7 @@ export async function GET(
   }
   const distressType = (inventory?.distressType || "").toUpperCase()
   const isFSBO = distressType === "FSBO"
+  const isCodeViolation = distressType === "CODE_VIOLATION"
   const isUnderwater = arv > 0 && payoff > arv * 0.9
 
   // Phone number to dial (e.g. +16155551212 for sms: link)
@@ -137,6 +146,13 @@ export async function GET(
     // FSBO: no foreclosure framing. Purpose-hint: we help FSBO sellers
     // keep what their listing is worth without giving it up to an agent.
     text = `${greetTag}saw the FSBO on ${streetOnly}. We work with FSBO sellers who want a defined sale date and a broad buyer market without losing 6% to an agent commission. Reply if it's worth a conversation. — Patrick / FALCO`
+  } else if (isCodeViolation) {
+    // Code violation: NOT foreclosure language. Owner has an open
+    // code-enforcement case w/ fines accruing — auction pitch is
+    // "transfer the liability to the buyer." Matches the math sheet's
+    // "FALCO · LIABILITY OPTIONS" framing so the homeowner sees the
+    // same story in the SMS as the attached image.
+    text = codeViolationSmsBody(streetOnly)
   } else if (isUnderwater) {
     // Underwater: no math image (can't compute accurately). Purpose-hint:
     // even if the payoff is real, we work to get them walking away with
@@ -157,10 +173,31 @@ export async function GET(
     ? `sms:${smsTo}?body=${encodeURIComponent(text)}`
     : null
 
+  // For CV leads, parse the violation list / case number / fine accrual
+  // from raw_payload so the share-button capture flow on lead-detail can
+  // populate HomeownerSnapshot.codeViolation and the captured PNG renders
+  // real CV math (fine totals, days outstanding, citation list) instead
+  // of the generic auction defaults.
+  let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
+  if (isCodeViolation && hr) {
+    try {
+      codeViolation = extractCodeViolationData(hr.raw_payload, hr.admin_notes)
+    } catch {
+      codeViolation = null
+    }
+  }
+
   return NextResponse.json({
     text,
     smsHref,
-    variant: isFSBO ? "fsbo" : isUnderwater ? "underwater" : "distressed",
+    variant: isFSBO
+      ? "fsbo"
+      : isCodeViolation
+      ? "code_violation"
+      : isUnderwater
+      ? "underwater"
+      : "distressed",
     phoneOnFile: phoneRaw || null,
+    codeViolation,
   })
 }

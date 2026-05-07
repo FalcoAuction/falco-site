@@ -159,3 +159,30 @@ export function foreclosureSpreadComparator(daysToSale: number | null): string {
       return "letting the bank take it at the trustee sale"
   }
 }
+
+/**
+ * Full SMS body for code-violation leads. Different framing than
+ * foreclosure: the homeowner isn't necessarily behind on a mortgage,
+ * they're carrying an open code-enforcement liability with fines that
+ * accrue daily. The auction pitch is "transfer the violation to the
+ * buyer and clear the liability" — same phrasing as the math sheet
+ * hero so the homeowner sees consistency between the text and the
+ * attached image.
+ *
+ * Voice: same multi-line, no-greeting, signed-Patrick-Armour pattern
+ * as the foreclosure body.
+ */
+export function codeViolationSmsBody(streetOnly: string): string {
+  const open = `Saw the open code violation on ${streetOnly}.`
+  const path =
+    "If repairs are out of reach, our auction partner can run a 30-day marketed sale where the violations transfer to the buyer at closing. Liability cleared, equity preserved, no out-of-pocket repair cost."
+  return [
+    `${open} ${STANDARD_DISQUALIFIER}`,
+    "",
+    path,
+    "",
+    "Math sheet attached.",
+    "",
+    SIGNATURE,
+  ].join("\n")
+}

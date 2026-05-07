@@ -1508,20 +1508,30 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   const [shareLoading, setShareLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
   const [capturing, setCapturing] = useState(false)
+  // Code-violation data parsed server-side from raw_payload, returned
+  // as part of the opener-text response. Plumbed into captureSnapshot
+  // so the inline math-sheet render shows real CV math (violation
+  // list, fine accrual, days outstanding) for CV leads. Null for
+  // non-CV leads.
+  const [cvForCapture, setCvForCapture] = useState<
+    HomeownerSnapshot["codeViolation"] | null
+  >(null)
 
   async function shareOpenerWithMath() {
     setShareMsg(null)
     setShareLoading(true)
     try {
-      // 1. Opener text
+      // 1. Opener text + (for CV leads) code-violation data
       const openerRes = await fetch(`/api/dialer/${lead.slug}/opener-text`)
       const opener = (await openerRes.json()) as {
         text?: string
         error?: string
+        codeViolation?: HomeownerSnapshot["codeViolation"] | null
       }
       if (!opener?.text) {
         throw new Error(opener?.error || "Couldn't build opener text")
       }
+      setCvForCapture(opener.codeViolation ?? null)
 
       // 2. Mount the hidden math sheet inline
       setCapturing(true)
@@ -1706,9 +1716,9 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
 
   // Build the HomeownerSnapshot for inline math-sheet rendering from
   // the data already on the dialer lead view. Code-violation extraction
-  // only happens server-side, so CV-specific UI on the captured PNG
-  // won't render — acceptable for now (CV leads are rare in foreclosure
-  // outreach).
+  // happens server-side and is plumbed via the opener-text response
+  // into cvForCapture, so CV leads render with real violation list +
+  // fine accrual on the captured PNG.
   const captureSnapshot: HomeownerSnapshot = {
     id: lead.slug,
     fullName: lead.ownerName ?? "",
@@ -1723,6 +1733,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     propertyValueSource: lead.avmMid ? "AVM" : null,
     distressType: lead.distressType ?? null,
     trusteeSaleStatus: lead.trusteeSaleStatus ?? null,
+    codeViolation: cvForCapture,
   }
 
   // Open the math sheet PAGE in a new tab. Patrick screenshots the
