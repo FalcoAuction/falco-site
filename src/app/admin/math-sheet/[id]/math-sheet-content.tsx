@@ -391,7 +391,14 @@ export default function MathSheetContent({
         {isCodeViolation && homeowner.codeViolation && (homeowner.codeViolation.violations || homeowner.codeViolation.caseNumber) && (() => {
           const cv = homeowner.codeViolation
           const days = daysSince(cv.receivedDate)
-          const accrual = estimateFineAccrual(days, cv.violationCount)
+          const accrual = estimateFineAccrual(days, cv.violationCount, cv.violations)
+          const tierLabel = accrual
+            ? accrual.tier === "severe"
+              ? "$100–$500/day (declared dangerous / unfit / demolition tier)"
+              : accrual.tier === "minor"
+              ? "$25–$50/day (lawn / single-maintenance tier)"
+              : "$50–$100/day (standard property-maintenance tier)"
+            : ""
           return (
             <section className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 md:p-5">
               <div className="text-[10px] uppercase tracking-[0.22em] text-amber-700 font-bold">
@@ -417,15 +424,17 @@ export default function MathSheetContent({
                 )}
                 {accrual && (
                   <Field
-                    label="Estimated fines accrued"
+                    label={`Fines accrued (last ${accrual.accrualDays}d)`}
                     value={`${fmt(accrual.low)} – ${fmt(accrual.high)}`}
                   />
                 )}
               </dl>
               <p className="mt-2 text-[10px] text-amber-900/70 leading-[1.5]">
-                Fine range estimate uses TN-typical $50–$250 per day per violation
-                ({cv.violationCount} distinct citations × {days ?? "—"} days outstanding).
-                Actual fines may differ — confirm with city codes office.
+                {accrual
+                  ? `Tier: ${tierLabel}. First ${accrual.cureDays} days are cure window — fines start accruing only after. Capped at 365 days; long-running cases typically settle below theoretical max in Environmental Court. Confirm exact total with the city.`
+                  : days !== null && days <= 30
+                  ? `Still inside the typical 30-day cure window — no fines accruing yet. They start once the citation stays open past day ${30 - (days ?? 0)}.`
+                  : `Confirm fine total with the city codes office.`}
               </p>
             </section>
           )
