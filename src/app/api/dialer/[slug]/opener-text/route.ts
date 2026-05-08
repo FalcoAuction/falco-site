@@ -20,6 +20,7 @@ import {
   codeViolationSmsBody,
 } from "@/lib/foreclosure-language"
 import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
+import { computePropertyValueConsensus } from "@/lib/property-value-consensus"
 
 export const dynamic = "force-dynamic"
 
@@ -88,6 +89,8 @@ export async function GET(
     full_name: string | null
     owner_name_records: string | null
     property_value: number | null
+    property_value_source: string | null
+    last_sale_date: string | null
     phone: string | null
     phone_metadata: Record<string, unknown> | null
     raw_payload: unknown
@@ -98,7 +101,7 @@ export async function GET(
     const { data } = await supabaseAdmin
       .from("homeowner_requests")
       .select(
-        "full_name, owner_name_records, property_value, phone, phone_metadata, raw_payload, admin_notes"
+        "full_name, owner_name_records, property_value, property_value_source, last_sale_date, phone, phone_metadata, raw_payload, admin_notes"
       )
       .eq("source", "bot")
       .eq("pipeline_lead_key", slug)
@@ -106,11 +109,23 @@ export async function GET(
     if (data) hr = data as unknown as HRSnap
   }
 
+  // Multi-source ARV consensus for the share-button capture flow. The
+  // returned `propertyValue` field replaces the raw inventory AVM in
+  // lead-detail's captureSnapshot, so the inline-rendered math sheet
+  // shows the cross-checked number across assessor + last-sale-
+  // appreciated + BatchData + HMDA instead of a single fragile source.
+  const consensus = computePropertyValueConsensus({
+    property_value: hr?.property_value ?? null,
+    property_value_source: hr?.property_value_source ?? null,
+    last_sale_date: hr?.last_sale_date ?? null,
+    phone_metadata: hr?.phone_metadata ?? null,
+  })
+
   const ownerFull =
     hr?.full_name || hr?.owner_name_records || inventory?.ownerName || ""
   const greeting = firstName(ownerFull)
   const address = inventory?.address || "your property"
-  const arv = hr?.property_value ?? inventory?.avmMid ?? 0
+  const arv = consensus.consensus ?? hr?.property_value ?? inventory?.avmMid ?? 0
   const loan = inventory?.mortgageAmount ?? 0
   const payoff = estimatePayoff(loan, inventory?.mortgageDate || null)
   let dts = daysToSale(inventory?.currentSaleDate)
@@ -219,5 +234,12 @@ export async function GET(
       : "distressed",
     phoneOnFile: phoneRaw || null,
     codeViolation,
+    // Multi-source ARV consensus for the share-button capture flow.
+    // lead-detail's captureSnapshot uses propertyValueConsensus to
+    // override the raw inventory AVM so the inline math sheet renders
+    // with the cross-checked number.
+    propertyValueConsensus: consensus.consensus,
+    propertyValueSourceLabel: consensus.primary?.label ?? null,
+    propertyValueConfidence: consensus.confidence,
   })
 }

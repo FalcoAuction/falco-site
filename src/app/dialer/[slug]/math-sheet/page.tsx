@@ -7,6 +7,7 @@ import MathSheetContent, {
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 import { type Scenario } from "@/app/admin/math-sheet/[id]/scenario-config"
 import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
+import { computePropertyValueConsensus } from "@/lib/property-value-consensus"
 
 export const dynamic = "force-dynamic"
 export const metadata = {
@@ -68,31 +69,47 @@ export default async function DialerMathSheetPage({
   }
   const avmMid = avmFields.avmMid ?? null
 
-  // For code-violation leads we need raw_payload + admin_notes from the
-  // homeowner_requests row to surface the violation list / case number /
-  // received date on the math sheet. The dialer query doesn't pull those
-  // (heavy payloads), so we do a one-off fetch here keyed off the lead's
-  // pipeline_lead_key.
+  // Fetch the homeowner_requests row to get (a) raw_payload + admin_notes
+  // for CV leads and (b) phone_metadata + property_value + last_sale_date
+  // for the multi-source ARV consensus. Single fetch for both purposes —
+  // previously only fetched on CV leads.
   let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
-  if ((lead.distressType || "").toUpperCase() === "CODE_VIOLATION" && supabaseAdmin) {
+  let consensusArv: number | null = null
+  let consensusSourceLabel: string | null = null
+  if (supabaseAdmin) {
     try {
       const sourceKey = (lead as unknown as { sourceLeadKey?: string }).sourceLeadKey
       if (sourceKey) {
         const { data: hr } = await supabaseAdmin
           .from("homeowner_requests")
-          .select("raw_payload, admin_notes")
+          .select(
+            "raw_payload, admin_notes, property_value, property_value_source, last_sale_date, phone_metadata"
+          )
           .eq("pipeline_lead_key", sourceKey)
           .eq("source", "bot")
           .maybeSingle()
         if (hr) {
-          codeViolation = extractCodeViolationData(
-            hr.raw_payload,
-            (hr.admin_notes as string | null) ?? null,
-          )
+          if ((lead.distressType || "").toUpperCase() === "CODE_VIOLATION") {
+            codeViolation = extractCodeViolationData(
+              hr.raw_payload,
+              (hr.admin_notes as string | null) ?? null,
+            )
+          }
+          // Multi-source ARV consensus (assessor + last-sale-appreciated +
+          // BatchData + HMDA cross-checked). Falls back to raw column when
+          // no defensible sources are present.
+          const consensus = computePropertyValueConsensus({
+            property_value: (hr.property_value as number | null) ?? null,
+            property_value_source: (hr.property_value_source as string | null) ?? null,
+            last_sale_date: (hr.last_sale_date as string | null) ?? null,
+            phone_metadata: hr.phone_metadata as Record<string, unknown> | null,
+          })
+          consensusArv = consensus.consensus
+          consensusSourceLabel = consensus.primary?.label ?? null
         }
       }
     } catch {
-      // Non-fatal — the math sheet renders fine without the panel.
+      // Non-fatal — the math sheet renders fine on raw column fallback.
     }
   }
 
@@ -108,9 +125,10 @@ export default async function DialerMathSheetPage({
     trusteeSaleDate: lead.currentSaleDate ?? null,
     mortgageBalance: lead.mortgageAmount ?? null,
     submittedAt: lead.createdAt ?? new Date().toISOString(),
-    // Pipeline AVM (from ATTOM) — pre-populates ARV in the math sheet
-    propertyValue: avmMid,
-    propertyValueSource: avmMid ? "AVM" : null,
+    // ARV: prefer multi-source consensus (assessor + last-sale-appreciated
+    // + BatchData + HMDA cross-checked) over the raw inventory AVM.
+    propertyValue: consensusArv ?? avmMid,
+    propertyValueSource: consensusSourceLabel ?? (avmMid ? "AVM" : null),
     distressType: lead.distressType ?? null,
     codeViolation,
     trusteeSaleStatus:
