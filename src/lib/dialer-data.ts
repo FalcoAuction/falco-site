@@ -403,6 +403,7 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     phoneValidated: inv.phoneValidated,
     phoneDnc: inv.phoneDnc,
     alternatePhoneCount: inv.alternatePhoneCount,
+    alternatePhones: inv.alternatePhones,
     mortgageDefensible: inv.mortgageDefensible,
     mortgageLenderResolved: inv.mortgageLenderResolved,
     mortgageOriginationYear: inv.mortgageOriginationYear,

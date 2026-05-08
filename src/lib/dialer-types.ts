@@ -75,6 +75,18 @@ export type DialerLeadView = {
   ownerPhonePrimary?: string
   ownerPhoneSecondary?: string
   ownerPhoneDncStatus?: string
+  /** All phone candidates from BatchData skip-trace beyond the
+   *  primary, with per-phone DNC + line-type. Surfaced on lead detail
+   *  as fallbacks when the primary doesn't connect. */
+  alternatePhones?: Array<{
+    number: string
+    lineType?: string
+    dnc?: boolean
+    score?: number
+    tested?: boolean
+    reachable?: boolean
+    carrier?: string
+  }>
   saleControllerName?: string
   saleControllerPhonePrimary?: string
   saleControllerPhoneSecondary?: string
