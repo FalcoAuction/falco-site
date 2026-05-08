@@ -174,6 +174,18 @@ export default async function DialerQueuePage({
       })
     : byRegion
 
+  // "New" = ingested in the last 36 hours. Time-based instead of
+  // workflow-status-based — the dialer's "new" workflow status is the
+  // default for every never-touched lead so it was useless as a
+  // freshness signal. 36h covers both daily cron passes (12 UTC + 21
+  // UTC) so a lead added in either run shows up.
+  const NEW_LEAD_WINDOW_HOURS = 36
+  const newCutoff = Date.now() - NEW_LEAD_WINDOW_HOURS * 60 * 60 * 1000
+  const isFreshlyIngested = (l: DialerLead) => {
+    const t = l.createdAt ? new Date(l.createdAt).getTime() : NaN
+    return Number.isFinite(t) && t >= newCutoff
+  }
+
   // Status filter — "ready" is special: defensible + validated phone
   // + complete profile, regardless of workflow status.
   const byStatus = byDistress.filter((l) => {
@@ -181,7 +193,7 @@ export default async function DialerQueuePage({
     if (filter === "ready") return isReadyToDial(l as unknown as ReadyDialLead)
     if (filter === "all") return true
     if (filter === "open") return s !== "closed_lost" && s !== "closed_won"
-    if (filter === "new") return s === "new"
+    if (filter === "new") return isFreshlyIngested(l)
     if (filter === "in_progress") return s === "attempting_contact" || s === "rpc_made"
     if (filter === "booked") return s === "auction_booked" || s === "listing_signed" || s === "auction_live"
     if (filter === "closed") return s === "closed_won" || s === "closed_lost"
@@ -236,7 +248,7 @@ export default async function DialerQueuePage({
     open: byDistress.filter(
       (l) => l.workflow.status !== "closed_lost" && l.workflow.status !== "closed_won"
     ).length,
-    new: byDistress.filter((l) => l.workflow.status === "new").length,
+    new: byDistress.filter(isFreshlyIngested).length,
     in_progress: byDistress.filter(
       (l) => l.workflow.status === "attempting_contact" || l.workflow.status === "rpc_made"
     ).length,
@@ -255,7 +267,7 @@ export default async function DialerQueuePage({
   const tabs = [
     { key: "ready", label: "Ready", count: counts.ready },
     { key: "open", label: "Open", count: counts.open },
-    { key: "new", label: "New", count: counts.new },
+    { key: "new", label: "New (36h)", count: counts.new },
     { key: "in_progress", label: "Working", count: counts.in_progress },
     { key: "booked", label: "Booked", count: counts.booked },
     { key: "closed", label: "Closed", count: counts.closed },
