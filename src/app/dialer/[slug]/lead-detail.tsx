@@ -1524,6 +1524,13 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   const [cvForCapture, setCvForCapture] = useState<
     HomeownerSnapshot["codeViolation"] | null
   >(null)
+  // Multi-source ARV consensus computed server-side. When set, it
+  // overrides the raw inventory AVM in captureSnapshot so the inline-
+  // rendered math sheet uses the cross-checked number.
+  const [arvForCapture, setArvForCapture] = useState<{
+    value: number | null
+    sourceLabel: string | null
+  }>({ value: null, sourceLabel: null })
 
   async function shareOpenerWithMath() {
     setShareMsg(null)
@@ -1535,11 +1542,39 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         text?: string
         error?: string
         codeViolation?: HomeownerSnapshot["codeViolation"] | null
+        propertyValueConsensus?: number | null
+        propertyValueSourceLabel?: string | null
+        propertyValueConfidence?: "high" | "medium" | "low" | "none"
       }
       if (!opener?.text) {
         throw new Error(opener?.error || "Couldn't build opener text")
       }
+      // Confidence gate. None = no defensible source, hard block.
+      // Low = sources disagree by > 30%, force a verify-before-send
+      // confirm so we don't blast bad math.
+      const conf = opener.propertyValueConfidence
+      if (conf === "none") {
+        throw new Error(
+          "ARV has no defensible source — share blocked. Re-enrichment needed before this lead can be blasted."
+        )
+      }
+      if (conf === "low") {
+        const proceed = window.confirm(
+          "ARV confidence is LOW — sources disagree by > 30%. The math sheet may be off by 15-40%. Verify the value (assessor portal, Zillow, etc.) before sending. Send anyway?"
+        )
+        if (!proceed) {
+          setShareMsg({
+            kind: "err",
+            text: "Share canceled — verify ARV before sending. Open the math sheet, override the ARV input, and try again.",
+          })
+          return
+        }
+      }
       setCvForCapture(opener.codeViolation ?? null)
+      setArvForCapture({
+        value: opener.propertyValueConsensus ?? null,
+        sourceLabel: opener.propertyValueSourceLabel ?? null,
+      })
 
       // 2. Mount the hidden math sheet inline
       setCapturing(true)
@@ -1635,11 +1670,37 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         text?: string
         error?: string
         codeViolation?: HomeownerSnapshot["codeViolation"] | null
+        propertyValueConsensus?: number | null
+        propertyValueSourceLabel?: string | null
+        propertyValueConfidence?: "high" | "medium" | "low" | "none"
       }
       if (!opener?.text) {
         throw new Error(opener?.error || "Couldn't build opener text")
       }
+      // Same confidence gate as the full share flow.
+      const conf = opener.propertyValueConfidence
+      if (conf === "none") {
+        throw new Error(
+          "ARV has no defensible source — share blocked. Re-enrichment needed before this lead can be blasted."
+        )
+      }
+      if (conf === "low") {
+        const proceed = window.confirm(
+          "ARV confidence is LOW — sources disagree by > 30%. The math sheet may be off by 15-40%. Verify the value (assessor portal, Zillow, etc.) before sending. Send anyway?"
+        )
+        if (!proceed) {
+          setCompactMsg({
+            kind: "err",
+            text: "Share canceled — verify ARV before sending. Open the math sheet, override the ARV input, and try again.",
+          })
+          return
+        }
+      }
       setCvForCapture(opener.codeViolation ?? null)
+      setArvForCapture({
+        value: opener.propertyValueConsensus ?? null,
+        sourceLabel: opener.propertyValueSourceLabel ?? null,
+      })
 
       setCapturingCompact(true)
       await new Promise<void>((resolve) =>
@@ -1830,8 +1891,12 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     trusteeSaleDate: lead.currentSaleDate ?? null,
     mortgageBalance: lead.mortgageAmount ?? null,
     submittedAt: new Date().toISOString(),
-    propertyValue: lead.avmMid ?? null,
-    propertyValueSource: lead.avmMid ? "AVM" : null,
+    // Prefer multi-source consensus when the opener-text response gave us
+    // one (it cross-checks assessor + last-sale-appreciated + BatchData +
+    // HMDA). Falls back to the raw inventory AVM when no consensus yet.
+    propertyValue: arvForCapture.value ?? lead.avmMid ?? null,
+    propertyValueSource:
+      arvForCapture.sourceLabel ?? (lead.avmMid ? "AVM" : null),
     distressType: lead.distressType ?? null,
     trusteeSaleStatus: lead.trusteeSaleStatus ?? null,
     codeViolation: cvForCapture,
