@@ -208,6 +208,18 @@ export default function LeadDetail({
         </section>
       )}
 
+      {/* Alternate phones from BatchData skip-trace — every number we
+          have for the property with per-phone DNC + line-type metadata.
+          Lets the caller fall through to fallbacks when the primary
+          doesn't connect (cf. Cathy Hughes responding on the DNC
+          number). Hidden when there are no alternates. */}
+      {lead.alternatePhones && lead.alternatePhones.length > 0 && (
+        <AlternatePhonesPanel
+          phones={lead.alternatePhones}
+          primary={lead.ownerPhonePrimary}
+        />
+      )}
+
       {/* Snapshot — 3 cards (Distress moved into header pill above to
           avoid redundancy). Order: urgency → market value → loan. */}
       <section className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1237,6 +1249,140 @@ function QualifiedLeadSection({
           {success}
         </div>
       )}
+    </section>
+  )
+}
+
+/** ============================================================================
+ *  AlternatePhonesPanel
+ *  ----------------------------------------------------------------------------
+ *  Every phone candidate BatchData found for the property, with per-
+ *  phone DNC + line-type + score badges. The dialer surfaces these as
+ *  fallbacks when the primary doesn't connect — sometimes the "DNC"
+ *  number is the one that actually responds (cf. Cathy Hughes 2050).
+ *
+ *  Sorted: non-DNC + mobile first, then non-DNC + landline, then DNC
+ *  numbers (still shown — the caller decides). Primary phone is
+ *  hidden from this list since it's already shown above.
+ *  ========================================================================= */
+function AlternatePhonesPanel({
+  phones,
+  primary,
+}: {
+  phones: NonNullable<DialerLeadView["alternatePhones"]>
+  primary?: string
+}) {
+  const primaryDigits = (primary || "").replace(/\D/g, "").slice(-10)
+  // Hide the primary; it's already prominent above.
+  const others = phones.filter((p) => p.number !== primaryDigits)
+  if (others.length === 0) return null
+
+  // Sort: non-DNC mobile → non-DNC landline → other → DNC
+  const tier = (p: (typeof others)[number]) => {
+    const lt = (p.lineType || "").toLowerCase()
+    const isMobile = lt.includes("mobile")
+    const isLandline = lt.includes("land") || lt.includes("fixed")
+    if (p.dnc) return 90
+    if (isMobile) return 10
+    if (isLandline) return 20
+    if (lt.includes("voip")) return 50
+    return 30
+  }
+  const sorted = [...others].sort((a, b) => tier(a) - tier(b))
+
+  function lineBadge(lineType?: string): { label: string; tone: string } | null {
+    const lt = (lineType || "").toLowerCase()
+    if (!lt) return null
+    if (lt.includes("mobile")) {
+      return {
+        label: "MOB",
+        tone: "border-emerald-400/40 bg-emerald-400/10 text-emerald-200",
+      }
+    }
+    if (lt.includes("land") || lt.includes("fixed")) {
+      return {
+        label: "LAND",
+        tone: "border-blue-400/35 bg-blue-400/10 text-blue-200",
+      }
+    }
+    if (lt.includes("voip")) {
+      return {
+        label: "VOIP",
+        tone: "border-amber-400/35 bg-amber-400/10 text-amber-200",
+      }
+    }
+    return null
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+        <div className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
+          Alternate phones · {sorted.length}
+        </div>
+        <div className="text-[11px] text-white/45">
+          Fallbacks when primary doesn&apos;t connect
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {sorted.map((p) => {
+          const tel = `tel:+1${p.number}`
+          const sms = `sms:+1${p.number}`
+          const badge = lineBadge(p.lineType)
+          return (
+            <div
+              key={p.number}
+              className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 ${
+                p.dnc
+                  ? "border-red-400/30 bg-red-400/[0.06]"
+                  : "border-emerald-400/25 bg-emerald-400/[0.05]"
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <a
+                  href={tel}
+                  className={`tabular-nums text-[13px] font-semibold ${
+                    p.dnc ? "text-red-200 line-through" : "text-emerald-100"
+                  } hover:underline`}
+                >
+                  {fmtPhone(p.number)}
+                </a>
+                {badge && (
+                  <span
+                    className={`inline-flex items-center rounded border px-1 py-px text-[9px] uppercase tracking-wider ${badge.tone}`}
+                  >
+                    {badge.label}
+                  </span>
+                )}
+                {p.dnc && (
+                  <span className="text-[9px] uppercase tracking-wider text-red-300/80 font-semibold">
+                    DNC
+                  </span>
+                )}
+                {typeof p.score === "number" && (
+                  <span className="text-[10px] text-white/40 tabular-nums">
+                    {p.score}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <a
+                  href={tel}
+                  className="rounded border border-white/15 bg-white/5 hover:bg-white/10 px-2 py-0.5 text-[11px] text-white/70"
+                >
+                  Call
+                </a>
+                <a
+                  href={sms}
+                  className="rounded border border-white/15 bg-white/5 hover:bg-white/10 px-2 py-0.5 text-[11px] text-white/70"
+                >
+                  Text
+                </a>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </section>
   )
 }

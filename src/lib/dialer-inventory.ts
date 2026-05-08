@@ -56,6 +56,11 @@ export type DialerInventoryLead = {
   /** Count of additional candidate phones in BatchData skip-trace
    *  beyond the primary. Useful when primary doesn't ring. */
   alternatePhoneCount?: number
+  /** Full BatchData phone candidates (every number we've pulled for
+   *  this property + per-phone DNC, line-type, and confidence). The
+   *  dialer surfaces these as fallbacks when the primary doesn't
+   *  connect. Does not include the primary phone itself. */
+  alternatePhones?: AlternatePhone[]
   /** True if mortgage_balance came from a defensible source (ROD-verified, HMDA-anchored, nashville_ledger). */
   mortgageDefensible?: boolean
   /** Lender name from ROD or HMDA (with FFIEC panel fallback). */
@@ -236,12 +241,32 @@ type HomeownerRequestRow = {
  *  + lead-detail UI: phone validation, line type, mortgage source,
  *  amortized balance, lender, equity, etc. Source-of-truth derivation
  *  so callers don't re-implement these rules. */
+/** A single phone-number candidate from BatchData skip-trace, with the
+ *  per-phone metadata that determines whether it's worth dialing. */
+export type AlternatePhone = {
+  number: string
+  /** Land Line / Mobile / VoIP / Wireless / etc. — verbatim from BatchData. */
+  lineType?: string
+  /** True if BatchData flagged this specific number as DNC. */
+  dnc?: boolean
+  /** 0–100 BatchData confidence score for the number. */
+  score?: number
+  /** True if BatchData has tested the number for reachability. */
+  tested?: boolean
+  /** True if the test came back "reachable". */
+  reachable?: boolean
+  /** Twilio Lookup carrier when an alternate has been validated.
+   *  Most alternates won't have this — Twilio runs primary-only. */
+  carrier?: string
+}
+
 type PhoneMetaDerived = {
   phoneLineType?: string
   phoneCarrier?: string
   phoneValidated?: boolean
   phoneDnc?: boolean
   alternatePhoneCount?: number
+  alternatePhones?: AlternatePhone[]
   mortgageDefensible?: boolean
   mortgageLenderResolved?: string
   mortgageOriginationYear?: number
@@ -281,14 +306,51 @@ function deriveFromPhoneMetadata(
     if (typeof tl.carrier_name === "string") out.phoneCarrier = tl.carrier_name as string
   }
 
-  // BatchData primary DNC + alternate count
+  // BatchData primary DNC + alternate count + full alternate list
   const bd = obj.batchdata_skip_trace as Record<string, unknown> | undefined
   if (bd && typeof bd === "object") {
     if (bd.primary_dnc === true) out.phoneDnc = true
     const all = bd.all_phones as unknown[] | undefined
     if (Array.isArray(all)) {
-      // Count alternates (any non-DNC phone other than the primary).
       out.alternatePhoneCount = Math.max(0, all.length - 1)
+      // Surface every phone candidate the dialer can fall through to
+      // when the primary doesn't connect. Strip leading +1 / non-digits
+      // and dedupe by 10-digit form. Caller-side rendering handles
+      // formatting + tel/sms links.
+      const seen = new Set<string>()
+      const phones: AlternatePhone[] = []
+      for (const raw of all) {
+        if (!raw || typeof raw !== "object") continue
+        const r = raw as Record<string, unknown>
+        const numStr =
+          typeof r.phone === "string"
+            ? r.phone
+            : typeof r.number === "string"
+            ? (r.number as string)
+            : ""
+        const digits = numStr.replace(/\D/g, "")
+        const tenDigit =
+          digits.length === 11 && digits.startsWith("1")
+            ? digits.slice(1)
+            : digits
+        if (tenDigit.length !== 10) continue
+        if (seen.has(tenDigit)) continue
+        seen.add(tenDigit)
+        phones.push({
+          number: tenDigit,
+          lineType:
+            typeof r.phone_type === "string"
+              ? (r.phone_type as string)
+              : typeof r.line_type === "string"
+              ? (r.line_type as string)
+              : undefined,
+          dnc: r.dnc === true,
+          score: typeof r.score === "number" ? (r.score as number) : undefined,
+          tested: r.tested === true,
+          reachable: r.reachable === true,
+        })
+      }
+      if (phones.length > 0) out.alternatePhones = phones
     }
   }
 
