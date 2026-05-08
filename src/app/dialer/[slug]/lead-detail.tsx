@@ -24,6 +24,7 @@ import MathSheetContent, {
   type HomeownerSnapshot,
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 import DaleBriefSheet, { type DaleBrief } from "./dale-brief-sheet"
+import { ShareMathSheet } from "./share-math-sheet"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -1508,6 +1509,13 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   const [shareLoading, setShareLoading] = useState(false)
   const [shareMsg, setShareMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
   const [capturing, setCapturing] = useState(false)
+  // Same-but-compact share flow. Mounts ShareMathSheet (the trimmed
+  // single-page variant) instead of the full MathSheetContent so the
+  // captured PNG is short enough to read in an iMessage bubble
+  // without scrolling.
+  const [compactLoading, setCompactLoading] = useState(false)
+  const [compactMsg, setCompactMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [capturingCompact, setCapturingCompact] = useState(false)
   // Code-violation data parsed server-side from raw_payload, returned
   // as part of the opener-text response. Plumbed into captureSnapshot
   // so the inline math-sheet render shows real CV math (violation
@@ -1611,6 +1619,99 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     } finally {
       setCapturing(false)
       setShareLoading(false)
+    }
+  }
+
+  // ─── Compact share: same opener text, smaller PNG ────────────────────
+  // Mirrors shareOpenerWithMath but mounts ShareMathSheet (compact
+  // single-page variant) and captures from [data-share-compact-capture]
+  // instead. Same opener body, same Web Share API call.
+  async function shareOpenerWithCompactMath() {
+    setCompactMsg(null)
+    setCompactLoading(true)
+    try {
+      const openerRes = await fetch(`/api/dialer/${lead.slug}/opener-text`)
+      const opener = (await openerRes.json()) as {
+        text?: string
+        error?: string
+        codeViolation?: HomeownerSnapshot["codeViolation"] | null
+      }
+      if (!opener?.text) {
+        throw new Error(opener?.error || "Couldn't build opener text")
+      }
+      setCvForCapture(opener.codeViolation ?? null)
+
+      setCapturingCompact(true)
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+      await new Promise((r) => setTimeout(r, 600))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fonts = (document as any).fonts
+      if (fonts && typeof fonts.ready?.then === "function") {
+        try {
+          await fonts.ready
+        } catch {
+          // Non-fatal.
+        }
+      }
+
+      const target = document.querySelector(
+        "[data-share-compact-capture] .share-math-sheet"
+      ) as HTMLElement | null
+      if (!target) {
+        throw new Error("Could not find compact math sheet to capture")
+      }
+
+      const rect = target.getBoundingClientRect()
+      const captureWidth = Math.max(target.scrollWidth, Math.ceil(rect.width))
+      const captureHeight = Math.max(target.scrollHeight, Math.ceil(rect.height))
+      const { toBlob } = await import("html-to-image")
+      const blob = await toBlob(target, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+        width: captureWidth,
+        height: captureHeight,
+        canvasWidth: captureWidth,
+        canvasHeight: captureHeight,
+      })
+      if (!blob) throw new Error("html-to-image returned no blob")
+
+      const file = new File([blob], "falco-math-sheet-compact.png", {
+        type: "image/png",
+      })
+
+      const navAny = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean
+      }
+      if (!navAny.canShare?.({ files: [file] }) || !navigator.share) {
+        const url = URL.createObjectURL(blob)
+        window.open(url, "_blank")
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(opener.text).catch(() => {})
+        }
+        setCompactMsg({
+          kind: "err",
+          text:
+            "Web Share not supported here — opened image in new tab and copied opener to clipboard.",
+        })
+        return
+      }
+
+      await navigator.share({ files: [file], text: opener.text })
+      setCompactMsg({
+        kind: "ok",
+        text: "Shared. Pick Messages → contact → send.",
+      })
+    } catch (err) {
+      setCompactMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Share failed.",
+      })
+    } finally {
+      setCapturingCompact(false)
+      setCompactLoading(false)
     }
   }
 
@@ -1815,6 +1916,27 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         </div>
       )}
 
+      {/* Compact-share inline render — same offscreen pattern as the
+          full-sheet share but mounts ShareMathSheet (single-page,
+          ~1/4 the height) for SMS-friendly previews. */}
+      {capturingCompact && (
+        <div
+          data-share-compact-capture=""
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: "-99999px",
+            top: 0,
+            width: "380px",
+            background: "#fff",
+            pointerEvents: "none",
+            zIndex: -1,
+          }}
+        >
+          <ShareMathSheet snapshot={captureSnapshot} />
+        </div>
+      )}
+
       {/* Hidden inline Dale brief — same offscreen-380px pattern as
           the homeowner share so iOS Safari doesn't clip the captured
           PNG on the right edge. */}
@@ -1855,6 +1977,19 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           className="rounded-lg border border-emerald-400/45 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
         >
           {shareLoading ? "Building math sheet..." : "📲 Share opener + math (one-click)"}
+        </button>
+
+        {/* Compact share — same opener text, smaller PNG. Single page,
+            roughly 1/4 the height of the full sheet so it lands cleanly
+            in iMessage without overwhelming the recipient. */}
+        <button
+          type="button"
+          onClick={shareOpenerWithCompactMath}
+          disabled={compactLoading}
+          title="Compact one-page math sheet, same opener. Smaller PNG for SMS-first situations where you don't want to overwhelm the homeowner."
+          className="rounded-lg border border-emerald-400/35 bg-emerald-400/10 hover:bg-emerald-400/20 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-sm text-emerald-100 font-semibold transition-colors"
+        >
+          {compactLoading ? "Building compact..." : "📄 Share opener + compact math"}
         </button>
 
         {/* Operator-side share — numbers-only brief for the auction
@@ -2009,6 +2144,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           }`}
         >
           {daleMsg.text}
+        </div>
+      )}
+
+      {compactMsg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            compactMsg.kind === "ok"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-amber-400/30 bg-amber-400/10 text-amber-200"
+          }`}
+        >
+          {compactMsg.text}
         </div>
       )}
 
