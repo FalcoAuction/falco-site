@@ -50,6 +50,24 @@ function daysToSale(saleIso: string | null | undefined): number | null {
   return Math.ceil(ms / (1000 * 60 * 60 * 24))
 }
 
+/**
+ * Convert all-caps source-data strings like "N 14TH ST" or "MAIN STREET" to
+ * normal-case ("N 14th St", "Main Street") for SMS bodies. Public-records
+ * data is almost always uppercase; that reads like a robocall when it
+ * lands on someone's phone.
+ *
+ *  - Capitalize first letter of each word, lowercase the rest.
+ *  - Preserve numeric ordinal suffixes ("14TH" → "14th", "1ST" → "1st").
+ *  - Single-letter directionals ("N", "S", "E", "W", "NE", etc.) stay
+ *    capitalized via the standard rule (first letter capital).
+ */
+function titleCaseStreet(s: string): string {
+  return s.replace(/\w+/g, (w) => {
+    if (/^\d+(st|nd|rd|th)$/i.test(w)) return w.toLowerCase()
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  })
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -134,8 +152,24 @@ export async function GET(
   const greetTag = greeting ? `${greeting} — ` : ""
   const streetOnly = (() => {
     const m = address.match(/^[\d-]+\s+([^,]+)/)
-    return m ? m[1].trim() : address.split(",")[0]
+    const raw = m ? m[1].trim() : address.split(",")[0]
+    return titleCaseStreet(raw)
   })()
+
+  // For CV leads, extract violation specifics up front. The same
+  // payload powers (a) the SMS body's count anchor ("N citations
+  // stacking") and (b) the response field that lets the share-button
+  // inline render show real violation list / case number / fine
+  // accrual instead of generic defaults.
+  let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
+  if (isCodeViolation && hr) {
+    try {
+      codeViolation = extractCodeViolationData(hr.raw_payload, hr.admin_notes)
+    } catch {
+      codeViolation = null
+    }
+  }
+  const cvViolationCount = codeViolation?.violationCount ?? 0
 
   // ─── Variant selection ───────────────────────────────────────────────
   // Brutal short. Math sheet attached as IMAGE (Patrick adds from camera
@@ -152,7 +186,7 @@ export async function GET(
     // "transfer the liability to the buyer." Matches the math sheet's
     // "FALCO · LIABILITY OPTIONS" framing so the homeowner sees the
     // same story in the SMS as the attached image.
-    text = codeViolationSmsBody(streetOnly)
+    text = codeViolationSmsBody(streetOnly, cvViolationCount)
   } else if (isUnderwater) {
     // Underwater: no math image (can't compute accurately). Purpose-hint:
     // even if the payoff is real, we work to get them walking away with
@@ -172,20 +206,6 @@ export async function GET(
   const smsHref = smsTo
     ? `sms:${smsTo}?body=${encodeURIComponent(text)}`
     : null
-
-  // For CV leads, parse the violation list / case number / fine accrual
-  // from raw_payload so the share-button capture flow on lead-detail can
-  // populate HomeownerSnapshot.codeViolation and the captured PNG renders
-  // real CV math (fine totals, days outstanding, citation list) instead
-  // of the generic auction defaults.
-  let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
-  if (isCodeViolation && hr) {
-    try {
-      codeViolation = extractCodeViolationData(hr.raw_payload, hr.admin_notes)
-    } catch {
-      codeViolation = null
-    }
-  }
 
   return NextResponse.json({
     text,
