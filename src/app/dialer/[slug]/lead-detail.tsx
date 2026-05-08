@@ -284,6 +284,12 @@ export default function LeadDetail({
       {/* Outreach helpers — email follow-up + SMS template */}
       <OutreachHelpers lead={lead} caller={caller} />
 
+      {/* Manual ARV override — caller pulls Zillow/Redfin/comp value
+          and types it in. Writes property_value + property_value_source,
+          stamps audit trail, and refreshes the page so the math sheet
+          + share-button preview pick up the new number. */}
+      <ArvOverridePanel lead={lead} onChanged={() => router.refresh()} />
+
       {/* Manual trustee-sale status — caller flips this after talking to
           the homeowner. Suppresses urgency framing in the math sheet
           + opener when the sale was cancelled / borrower reinstated. */}
@@ -1229,6 +1235,138 @@ function QualifiedLeadSection({
       {success && (
         <div className="mt-3 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
           {success}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** ============================================================================
+ *  ArvOverridePanel
+ *  ----------------------------------------------------------------------------
+ *  Manual ARV override. Caller pulls a Zillow Zestimate / Redfin / comp
+ *  / homeowner-verbal value and types it in here. Writes immediately to
+ *  homeowner_requests.property_value + .property_value_source +
+ *  phone_metadata.property_value_override (audit trail). Triggers
+ *  router.refresh() so the math sheet, share-button capture, and lead
+ *  detail re-render with the new number.
+ *
+ *  The override registers as the highest-confidence source (1.0) in
+ *  computePropertyValueConsensus, so it pins the consensus to the
+ *  caller's value regardless of what the assessor or BatchData say.
+ *  ========================================================================= */
+function ArvOverridePanel({
+  lead,
+  onChanged,
+}: {
+  lead: DialerLeadView
+  onChanged: () => void
+}) {
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [value, setValue] = useState<string>("")
+  const [source, setSource] = useState<string>("zillow")
+
+  const currentArv = lead.avmMid
+
+  async function submit() {
+    setMsg(null)
+    const num = parseFloat(value.replace(/[^\d.]/g, ""))
+    if (!Number.isFinite(num) || num <= 0) {
+      setMsg({ kind: "err", text: "Enter a valid number" })
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/dialer/${lead.slug}/set-arv`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: num, source }),
+      })
+      const json = (await res.json()) as { ok?: boolean; error?: string; propertyValue?: number }
+      if (!res.ok || !json.ok) {
+        setMsg({ kind: "err", text: json.error || `Failed (HTTP ${res.status}).` })
+        return
+      }
+      setMsg({
+        kind: "ok",
+        text: `ARV set to $${(json.propertyValue ?? num).toLocaleString()}. Math sheet + share preview will refresh.`,
+      })
+      setValue("")
+      onChanged()
+    } catch (err) {
+      setMsg({
+        kind: "err",
+        text: err instanceof Error ? err.message : "Network error.",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+        <div className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
+          Manual ARV override
+        </div>
+        <div className="text-[11px] text-white/55">
+          Current:{" "}
+          <span className="text-white/85 tabular-nums">
+            {currentArv
+              ? `$${currentArv.toLocaleString()}`
+              : "(none)"}
+          </span>
+        </div>
+      </div>
+
+      <div className="text-[11px] text-white/50 mb-2 leading-relaxed">
+        Pull a Zestimate / Redfin / comp value and type it here. Math sheet
+        + share preview update immediately. Pins the consensus — overrides
+        any assessor / AVM / HMDA fallback.
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="$ value"
+          className="rounded-md border border-white/15 bg-black/40 px-2.5 py-1.5 text-[12px] text-white tabular-nums w-32"
+        />
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="rounded-md border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white"
+        >
+          <option value="zillow">Zillow</option>
+          <option value="redfin">Redfin</option>
+          <option value="realtor_com">Realtor.com</option>
+          <option value="mls_comp">MLS comp</option>
+          <option value="homeowner_verbal">Homeowner verbal</option>
+          <option value="drive_by">Drive-by estimate</option>
+          <option value="manual_other">Other</option>
+        </select>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={saving || !value.trim()}
+          className="rounded-lg border border-emerald-400/45 bg-emerald-400/15 hover:bg-emerald-400/25 disabled:opacity-40 px-3 py-1.5 text-[12px] text-emerald-100 font-semibold"
+        >
+          {saving ? "Saving..." : "Set ARV"}
+        </button>
+      </div>
+
+      {msg && (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+            msg.kind === "ok"
+              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+              : "border-red-400/30 bg-red-400/10 text-red-200"
+          }`}
+        >
+          {msg.text}
         </div>
       )}
     </section>
