@@ -169,15 +169,31 @@ export function foreclosureSpreadComparator(daysToSale: number | null): string {
  * hero so the homeowner sees consistency between the text and the
  * attached image.
  *
- * Voice: same multi-line, no-greeting, signed-Patrick-Armour pattern
- * as the foreclosure body.
+ * Voice (calibrated 2026-05-08): role-clarity ("not wholesalers, we
+ * run sales for owners") leads, since CV leads are even more prone
+ * to the buyer-vs-seller-rep confusion than foreclosure leads.
+ * "No commissions ever" is a stronger no-strings disqualifier than
+ * the foreclosure body's commission line.
  */
-export function codeViolationSmsBody(streetOnly: string): string {
-  const open = `Saw the open code violation on ${streetOnly}.`
+export function codeViolationSmsBody(
+  streetOnly: string,
+  violationCount: number = 0,
+): string {
+  // "N citations stacking" only renders when we have a real count —
+  // 0 (extraction failed or single citation) drops to a softer hook.
+  const hookSuffix =
+    violationCount >= 2
+      ? ` — ${violationCount} citations stacking`
+      : violationCount === 1
+      ? " — citation stacking"
+      : ""
+  const open = `Open code violation on ${streetOnly}${hookSuffix}.`
+  const disqualifier =
+    "We're not wholesalers, we run sales for owners. No commissions ever, no repair bills."
   const path =
-    "If repairs are out of reach, our auction partner can run a 30-day marketed sale where the violations transfer to the buyer at closing. Liability cleared, equity preserved, no out-of-pocket repair cost."
+    "If selling beats fixing, our auction partner closes in 30 days. Violations transfer to the buyer at closing. Equity in your pocket, not the city's."
   return [
-    `${open} ${STANDARD_DISQUALIFIER}`,
+    `${open} ${disqualifier}`,
     "",
     path,
     "",
