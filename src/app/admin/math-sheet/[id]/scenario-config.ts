@@ -20,6 +20,7 @@ export type Scenario =
   | "bankruptcy_363_sale"
   | "fsbo"
   | "tax_lien"
+  | "demolition"
 
 export type ScenarioConfig = {
   scenario: Scenario
@@ -246,6 +247,31 @@ const TAX_LIEN: ScenarioConfig = {
   applyTrusteeFee: false,
 }
 
+const DEMOLITION: ScenarioConfig = {
+  scenario: "demolition",
+  headerEyebrow: "FALCO · DEMO / REHAB OPTIONS",
+  dateFieldLabel: "Permit issued",
+  heroLine:
+    "The standing structure has cash value RIGHT NOW that disappears once demo or rehab starts. Marketed auction nets {range} — closed in 30 days, as-is, before the bulldozer or the contractor.",
+  spreadComparator:
+    "what's left after you've paid for demo + new construction (or paid for the rehab) + months of carry",
+  path1: {
+    label: "Stay the course",
+    valueText: "—",  // overridden by computed demoRoute.totalOutOfPocket
+    sub: "Pay for demo + new construction OR rehab cost out of pocket. Eat 6–18 months of carry while the work happens. Property has no cash value to you until it's done. End-state value depends entirely on what you build / how the rehab pencils.",
+    tone: "loss",
+  },
+  wholesalerIntro:
+    "Wholesalers approach demo / rehab properties aggressively because the time pressure converts. Math behind a typical cash offer:",
+  auctionIntro:
+    "Marketed auction sells the property AS-IS, before any demo or repair work. Investor-buyers specialize in teardown lots and fire/storm rehabs — they price in their own cost and compete on price. 30-day campaign with photos and aggressive investor-pool marketing. You walk with cash at close; buyer takes on the project.",
+  methodologyPath1:
+    "\"Stay the course\" sums the permit's stated cost (demo or rehab) + estimated new-construction (sqft × $200/sqft TN baseline, when applicable) + monthly carrying (taxes, insurance, mortgage if any) over the modeled construction window. End-state property value is excluded — it depends on what's built and the market when work finishes.",
+  ctaHeader: "If you want this off your hands before the work starts",
+  showMls: false,
+  applyTrusteeFee: false,
+}
+
 const SCENARIO_CONFIGS: Record<Scenario, ScenarioConfig> = {
   foreclosure: FORECLOSURE,
   probate: PROBATE,
@@ -254,6 +280,7 @@ const SCENARIO_CONFIGS: Record<Scenario, ScenarioConfig> = {
   bankruptcy_363_sale: BANKRUPTCY_363_SALE,
   fsbo: FSBO,
   tax_lien: TAX_LIEN,
+  demolition: DEMOLITION,
 }
 
 /** Map the pipeline distress_type code → math-sheet scenario.
@@ -283,6 +310,8 @@ export function resolveScenario(
       return FSBO
     case "TAX_LIEN":
       return TAX_LIEN
+    case "DEMOLITION":
+      return DEMOLITION
     case "PRE_FORECLOSURE":
     case "PREFORECLOSURE":
     case "TRUSTEE_NOTICE":

@@ -1732,6 +1732,11 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   // and (if a phone is on file) open the SMS app pre-filled. iOS / Android
   // both honor sms: URIs.
   function fetchAndCopyOpener() {
+    // Time-window guardrail. Patrick can override.
+    const offHours = offHoursReason()
+    if (offHours && !window.confirm(offHours)) {
+      return
+    }
     setOpenerCopied(false)
     setOpenerPreview(null)
     setEmailMsg(null)
@@ -1752,6 +1757,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         // If we have the homeowner's phone, open the SMS app pre-filled.
         // Patrick taps Send.
         if (json.smsHref) {
+          logSmsSend(json.text)
           window.location.href = json.smsHref
         }
       })
@@ -1808,6 +1814,13 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   const [cvForCapture, setCvForCapture] = useState<
     HomeownerSnapshot["codeViolation"] | null
   >(null)
+  // Demolition data parsed server-side from raw_payload, returned as
+  // part of the opener-text response. Plumbed into captureSnapshot so
+  // the inline math-sheet render shows real demo + construction
+  // commitment math for DEMOLITION leads. Null for non-demo leads.
+  const [demolitionForCapture, setDemolitionForCapture] = useState<
+    HomeownerSnapshot["demolition"] | null
+  >(null)
   // Multi-source ARV consensus computed server-side. When set, it
   // overrides the raw inventory AVM in captureSnapshot so the inline-
   // rendered math sheet uses the cross-checked number.
@@ -1816,8 +1829,66 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     sourceLabel: string | null
   }>({ value: null, sourceLabel: null })
 
+  /**
+   * Best-practice send window for cold homeowner SMS:
+   *   Tue / Wed / Thu, 10:00 to 14:00 Central Time.
+   *
+   * Outside the window, return a non-empty reason string so the caller
+   * shows a window.confirm() before proceeding. Patrick can override
+   * and send anyway; the gate is a speed-bump, not a block.
+   */
+  function offHoursReason(): string | null {
+    const now = new Date()
+    // Pull the current time in America/Chicago without pulling a date
+    // library. toLocaleString with timeZone gives us the locale time
+    // string; we parse hours + weekday from it.
+    const tz = "America/Chicago"
+    const weekday = now.toLocaleString("en-US", { timeZone: tz, weekday: "short" })
+    // "Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"
+    const hour = parseInt(
+      now.toLocaleString("en-US", {
+        timeZone: tz,
+        hour: "2-digit",
+        hour12: false,
+      }),
+      10,
+    )
+    const isWeekday = ["Tue", "Wed", "Thu"].includes(weekday)
+    const inWindow = isWeekday && hour >= 10 && hour < 14
+    if (inWindow) return null
+    return `It's currently ${weekday} ${hour}:00 Central. Best response window is Tue/Wed/Thu 10a-2p CT. Send anyway?`
+  }
+
+  /**
+   * Auto-log an SMS send to dialer_activities. Channel='text',
+   * outcome='voicemail_left' (existing schema's closest match for
+   * "outreach sent, awaiting reply" — matches Patrick's prior usage).
+   * Notes field carries the body verbatim so we can audit which
+   * variants convert.
+   * Fire-and-forget: a failed log shouldn't block the share flow.
+   */
+  function logSmsSend(body: string): void {
+    fetch("/api/dialer/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        listingSlug: lead.slug,
+        channel: "text",
+        outcome: "voicemail_left",
+        notes: body,
+      }),
+    }).catch(() => {
+      // non-fatal — log failures shouldn't break the flow
+    })
+  }
+
   async function shareOpenerWithMath() {
     setShareMsg(null)
+    // Time-window guardrail. Patrick can override.
+    const offHours = offHoursReason()
+    if (offHours && !window.confirm(offHours)) {
+      return
+    }
     setShareLoading(true)
     try {
       // 1. Opener text + (for CV leads) code-violation data
@@ -1826,6 +1897,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         text?: string
         error?: string
         codeViolation?: HomeownerSnapshot["codeViolation"] | null
+        demolition?: HomeownerSnapshot["demolition"] | null
         propertyValueConsensus?: number | null
         propertyValueSourceLabel?: string | null
         propertyValueConfidence?: "high" | "medium" | "low" | "none"
@@ -1855,6 +1927,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         }
       }
       setCvForCapture(opener.codeViolation ?? null)
+      setDemolitionForCapture(opener.demolition ?? null)
       setArvForCapture({
         value: opener.propertyValueConsensus ?? null,
         sourceLabel: opener.propertyValueSourceLabel ?? null,
@@ -1929,6 +2002,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         files: [file],
         text: opener.text,
       })
+      logSmsSend(opener.text)
       setShareMsg({ kind: "ok", text: "Shared. Pick Messages → contact → send." })
     } catch (err) {
       setShareMsg({
@@ -1947,6 +2021,10 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   // instead. Same opener body, same Web Share API call.
   async function shareOpenerWithCompactMath() {
     setCompactMsg(null)
+    const offHours = offHoursReason()
+    if (offHours && !window.confirm(offHours)) {
+      return
+    }
     setCompactLoading(true)
     try {
       const openerRes = await fetch(`/api/dialer/${lead.slug}/opener-text`)
@@ -1954,6 +2032,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         text?: string
         error?: string
         codeViolation?: HomeownerSnapshot["codeViolation"] | null
+        demolition?: HomeownerSnapshot["demolition"] | null
         propertyValueConsensus?: number | null
         propertyValueSourceLabel?: string | null
         propertyValueConfidence?: "high" | "medium" | "low" | "none"
@@ -1981,6 +2060,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
         }
       }
       setCvForCapture(opener.codeViolation ?? null)
+      setDemolitionForCapture(opener.demolition ?? null)
       setArvForCapture({
         value: opener.propertyValueConsensus ?? null,
         sourceLabel: opener.propertyValueSourceLabel ?? null,
@@ -2045,6 +2125,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
       }
 
       await navigator.share({ files: [file], text: opener.text })
+      logSmsSend(opener.text)
       setCompactMsg({
         kind: "ok",
         text: "Shared. Pick Messages → contact → send.",
@@ -2184,6 +2265,8 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
     distressType: lead.distressType ?? null,
     trusteeSaleStatus: lead.trusteeSaleStatus ?? null,
     codeViolation: cvForCapture,
+    demolition: demolitionForCapture,
+    sqft: lead.buildingAreaSqft ?? null,
   }
 
   // Open the math sheet PAGE in a new tab. Patrick screenshots the

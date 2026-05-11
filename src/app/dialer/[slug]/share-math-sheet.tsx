@@ -23,6 +23,14 @@ import {
 } from "@/app/admin/math-sheet/[id]/scenario-config"
 import type { HomeownerSnapshot } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 
+/** Inline duplicate of estimateRebuildCost so this client component
+ *  doesn't pull in the math-sheet/[id] module's full data extractor.
+ *  $200/sqft TN baseline; 2,000 sqft fallback when sqft missing. */
+function estimateRebuildCostInline(sqft: number | null | undefined): number {
+  const s = sqft && sqft > 0 ? sqft : 2000
+  return Math.round(s * 200)
+}
+
 function daysBetween(iso: string | null | undefined): number | null {
   if (!iso) return null
   const ms = new Date(iso).getTime() - Date.now()
@@ -118,6 +126,39 @@ export function ShareMathSheet({
   const seed = defaultInputsFor(arv, loanBalance)
 
   const isCv = cfg.scenario === "code_violation"
+  const isDemo = cfg.scenario === "demolition"
+
+  // Demo / rehab seed — same logic as MathSheetContent.demoDefaults but
+  // condensed for the compact share sheet. Subtype controls auction
+  // clearance + which cost legs are populated.
+  const demoSubtype = snapshot.demolition?.subtype ?? "unknown"
+  const demoPermitCost = snapshot.demolition?.constCost ?? 0
+  const demoFields = isDemo
+    ? demoSubtype === "fire_damage" || demoSubtype === "storm_damage"
+      ? {
+          auctionMin: 0.55,
+          auctionMax: 0.65,
+          demolitionCost: 0,
+          constructionCost: demoPermitCost > 0 ? demoPermitCost : 75_000,
+          constructionMonths: 6,
+        }
+      : demoSubtype === "teardown" || demoSubtype === "major_rebuild"
+      ? {
+          auctionMin: 0.62,
+          auctionMax: 0.72,
+          demolitionCost: demoPermitCost > 0 ? demoPermitCost : 12_000,
+          constructionCost: estimateRebuildCostInline(snapshot.sqft ?? null),
+          constructionMonths: 14,
+        }
+      : {
+          auctionMin: 0.65,
+          auctionMax: 0.78,
+          demolitionCost: demoPermitCost > 0 ? demoPermitCost : 0,
+          constructionCost: 0,
+          constructionMonths: 0,
+        }
+    : null
+
   const inputs: MathInputs = {
     arv,
     loanBalance,
@@ -126,8 +167,8 @@ export function ShareMathSheet({
     investorMargin: seed.investorMargin,
     closingCosts: seed.closingCosts,
     buyerPremiumPct: seed.buyerPremiumPct,
-    auctionMinPct: isCv ? 0.65 : seed.auctionMinPct,
-    auctionMaxPct: isCv ? 0.75 : seed.auctionMaxPct,
+    auctionMinPct: isCv ? 0.65 : demoFields?.auctionMin ?? seed.auctionMinPct,
+    auctionMaxPct: isCv ? 0.75 : demoFields?.auctionMax ?? seed.auctionMaxPct,
     auctionWorstPct: seed.auctionWorstPct,
     wholesalerMaoPct: seed.wholesalerMaoPct,
     wholesalerStretchPct: seed.wholesalerStretchPct,
@@ -139,6 +180,10 @@ export function ShareMathSheet({
     mlsCommissionPct: seed.mlsCommissionPct,
     mlsCarryingPerMonth: seed.mlsCarryingPerMonth,
     mlsCarryingMonths: seed.mlsCarryingMonths,
+    demolitionCost: demoFields?.demolitionCost ?? 0,
+    constructionCost: demoFields?.constructionCost ?? 0,
+    constructionMonths: demoFields?.constructionMonths ?? 0,
+    constructionCarryPerMonth: seed.constructionCarryPerMonth,
   }
   const out = computeMath(inputs)
 
@@ -166,11 +211,25 @@ export function ShareMathSheet({
   const wholesalerLabel =
     wholesalerNet > 0 ? fmt(wholesalerNet) : "$0 (offer below loan)"
 
-  const doNothingSub = isCv
+  const doNothingEyebrow = isDemo
+    ? "Stay the course"
+    : isCv
+    ? "Self-remediate"
+    : "Do nothing"
+  const doNothingValue = isDemo
+    ? `− ${fmt(out.demoRoute.totalOutOfPocket)}`
+    : isCv
+    ? fmt(out.selfRemediate.netToHomeowner)
+    : "$0"
+  const doNothingSub = isDemo
+    ? `Demo + construction + ${out.demoRoute.constructionMonths} mo of carry — that's the commitment before any cash returns.`
+    : isCv
     ? "Fines keep accruing. Liens stack. Eventually the city forces the sale and you get nothing."
     : "Bank takes it at the trustee sale. Equity wiped out."
 
-  const auctionSub = isCv
+  const auctionSub = isDemo
+    ? "Open competition. State-licensed auctioneer. Investor-buyers take on the demo or rehab. Closes in 30–45 days. No commission from you."
+    : isCv
     ? "Open competition. State-licensed auctioneer. Investor pool buys as-is, violations transfer at closing. Closes in 30–45 days. No commission from you."
     : "Open competition. State-licensed auctioneer. Closes in 30–45 days. No commission from you."
 
@@ -293,8 +352,8 @@ export function ShareMathSheet({
         }}
       >
         <Card
-          eyebrow="Do nothing"
-          value="$0"
+          eyebrow={doNothingEyebrow}
+          value={doNothingValue}
           tone="loss"
           sub={doNothingSub}
         />

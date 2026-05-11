@@ -8,19 +8,36 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
  * attention.
  */
 
+// Bots currently in the daily rotation (src/bots/_run_new.py). The
+// admin's stale-bot banner alerts on any of these missing the 28h
+// threshold. Removed 2026-05-08:
+//   - api_tax_delinquent  (legacy, requires manual seed file, never run)
+//   - tn_foreclosure_notices (superseded by nashville_ledger +
+//     tn_public_notice covering the same source set)
+//   - tn_probate (deliberately disabled — was hanging GH Actions
+//     runner; tn_public_notice category 23 covers probate notices
+//     in the meantime)
+//   - ustitlesearch_rod (orphaned paid-service bot, not in rotation;
+//     re-add when wired into _run_new.py with proper rate limits)
 const BOTS_TO_TRACK = [
+  // Code-violation sources (high-volume daily)
   "nashville_codes",
   "memphis_codes",
   "chattanooga_codes",
   "knoxville_poh",
+  // Foreclosure-notice sources
+  "nashville_ledger",
+  "memphis_daily_news",
+  "hamilton_county_herald",
   "tn_public_notice",
-  "tn_foreclosure_notices",
-  "tn_probate",
+  "tn_lis_pendens",
+  // Tax delinquent
   "tn_tax_delinquent",
-  "api_tax_delinquent",
   "hamilton_tax_delinquent",
-  "ustitlesearch_rod",
+  // Enrichers
   "hmda_enricher",
+  "middle_tn_skiptrace",
+  "decision_engine",
   "auto_promoter",
 ] as const
 

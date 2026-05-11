@@ -17,6 +17,10 @@ import {
   type CodeViolationData,
 } from "./code-violation-data"
 import {
+  estimateRebuildCost,
+  type DemolitionData,
+} from "./demolition-data"
+import {
   foreclosureHeroLine,
   foreclosureSpreadComparator,
 } from "@/lib/foreclosure-language"
@@ -42,6 +46,15 @@ export type HomeownerSnapshot = {
    *  Metro Codes / Memphis 311 / etc.) by extractCodeViolationData().
    *  Null for non-CV leads. */
   codeViolation?: CodeViolationData | null
+  /** Demolition / fire-rehab specifics extracted from raw_payload
+   *  (davidson_demolition_bot) by extractDemolitionData(). Null for
+   *  non-demolition leads. Powers the "stay the course" Path 1 cost
+   *  projection on demolition-scenario sheets. */
+  demolition?: DemolitionData | null
+  /** Building square footage from assessor enrichment. Used to estimate
+   *  new-construction cost (sqft × $200/sqft TN baseline) for the
+   *  teardown subtype of the demolition scenario. */
+  sqft?: number | null
   /** Manual trustee-sale status override set via /api/dialer/[slug]/sale-status.
    *  When `cancelled` or `reinstated`, the foreclosure hero falls back to the
    *  unscheduled framing (no urgency pitch). When `ran`, it falls back to
@@ -122,6 +135,7 @@ export default function MathSheetContent({
   // copy purposes — it's pure, so the duplicate compute is fine.)
   const scenarioCfgInit = resolveScenario(homeowner.distressType, scenarioOverride)
   const isCodeViolation = scenarioCfgInit.scenario === "code_violation"
+  const isDemolition = scenarioCfgInit.scenario === "demolition"
   const cvDefaults = isCodeViolation
     ? {
         auctionMin: 0.65,
@@ -132,6 +146,49 @@ export default function MathSheetContent({
       }
     : null
 
+  // Demolition / fire-rehab seed defaults. Subtype drives the math:
+  //   teardown / major_rebuild  → demo cost from permit + sqft-modeled
+  //                               new-construction over 14 months
+  //   fire_damage / storm_damage → permit Const_Cost is the rehab budget
+  //                               (no demo phase) over 6 months
+  //   unknown                    → no seed; rep enters values manually
+  // Auction clearance also tightens for demolition (60-72%) because
+  // investor-buyers price in their teardown / rehab cost.
+  const demoDefaults = isDemolition
+    ? (() => {
+        const subtype = homeowner.demolition?.subtype ?? "unknown"
+        const permitCost = homeowner.demolition?.constCost ?? 0
+        if (subtype === "teardown" || subtype === "major_rebuild") {
+          return {
+            auctionMin: 0.62,
+            auctionMax: 0.72,
+            demolitionCost: permitCost > 0 ? permitCost : 12_000,
+            constructionCost: estimateRebuildCost(homeowner.sqft, 200),
+            constructionMonths: 14,
+            constructionCarryPerMonth: 1500,
+          }
+        }
+        if (subtype === "fire_damage" || subtype === "storm_damage") {
+          return {
+            auctionMin: 0.55,
+            auctionMax: 0.65,
+            demolitionCost: 0,
+            constructionCost: permitCost > 0 ? permitCost : 75_000,
+            constructionMonths: 6,
+            constructionCarryPerMonth: 1500,
+          }
+        }
+        return {
+          auctionMin: 0.65,
+          auctionMax: 0.78,
+          demolitionCost: permitCost > 0 ? permitCost : 0,
+          constructionCost: 0,
+          constructionMonths: 0,
+          constructionCarryPerMonth: 1500,
+        }
+      })()
+    : null
+
   const [arv, setArv] = useState<number>(arvDefault)
   const [arvManuallyEdited, setArvManuallyEdited] = useState<boolean>(false)
   const [loanBalance, setLoanBalance] = useState<number>(homeowner.mortgageBalance ?? 0)
@@ -140,10 +197,10 @@ export default function MathSheetContent({
   const [investorMargin, setInvestorMargin] = useState<number>(seed.investorMargin)
   const [closingCosts, setClosingCosts] = useState<number>(seed.closingCosts)
   const [auctionMinPct, setAuctionMinPct] = useState<number>(
-    cvDefaults?.auctionMin ?? seed.auctionMinPct
+    cvDefaults?.auctionMin ?? demoDefaults?.auctionMin ?? seed.auctionMinPct
   )
   const [auctionMaxPct, setAuctionMaxPct] = useState<number>(
-    cvDefaults?.auctionMax ?? seed.auctionMaxPct
+    cvDefaults?.auctionMax ?? demoDefaults?.auctionMax ?? seed.auctionMaxPct
   )
   const [taxLienAmount, setTaxLienAmount] = useState<number>(0)
   const [monthlyFineAccrual, setMonthlyFineAccrual] = useState<number>(
@@ -151,6 +208,15 @@ export default function MathSheetContent({
   )
   const [repairMonths, setRepairMonths] = useState<number>(
     cvDefaults?.repairMonths ?? 0
+  )
+  const [demolitionCost, setDemolitionCost] = useState<number>(
+    demoDefaults?.demolitionCost ?? 0
+  )
+  const [constructionCost, setConstructionCost] = useState<number>(
+    demoDefaults?.constructionCost ?? 0
+  )
+  const [constructionMonths, setConstructionMonths] = useState<number>(
+    demoDefaults?.constructionMonths ?? 0
   )
 
   // Per-scenario framing (probate / code violation / FSBO / etc.) drives
@@ -202,6 +268,11 @@ export default function MathSheetContent({
     mlsCommissionPct: seed.mlsCommissionPct,
     mlsCarryingPerMonth: seed.mlsCarryingPerMonth,
     mlsCarryingMonths: seed.mlsCarryingMonths,
+    demolitionCost,
+    constructionCost,
+    constructionMonths,
+    constructionCarryPerMonth:
+      demoDefaults?.constructionCarryPerMonth ?? seed.constructionCarryPerMonth,
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
   const arvNeedsVerification = !hasPipelineArv && !arvManuallyEdited
@@ -330,6 +401,13 @@ export default function MathSheetContent({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
               <NumInput label="Monthly fines ($)" value={monthlyFineAccrual} step={100} onChange={setMonthlyFineAccrual} />
               <NumInput label="Cure months" value={repairMonths} step={1} onChange={setRepairMonths} />
+            </div>
+          )}
+          {isDemolition && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
+              <NumInput label="Demo cost ($)" value={demolitionCost} step={1000} onChange={setDemolitionCost} />
+              <NumInput label="Construction / rehab ($)" value={constructionCost} step={5000} onChange={setConstructionCost} />
+              <NumInput label="Construction months" value={constructionMonths} step={1} onChange={setConstructionMonths} />
             </div>
           )}
           <div className="mt-2 text-[10px] text-white/35 leading-[1.5]">
@@ -501,6 +579,8 @@ export default function MathSheetContent({
                 ? fmt(out.taxSale?.netToHomeowner ?? 0)
                 : scenarioCfg.scenario === "code_violation"
                 ? fmt(out.selfRemediate?.netToHomeowner ?? 0)
+                : scenarioCfg.scenario === "demolition"
+                ? `− ${fmt(out.demoRoute?.totalOutOfPocket ?? 0)}`
                 : scenarioCfg.path1.valueText
             }
             sub={scenarioCfg.path1.sub}
@@ -665,6 +745,66 @@ export default function MathSheetContent({
               violations — the cure has to happen <strong>before</strong> the sale closes.
               That&apos;s why &quot;list as-is on MLS&quot; isn&apos;t a real path here, and
               why most code-violation properties exit through wholesale or auction.
+            </p>
+          </section>
+        )}
+
+        {/* Demo / fire-rehab walkthrough — demolition scenario only. The
+            owner has paid the city for a permit and committed to a
+            costly path: tear down + rebuild OR rehab a damaged structure.
+            We model the total commitment so the auction-now alternative
+            is unmistakable. */}
+        {isDemolition && (
+          <section className="mt-8">
+            <h2 className="text-[16px] font-semibold tracking-tight">
+              What &quot;stay the course&quot; actually costs
+            </h2>
+            <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
+              The permit is the commitment to spend.
+              {homeowner.demolition?.subtype === "fire_damage" ||
+              homeowner.demolition?.subtype === "storm_damage" ? (
+                <> Rehabbing a damaged structure means paying for the work + carrying the property while it sits unfinished.</>
+              ) : (
+                <> Tearing down means demo cost + new construction + months of carry before the property has any cash value to you again.</>
+              )}
+            </p>
+            <table className="mt-3 w-full text-[13px] border border-neutral-200">
+              <tbody>
+                {out.demoRoute.demolitionCost > 0 && (
+                  <Row
+                    label="− Demolition cost (permit)"
+                    value={fmtSigned(-out.demoRoute.demolitionCost)}
+                  />
+                )}
+                {out.demoRoute.constructionCost > 0 && (
+                  <Row
+                    label={
+                      homeowner.demolition?.subtype === "fire_damage" ||
+                      homeowner.demolition?.subtype === "storm_damage"
+                        ? "− Rehab cost"
+                        : "− New construction (sqft × $200/sqft baseline)"
+                    }
+                    value={fmtSigned(-out.demoRoute.constructionCost)}
+                  />
+                )}
+                {out.demoRoute.carryingCost > 0 && (
+                  <Row
+                    label={`− Carrying costs (${out.demoRoute.constructionMonths} mo × ${fmt(out.demoRoute.constructionCarryPerMonth)}/mo)`}
+                    value={fmtSigned(-out.demoRoute.carryingCost)}
+                  />
+                )}
+                <Row
+                  label="Total commitment before any cash returns"
+                  value={`− ${fmt(out.demoRoute.totalOutOfPocket)}`}
+                  bold
+                  negative
+                />
+              </tbody>
+            </table>
+            <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
+              End-state property value isn&apos;t included — it depends on what gets built and the
+              market when work finishes. The {fmt(out.demoRoute.totalOutOfPocket)} above is just the
+              out-of-pocket / financed commitment, before you&apos;ve sold anything.
             </p>
           </section>
         )}

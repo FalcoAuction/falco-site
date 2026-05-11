@@ -7,6 +7,7 @@ import MathSheetContent, {
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 import { type Scenario } from "@/app/admin/math-sheet/[id]/scenario-config"
 import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
+import { extractDemolitionData } from "@/app/admin/math-sheet/[id]/demolition-data"
 import { computePropertyValueConsensus } from "@/lib/property-value-consensus"
 
 export const dynamic = "force-dynamic"
@@ -74,6 +75,8 @@ export default async function DialerMathSheetPage({
   // for the multi-source ARV consensus. Single fetch for both purposes —
   // previously only fetched on CV leads.
   let codeViolation: ReturnType<typeof extractCodeViolationData> | null = null
+  let demolition: ReturnType<typeof extractDemolitionData> | null = null
+  let sqft: number | null = null
   let consensusArv: number | null = null
   let consensusSourceLabel: string | null = null
   if (supabaseAdmin) {
@@ -83,7 +86,7 @@ export default async function DialerMathSheetPage({
         const { data: hr } = await supabaseAdmin
           .from("homeowner_requests")
           .select(
-            "raw_payload, admin_notes, property_value, property_value_source, last_sale_date, phone_metadata"
+            "raw_payload, admin_notes, property_value, property_value_source, last_sale_date, phone_metadata, sqft"
           )
           .eq("pipeline_lead_key", sourceKey)
           .eq("source", "bot")
@@ -95,6 +98,13 @@ export default async function DialerMathSheetPage({
               (hr.admin_notes as string | null) ?? null,
             )
           }
+          if ((lead.distressType || "").toUpperCase() === "DEMOLITION") {
+            demolition = extractDemolitionData(
+              hr.raw_payload,
+              (hr.admin_notes as string | null) ?? null,
+            )
+          }
+          sqft = (hr.sqft as number | null) ?? null
           // Multi-source ARV consensus (assessor + last-sale-appreciated +
           // BatchData + HMDA cross-checked). Falls back to raw column when
           // no defensible sources are present.
@@ -131,6 +141,8 @@ export default async function DialerMathSheetPage({
     propertyValueSource: consensusSourceLabel ?? (avmMid ? "AVM" : null),
     distressType: lead.distressType ?? null,
     codeViolation,
+    demolition,
+    sqft,
     trusteeSaleStatus:
       (lead as unknown as { trusteeSaleStatus?: HomeownerSnapshot["trusteeSaleStatus"] })
         .trusteeSaleStatus ?? null,
