@@ -291,9 +291,30 @@ export default function MathSheetContent({
       {/* Print-only styles */}
       <style>{`
         @media print {
+          @page { margin: 0.5in; size: letter; }
           .no-print { display: none !important; }
           .print-page { padding: 0 !important; max-width: 100% !important; }
           body { background: white !important; }
+          /* Tighter densities for print so the sheet fits 2 pages
+             (one piece of paper, double-sided). */
+          .print-page section { margin-top: 16px !important; }
+          .print-page header { padding-bottom: 12px !important; }
+          .print-page footer { margin-top: 16px !important; padding-top: 12px !important; }
+          .print-page table { font-size: 11px !important; }
+          .print-page th, .print-page td { padding: 4px 6px !important; }
+          .print-page h2 { font-size: 14px !important; margin-bottom: 4px !important; }
+          .print-page .text-\\[28px\\], .print-page .md\\:text-\\[28px\\] { font-size: 20px !important; line-height: 1.2 !important; }
+          .print-page .text-\\[22px\\], .print-page .md\\:text-\\[22px\\] { font-size: 16px !important; line-height: 1.2 !important; }
+          .print-page .py-10, .print-page .md\\:py-14 { padding-top: 8px !important; padding-bottom: 8px !important; }
+          .print-page .p-6, .print-page .md\\:p-8 { padding: 14px !important; }
+          /* Keep walkthroughs from splitting mid-table */
+          .print-page table { page-break-inside: avoid; }
+          .print-page section { page-break-inside: avoid; }
+          /* Force a deliberate break before methodology so the
+             contact card always lands at the bottom of page 2,
+             not mid-walkthrough. */
+          .print-contact-block { page-break-before: avoid; page-break-inside: avoid; }
+          .print-methodology { page-break-before: avoid; }
         }
         /* SHARE-NARROW MODE
          * Used by the inline-render share flow on lead-detail. iOS Safari
@@ -1017,8 +1038,35 @@ export default function MathSheetContent({
           </p>
         </section>
 
+        {/* Contact block — prominent so the homeowner has a clear way
+            to reach back, even if Patrick didn't hand them a card. */}
+        <section className="print-contact-block mt-8 rounded-xl border-2 border-emerald-600 bg-emerald-50 p-5">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-800 font-bold">
+            How to reach me
+          </div>
+          <div className="mt-2 text-[18px] font-semibold text-neutral-900 leading-tight">
+            Patrick Yuri Armour
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px] text-neutral-800">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500 font-semibold">Phone / text</div>
+              <div className="mt-0.5 font-semibold">601-213-8868</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500 font-semibold">Email</div>
+              <div className="mt-0.5">falco@falco.llc</div>
+              <div className="text-neutral-600">yuriarmour@gmail.com</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500 font-semibold">Website</div>
+              <div className="mt-0.5">falco.llc</div>
+              <div className="text-neutral-600">Nashville, TN</div>
+            </div>
+          </div>
+        </section>
+
         {/* Footer */}
-        <footer className="mt-10 pt-5 border-t border-neutral-200 text-[10px] text-neutral-500 leading-[1.6]">
+        <footer className="print-methodology mt-6 pt-4 border-t border-neutral-200 text-[10px] text-neutral-500 leading-[1.6]">
           <div className="font-semibold text-neutral-700 uppercase tracking-[0.18em] mb-2">
             Methodology &amp; sources
           </div>
@@ -1029,8 +1077,8 @@ export default function MathSheetContent({
             <li>• Numbers are estimates based on the inputs above. Final auction outcome depends on market conditions, buyer turnout, and property condition.</li>
             <li>• Full sourcing for industry assumptions: <span className="text-emerald-700">falco.llc/manifesto#sources</span></li>
           </ul>
-          <div className="mt-4 flex items-center justify-between text-[10px] text-neutral-400">
-            <div>FALCO · Tennessee · falco@falco.llc</div>
+          <div className="mt-3 flex items-center justify-between text-[10px] text-neutral-400">
+            <div>FALCO · Tennessee · Patrick Yuri Armour · 601-213-8868</div>
             <div>Prepared {new Date().toLocaleString()}</div>
           </div>
         </footer>
