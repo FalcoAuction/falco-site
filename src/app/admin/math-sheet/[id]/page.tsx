@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 import MathSheetContent, { type HomeownerSnapshot } from "./math-sheet-content"
 import { type Scenario } from "./scenario-config"
 import { extractCodeViolationData } from "./code-violation-data"
+import { extractDemolitionData } from "./demolition-data"
 import { computePropertyValueConsensus } from "@/lib/property-value-consensus"
 
 export const dynamic = "force-dynamic"
@@ -91,6 +92,18 @@ export default async function MathSheetPage({
         return null
       }
     })(),
+    demolition: (() => {
+      try {
+        return extractDemolitionData(
+          data.raw_payload,
+          (data.admin_notes as string | null) ?? null,
+        )
+      } catch (e) {
+        console.error("extractDemolitionData failed for", id, e)
+        return null
+      }
+    })(),
+    sqft: (data.sqft as number | null) ?? null,
   }
 
   return (

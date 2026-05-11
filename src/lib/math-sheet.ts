@@ -67,6 +67,19 @@ export type MathInputs = {
    *  re-inspection). Used to compute fines accrued during the cure
    *  period. 0 elsewhere; default 3 for code_violation. */
   repairMonths: number
+  /** Demolition / fire-rehab "stay the course" path inputs. All 0 by
+   *  default; populated by the math sheet renderer when scenario is
+   *  "demolition" (driven by extractDemolitionData). */
+  demolitionCost: number
+  /** New construction cost (teardown subtype) OR rehab cost (fire /
+   *  storm subtype). For teardown, defaults to sqft × $200/sqft.
+   *  For fire/storm, comes from the permit's Const_Cost directly. */
+  constructionCost: number
+  /** Modeled months of construction / rehab. */
+  constructionMonths: number
+  /** Per-month carrying cost during construction (taxes, insurance,
+   *  mortgage if any, lawn). Default $1,500/mo same as MLS carry. */
+  constructionCarryPerMonth: number
 }
 
 /**
@@ -138,6 +151,13 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     // when scenarioCfg.scenario === "code_violation".
     monthlyFineAccrual: 0,
     repairMonths: 0,
+    // Demolition route defaults to 0 (no-op for non-demo scenarios). The
+    // renderer seeds non-zero defaults when scenarioCfg.scenario ===
+    // "demolition" (using Const_Cost from the permit + sqft × $200/sqft).
+    demolitionCost: 0,
+    constructionCost: 0,
+    constructionMonths: 0,
+    constructionCarryPerMonth: 1500,
   }
 }
 
@@ -162,6 +182,10 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   mlsCarryingMonths: 3,
   monthlyFineAccrual: 0,
   repairMonths: 0,
+  demolitionCost: 0,
+  constructionCost: 0,
+  constructionMonths: 0,
+  constructionCarryPerMonth: 1500,
 }
 
 /** Three possible wholesaler outcomes for a given property. */
@@ -237,6 +261,27 @@ export type SelfRemediateScenario = {
   netToHomeowner: number
 }
 
+/** Demolition / fire-rehab "stay the course" path. Sums the permit's
+ *  stated cost + (for teardown subtype) modeled new-build cost +
+ *  carrying cost over the construction window. End-state value is NOT
+ *  computed — depends on what's built and the market when work
+ *  finishes; the headline is the out-of-pocket commitment. */
+export type DemoRouteScenario = {
+  /** Permit-stated demo cost. 0 for fire/storm rehab subtypes. */
+  demolitionCost: number
+  /** New construction cost (teardown subtype) OR rehab cost (fire /
+   *  storm subtype). */
+  constructionCost: number
+  /** Months of construction / rehab modeled. */
+  constructionMonths: number
+  /** Per-month carrying cost during construction. */
+  constructionCarryPerMonth: number
+  /** Total carrying cost = months × per-month. */
+  carryingCost: number
+  /** Total commitment = demo + construction + carrying. */
+  totalOutOfPocket: number
+}
+
 /** Tax sale path — what happens if the homeowner does nothing and the
  *  property goes to chancery court tax sale. TN-specific math. */
 export type TaxSaleScenario = {
@@ -306,6 +351,9 @@ export type MathOutput = {
   /** Modeled self-remediate-then-sell outcome. Always computed but
    *  only RENDERED in code_violation scenario as Path 1. */
   selfRemediate: SelfRemediateScenario
+  /** Demolition / fire-rehab "stay the course" outcome. Always computed
+   *  but only RENDERED in demolition scenario as Path 1. */
+  demoRoute: DemoRouteScenario
   /** MLS path — present in every output but only RENDERED on scenarios
    *  where the agent listing is the homeowner's real default option
    *  (probate, FSBO). */
@@ -556,6 +604,21 @@ export function computeMath(inputs: MathInputs): MathOutput {
       repairMonths: inputs.repairMonths,
       netToHomeowner: srNet,
     },
+    demoRoute: ((): DemoRouteScenario => {
+      const demolitionCost = Math.max(0, inputs.demolitionCost || 0)
+      const constructionCost = Math.max(0, inputs.constructionCost || 0)
+      const constructionMonths = Math.max(0, inputs.constructionMonths || 0)
+      const carry = Math.max(0, inputs.constructionCarryPerMonth || 0)
+      const carryingCost = constructionMonths * carry
+      return {
+        demolitionCost,
+        constructionCost,
+        constructionMonths,
+        constructionCarryPerMonth: carry,
+        carryingCost,
+        totalOutOfPocket: demolitionCost + constructionCost + carryingCost,
+      }
+    })(),
     spreadEstimate: {
       midpointGain: auctionMidpointNet - realisticNet,
       bestCaseGain: high.netToHomeowner - realisticNet,

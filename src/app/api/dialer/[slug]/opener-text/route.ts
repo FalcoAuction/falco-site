@@ -18,8 +18,13 @@ import { defaultInputsFor, computeMath, fmt } from "@/lib/math-sheet"
 import {
   foreclosureSmsBody,
   codeViolationSmsBody,
+  demolitionSmsBody,
+  probateSmsBody,
+  bankruptcySmsBody,
+  taxLienSmsBody,
 } from "@/lib/foreclosure-language"
 import { extractCodeViolationData } from "@/app/admin/math-sheet/[id]/code-violation-data"
+import { extractDemolitionData } from "@/app/admin/math-sheet/[id]/demolition-data"
 import { computePropertyValueConsensus } from "@/lib/property-value-consensus"
 
 export const dynamic = "force-dynamic"
@@ -146,6 +151,10 @@ export async function GET(
   const distressType = (inventory?.distressType || "").toUpperCase()
   const isFSBO = distressType === "FSBO"
   const isCodeViolation = distressType === "CODE_VIOLATION"
+  const isDemolition = distressType === "DEMOLITION"
+  const isProbate = distressType === "PROBATE"
+  const isBankruptcy = distressType === "BANKRUPTCY"
+  const isTaxLien = distressType === "TAX_LIEN"
   const isUnderwater = arv > 0 && payoff > arv * 0.9
 
   // Phone number to dial (e.g. +16155551212 for sms: link)
@@ -186,6 +195,18 @@ export async function GET(
   }
   const cvViolationCount = codeViolation?.violationCount ?? 0
 
+  // Demolition specifics — same pattern as CV. Powers SMS subtype
+  // selection (teardown/fire/storm) and exposes Const_Cost so the
+  // share-button capture flow can show the owner's real commitment.
+  let demolition: ReturnType<typeof extractDemolitionData> | null = null
+  if (isDemolition && hr) {
+    try {
+      demolition = extractDemolitionData(hr.raw_payload, hr.admin_notes)
+    } catch {
+      demolition = null
+    }
+  }
+
   // ─── Variant selection ───────────────────────────────────────────────
   // Brutal short. Math sheet attached as IMAGE (Patrick adds from camera
   // roll after opener-png download). The text just sets the context.
@@ -202,6 +223,30 @@ export async function GET(
     // "FALCO · LIABILITY OPTIONS" framing so the homeowner sees the
     // same story in the SMS as the attached image.
     text = codeViolationSmsBody(streetOnly, cvViolationCount)
+  } else if (isDemolition) {
+    // Demolition / fire-damage rehab: owner has paid the city for a
+    // permit and committed to demo or rehab. Pitch is "capture the
+    // standing-structure value before you spend $X on demo or rehab."
+    // Subtype selects teardown vs fire vs storm copy.
+    text = demolitionSmsBody(
+      demolition?.subtype ?? "unknown",
+      streetOnly,
+      demolition?.constCost ?? null,
+    )
+  } else if (isProbate) {
+    // Probate: addressed to executor / heir. Tone is respectful,
+    // pitch is attorney-friendly 30-day close vs MLS bleeding the
+    // estate every month it sits.
+    text = probateSmsBody(streetOnly)
+  } else if (isBankruptcy) {
+    // Bankruptcy: assume pre-petition (debtor still controls). Pitch
+    // is sell before filing to capture proceeds above the $7,500 TN
+    // homestead exemption. Rep adapts in conversation if § 363.
+    text = bankruptcySmsBody(streetOnly)
+  } else if (isTaxLien) {
+    // Tax lien: lien handled at close, clean deed, sale fits before
+    // the next tax sale date.
+    text = taxLienSmsBody(streetOnly)
   } else if (isUnderwater) {
     // Underwater: no math image (can't compute accurately). Purpose-hint:
     // even if the payoff is real, we work to get them walking away with
@@ -229,11 +274,20 @@ export async function GET(
       ? "fsbo"
       : isCodeViolation
       ? "code_violation"
+      : isDemolition
+      ? "demolition"
+      : isProbate
+      ? "probate"
+      : isBankruptcy
+      ? "bankruptcy"
+      : isTaxLien
+      ? "tax_lien"
       : isUnderwater
       ? "underwater"
       : "distressed",
     phoneOnFile: phoneRaw || null,
     codeViolation,
+    demolition,
     // Multi-source ARV consensus for the share-button capture flow.
     // lead-detail's captureSnapshot uses propertyValueConsensus to
     // override the raw inventory AVM so the inline math sheet renders

@@ -16,6 +16,7 @@ const DISTRESS_LABELS: Record<string, string> = {
   BANKRUPTCY: "Bankruptcy",
   LIS_PENDENS: "Lis Pendens",
   PREFORECLOSURE: "Pre-foreclosure",
+  DEMOLITION: "Demolition / Rehab",
 }
 
 export const dynamic = "force-dynamic"
@@ -369,7 +370,7 @@ export default async function DialerQueuePage({
             const county = normalizeCounty(lead.county)
             const countyLabel = county.replace(/\b\w/g, (m) => m.toUpperCase())
             return (
-              <li key={lead.slug}>
+              <li key={lead.slug} data-lead-slug={lead.slug}>
                 <Link
                   href={`/dialer/${lead.slug}`}
                   className="block hover:bg-white/[0.04] transition-colors"
