@@ -44,15 +44,17 @@ export function classifySaleUrgency(daysToSale: number | null): SaleUrgency {
   return "far"
 }
 
-// No em dashes anywhere in SMS bodies. They read as AI-generated and
-// trash the credibility of a cold outreach. Periods, commas, or split
-// sentences instead.
+// VOICE — calm, helpful, neighbor-tone. Open the door for a
+// conversation. Don't lead with the threat (no "Bank takes..."),
+// don't weaponize the date or dollar amount, don't ask for immediate
+// commitment.
 //
-// "No cost to you" is FALCO's primary differentiator vs wholesalers
-// (30-45% spread), agents (6% commission), and attorneys (hourly).
-// Every body foregrounds it; never bury it in a disqualifier list.
-
-const SIGNATURE = "Patrick"
+// PATTERN: "Hi, Patrick with FALCO. Saw [street] [neutral context].
+// I help homeowners in this spot [outcome] at no cost. Around if
+// you'd want to talk. No pressure."
+//
+// No em dashes (AI tell). The "no cost" line is woven into the
+// offer, not foregrounded as a flag.
 
 /**
  * Full SMS body for foreclosure leads — multi-line, no greeting,
@@ -64,22 +66,17 @@ export function foreclosureSmsBody(
   streetOnly: string,
 ): string {
   const urgency = classifySaleUrgency(daysToSale)
-  const dts = daysToSale ?? 0
   switch (urgency) {
     case "far":
     case "comfortable":
-      return `Bank takes ${streetOnly} in ${dts} days. Whatever equity you have goes with it. We can run a marketed auction so it stays in your hands. Costs $0. Worth 10 minutes? ${SIGNATURE}`
     case "tight":
     case "urgent":
-      return `Bank takes ${streetOnly} in ${dts} days. Whatever equity you have goes with it. We can postpone and run a marketed auction so it stays in your hands. Costs $0. Worth 10 minutes? ${SIGNATURE}`
     case "critical":
-      return dts === 0
-        ? `Bank takes ${streetOnly} TODAY. Emergency postponement plus auction could still save the equity. Costs $0. Call me? ${SIGNATURE}`
-        : `Bank takes ${streetOnly} in ${dts} days. Emergency postponement plus auction could still save the equity. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+      return `Hi, Patrick with FALCO. Saw ${streetOnly} on the trustee docket. I help homeowners in this spot keep their options open at no cost. Around if you'd want to talk through what's possible. No pressure.`
     case "past":
-      return `Bank took ${streetOnly} at the trustee sale. If there's redemption time or another sale coming, we can walk you through what's left. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+      return `Hi, Patrick with FALCO. Saw ${streetOnly} on the trustee docket. If there's still redemption time or another sale coming, I help homeowners in this spot look at what's left. No cost. Around if you'd want to talk.`
     case "unscheduled":
-      return `${streetOnly} is heading to a trustee sale. Best window to act is before it gets scheduled. Marketed auction keeps the equity in your hands. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+      return `Hi, Patrick with FALCO. Saw ${streetOnly} heading toward a trustee sale. I help homeowners in this spot keep their options open at no cost. Around if you'd want to talk through what's possible. No pressure.`
   }
 }
 
@@ -173,33 +170,20 @@ export type DemolitionSubtype =
 export function demolitionSmsBody(
   subtype: DemolitionSubtype,
   streetOnly: string,
-  constCost: number | null,
+  _constCost: number | null,
 ): string {
-  const cost = constCost && constCost > 0 ? formatCostShort(constCost) : null
-
+  void _constCost
   switch (subtype) {
     case "teardown":
-    case "major_rebuild": {
-      const threat = cost
-        ? `Tearing down ${streetOnly} costs you ${cost} plus months of carry.`
-        : `Tearing down ${streetOnly} costs you tens of thousands plus months of carry.`
-      return `${threat} Selling it as-is right now puts cash in your hand instead, buyer handles the demo. Costs $0. Worth 10 minutes? ${SIGNATURE}`
-    }
-    case "fire_damage": {
-      const threat = cost
-        ? `Fire damage rehab on ${streetOnly} runs ${cost} plus months of carry.`
-        : `Fire damage rehab on ${streetOnly} runs into six figures plus months of carry.`
-      return `${threat} Investor buyers pay cash for it as-is, no repair bills. Costs $0. Worth 10 minutes? ${SIGNATURE}`
-    }
-    case "storm_damage": {
-      const threat = cost
-        ? `Storm damage rehab on ${streetOnly} runs ${cost} plus months of carry.`
-        : `Storm damage rehab on ${streetOnly} eats months of carry and a real bill.`
-      return `${threat} Investor buyers pay cash for it as-is and take on the rebuild. Costs $0. Worth 10 minutes? ${SIGNATURE}`
-    }
+    case "major_rebuild":
+      return `Hi, Patrick with FALCO. Saw the demo permit on ${streetOnly}. I help homeowners in this spot see if selling as-is could beat the demo path. No cost to talk through it. Around if you'd want to chat. No pressure.`
+    case "fire_damage":
+      return `Hi, Patrick with FALCO. Saw the fire damage permit on ${streetOnly}, sorry you're dealing with that. I help homeowners find buyers who'd take the rebuild themselves. No cost to talk through it. Around if you'd want to chat. No pressure.`
+    case "storm_damage":
+      return `Hi, Patrick with FALCO. Saw the storm damage permit on ${streetOnly}. I help homeowners find buyers who'd take the rebuild themselves. No cost to talk through it. Around if you'd want to chat. No pressure.`
     case "unknown":
     default:
-      return `Saw a recent permit on ${streetOnly}. If selling as-is beats the rebuild, we can run a marketed auction with no repair bills and no carrying costs. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+      return `Hi, Patrick with FALCO. Saw a recent permit on ${streetOnly}. If you'd ever want to look at whether selling as-is beats the rebuild path, I help homeowners think through it at no cost. No pressure.`
   }
 }
 
@@ -216,7 +200,7 @@ function formatCostShort(n: number): string {
  * probate-court timelines.
  */
 export function probateSmsBody(streetOnly: string): string {
-  return `MLS commission on ${streetOnly} would eat 6% of the heirs' share, plus 60 to 120 days of carry. Marketed auction is attorney-friendly, closes in 30 days, no commission. Costs the estate $0. Worth 10 minutes? ${SIGNATURE}`
+  return `Hi, Patrick with FALCO. Saw ${streetOnly} is going through probate. I help families and executors look at sale paths that don't eat the heirs' share. No cost to talk through what's possible. Around if you'd want to chat. No pressure.`
 }
 
 /**
@@ -226,7 +210,7 @@ export function probateSmsBody(streetOnly: string): string {
  * adapted in conversation.
  */
 export function bankruptcySmsBody(streetOnly: string): string {
-  return `File BK on ${streetOnly} and the trustee takes everything above the $7,500 TN homestead exemption. Sell before you file and you keep all of it. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+  return `Hi, Patrick with FALCO. Saw ${streetOnly} flagged in a pre-petition window. I help homeowners look at options before the trustee gets involved. No cost to talk it through. Around if you'd want to chat. No pressure.`
 }
 
 /**
@@ -235,16 +219,13 @@ export function bankruptcySmsBody(streetOnly: string): string {
  * close, clean title, no out-of-pocket lien resolution.
  */
 export function taxLienSmsBody(streetOnly: string): string {
-  return `Tax lien on ${streetOnly} with the chancery court sale clock running. We auction it and the title company pays the county at close, you sign a clean deed. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+  return `Hi, Patrick with FALCO. Saw the tax lien on ${streetOnly}. I help homeowners find sale paths that clear the lien at close, no out-of-pocket. No cost to talk it through. Around if you'd want to chat. No pressure.`
 }
 
 export function codeViolationSmsBody(
   streetOnly: string,
-  violationCount: number = 0,
+  _violationCount: number = 0,
 ): string {
-  const threat =
-    violationCount >= 2
-      ? `${violationCount} citations on ${streetOnly} and the fines accrue daily.`
-      : `Open code citations on ${streetOnly} and the fines accrue daily.`
-  return `${threat} Sell it as-is and the violations transfer to the buyer at closing. Equity stays in your pocket instead of the city's. Costs $0. Worth 10 minutes? ${SIGNATURE}`
+  void _violationCount
+  return `Hi, Patrick with FALCO. Saw some open code citations on ${streetOnly}. I help homeowners in this spot find paths that skip the repair bills and commissions, with the violations transferring to the buyer at close. No cost to talk it through. Around if you'd want to chat. No pressure.`
 }

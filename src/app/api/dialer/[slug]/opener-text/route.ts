@@ -173,9 +173,11 @@ export async function GET(
   // Avoid the unused-import linter noise:
   void fmt; void computeMath; void defaultInputsFor; void payoff; void arv
 
-  // greeting (first name) is consumed by the FSBO and underwater
-  // branches via a local `namePrefix` (period-separated, no em dash).
-  // Other distress variants don't currently personalize on first name.
+  // greeting (first name) currently unused — the calm-tone bodies
+  // open with "Hi, Patrick with FALCO. Saw [street]..." which doesn't
+  // address the homeowner by name on first touch. Kept derived so we
+  // can fold it back into the bodies later if needed.
+  void greeting
   const streetOnly = (() => {
     const m = address.match(/^[\d-]+\s+([^,]+)/)
     const raw = m ? m[1].trim() : address.split(",")[0]
@@ -215,10 +217,8 @@ export async function GET(
   let text: string
 
   if (isFSBO) {
-    // FSBO: no foreclosure framing. We help FSBO sellers keep what
-    // their listing is worth without giving it up to an agent.
-    const namePrefix = greeting ? `${greeting}. ` : ""
-    text = `${namePrefix}Saw ${streetOnly} listed FSBO. MLS commission would eat 6% of your number, plus 60 to 120 days of carry. Marketed auction closes in 30 days with no commission. Costs $0. Worth 10 minutes? Patrick`
+    // FSBO: calm, helpful tone. Door-opener, not a sales pitch.
+    text = `Hi, Patrick with FALCO. Saw ${streetOnly} listed FSBO. I help FSBO sellers look at auction paths that keep the 6% commission off their number. No cost to talk it through. Around if you'd want to chat. No pressure.`
   } else if (isCodeViolation) {
     // Code violation: NOT foreclosure language. Owner has an open
     // code-enforcement case w/ fines accruing — auction pitch is
@@ -251,12 +251,10 @@ export async function GET(
     // the next tax sale date.
     text = taxLienSmsBody(streetOnly)
   } else if (isUnderwater) {
-    // Underwater: public records show payoff at or above market. The
-    // pitch is that recorded balances run $30-80K stale, so the actual
-    // payoff is often well below market. Ask for the real payoff so we
-    // can run the math.
-    const namePrefix = greeting ? `${greeting}. ` : ""
-    text = `${namePrefix}Public records say you're underwater on ${streetOnly}, but recorded payoffs run $30-80K stale. There may still be money left for you. Costs $0 to run the real math. Text your actual payoff back? Patrick`
+    // Underwater: public records show payoff at or above market, but
+    // recorded balances run stale. Open the door for the real payoff
+    // without leading with shame or alarm.
+    text = `Hi, Patrick with FALCO. Public records on ${streetOnly} show a payoff close to market, though recorded balances often run a fair bit stale. If you'd ever want to look at the real math, send me your actual payoff and I'll run it. No cost. No pressure.`
   } else {
     // Distressed default — full multi-line body from foreclosureSmsBody.
     // No greeting prefix (the urgency hook leads cold), no separate
