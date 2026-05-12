@@ -19,7 +19,14 @@ export type DialerNextAction =
   | "drop"
   | "none"
 
-export type DialerChannel = "call" | "text" | "voicemail" | "email" | "note"
+export type DialerChannel =
+  | "call"
+  | "text"
+  | "voicemail"
+  | "email"
+  | "note"
+  | "door_knock"
+  | "flyer_left"
 
 export type DialerOutcome =
   | "connected"
@@ -147,6 +154,8 @@ export const CHANNEL_LABELS: Record<DialerChannel, string> = {
   voicemail: "Voicemail",
   email: "Email",
   note: "Note",
+  door_knock: "Door knock",
+  flyer_left: "Flyer / card left",
 }
 
 /** Friendly label + category for a raw distress_type value. Pure function, client-safe. */

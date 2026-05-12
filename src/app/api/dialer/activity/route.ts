@@ -7,7 +7,9 @@ import {
   type DialerNextAction,
 } from "@/lib/dialer-data"
 
-const CHANNELS: DialerChannel[] = ["call", "text", "voicemail", "email", "note"]
+const CHANNELS: DialerChannel[] = [
+  "call", "text", "voicemail", "email", "note", "door_knock", "flyer_left",
+]
 const OUTCOMES: DialerOutcome[] = [
   "connected",
   "voicemail_left",

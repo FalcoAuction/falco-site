@@ -83,7 +83,9 @@ const NEXT_ACTION_OPTIONS: DialerNextAction[] = [
   "none",
 ]
 
-const CHANNEL_OPTIONS: DialerChannel[] = ["call", "text", "voicemail", "email", "note"]
+const CHANNEL_OPTIONS: DialerChannel[] = [
+  "call", "text", "voicemail", "email", "note", "door_knock", "flyer_left",
+]
 const OUTCOME_OPTIONS: DialerOutcome[] = [
   "connected",
   "voicemail_left",
