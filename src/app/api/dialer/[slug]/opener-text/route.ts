@@ -217,8 +217,8 @@ export async function GET(
   let text: string
 
   if (isFSBO) {
-    // FSBO: calm, helpful tone. Door-opener, not a sales pitch.
-    text = `Hi, Patrick with FALCO. Saw ${streetOnly} listed FSBO. I help FSBO sellers look at auction paths that keep the 6% commission off their number. No cost to talk it through. Around if you'd want to chat. No pressure.`
+    // FSBO: calm, helpful, stake-first.
+    text = `Saw ${streetOnly} listed for sale by owner. FSBO listings often sit for months and most end up paying an agent commission anyway. I help FSBO sellers get to a defined sale day without the 6% commission. No cost to you. Text me if I can help. Patrick at FALCO.`
   } else if (isCodeViolation) {
     // Code violation: NOT foreclosure language. Owner has an open
     // code-enforcement case w/ fines accruing — auction pitch is
@@ -254,7 +254,7 @@ export async function GET(
     // Underwater: public records show payoff at or above market, but
     // recorded balances run stale. Open the door for the real payoff
     // without leading with shame or alarm.
-    text = `Hi, Patrick with FALCO. Public records on ${streetOnly} show a payoff close to market, though recorded balances often run a fair bit stale. If you'd ever want to look at the real math, send me your actual payoff and I'll run it. No cost. No pressure.`
+    text = `Public records show ${streetOnly} may be underwater on the loan. Recorded payoffs often run stale, and you may actually have money left. Reply with your real payoff and I will run the math. No cost to you. Patrick at FALCO.`
   } else {
     // Distressed default — full multi-line body from foreclosureSmsBody.
     // No greeting prefix (the urgency hook leads cold), no separate

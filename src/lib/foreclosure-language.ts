@@ -72,11 +72,11 @@ export function foreclosureSmsBody(
     case "tight":
     case "urgent":
     case "critical":
-      return `Hi, Patrick with FALCO. Saw ${streetOnly} on the trustee docket. I help homeowners in this spot keep their options open at no cost. Around if you'd want to talk through what's possible. No pressure.`
+      return `Saw ${streetOnly} on the foreclosure list. When the bank takes the house at the sale, you lose the house and any money in it above what you owe the bank. I help homeowners save that money before that happens. No cost to you. Text me if I can help. Patrick at FALCO.`
     case "past":
-      return `Hi, Patrick with FALCO. Saw ${streetOnly} on the trustee docket. If there's still redemption time or another sale coming, I help homeowners in this spot look at what's left. No cost. Around if you'd want to talk.`
+      return `Saw ${streetOnly} on the foreclosure list. If there's still redemption time or another sale coming, there may still be money to recover. I help homeowners in your spot at no cost. Text me if I can help. Patrick at FALCO.`
     case "unscheduled":
-      return `Hi, Patrick with FALCO. Saw ${streetOnly} heading toward a trustee sale. I help homeowners in this spot keep their options open at no cost. Around if you'd want to talk through what's possible. No pressure.`
+      return `Saw ${streetOnly} heading toward a foreclosure sale. When the bank takes the house at the sale, you lose the house and any money in it above what you owe the bank. I help homeowners save that money before that happens. No cost to you. Text me if I can help. Patrick at FALCO.`
   }
 }
 
@@ -176,14 +176,14 @@ export function demolitionSmsBody(
   switch (subtype) {
     case "teardown":
     case "major_rebuild":
-      return `Hi, Patrick with FALCO. Saw the demo permit on ${streetOnly}. I help homeowners in this spot see if selling as-is could beat the demo path. No cost to talk through it. Around if you'd want to chat. No pressure.`
+      return `Saw the demo permit on ${streetOnly}. Tearing the house down loses the value it has standing right now. I help homeowners sell it before the demo, so they walk away with cash. No cost to you. Text me if I can help. Patrick at FALCO.`
     case "fire_damage":
-      return `Hi, Patrick with FALCO. Saw the fire damage permit on ${streetOnly}, sorry you're dealing with that. I help homeowners find buyers who'd take the rebuild themselves. No cost to talk through it. Around if you'd want to chat. No pressure.`
+      return `Saw the fire damage permit on ${streetOnly}, sorry you are dealing with that. Rebuilding is expensive and takes months. I help homeowners sell the property as is, so they walk with cash. No cost to you. Text me if I can help. Patrick at FALCO.`
     case "storm_damage":
-      return `Hi, Patrick with FALCO. Saw the storm damage permit on ${streetOnly}. I help homeowners find buyers who'd take the rebuild themselves. No cost to talk through it. Around if you'd want to chat. No pressure.`
+      return `Saw the storm damage permit on ${streetOnly}. Rebuilding is expensive and takes months. I help homeowners sell the property as is, so the buyer takes on the rebuild. No cost to you. Text me if I can help. Patrick at FALCO.`
     case "unknown":
     default:
-      return `Hi, Patrick with FALCO. Saw a recent permit on ${streetOnly}. If you'd ever want to look at whether selling as-is beats the rebuild path, I help homeowners think through it at no cost. No pressure.`
+      return `Saw a recent permit on ${streetOnly}. Rebuilding takes months and real money. I help homeowners sell as is and walk with cash instead. No cost to you. Text me if I can help. Patrick at FALCO.`
   }
 }
 
@@ -200,7 +200,7 @@ function formatCostShort(n: number): string {
  * probate-court timelines.
  */
 export function probateSmsBody(streetOnly: string): string {
-  return `Hi, Patrick with FALCO. Saw ${streetOnly} is going through probate. I help families and executors look at sale paths that don't eat the heirs' share. No cost to talk through what's possible. Around if you'd want to chat. No pressure.`
+  return `Saw ${streetOnly} going through probate. Estates lose money every month the property sits, and a 6% MLS commission eats more. I help estates close faster without that commission. No cost to the estate. Text me if I can help. Patrick at FALCO.`
 }
 
 /**
@@ -210,7 +210,7 @@ export function probateSmsBody(streetOnly: string): string {
  * adapted in conversation.
  */
 export function bankruptcySmsBody(streetOnly: string): string {
-  return `Hi, Patrick with FALCO. Saw ${streetOnly} flagged in a pre-petition window. I help homeowners look at options before the trustee gets involved. No cost to talk it through. Around if you'd want to chat. No pressure.`
+  return `Saw ${streetOnly} flagged before a bankruptcy filing. Once you file, the trustee takes any money above the $7,500 TN exemption. I help homeowners sell first so they keep what is theirs. No cost to you. Text me if I can help. Patrick at FALCO.`
 }
 
 /**
@@ -219,7 +219,7 @@ export function bankruptcySmsBody(streetOnly: string): string {
  * close, clean title, no out-of-pocket lien resolution.
  */
 export function taxLienSmsBody(streetOnly: string): string {
-  return `Hi, Patrick with FALCO. Saw the tax lien on ${streetOnly}. I help homeowners find sale paths that clear the lien at close, no out-of-pocket. No cost to talk it through. Around if you'd want to chat. No pressure.`
+  return `Saw the tax lien on ${streetOnly}. Eventually the county forces a tax sale and the homeowner usually walks away with very little. I help homeowners sell first, with the lien paid at close. No cost to you. Text me if I can help. Patrick at FALCO.`
 }
 
 export function codeViolationSmsBody(
@@ -227,5 +227,5 @@ export function codeViolationSmsBody(
   _violationCount: number = 0,
 ): string {
   void _violationCount
-  return `Hi, Patrick with FALCO. Saw some open code citations on ${streetOnly}. I help homeowners in this spot find paths that skip the repair bills and commissions, with the violations transferring to the buyer at close. No cost to talk it through. Around if you'd want to chat. No pressure.`
+  return `Saw open code violations on ${streetOnly}. Citations stack up daily, and eventually the city forces a sale or you pay big repair bills. I help homeowners sell as is so the buyer takes on the citations. No cost to you. Text me if I can help. Patrick at FALCO.`
 }
