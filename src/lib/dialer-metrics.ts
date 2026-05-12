@@ -12,6 +12,8 @@ export type ChannelCounts = {
   voicemail: number
   email: number
   note: number
+  door_knock: number
+  flyer_left: number
 }
 
 export type OutcomeCounts = {
@@ -88,7 +90,7 @@ const EMPTY_WINDOW = (): ActivityWindow => ({
   rpcs: 0,
   bookings: 0,
   closedLost: 0,
-  byChannel: { call: 0, text: 0, voicemail: 0, email: 0, note: 0 },
+  byChannel: { call: 0, text: 0, voicemail: 0, email: 0, note: 0, door_knock: 0, flyer_left: 0 },
   byOutcome: {
     connected: 0,
     voicemail_left: 0,
