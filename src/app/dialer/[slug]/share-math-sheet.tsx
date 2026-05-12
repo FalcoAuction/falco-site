@@ -384,53 +384,90 @@ export function ShareMathSheet({
         Estimates from public records + standard market assumptions.
         Confirm payoff with your servicer before any decision.
       </div>
+
+      {/* Contact block — name + phone + emails so recipient has a
+          callback path without needing a business card. Emerald-
+          bordered to match the printable sheet's contact card. */}
       <div
         style={{
-          marginTop: 8,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 6,
-          fontSize: 10,
-          color: "#171717",
+          marginTop: 10,
+          padding: "8px 10px",
+          border: "1.5px solid #34d399",
+          borderRadius: 6,
+          background: "#ecfdf5",
         }}
       >
-        <div>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              fontWeight: 700,
-              color: "#737373",
-              textTransform: "uppercase",
-            }}
-          >
-            Website
-          </div>
-          <div style={{ marginTop: 1 }}>falco.llc</div>
+        <div
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.22em",
+            fontWeight: 700,
+            color: "#047857",
+            textTransform: "uppercase",
+          }}
+        >
+          How to reach me
         </div>
-        <div>
-          <div
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              fontWeight: 700,
-              color: "#737373",
-              textTransform: "uppercase",
-            }}
-          >
-            Email
-          </div>
-          <div style={{ marginTop: 1 }}>falco@falco.llc</div>
+        <div
+          style={{
+            marginTop: 3,
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#0f172a",
+            lineHeight: 1.2,
+          }}
+        >
+          Patrick Yuri Armour
         </div>
-      </div>
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 10,
-          color: "#525252",
-        }}
-      >
-        Based in Nashville, TN
+        <div
+          style={{
+            marginTop: 5,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 6,
+            fontSize: 10,
+            color: "#171717",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 8,
+                letterSpacing: "0.14em",
+                fontWeight: 700,
+                color: "#737373",
+                textTransform: "uppercase",
+              }}
+            >
+              Phone / text
+            </div>
+            <div style={{ marginTop: 1, fontWeight: 600 }}>601-213-8868</div>
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 8,
+                letterSpacing: "0.14em",
+                fontWeight: 700,
+                color: "#737373",
+                textTransform: "uppercase",
+              }}
+            >
+              Email
+            </div>
+            <div style={{ marginTop: 1 }}>falco@falco.llc</div>
+            <div style={{ color: "#525252" }}>yuriarmour@gmail.com</div>
+          </div>
+        </div>
+        <div
+          style={{
+            marginTop: 5,
+            fontSize: 9,
+            color: "#525252",
+          }}
+        >
+          falco.llc · Nashville, TN
+        </div>
       </div>
     </article>
   )
