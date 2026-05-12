@@ -39,6 +39,9 @@ const BOTS_TO_TRACK = [
   "middle_tn_skiptrace",
   "decision_engine",
   "auto_promoter",
+  // Docket-diff reaper — auto-flags foreclosure leads as cancelled
+  // when their notice stops appearing in our daily scrape.
+  "trustee_status_reaper",
 ] as const
 
 export type BotFreshness = {
