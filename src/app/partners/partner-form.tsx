@@ -148,7 +148,7 @@ export default function PartnerForm() {
               value={feeStructure}
               onChange={(e) => setFeeStructure(e.target.value)}
               className={inputCls}
-              placeholder="e.g. 8% buyer's premium, no seller commission"
+              placeholder="e.g. 10% buyer's premium, no seller commission"
             />
           </Field>
 

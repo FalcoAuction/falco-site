@@ -21,7 +21,7 @@ const ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "What does it cost me?",
-    a: "Zero dollars out of pocket. No listing fee, no upfront cost, no commission from your side. The auction partner is compensated by a standard 8% buyer's premium paid on top of the winning bid by the buyer. If the property doesn't sell, you don't owe anyone anything.",
+    a: "Zero dollars out of pocket. No listing fee, no upfront cost, no commission from your side. The auction partner is compensated by a standard 10% buyer's premium paid on top of the winning bid by the buyer. If the property doesn't sell, you don't owe anyone anything.",
   },
   {
     q: "How long does this take?",
@@ -29,7 +29,7 @@ const ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "Who are the buyers?",
-    a: "Cash buyers and active investors who have pre-registered for Tennessee inventory access. We notify them first when a new property lists. Standard 8% buyer's premium, clean title, pre-verified. The same model professional auction houses have used for decades.",
+    a: "Cash buyers and active investors who have pre-registered for Tennessee inventory access. We notify them first when a new property lists. Standard 10% buyer's premium, clean title, pre-verified. The same model professional auction houses have used for decades.",
   },
   {
     q: "How do I get started as a seller?",

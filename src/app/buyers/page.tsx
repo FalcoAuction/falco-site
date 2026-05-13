@@ -71,7 +71,7 @@ export default function BuyersLandingPage() {
             />
             <ValueCard
               label="Your deal"
-              value="8% buyer's premium"
+              value="10% buyer's premium"
               detail="Standard auction BP. No hidden fees. Clean title, pre-verified."
             />
           </div>
@@ -114,7 +114,7 @@ export default function BuyersLandingPage() {
             <StepCard
               num="03"
               title="You bid first"
-              body="Registered buyers get notified before any public listing. Standard 8% buyer's premium, clean title, auction-day close."
+              body="Registered buyers get notified before any public listing. Standard 10% buyer's premium, clean title, auction-day close."
             />
           </div>
         </div>
