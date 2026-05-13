@@ -3,7 +3,7 @@ import Link from "next/link"
 export const metadata = {
   title: "Why FALCO exists — Manifesto",
   description:
-    "Why we built FALCO instead of becoming another wholesaler. The math, the harm, the alternative.",
+    "Tennessee homeowners lose six figures of equity to foreclosure every week. Most of it doesn't have to. The math, the three paths, and the one that keeps the money in the homeowner's pocket.",
 }
 
 export default function ManifestoPage() {
@@ -40,41 +40,46 @@ export default function ManifestoPage() {
         <h1 className="mt-6 text-[42px] md:text-[68px] leading-[1.0] tracking-[-0.03em] font-semibold">
           Tennessee homeowners lose{" "}
           <span className="text-emerald-400">six figures of equity</span>{" "}
-          every week to people who do nothing for it.
+          to foreclosure every week. Most of it doesn't have to.
         </h1>
         <p className="mt-8 text-[16px] md:text-[20px] leading-[1.6] text-white/65">
-          That's why FALCO exists. The harm, the math, the alternative —
-          with sources, in Tennessee.
+          When a home heads toward the courthouse, the equity disappears in
+          one of three ways. FALCO is built to make sure none of them is
+          the default. The math, the paths, the alternative — with sources,
+          in Tennessee.
         </p>
       </section>
 
       {/* Body */}
       <section className="mx-auto max-w-3xl px-6 pb-24 md:px-10 md:pb-32 space-y-20 md:space-y-28">
 
-        {/* 01 — The setup */}
-        <Block n="01" title="The setup nobody talks about">
+        {/* 01 — Where the equity goes */}
+        <Block n="01" title="Where the equity goes">
           <p>
             A Tennessee homeowner falls behind on their mortgage. Divorce,
             job loss, medical bills — pick one.
           </p>
           <p>
-            Within 120 days the lender files a notice of substitution of
-            trustee. That filing is public record. By the next afternoon,
-            the homeowner's phone is ringing.
+            Within 120 days, the lender files a notice of substitution of
+            trustee. That filing is public record. The clock starts.
           </p>
           <p>
-            Every caller has the same offer.{" "}
-            <em className="text-white/85">
-              "We buy houses cash, as-is, close in seven days."
-            </em>
+            Over the next 6–12 weeks, the equity in their home walks out
+            the door one of three ways:
           </p>
+          <ul className="space-y-2.5 text-[15px] md:text-[17px] text-white/72 mt-3 list-disc pl-5 marker:text-emerald-400/60">
+            <li>The bank takes it at the trustee sale. Equity = $0.</li>
+            <li>A fast-cash buyer takes most of it under deadline pressure. Equity walks with the buyer.</li>
+            <li>No one shows up. The trustee sale runs by default. See path one.</li>
+          </ul>
           <p>
-            None of them are telling the homeowner what their house is
-            actually worth.
+            Two of those three are the default. The third — keeping the
+            equity intact while still hitting the lender's deadline — only
+            happens if someone builds the machinery for it.
           </p>
         </Block>
 
-        <PullQuote>The discount isn't a side effect. The discount IS the business model.</PullQuote>
+        <PullQuote>The equity loss isn't a side effect of the foreclosure process. It's how the process is engineered to work.</PullQuote>
 
         {/* 02 — THE MATH */}
         <Block n="02" title="The math">
@@ -96,9 +101,9 @@ export default function ManifestoPage() {
             tone="loss"
           />
           <StatCard
-            label="Wholesaler offer (typical)"
+            label="Fast-cash offer (typical)"
             value="~$24,000"
-            sub="Cash, fast, no questions. Built on the wholesale industry's standard 70% rule."
+            sub="Cash, fast, no questions. Built on the wholesale-industry 70% rule that most cash buyers use to price distressed property."
             tone="meh"
           />
           <StatCard
@@ -109,11 +114,12 @@ export default function ManifestoPage() {
           />
         </div>
 
-        {/* How the wholesaler gets to ~$24K */}
-        <Block n="02a" title="How a wholesaler arrives at $24,000">
+        {/* How the cash offer gets to ~$24K */}
+        <Block n="02a" title="How a fast-cash offer arrives at $24,000">
           <p className="text-white/55 text-[14px]">
-            They're not pulling it from thin air. The wholesale industry
-            has a published formula — the 70% rule
+            It's not arbitrary. The cash-buyer market — wholesalers, iBuyers,
+            "we buy houses" operators — prices distressed property using a
+            published formula called the 70% rule
             <Sup>2</Sup>:
           </p>
           <MathTable
@@ -121,8 +127,8 @@ export default function ManifestoPage() {
               { label: "After-repair value (ARV)", value: "$484,000" },
               { label: "× 70% (industry-standard MAO ceiling)", value: "$338,800" },
               { label: "− Estimated repairs (assumed)", value: "− $25,000" },
-              { label: "− Wholesaler assignment fee", value: "− $10,000" },
-              { label: "− Investor's required profit margin", value: "− $40,000" },
+              { label: "− Assignment fee / buyer spread", value: "− $10,000" },
+              { label: "− Required investor profit margin", value: "− $40,000" },
             ]}
             total={{ label: "Cash offer to seller", value: "$263,800" }}
             totalTone="meh"
@@ -130,15 +136,16 @@ export default function ManifestoPage() {
           <p>
             Subtract the $290,000 loan payoff and the homeowner is{" "}
             <Hl>−$26,200 underwater</Hl>. To make the cash offer "work,"
-            the wholesaler asks the homeowner to bring cash to closing —
-            or walks. Most homeowners take a slightly higher offer
-            (around <Hl>$314,000</Hl>) that nets them <Hl>~$24,000</Hl>{" "}
-            after the loan is paid.
+            the buyer asks the homeowner to bring cash to closing — or
+            walks. Most homeowners take a slightly higher offer (around{" "}
+            <Hl>$314,000</Hl>) that nets them <Hl>~$24,000</Hl> after the
+            loan is paid.
           </p>
           <p>
-            Either way, three of those line items — repairs, assignment
-            fee, investor margin — aren't services. They're discounts
-            taken before the homeowner sees a dollar.
+            That's the trade. Speed in exchange for a discount. The
+            discount is real — repairs, assignment fee, investor margin
+            aren't services rendered. They're the price of closing in
+            seven days instead of forty.
           </p>
         </Block>
 
@@ -172,10 +179,10 @@ export default function ManifestoPage() {
         </Block>
 
         <PullQuote>
-          The spread between the wholesaler's net and a marketed auction's
-          net — <Hl>$70,000 to $100,000</Hl> on this house — isn't earned.
-          It's the gap between what the wholesaler paid and what the home
-          was always worth.
+          The spread between a fast-cash offer and a marketed auction —{" "}
+          <Hl>$70,000 to $100,000</Hl> on this house — isn't a service
+          fee. It's the price of speed pricing, paid out of the
+          homeowner's equity instead of by the buyer.
         </PullQuote>
 
         {/* 02c — Same shape at every price point */}
@@ -199,15 +206,15 @@ export default function ManifestoPage() {
           <p>
             Roughly 35–45% of serious delinquencies escalate to a trustee
             sale filing. That's <Hl>~100 filings per week</Hl>, statewide.
-            If even half of those families take a wholesaler offer instead
+            If even half of those families take a fast-cash offer instead
             of a marketed sale, the conservative weekly equity transfer
             looks like this:
           </p>
         </Block>
 
         <div className="grid md:grid-cols-2 gap-4 -mt-10 md:-mt-16">
-          <BigStat label="Per week" value="~$1.5M" sub="of TN homeowner equity transferred to wholesalers" />
-          <BigStat label="Per year" value="~$78M" sub="not earned. Not added value. Just a discount on someone else's worst week." />
+          <BigStat label="Per week" value="~$1.5M" sub="of TN homeowner equity extracted via speed-pricing on distressed property" />
+          <BigStat label="Per year" value="~$78M" sub="paid out of homeowner pockets to close the speed-vs-market gap nobody told them existed." />
         </div>
 
         <Block n="02e" title="What that means per family">
@@ -221,42 +228,43 @@ export default function ManifestoPage() {
           </p>
         </Block>
 
-        {/* 02f — The cottage industry */}
-        <Block n="02f" title="And there's a whole cottage industry built on it">
+        {/* 02f — The machinery */}
+        <Block n="02f" title="The extraction machinery is well-oiled">
           <p>
             Nationally, an estimated <Hl>50,000 to 150,000</Hl> wholesale
             assignments happen each year. At an average <Hl>$10,000</Hl>{" "}
             assignment fee per deal<Sup>6</Sup>, that's roughly{" "}
             <Hl>$0.5–1.5 billion</Hl> in assignment fees alone — separate
-            from the much larger spread the end-buyer captures by buying
-            distressed.
+            from the much larger spread end-buyers capture on the
+            distressed-to-retail flip.
           </p>
           <p>
-            Surrounding that is an entire YouTube ecosystem of "real
-            estate gurus" selling $497 courses, $1,997 mentorships, and
-            $5,000 "mastermind" weekends to the next wave of people who
-            want in on the receiving end of those checks. The hook is
-            always the same: <em className="text-white/85">no money down,
-            no license required, just send a thousand mailers a week and
-            wait for someone desperate to call.</em>
+            That market funds an entire ecosystem of mailers, cold-call
+            scripts, courthouse-record subscriptions, and YouTube
+            "real estate guru" courses teaching the next wave of operators
+            how to buy distress at a discount. The pitch is always the
+            same: <em className="text-white/85">no money down, no license
+            required, just send a thousand mailers a week and wait for
+            someone desperate to call.</em>
           </p>
           <p>
-            They're not wrong about the mechanics. They're just leaving
-            out who pays.
+            The machinery works. It just works against the homeowner's
+            equity, and nobody on the buying side has any reason to
+            point that out.
           </p>
         </Block>
 
         {/* 03 — Why this works at all */}
-        <Block n="03" title="Why the wholesaler model works at all">
+        <Block n="03" title="Why the extraction model works at all">
           <p>It depends on three things.</p>
           <ThreeReasons />
           <p>FALCO breaks all three.</p>
           <ul className="space-y-2.5 text-[14px] md:text-[15px] text-white/65 mt-4 list-disc pl-5 marker:text-emerald-400/60">
-            <li>We monitor the public records every day. We know before the wholesaler call.</li>
-            <li>We show the homeowner the math, in writing, on the first call.</li>
+            <li>We monitor public records every day. We reach the homeowner before the equity decision gets locked in.</li>
+            <li>We show all three numbers in writing, on the first call — trustee sale, fast-cash offer, marketed auction.</li>
             <li>
               We route the home to a state-licensed Tennessee auction firm
-              that runs a real marketed sale.
+              that runs a real marketed sale on the lender's timeline.
             </li>
           </ul>
         </Block>
@@ -264,9 +272,9 @@ export default function ManifestoPage() {
         {/* 04 */}
         <Block n="04" title="Why we don't buy the house ourselves">
           <p>
-            Becoming another buyer would make us part of the problem.
-            Every dollar we'd profit on the spread is a dollar that should
-            have gone to the homeowner.
+            If we bought your house, our incentives would line up against
+            yours. Every dollar we'd profit on the spread is a dollar
+            that should have gone with the equity, into your pocket.
           </p>
           <p>
             FALCO is paid the way auction houses have been paid for two
@@ -275,7 +283,8 @@ export default function ManifestoPage() {
           </p>
           <p>
             We have no incentive to push the sale price down. We have
-            every incentive to push it up.
+            every incentive to push it up. Our paycheck is a percentage
+            of yours.
           </p>
         </Block>
 
@@ -283,17 +292,18 @@ export default function ManifestoPage() {
         <Block n="05" title="What we're not">
           <p>
             We're not going to call you the day after the notice files
-            offering you cash. We're not going to mail you a letter with
-            a handwritten font claiming we're a local family.
+            offering to buy your house. We're not going to mail you a
+            letter with a handwritten font claiming we're a local family.
           </p>
           <p>
-            We're not the courthouse foreclosure auction — that's the
-            thing we're trying to prevent.
+            We're not the courthouse foreclosure auction. That's the
+            mechanism that takes the equity. We're built around the
+            opposite outcome.
           </p>
           <p>
-            We're a Tennessee company that thinks an honest auction is
-            better than a predatory cash offer, and we built the machinery
-            to deliver one.
+            We're a Tennessee company that believes the equity in your
+            home is yours — and we built the machinery to keep it that
+            way when foreclosure is coming.
           </p>
         </Block>
 
@@ -660,7 +670,7 @@ function ExampleGrid() {
               Trustee sale
             </th>
             <th className="py-3 px-3 text-right text-[11px] uppercase tracking-[0.18em] text-white/55 font-semibold">
-              Wholesaler
+              Fast-cash offer
             </th>
             <th className="py-3 px-4 text-right text-[11px] uppercase tracking-[0.18em] text-emerald-300/85 font-semibold">
               Marketed auction
@@ -684,9 +694,10 @@ function ExampleGrid() {
         </tbody>
       </table>
       <div className="px-4 py-2.5 text-[11px] text-white/40 leading-[1.5] border-t border-white/[0.06]">
-        County medians from Redfin (Dec 2025)<Sup>1</Sup>. Wholesaler net derived from
-        the 70% rule formula<Sup>2</Sup>; marketed auction net assumes 80–88%
-        of retail less loan + closing.
+        County medians from Redfin (Dec 2025)<Sup>1</Sup>. Fast-cash offer net derived
+        from the 70% rule formula<Sup>2</Sup> the cash-buyer market uses to price
+        distressed property; marketed auction net assumes 80–88% of retail less loan
+        + closing.
       </div>
     </div>
   )
@@ -696,15 +707,15 @@ function ThreeReasons() {
   const items = [
     {
       h: "Information asymmetry",
-      b: "The homeowner doesn't know what their house would clear. The wholesaler does — that's the job.",
+      b: "The homeowner doesn't know what their house would actually clear at market. The cash buyer does — that's the job. The gap between those two numbers is the homeowner's equity.",
     },
     {
       h: "Time pressure",
-      b: "The trustee sale date is real. Once it passes, the equity is gone. A fast cash offer feels like the only option even when better ones exist.",
+      b: "The trustee sale date is real. Once it passes, the equity is gone. A fast cash offer feels like the only option even when a marketed sale could run on the same deadline.",
     },
     {
       h: "Missing alternative",
-      b: "The only people calling are wholesalers. Realtors don't proactively chase distress. Auction firms don't market to homeowners. Lenders certainly don't.",
+      b: "The only people calling are cash buyers. Realtors don't proactively chase distress. Auction firms don't market to homeowners. Lenders certainly don't.",
     },
   ]
   return (

@@ -78,7 +78,7 @@ const FORECLOSURE: ScenarioConfig = {
     tone: "loss",
   },
   wholesalerIntro:
-    "The wholesale industry talks about the published \"70% rule,\" but the homeowner cash offer usually lands below that so the wholesaler can capture spread. This is the practical offer math:",
+    "Cash buyers — wholesalers, iBuyers, \"we buy houses\" operators — use the published 70% rule to price distressed property, then offer below that to capture spread. This is the practical math behind a typical offer:",
   auctionIntro:
     "Same property. Different process: photos, advertising, a 30–60 day campaign, a defined sale day, and buyers competing openly on price.",
   methodologyPath1:
@@ -102,7 +102,7 @@ const PROBATE: ScenarioConfig = {
     tone: "meh",
   },
   wholesalerIntro:
-    "Wholesalers approach probate executors aggressively because the timeline pressure (close the estate, distribute to heirs) usually pulls a lower-than-market price. Here is the math behind their offer:",
+    "Cash buyers approach probate executors aggressively because the timeline pressure (close the estate, distribute to heirs) usually pulls a lower-than-market price. Here is the math behind a typical offer:",
   auctionIntro:
     "Marketed auction is attorney-friendly and probate-court-compatible: 30–45 day campaign, defined sale day, no showings, no commission deducted from the estate. The buyer pays a 10% premium on top of the hammer price.",
   methodologyPath1:
@@ -126,7 +126,7 @@ const CODE_VIOLATION: ScenarioConfig = {
     tone: "meh",
   },
   wholesalerIntro:
-    "Wholesalers target code-violation properties hard because the discount opportunity is steep. They deduct repair cost AND their margin from the offer. Math behind a typical cash offer:",
+    "Cash buyers target code-violation properties hard because the discount opportunity is steep. They deduct repair cost AND their margin from the offer. Math behind a typical cash offer:",
   auctionIntro:
     "Investor auction means buyers who specialize in rehab compete on price. Property sold as-is — open violations transfer with the deed and the buyer takes responsibility for cure post-close. Realistic clearance is 65–75% of post-repair ARV (lower than standard auction, because investors price in their repair budget). 30–45 day campaign with photos and aggressive investor-pool marketing.",
   methodologyPath1:
@@ -157,7 +157,7 @@ const BANKRUPTCY_PRE_PETITION: ScenarioConfig = {
     tone: "loss",
   },
   wholesalerIntro:
-    "Pre-petition wholesalers target debtors aggressively. Math behind a typical cash offer:",
+    "Pre-petition cash buyers target debtors aggressively because of the timeline pressure. Math behind a typical cash offer:",
   auctionIntro:
     "Pre-petition marketed auction means YOU control the sale. Full proceeds pass through to you minus loan payoff and closing — no trustee, no creditors at the table. 30–45 day campaign, defined sale day. After you receive funds, you can fund the BK plan or, with debt-counseling guidance, potentially avoid filing entirely.",
   methodologyPath1:
@@ -185,7 +185,7 @@ const BANKRUPTCY_363_SALE: ScenarioConfig = {
     tone: "meh",
   },
   wholesalerIntro:
-    "Wholesalers occasionally approach BK trustees with cash offers. Most trustees decline (fiduciary duty to maximize recovery), but the math is here for completeness:",
+    "Cash buyers occasionally approach BK trustees with offers. Most trustees decline (fiduciary duty to maximize recovery), but the math is here for completeness:",
   auctionIntro:
     "§ 363 marketed auction is the BK code's transparent-sale mechanism. Court-approved bidder procedures, 30–45 day exposure, defined sale day, no agent commission. Higher recovery to creditors and faster case closure.",
   methodologyPath1:
@@ -213,7 +213,7 @@ const FSBO: ScenarioConfig = {
     tone: "meh",
   },
   wholesalerIntro:
-    "FSBOs get heavy wholesaler outreach. The 70%-rule math behind a typical cash offer:",
+    "FSBOs get heavy outreach from cash buyers. The 70%-rule math behind a typical offer:",
   auctionIntro:
     "Marketed auction closes faster than MLS at competitive net. Buyer pays a 10% premium on top of the hammer price; you pay no seller commission. 30–45 day campaign, defined sale day, no contingencies.",
   methodologyPath1:
@@ -237,7 +237,7 @@ const TAX_LIEN: ScenarioConfig = {
     tone: "loss",
   },
   wholesalerIntro:
-    "Wholesalers target tax-distressed properties hard because the time pressure converts. They bake the lien payoff into their offer (and discount accordingly). The 70%-rule math:",
+    "Cash buyers target tax-distressed properties hard because the time pressure converts. They bake the lien payoff into the offer (and discount accordingly). The 70%-rule math:",
   auctionIntro:
     "Marketed auction handles the lien at close: the title company pays the county directly out of proceeds, you sign a clean deed, the buyer takes free-and-clear title. 30–45 day campaign, generally fits before the next tax sale date.",
   methodologyPath1:
@@ -262,7 +262,7 @@ const DEMOLITION: ScenarioConfig = {
     tone: "loss",
   },
   wholesalerIntro:
-    "Wholesalers approach demo / rehab properties aggressively because the time pressure converts. Math behind a typical cash offer:",
+    "Cash buyers approach demo / rehab properties aggressively because the time pressure converts. Math behind a typical cash offer:",
   auctionIntro:
     "Marketed auction sells the property AS-IS, before any demo or repair work. Investor-buyers specialize in teardown lots and fire/storm rehabs — they price in their own cost and compete on price. 30-day campaign with photos and aggressive investor-pool marketing. You walk with cash at close; buyer takes on the project.",
   methodologyPath1:

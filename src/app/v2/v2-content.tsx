@@ -126,18 +126,18 @@ export default function V2Content() {
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
               <h1 className="falco-scroll-reveal text-[34px] md:text-[72px] leading-[1.02] md:leading-[0.96] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
-                <span className="block">We route distressed Tennessee homes</span>
-                <span className="block text-emerald-400">to local auction companies.</span>
-                <span className="block text-white/45">Not to wholesalers.</span>
+                <span className="block">Six figures of equity vanish from Tennessee homes</span>
+                <span className="block text-emerald-400">every week of foreclosure.</span>
+                <span className="block text-white/45">We're built to keep that money in the homeowner's pocket.</span>
               </h1>
 
               <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
-                We find Tennessee homeowners before the trustee sale. We show them what
-                their home would actually clear at a marketed auction. Then we list it
-                with our auction partners. The equity goes home with{" "}
-                <span className="text-emerald-300/90 font-medium">the homeowner</span>.
-                <br />
-                <span className="text-white/45">Not a wholesaler.</span>
+                When a Tennessee home heads toward the courthouse, the equity can disappear three ways
+                — the bank takes it at the trustee sale, a fast-cash buyer takes most of it
+                under deadline pressure, or no one shows up at all. FALCO is the operator that
+                runs a fourth play: a state-licensed marketed auction on the lender's timeline.
+                The buyer pays an 8% premium.{" "}
+                <span className="text-emerald-300/90 font-medium">The homeowner keeps what's theirs.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
@@ -180,21 +180,22 @@ export default function V2Content() {
                   keeps it in their pocket.
                 </p>
                 <p className="falco-scroll-reveal mt-7 text-[17px] leading-[1.7] text-white/75">
-                  We try to reach them before the wholesaler call. We show them what
-                  their home would actually clear at a marketed auction. Then we list
-                  it with our auction partners and let the market set the price, not
-                  a flipper's margin.
+                  We reach the homeowner before the equity decision gets locked in. We show
+                  them what their home would actually clear at a marketed auction — alongside
+                  the trustee-sale outcome and what a fast-cash buyer would typically offer.
+                  Then we list with our state-licensed auction partners and let the open
+                  market set the price.
                 </p>
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
-                  We don't buy your house. We don't take a commission. The buyer pays a
-                  standard 8% auction premium and you keep the equity that's yours.
+                  We don't buy your house. We don't take a commission from the seller. The
+                  buyer pays a standard 8% auction premium and the equity goes home with you.
                 </p>
                 <p className="falco-scroll-reveal mt-7 text-[14px] leading-[1.7]">
                   <Link
                     href="/manifesto"
                     className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors"
                   >
-                    Read the longer, angrier version →
+                    Read the math, county by county →
                   </Link>
                 </p>
               </div>
@@ -210,7 +211,7 @@ export default function V2Content() {
                 How it works
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Three steps. No wholesalers.
+                Three steps. The equity stays with the homeowner.
               </h2>
             </div>
 
@@ -223,7 +224,7 @@ export default function V2Content() {
               <Step
                 num="02"
                 title="We make the call"
-                body="Our team reaches the homeowner directly. Not with a lowball cash offer, but with real numbers on what a marketed sale would yield. Most homeowners have never had anyone explain that an alternative existed."
+                body="Our team reaches the homeowner directly. We walk them through what their home would clear at a marketed sale — alongside what the trustee sale and a typical cash offer would leave them with. Most homeowners have never seen the three numbers side by side."
               />
               <Step
                 num="03"
@@ -249,10 +250,11 @@ export default function V2Content() {
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  You'll get a lot of calls. Wholesalers offering 65–75% of your home's
-                  value, in cash, fast — built on the wholesale industry's "70% rule."
-                  Many homeowners sign because nobody told them there was a third path.
-                  There is. It's built around what you keep, not what someone else takes.
+                  You'll get a lot of calls. Cash buyers offering 45–65% of your home's
+                  value — fast, as-is, no questions. That trade is real: speed in exchange
+                  for a discount. Most homeowners sign because nobody told them a marketed
+                  sale can run on the same deadline. It can. The price difference is your
+                  equity, intact.
                 </p>
 
                 <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
@@ -268,7 +270,7 @@ export default function V2Content() {
                     <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Sell to a wholesaler at 65%</div>
+                    <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
                     <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
@@ -304,13 +306,13 @@ export default function V2Content() {
               </div>
               <div className="max-w-2xl">
                 <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Skip the wholesaler swarm.
+                  Get there before the bidders pile in.
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  We surface equity-rich Tennessee distressed properties before they hit
-                  MLS, before the wholesaler swarm shows up. Then we list them through
-                  our auction pipeline. Clean title, pre-verified, standard 8% buyer's
+                  We surface equity-rich Tennessee distressed properties at the courthouse-
+                  filing layer — before the cash-buyer market saturates them. Then we list
+                  through our auction pipeline. Clean title, pre-verified, standard 8% buyer's
                   premium. You bid the number you want to pay. If you win, you close.
                 </p>
 
@@ -385,14 +387,14 @@ export default function V2Content() {
                 What makes us different
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Not wholesalers. Not MLS. Not Auction.com.
+                Built around the homeowner's equity, not the buyer's spread.
               </h2>
             </div>
 
             <div className="grid gap-8 md:grid-cols-3">
               <Diff
-                label="vs. wholesalers"
-                body="They profit when you sell at a discount. We profit only when you sell at market. Our incentives line up with yours; theirs line up against."
+                label="vs. cash-offer / fast-buyer paths"
+                body="Cash buyers earn the spread between speed pricing and market pricing — that spread is your equity. We don't buy your house. The market sets the price. The equity goes to you instead of to the spread."
               />
               <Diff
                 label="vs. traditional MLS"
@@ -400,7 +402,7 @@ export default function V2Content() {
               />
               <Diff
                 label="vs. national auction sites"
-                body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure hits, so they keep the equity."
+                body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure hits, so the equity gets preserved instead of liquidated."
               />
             </div>
 
@@ -441,9 +443,9 @@ export default function V2Content() {
 
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
                   We work with state-licensed Tennessee auction firms to give homeowners
-                  a real disposition path that doesn't end in a wholesaler discount or
-                  the courthouse steps. We don't buy houses. We don't broker mortgages.
-                  We don't run a webinar. We connect distressed sellers to a marketed
+                  a real disposition path that doesn't end at the courthouse steps with
+                  the equity gone. We don't buy houses. We don't broker mortgages. We
+                  don't run a webinar. We connect distressed sellers to a marketed
                   auction and we get paid only when the buyer pays the auction premium.
                 </p>
 

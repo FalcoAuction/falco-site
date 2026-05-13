@@ -358,10 +358,10 @@ export function ShareMathSheet({
           sub={doNothingSub}
         />
         <Card
-          eyebrow="Wholesaler offer"
+          eyebrow="Fast-cash offer"
           value={wholesalerLabel}
           tone="meh"
-          sub="Cash offer, fast close. They deduct repairs + their margin."
+          sub="Cash buyer, fast close. They deduct repairs + their margin — speed pricing in exchange for a discount on your equity."
         />
         <Card
           eyebrow="Marketed auction"

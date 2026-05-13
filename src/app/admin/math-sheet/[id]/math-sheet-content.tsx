@@ -564,7 +564,7 @@ export default function MathSheetContent({
               <span className="text-emerald-700 font-semibold">
                 {fmt(out.spreadEstimate.midpointGain)}
               </span>{" "}
-              more than a wholesaler offer
+              more than a fast-cash offer
               {out.spreadEstimate.bestCaseGain > out.spreadEstimate.midpointGain * 1.1 && (
                 <>
                   {" "}
@@ -608,7 +608,7 @@ export default function MathSheetContent({
             tone={scenarioCfg.path1.tone}
           />
           <PathCard
-            label="Wholesaler offer"
+            label="Fast-cash offer"
             value={
               out.wholesaler.scenario === "walks"
                 ? "$0 / no deal"
@@ -616,10 +616,10 @@ export default function MathSheetContent({
             }
             sub={
               out.wholesaler.scenario === "walks"
-                ? "Most wholesalers walk at this LTV; some try seller-financing or 'subject-to' deals."
+                ? "Most cash buyers walk at this LTV; some try seller-financing or 'subject-to' deals."
                 : out.wholesaler.scenario === "stretched"
                 ? `Base ${baseWholesalePct} offer doesn't pencil here. ${stretchWholesalePct} stretch on a thinner deal.`
-                : `Modeled at ${baseWholesalePct} of ARV, matching distressed cash-offer reality.`
+                : `Modeled at ${baseWholesalePct} of ARV, matching what TN cash buyers actually pay on distressed property.`
             }
             tone="meh"
           />
@@ -643,10 +643,10 @@ export default function MathSheetContent({
           />
         </section>
 
-        {/* Wholesaler walkthrough */}
+        {/* Fast-cash offer walkthrough */}
         <section className="mt-8">
           <h2 className="text-[16px] font-semibold tracking-tight">
-            How a wholesaler arrives at their offer
+            How a fast-cash offer arrives at its number
           </h2>
           <p className="mt-1 text-[12px] text-neutral-600 leading-[1.6]">
             {scenarioCfg.wholesalerIntro}
@@ -656,8 +656,8 @@ export default function MathSheetContent({
               <Row label="After-repair value (ARV)" value={fmt(out.wholesaler.arv)} />
               <Row label={`× ${baseWholesalePct} - distressed cash-offer ceiling`} value={fmt(out.wholesaler.maoCeiling)} />
               <Row label="− Estimated repairs (assumed)" value={fmtSigned(-out.wholesaler.repairs)} />
-              <Row label="− Wholesaler assignment fee" value={fmtSigned(-out.wholesaler.assignmentFee)} />
-              <Row label="− Investor's required profit margin" value={fmtSigned(-out.wholesaler.investorMargin)} />
+              <Row label="− Assignment fee / buyer spread" value={fmtSigned(-out.wholesaler.assignmentFee)} />
+              <Row label="− Required investor profit margin" value={fmtSigned(-out.wholesaler.investorMargin)} />
               <Row
                 label="Standard cash offer to seller"
                 value={fmt(out.wholesaler.cashOfferStandard)}
@@ -688,7 +688,7 @@ export default function MathSheetContent({
           {out.wholesaler.scenario === "stretched" && (
             <div className="mt-4 rounded-md border border-amber-300/70 bg-amber-50 p-3.5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
-                What the wholesaler actually does on this property
+                What a cash buyer actually does on this property
               </div>
               <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
                 The base {baseWholesalePct} distressed offer doesn&apos;t leave them margin to close. To
@@ -713,14 +713,14 @@ export default function MathSheetContent({
                 What actually happens here
               </div>
               <p className="mt-1.5 text-[12px] text-neutral-800 leading-[1.6]">
-                Even stretched to {stretchWholesalePct} of ARV, the wholesaler can&apos;t cover
+                Even stretched to {stretchWholesalePct} of ARV, a cash buyer can&apos;t cover
                 your loan and still earn enough to bother. <strong>Most walk
                 away.</strong> A few try creative deals — &quot;subject-to,&quot;
                 seller financing, novation — that take the property without
                 paying off the loan. Those are highly situational and often
-                end badly for the homeowner. <strong>If a wholesaler walks,
+                end badly for the homeowner. <strong>If the cash buyers walk,
                 your real choice is between {scenarioCfg.path1.label.toLowerCase()} and a
-                marketed auction. Wholesale isn&apos;t actually on the table.</strong>
+                marketed auction. The cash-offer path isn&apos;t actually on the table.</strong>
               </p>
             </div>
           )}
@@ -765,7 +765,7 @@ export default function MathSheetContent({
               Conventional buyer lenders won&apos;t lend on properties with open code
               violations — the cure has to happen <strong>before</strong> the sale closes.
               That&apos;s why &quot;list as-is on MLS&quot; isn&apos;t a real path here, and
-              why most code-violation properties exit through wholesale or auction.
+              why most code-violation properties exit through a cash buyer or auction.
             </p>
           </section>
         )}
@@ -964,7 +964,7 @@ export default function MathSheetContent({
             payoff and standard closing fees.
           </p>
 
-          {/* Worst-case-still-beats-wholesaler callout — strongest pitch when true */}
+          {/* Worst-case-still-beats-cash-offer callout — strongest pitch when true */}
           {out.wholesaler.scenario !== "walks" && out.auction.worstStillBeatsWholesaler && (
             <div className="mt-4 rounded-md border border-emerald-300/70 bg-emerald-50 p-3.5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
@@ -977,10 +977,10 @@ export default function MathSheetContent({
                 <strong>{fmt(out.auction.worst.netToHomeowner)}</strong> — still
                 roughly{" "}
                 <strong>{fmt(out.auction.worst.netToHomeowner - out.wholesaler.realisticNet)}</strong>{" "}
-                more than the wholesaler offer.
+                more than the fast-cash offer.
                 {out.auction.breakevenPct !== null && out.auction.breakevenPct > 0.5 && out.auction.breakevenPct < out.auction.worst.retailPct && (
                   <>
-                    {" "}For the wholesaler to come out ahead, the auction would
+                    {" "}For the cash offer to come out ahead, the auction would
                     need to clear below{" "}
                     <strong>{Math.round(out.auction.breakevenPct * 100)}% of retail</strong>.
                   </>
@@ -996,9 +996,9 @@ export default function MathSheetContent({
               <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
                 The auction would need to clear at least{" "}
                 <strong>{out.auction.breakevenPct !== null ? `${Math.round(out.auction.breakevenPct * 100)}% of retail` : "above the worst-case modeled here"}</strong>{" "}
-                to net you more than the wholesaler offer. The conservative and
+                to net you more than the fast-cash offer. The conservative and
                 strong scenarios both clear that bar, but a weak auction outcome
-                could underperform the wholesaler. We&apos;ll only list if we
+                could underperform the cash offer. We&apos;ll only list if we
                 believe the campaign can clear comfortably above breakeven.
               </p>
             </div>
@@ -1009,7 +1009,7 @@ export default function MathSheetContent({
                 The auction is your real path to equity
               </div>
               <p className="mt-1.5 text-[13px] text-neutral-800 leading-[1.6]">
-                With the wholesaler walking away and {scenarioCfg.scenario === "foreclosure" ? "the trustee sale paying you nothing" : `${scenarioCfg.path1.label.toLowerCase()} netting nothing`},
+                With cash buyers walking away and {scenarioCfg.scenario === "foreclosure" ? "the trustee sale paying you nothing" : `${scenarioCfg.path1.label.toLowerCase()} netting nothing`},
                 the auction is the only route that puts money in your pocket.
                 Even at our worst-case scenario ({Math.round(out.auction.worst.retailPct * 100)}%
                 of retail), you&apos;d walk away with{" "}

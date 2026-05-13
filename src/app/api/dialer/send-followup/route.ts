@@ -190,16 +190,16 @@ export async function POST(req: NextRequest) {
       "padding:10px 14px 12px;color:#1e293b;font-weight:700;text-align:right;border-top:1px solid #e2e8f0"
 
     mathBlock = `
-<!-- WHOLESALER PATH -->
+<!-- FAST-CASH PATH -->
 <div style="${sectionStyle}">
-  <div style="${headerStyle}">Path 1 · Cash wholesaler offer</div>
+  <div style="${headerStyle}">Path 1 · Fast-cash offer</div>
   <table style="${tableStyle}">
     <tr><td style="${labelStyle}">Property value (AVM)</td><td style="${valStyle}">${esc(fmtMath(arv))}</td></tr>
     <tr><td style="${labelStyle}">Cash offer to you (real distressed comps)</td><td style="${valStyle}">${esc(fmtMath(m.wholesaler.cashOfferStandard))}</td></tr>
     <tr><td style="${labelStyle}">Less mortgage payoff (est.)</td><td style="${valStyle};color:#dc2626">−${esc(fmtMath(payoff))}</td></tr>
     <tr><td style="${totalLabelStyle}">Your take-home</td><td style="${totalValStyle}">${esc(fmtMath(wholesaleNet))}</td></tr>
   </table>
-  <div style="padding:8px 14px 12px;color:#94a3b8;font-size:11px;line-height:1.5">Reflects what TN cash buyers actually offer on distressed properties (45-55% of market). Not the textbook 70%-rule formula — that's what investors pay wholesalers, not what wholesalers pay you.</div>
+  <div style="padding:8px 14px 12px;color:#94a3b8;font-size:11px;line-height:1.5">Reflects what TN cash buyers actually offer on distressed property (45-55% of market). That's the cost of speed pricing — paid out of your equity instead of by the buyer.</div>
 </div>
 
 <!-- TRUSTEE PATH -->
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
     m.auction.worstStillBeatsWholesaler
       ? `<div style="padding:10px 14px;background:#dcfce7;color:#166534;font-size:13px;line-height:1.5">
         <strong>Even at a worst-case auction (~70% clearance):</strong> you'd still net
-        <strong>${esc(fmtMath(auctionWorst))}</strong> — better than the wholesaler offer.
+        <strong>${esc(fmtMath(auctionWorst))}</strong> — better than the fast-cash offer.
       </div>`
       : `<div style="padding:10px 14px;background:#dcfce7;color:#166534;font-size:13px;line-height:1.5">
         Worst-case auction (~70% clearance): ${esc(fmtMath(auctionWorst))}
@@ -237,14 +237,14 @@ export async function POST(req: NextRequest) {
 </div>`
 
     mathTextBlock = `
-  PATH 1 · Cash wholesaler offer
+  PATH 1 · Fast-cash offer
     Property value (AVM):              ${fmtMath(arv)}
     Cash offer (real distressed comps): ${fmtMath(m.wholesaler.cashOfferStandard)}
     Less mortgage payoff (est.):     - ${fmtMath(payoff)}
     Your take-home:                    ${fmtMath(wholesaleNet)}
-    (Reflects what TN cash buyers actually offer — 45-55% of market.
-     Not the textbook 70% rule — that's what investors pay wholesalers,
-     not what wholesalers pay you.)
+    (Reflects what TN cash buyers actually offer on distressed
+     property — 45-55% of market. The discount is the cost of
+     speed pricing, paid out of your equity instead of by the buyer.)
 
   PATH 2 · If the trustee sale runs (no listing)
     Sells at courthouse for whatever the bank needs to recover.
@@ -365,21 +365,21 @@ export async function POST(req: NextRequest) {
   // not a hand on the shoulder.
   // ─────────────────────────────────────────────────────────────────────
 
-  // Brutal opener: state the situation, name the wholesale trap, give
-  // the three numbers in a one-line summary. Math detail follows below.
+  // Opener: state the situation, show the three paths the equity can
+  // walk out, give the numbers. Math detail follows below.
   const distressedOpener =
     arv > 0
       ? `<p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
-          The wholesale offers calling you don't get better — they get worse as the sale date gets closer. Here's what your house actually clears via marketed sale vs. what they're offering vs. doing nothing:
+          The fast-cash offers calling you don't improve as the sale date gets closer — they get worse, because the buyer has more leverage. Here's what your house actually clears via marketed sale vs. what they're offering vs. doing nothing:
         </p>
         <table style="width:100%;border-collapse:collapse;margin:8px 0 18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
-          <tr><td style="padding:10px 14px;color:#475569;font-size:13px;width:65%">Cash wholesaler — your take-home</td><td style="padding:10px 14px;color:#991b1b;font-size:14px;font-weight:600;text-align:right">${esc(fmtMath(wholesaleNet))}</td></tr>
+          <tr><td style="padding:10px 14px;color:#475569;font-size:13px;width:65%">Fast-cash offer — your take-home</td><td style="padding:10px 14px;color:#991b1b;font-size:14px;font-weight:600;text-align:right">${esc(fmtMath(wholesaleNet))}</td></tr>
           <tr><td style="padding:10px 14px;color:#475569;font-size:13px;border-top:1px solid #e2e8f0">Trustee sale (do nothing)</td><td style="padding:10px 14px;color:#52525b;font-size:14px;font-weight:600;text-align:right;border-top:1px solid #e2e8f0">$0</td></tr>
           <tr><td style="padding:10px 14px;color:#475569;font-size:13px;border-top:1px solid #e2e8f0">Marketed sale — your take-home</td><td style="padding:10px 14px;color:#15803d;font-size:14px;font-weight:700;text-align:right;border-top:1px solid #e2e8f0">${esc(fmtMath(auctionLow))} – ${esc(fmtMath(auctionHigh))}</td></tr>
         </table>
         <p style="margin:0 0 18px;color:#475569;font-size:13px;line-height:1.6">One-page PDF attached with the full breakdown. Numbers below are the same data in case the PDF doesn't render in your client.</p>`
       : `<p style="margin:0 0 14px;color:#1e293b;font-size:15px;line-height:1.6">
-          You're on the trustee-sale list for ${esc(address)}. We can't model your numbers without the AVM yet — but the wholesale offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.
+          You're on the trustee-sale list for ${esc(address)}. We can't model your numbers without the AVM yet — but the fast-cash offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.
         </p>`
 
   const distressedHtml = `<!DOCTYPE html>
@@ -408,10 +408,10 @@ export async function POST(req: NextRequest) {
 
   const distressedText = [
     arv > 0
-      ? `The wholesale offers calling you don't get better — they get worse as the sale date gets closer. Here's what your house actually clears, three ways:`
-      : `You're on the trustee-sale list for ${address}. We can't model your numbers without the AVM yet — but the wholesale offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.`,
+      ? `The fast-cash offers calling you don't improve as the sale date gets closer — they get worse, because the buyer has more leverage. Here's what your house actually clears, three ways:`
+      : `You're on the trustee-sale list for ${address}. We can't model your numbers without the AVM yet — but the fast-cash offers calling you aren't your only option, and the trustee sale isn't either. Reply with your most recent mortgage statement and we'll run the real math within the day.`,
     arv > 0 ? `` : null,
-    arv > 0 ? `  Cash wholesaler — your take-home:  ${fmtMath(wholesaleNet)}` : null,
+    arv > 0 ? `  Fast-cash offer — your take-home:  ${fmtMath(wholesaleNet)}` : null,
     arv > 0 ? `  Trustee sale (do nothing):         $0` : null,
     arv > 0 ? `  Marketed sale — your take-home:    ${fmtMath(auctionLow)} – ${fmtMath(auctionHigh)}` : null,
     arv > 0 ? `` : null,
