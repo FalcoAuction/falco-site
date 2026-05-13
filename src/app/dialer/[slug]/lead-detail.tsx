@@ -285,7 +285,7 @@ export default function LeadDetail({
               Open the printable 3-path comparison
             </div>
             <div className="text-[11px] text-white/55 mt-0.5">
-              Trustee sale vs. wholesaler offer vs. marketed auction. Edit ARV /
+              Trustee sale vs. fast-cash offer vs. marketed auction. Edit ARV /
               loan inputs, then Print → Save PDF → email to the homeowner.
             </div>
           </div>
@@ -520,7 +520,7 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
             <span className="text-red-300 font-semibold">$0 – $5K</span>
           </div>
           <div className="flex justify-between gap-3">
-            <span className="text-white/65">2. Wholesaler at 65% of value</span>
+            <span className="text-white/65">2. Fast-cash buyer at 65% of value</span>
             <span className="text-amber-200">{wholesalerNet !== null ? fmtCurrency(wholesalerNet) : "—"}</span>
           </div>
           <div className="flex justify-between gap-3">
@@ -535,7 +535,7 @@ function EquityWorkup({ lead }: { lead: DialerLeadView }) {
         {equityLow !== null && wholesalerNet !== null && equityLow > wholesalerNet && (
           <div className="mt-2 text-[11px] text-emerald-300/85">
             Difference: <span className="font-semibold">{fmtCurrency(equityLow - wholesalerNet)}+</span> more
-            in the seller's pocket vs. the wholesaler offer.
+            in the seller's pocket vs. the fast-cash offer.
           </div>
         )}
       </div>

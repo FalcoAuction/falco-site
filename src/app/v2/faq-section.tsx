@@ -9,15 +9,15 @@ const ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "Do I have to sell?",
-    a: "No. We'll show you the math: what a marketed sale would yield, what a wholesaler would pay, and what happens if the trustee sale goes through. If the numbers don't make sense for your situation, we'll say so plainly and you decide.",
+    a: "No. We'll show you the math: what a marketed sale would yield, what a typical cash buyer would pay, and what happens if the trustee sale goes through. If the numbers don't make sense for your situation, we'll say so plainly and you decide.",
   },
   {
-    q: "How is this different from a wholesaler?",
-    a: "Wholesalers buy your house below market and resell at market. Their profit is the gap between what they pay you and what the home is actually worth. We don't buy your house at all. Our auction partner sells it to the highest bidder at competitive open-bid pricing, typically 85–95% of full retail value. You keep the equity a wholesaler would have pocketed.",
+    q: "How is this different from a cash buyer / wholesaler?",
+    a: "A cash buyer — wholesaler, iBuyer, 'we buy houses' operator, whatever flavor — purchases your house at a discount, fast, then resells at market. The speed-discount is the trade. We don't buy your house at all. We market it to the open buyer pool through a state-licensed Tennessee auction firm with a 30-to-60-day campaign and let the highest bidder set the price. Same urgency. Same finality of sale. The equity goes home with you instead of with the buyer.",
   },
   {
     q: "What if the auction doesn't sell for enough?",
-    a: "Marketed auctions in Tennessee typically land between 85% and 95% of full retail when properly run. If a property clearly won't clear a number that makes sense for you, we won't list it. We'll tell you up front. Sometimes a wholesaler offer or even letting the trustee sale happen is the right answer for the math. We'd rather tell you that than waste both our time.",
+    a: "Marketed auctions in Tennessee typically land between 85% and 95% of full retail when properly run. If a property clearly won't clear a number that makes sense for you, we won't list it. We'll tell you up front. Sometimes a cash offer or even letting the trustee sale happen is the right answer for the math. We'd rather tell you that than waste both our time.",
   },
   {
     q: "What does it cost me?",

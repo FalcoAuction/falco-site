@@ -7,7 +7,7 @@ import path from "node:path"
 export const runtime = "nodejs"
 
 export const alt =
-  "FALCO routes distressed Tennessee homes to local auction companies, not wholesalers"
+  "Six figures of equity vanish from Tennessee homes every week of foreclosure. FALCO is built to keep that money in the homeowner's pocket."
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -132,13 +132,13 @@ export default function OpenGraphImage() {
             }}
           >
             <div style={{ color: "#ffffff" }}>
-              We route distressed Tennessee homes
+              Six figures of equity vanish
             </div>
             <div style={{ color: "rgb(52,211,153)" }}>
-              to local auction companies.
+              every week of foreclosure.
             </div>
             <div style={{ color: "rgba(255,255,255,0.55)" }}>
-              Not to wholesalers.
+              We keep it in the homeowner's pocket.
             </div>
           </div>
 

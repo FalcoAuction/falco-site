@@ -62,7 +62,7 @@ export default function BuyersLandingPage() {
             <ValueCard
               label="The inventory"
               value="Pre-foreclosure, lis pendens, tax distress"
-              detail="Equity-positive homes, sourced before they saturate the wholesale market."
+              detail="Equity-positive homes, sourced before the cash-buyer market saturates them."
             />
             <ValueCard
               label="Your timing"

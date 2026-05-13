@@ -125,19 +125,15 @@ export default function V2Content() {
 
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
-              <h1 className="falco-scroll-reveal text-[34px] md:text-[72px] leading-[1.02] md:leading-[0.96] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
-                <span className="block">We route distressed Tennessee homes</span>
-                <span className="block text-emerald-400">to local auction companies.</span>
-                <span className="block text-white/45">Not to wholesalers.</span>
+              <h1 className="falco-scroll-reveal text-[40px] md:text-[80px] leading-[1.02] md:leading-[0.94] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
+                <span className="block">Foreclosure's coming.</span>
+                <span className="block text-emerald-400">Sell on your timeline.</span>
+                <span className="block text-white/45">Not the bank's.</span>
               </h1>
 
-              <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-2xl text-[15px] md:text-[20px] leading-[1.6] text-white/85">
-                We find Tennessee homeowners before the trustee sale. We show them what
-                their home would actually clear at a marketed auction. Then we list it
-                with our auction partners. The equity goes home with{" "}
-                <span className="text-emerald-300/90 font-medium">the homeowner</span>.
-                <br />
-                <span className="text-white/45">Not a wholesaler.</span>
+              <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-xl text-[16px] md:text-[20px] leading-[1.55] text-white/80">
+                Marketed auction. Lender's deadline. The buyer pays the premium.{" "}
+                <span className="text-emerald-300/90 font-medium">You keep the equity.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
@@ -173,28 +169,21 @@ export default function V2Content() {
                 </div>
               </div>
               <div className="max-w-2xl">
-                <p className="falco-scroll-reveal text-[20px] md:text-[30px] leading-[1.4] md:leading-[1.45] text-white font-light tracking-tight">
-                  A Tennessee homeowner facing foreclosure is typically sitting on{" "}
-                  <span className="font-medium">$100,000 to $250,000</span> of equity
-                  they're about to lose. Most of them never hear about the option that
-                  keeps it in their pocket.
+                <p className="falco-scroll-reveal text-[22px] md:text-[32px] leading-[1.35] md:leading-[1.4] text-white font-light tracking-tight">
+                  A homeowner facing foreclosure is sitting on{" "}
+                  <span className="font-medium">$100K–$250K</span> of equity they're
+                  about to lose. We're built so they don't.
                 </p>
-                <p className="falco-scroll-reveal mt-7 text-[17px] leading-[1.7] text-white/75">
-                  We try to reach them before the wholesaler call. We show them what
-                  their home would actually clear at a marketed auction. Then we list
-                  it with our auction partners and let the market set the price, not
-                  a flipper's margin.
+                <p className="falco-scroll-reveal mt-6 text-[16px] md:text-[17px] leading-[1.65] text-white/70">
+                  We don't buy your house. We don't take a commission. The buyer pays the
+                  auction premium and the equity goes home with you.
                 </p>
-                <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
-                  We don't buy your house. We don't take a commission. The buyer pays a
-                  standard 8% auction premium and you keep the equity that's yours.
-                </p>
-                <p className="falco-scroll-reveal mt-7 text-[14px] leading-[1.7]">
+                <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
                   <Link
                     href="/manifesto"
                     className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors"
                   >
-                    Read the longer, angrier version →
+                    Read the math, county by county →
                   </Link>
                 </p>
               </div>
@@ -210,25 +199,25 @@ export default function V2Content() {
                 How it works
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Three steps. No wholesalers.
+                Three steps. Your equity stays put.
               </h2>
             </div>
 
             <div className="grid gap-10 md:grid-cols-3">
               <Step
                 num="01"
-                title="We find the file"
-                body="Daily scrapes of trustee notices, lis pendens filings, tax records, and probate courts across all 95 Tennessee counties. Every actionable property comes with owner contact, valuation, and timing."
+                title="We watch the docket"
+                body="Daily monitoring of every foreclosure filing across 95 TN counties."
               />
               <Step
                 num="02"
-                title="We make the call"
-                body="Our team reaches the homeowner directly. Not with a lowball cash offer, but with real numbers on what a marketed sale would yield. Most homeowners have never had anyone explain that an alternative existed."
+                title="We show you the math"
+                body="One call. Three paths side by side. Your real take-home on each."
               />
               <Step
                 num="03"
-                title="We list with auction"
-                body="Property goes to a marketed public auction (not the courthouse trustee sale) run by a state-licensed TN auction partner. Buyers compete openly. Typically clears at 85–95% of retail. Seller pays zero — the buyer pays an 8% premium."
+                title="We run the auction"
+                body="State-licensed marketed sale on the lender's deadline. Buyer pays the premium. Seller pays nothing."
               />
             </div>
           </div>
@@ -248,11 +237,9 @@ export default function V2Content() {
                   Facing foreclosure in Tennessee?
                 </h2>
 
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  You'll get a lot of calls. Wholesalers offering 65–75% of your home's
-                  value, in cash, fast — built on the wholesale industry's "70% rule."
-                  Many homeowners sign because nobody told them there was a third path.
-                  There is. It's built around what you keep, not what someone else takes.
+                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
+                  You're sitting on more equity than anyone calling you will pay for it.
+                  Here's what your house actually clears, three ways:
                 </p>
 
                 <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
@@ -268,7 +255,7 @@ export default function V2Content() {
                     <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Sell to a wholesaler at 65%</div>
+                    <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
                     <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
@@ -304,29 +291,26 @@ export default function V2Content() {
               </div>
               <div className="max-w-2xl">
                 <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Skip the wholesaler swarm.
+                  First look at TN distressed inventory.
                 </h2>
 
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  We surface equity-rich Tennessee distressed properties before they hit
-                  MLS, before the wholesaler swarm shows up. Then we list them through
-                  our auction pipeline. Clean title, pre-verified, standard 8% buyer's
-                  premium. You bid the number you want to pay. If you win, you close.
+                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
+                  Equity-rich properties, sourced at the courthouse-filing layer, listed
+                  through our auction pipeline. Clean title, 8% buyer's premium. Bid and close.
                 </p>
 
-                <ul className="falco-scroll-reveal mt-7 space-y-3 text-[15px] text-white/85">
-                  <BuyerBullet text="First-look notifications on Tennessee inventory" />
-                  <BuyerBullet text="Equity-positive deals only. No underwater junk." />
-                  <BuyerBullet text="Standard 8% buyer's premium, no surprises" />
-                  <BuyerBullet text="Clean title, delivered at close by our auction partners" />
+                <ul className="falco-scroll-reveal mt-6 space-y-2.5 text-[15px] text-white/85">
+                  <BuyerBullet text="First-look on TN inventory" />
+                  <BuyerBullet text="Equity-positive only" />
+                  <BuyerBullet text="Clean title, 8% buyer's premium" />
                 </ul>
 
-                <div className="falco-scroll-reveal mt-8 flex flex-wrap gap-3">
+                <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
                   <Link
                     href="/buyers"
                     className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
                   >
-                    Get notified when TN inventory lists →
+                    Get notified →
                   </Link>
                   <div className="text-[13px] text-white/55 self-center">
                     90 seconds. No spam.
@@ -351,25 +335,23 @@ export default function V2Content() {
                   Run a TN auction company?
                 </h2>
 
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  We bring you a steady flow of Tennessee distressed inventory you don't
-                  have to source. Sellers we hand off are already qualified. You bring
-                  the licensing, marketing, and execution. We bring the pipeline.
+                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
+                  Steady pre-qualified inventory you don't have to source. You bring the
+                  licensing and execution. We bring the pipeline.
                 </p>
 
-                <ul className="falco-scroll-reveal mt-7 space-y-3 text-[15px] text-white/85">
-                  <BuyerBullet text="Pre-qualified, equity-positive inventory delivered as it surfaces" />
-                  <BuyerBullet text="Sellers educated on the auction option before handoff" />
-                  <BuyerBullet text="No sourcing cost. Your team sees only ready listings" />
-                  <BuyerBullet text="Long-term partnership, not one-off referrals" />
+                <ul className="falco-scroll-reveal mt-6 space-y-2.5 text-[15px] text-white/85">
+                  <BuyerBullet text="Pre-qualified inventory, delivered as it surfaces" />
+                  <BuyerBullet text="Sellers educated before handoff" />
+                  <BuyerBullet text="No sourcing cost" />
                 </ul>
 
-                <div className="falco-scroll-reveal mt-8 flex flex-wrap gap-3">
+                <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
                   <Link
                     href="/partners"
                     className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
                   >
-                    Open a partnership conversation
+                    Open a conversation
                   </Link>
                 </div>
               </div>
@@ -385,22 +367,22 @@ export default function V2Content() {
                 What makes us different
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Not wholesalers. Not MLS. Not Auction.com.
+                Homeowner-side, not buyer-side.
               </h2>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-3">
               <Diff
-                label="vs. wholesalers"
-                body="They profit when you sell at a discount. We profit only when you sell at market. Our incentives line up with yours; theirs line up against."
+                label="vs. cash buyers"
+                body="They earn the spread. We don't buy your house — the market sets the price and the equity goes to you."
               />
               <Diff
                 label="vs. traditional MLS"
-                body="90 days, 6% commission, staging, showings, surprise inspections. We run 45–75 days, seller pays zero, auction day is the close."
+                body="90 days, 6% commission, showings. We run 45–75 days, zero seller commission, defined sale day."
               />
               <Diff
-                label="vs. national auction sites"
-                body="Auction.com is buyer-side and post-foreclosure. Hubzu is bank-side. We work with the homeowner before the foreclosure hits, so they keep the equity."
+                label="vs. Auction.com / Hubzu"
+                body="Buyer-side, post-foreclosure. We work with the homeowner before the foreclosure hits."
               />
             </div>
 
@@ -433,18 +415,14 @@ export default function V2Content() {
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
                   Tennessee sees roughly{" "}
                   <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
-                  per week. We read every one. FALCO is a Tennessee operation built on
-                  a distress-data pipeline that monitors trustee notices, lis pendens
-                  filings, tax records, and probate courts across all 95 TN counties,
-                  every day.
+                  per week. We read every one and reach the homeowner before the equity
+                  decision gets locked in.
                 </p>
 
-                <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.7] text-white/75">
-                  We work with state-licensed Tennessee auction firms to give homeowners
-                  a real disposition path that doesn't end in a wholesaler discount or
-                  the courthouse steps. We don't buy houses. We don't broker mortgages.
-                  We don't run a webinar. We connect distressed sellers to a marketed
-                  auction and we get paid only when the buyer pays the auction premium.
+                <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.65] text-white/70">
+                  We don't buy houses. We don't broker mortgages. We don't run a webinar.
+                  We connect distressed sellers to a marketed auction and get paid only
+                  when the buyer pays the premium.
                 </p>
 
                 <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">

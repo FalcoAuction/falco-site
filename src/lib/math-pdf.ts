@@ -131,7 +131,7 @@ function drawMathSheetPage(doc: PDFKit.PDFDocument, input: MathPdfInput): void {
     doc,
     36, boxTop, boxWidth, boxHeight,
     "#fef2f2", "#dc2626",
-    "Path 1 · Wholesale offer",
+    "Path 1 · Fast-cash offer",
     [
       ["Cash offer to you", fmt(wholesaleCash)],
       ["", ""],
@@ -142,7 +142,7 @@ function drawMathSheetPage(doc: PDFKit.PDFDocument, input: MathPdfInput): void {
       bigLabel: "Your take-home",
       bigValue: fmt(wholesaleNet),
       bigColor: "#991b1b",
-      footer: ["Closes 14-21 days", "Requires accepting first cash offer"],
+      footer: ["Closes 14-21 days", "Speed in exchange for a discount"],
     },
   )
 
@@ -190,7 +190,7 @@ function drawMathSheetPage(doc: PDFKit.PDFDocument, input: MathPdfInput): void {
     .fontSize(9)
     .fillColor("#64748b")
     .text(
-      `Numbers from public AVM data + FALCO model. They sharpen once we pull the actual mortgage payoff letter from your servicer. The wholesale figure reflects what TN cash buyers actually offer on distressed properties (45-55% of market value), not the textbook formula. Marketed sale routed through a state-licensed TN auction firm.`,
+      `Numbers from public AVM data + FALCO model. They sharpen once we pull the actual mortgage payoff letter from your servicer. The fast-cash figure reflects what TN cash buyers actually offer on distressed property (45-55% of market value), not the textbook formula. Marketed sale routed through a state-licensed TN auction firm. Same urgency, the equity goes home with you.`,
       36, boxTop + boxHeight + 12,
       { width: 720, align: "left" },
     )
