@@ -162,7 +162,7 @@ export default function ManifestoPage() {
             totalTone="win"
           />
           <p>
-            The buyer pays an 8% premium on top of their bid. That covers
+            The buyer pays a 10% premium on top of their bid. That covers
             the auction firm + FALCO. The homeowner doesn't see it and
             doesn't pay it.
           </p>

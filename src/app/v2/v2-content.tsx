@@ -298,13 +298,13 @@ export default function V2Content() {
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
                   Equity-rich properties, sourced at the courthouse-filing layer, listed
-                  through our auction pipeline. Clean title, 8% buyer's premium. Bid and close.
+                  through our auction pipeline. Clean title, 10% buyer's premium. Bid and close.
                 </p>
 
                 <ul className="falco-scroll-reveal mt-6 space-y-2.5 text-[15px] text-white/85">
                   <BuyerBullet text="First-look on TN inventory" />
                   <BuyerBullet text="Equity-positive only" />
-                  <BuyerBullet text="Clean title, 8% buyer's premium" />
+                  <BuyerBullet text="Clean title, 10% buyer's premium" />
                 </ul>
 
                 <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
