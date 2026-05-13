@@ -125,15 +125,17 @@ export default function V2Content() {
 
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
-              <h1 className="falco-scroll-reveal text-[40px] md:text-[80px] leading-[1.02] md:leading-[0.94] tracking-[-0.03em] md:tracking-[-0.035em] font-semibold text-white">
-                <span className="block">Foreclosure's coming.</span>
-                <span className="block text-emerald-400">Sell on your timeline.</span>
-                <span className="block text-white/45">Not the bank's.</span>
+              <h1 className="falco-scroll-reveal text-[44px] md:text-[96px] leading-[0.98] md:leading-[0.9] tracking-[-0.03em] md:tracking-[-0.04em] font-semibold text-white">
+                <span className="block">Tennessee foreclosure?</span>
+                <span className="block text-emerald-400">Run a real auction.</span>
+                <span className="block text-white/45">Keep your equity.</span>
               </h1>
 
-              <p className="falco-scroll-reveal mt-6 md:mt-8 max-w-xl text-[16px] md:text-[20px] leading-[1.55] text-white/80">
-                Marketed auction. Lender's deadline. The buyer pays the premium.{" "}
-                <span className="text-emerald-300/90 font-medium">You keep the equity.</span>
+              <p className="falco-scroll-reveal mt-7 md:mt-9 max-w-2xl text-[16px] md:text-[21px] leading-[1.5] text-white/80">
+                FALCO routes Tennessee homes through state-licensed marketed auctions —
+                fast enough to beat the trustee sale, structured to clear at market.
+                The buyer pays our fee.{" "}
+                <span className="text-emerald-300/90 font-medium">You keep what's yours.</span>
               </p>
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
@@ -175,8 +177,8 @@ export default function V2Content() {
                   about to lose. We're built so they don't.
                 </p>
                 <p className="falco-scroll-reveal mt-6 text-[16px] md:text-[17px] leading-[1.65] text-white/70">
-                  We don't buy your house. We don't take a commission. The buyer pays the
-                  auction premium and the equity goes home with you.
+                  We don't buy your house. The buyer pays our fee. The equity
+                  goes home with you.
                 </p>
                 <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
                   <Link
@@ -238,8 +240,8 @@ export default function V2Content() {
                 </h2>
 
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
-                  You're sitting on more equity than anyone calling you will pay for it.
-                  Here's what your house actually clears, three ways:
+                  The cash buyers calling will pay you a fraction of what your home
+                  actually clears at a real auction. Here's the math, three ways:
                 </p>
 
                 <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
@@ -374,7 +376,7 @@ export default function V2Content() {
             <div className="grid gap-6 md:grid-cols-3">
               <Diff
                 label="vs. cash buyers"
-                body="They earn the spread. We don't buy your house — the market sets the price and the equity goes to you."
+                body="Cash buyers profit on the gap between what they pay you and what the home actually clears. We don't buy your house — the open market sets the price."
               />
               <Diff
                 label="vs. traditional MLS"
@@ -415,8 +417,8 @@ export default function V2Content() {
                 <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
                   Tennessee sees roughly{" "}
                   <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
-                  per week. We read every one and reach the homeowner before the equity
-                  decision gets locked in.
+                  per week. We read every one and call the homeowner — usually
+                  before any cash buyer does.
                 </p>
 
                 <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.65] text-white/70">
