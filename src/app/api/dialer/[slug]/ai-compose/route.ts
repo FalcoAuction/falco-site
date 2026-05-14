@@ -83,6 +83,7 @@ export async function POST(
     mode?: "opener" | "reply" | "followup"
     inbound_message?: string
     hint_angle?: OutreachAngle
+    pasted_thread?: string
   }
   try {
     body = await req.json()
@@ -258,9 +259,15 @@ export async function POST(
 
   // ───── Build the compose request ─────────────────────────────────────
   const leadContext = buildLeadContext(leadView as unknown as DialerLeadView)
+  const pastedThread = body.pasted_thread?.trim() || undefined
   let composeReq: ComposeRequest
   if (mode === "opener") {
-    composeReq = { mode: "opener", lead_context: leadContext, hint_angle: body.hint_angle }
+    composeReq = {
+      mode: "opener",
+      lead_context: leadContext,
+      hint_angle: body.hint_angle,
+      pasted_thread: pastedThread,
+    }
   } else if (mode === "reply") {
     if (!body.inbound_message || !body.inbound_message.trim()) {
       return NextResponse.json(
@@ -273,6 +280,7 @@ export async function POST(
       lead_context: leadContext,
       inbound_message: body.inbound_message.trim(),
       conversation_history: conversationHistory,
+      pasted_thread: pastedThread,
     }
   } else {
     composeReq = {
@@ -280,6 +288,7 @@ export async function POST(
       lead_context: leadContext,
       prior_angles: priorAngles,
       conversation_history: conversationHistory,
+      pasted_thread: pastedThread,
     }
   }
 
