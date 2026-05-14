@@ -258,18 +258,21 @@ export type ComposeRequest =
       mode: "opener"
       lead_context: string
       hint_angle?: OutreachAngle // optional hint; bot can override
+      pasted_thread?: string // optional iMessage thread paste-in
     }
   | {
       mode: "reply"
       lead_context: string
       inbound_message: string
       conversation_history: ConversationMessage[]
+      pasted_thread?: string
     }
   | {
       mode: "followup"
       lead_context: string
       prior_angles: OutreachAngle[]
       conversation_history: ConversationMessage[]
+      pasted_thread?: string
     }
 
 export type ConversationMessage = {
@@ -342,8 +345,20 @@ export function buildComposeUserMessage(req: ComposeRequest): string {
             .join("\n")
       )
     } else {
-      sections.push("(no prior conversation history)")
+      sections.push("(no prior conversation history in our system)")
     }
+  }
+
+  // Pasted thread context — when Patrick has been texting from his
+  // personal cell and the history isn't logged in our DB, he can paste
+  // a screenshot-OCR or copy-paste of the iMessage thread here. Brain
+  // treats this as additional ground truth for what's been said.
+  if (req.pasted_thread && req.pasted_thread.trim()) {
+    sections.push(
+      "PASTED CONVERSATION (from Patrick's cell, copy-pasted from iMessage — treat as " +
+        "more authoritative than the conversation_history above when they conflict):\n" +
+        req.pasted_thread.trim()
+    )
   }
 
   sections.push(

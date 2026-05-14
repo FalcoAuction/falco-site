@@ -61,12 +61,16 @@ export function AiComposePanel({
 }) {
   const [mode, setMode] = useState<Mode>("opener")
   const [inbound, setInbound] = useState("")
+  const [pastedThread, setPastedThread] = useState("")
+  const [showPaste, setShowPaste] = useState(false)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ComposeResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editedDraft, setEditedDraft] = useState("")
   const [logging, setLogging] = useState(false)
   const [logged, setLogged] = useState(false)
+  const [sendingTwilio, setSendingTwilio] = useState(false)
+  const [twilioSent, setTwilioSent] = useState(false)
 
   async function generate() {
     setError(null)
@@ -74,7 +78,11 @@ export function AiComposePanel({
     setLogged(false)
     setLoading(true)
     try {
-      const body: { mode: Mode; inbound_message?: string } = { mode }
+      const body: {
+        mode: Mode
+        inbound_message?: string
+        pasted_thread?: string
+      } = { mode }
       if (mode === "reply") {
         if (!inbound.trim()) {
           setError("Paste the inbound message first.")
@@ -82,6 +90,9 @@ export function AiComposePanel({
           return
         }
         body.inbound_message = inbound.trim()
+      }
+      if (pastedThread.trim()) {
+        body.pasted_thread = pastedThread.trim()
       }
       const res = await fetch(`/api/dialer/${slug}/ai-compose`, {
         method: "POST",
@@ -112,6 +123,38 @@ export function AiComposePanel({
     // Build sms: href with the (possibly edited) draft text.
     const href = `sms:${result.phone}?&body=${encodeURIComponent(editedDraft.trim())}`
     window.location.href = href
+  }
+
+  async function sendViaTwilio() {
+    if (!result || !editedDraft.trim() || !result.phone) return
+    setSendingTwilio(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/sms/twilio-send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          to_phone: result.phone,
+          body: editedDraft.trim(),
+          angle: result.angle_used || null,
+        }),
+      })
+      const json = (await res.json()) as { error?: string; sid?: string }
+      if (!res.ok) {
+        setError(
+          json.error ||
+            `Twilio send failed: HTTP ${res.status}. Make sure TWILIO_FROM_NUMBER is set in Vercel env.`
+        )
+        return
+      }
+      setTwilioSent(true)
+      // Inbound will land on the Twilio webhook → conversation continues.
+    } catch (e) {
+      setError("Twilio send failed: " + (e as Error).message)
+    } finally {
+      setSendingTwilio(false)
+    }
   }
 
   async function logSend() {
@@ -228,6 +271,49 @@ export function AiComposePanel({
             </div>
           )}
 
+          {/* Optional: paste iMessage thread context.
+              Patrick's outreach goes from his personal cell — replies come
+              there too, so the brain has no DB record of the conversation.
+              Screenshot the thread on iPhone, long-press text in the
+              screenshot to copy, paste here. */}
+          <div>
+            {!showPaste ? (
+              <button
+                onClick={() => setShowPaste(true)}
+                className="text-[12px] text-emerald-300/85 hover:text-emerald-200 underline-offset-2 hover:underline"
+              >
+                + paste iMessage thread context (optional)
+              </button>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-white/55 font-semibold">
+                    iMessage thread (optional)
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowPaste(false)
+                      setPastedThread("")
+                    }}
+                    className="text-[10px] text-white/45 hover:text-white/70"
+                  >
+                    hide
+                  </button>
+                </div>
+                <textarea
+                  value={pastedThread}
+                  onChange={(e) => setPastedThread(e.target.value)}
+                  placeholder="Paste the thread from your iPhone iMessage screenshot. Brain uses it as ground truth for what's been said with this homeowner."
+                  rows={4}
+                  className="w-full rounded-md bg-white/[0.04] border border-white/15 px-3 py-2 text-[13px] text-white/85 placeholder-white/30 focus:outline-none focus:border-emerald-400/50 font-mono"
+                />
+                <div className="mt-1 text-[10px] text-white/40 leading-[1.5]">
+                  Tip: screenshot the iMessage thread on iPhone → photo → long-press → Select All → Copy. Then paste here.
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Generate button */}
           <button
             onClick={generate}
@@ -314,26 +400,50 @@ export function AiComposePanel({
 
               {/* Send + log buttons */}
               {!isOptout && (
-                <div className="flex flex-wrap gap-2 pt-1">
+                <div className="space-y-2 pt-1">
+                  {/* Twilio send — fully automated, logs both ways,
+                      goes from your FALCO number. The Send via Twilio
+                      button is the future state. iMessage is the
+                      transitional one. */}
                   <button
-                    onClick={sendViaImessage}
-                    disabled={!editedDraft.trim() || !result.phone}
-                    className="flex-1 min-w-[170px] rounded-md bg-emerald-400 hover:bg-emerald-300 disabled:opacity-40 text-black font-semibold text-[14px] py-2 transition-colors"
+                    onClick={sendViaTwilio}
+                    disabled={
+                      sendingTwilio ||
+                      twilioSent ||
+                      !editedDraft.trim() ||
+                      !result.phone
+                    }
+                    className="w-full rounded-md bg-emerald-400 hover:bg-emerald-300 disabled:opacity-40 text-black font-semibold text-[14px] py-2.5 transition-colors"
+                    title="Send via FALCO's Twilio number. Bot auto-logs the send, and inbound replies will route through our webhook so the brain sees everything."
                   >
-                    📲 Send via iMessage
+                    {twilioSent
+                      ? "✓ Sent via Twilio"
+                      : sendingTwilio
+                      ? "Sending..."
+                      : "⚡ Send via Twilio (auto-logged)"}
                   </button>
-                  <button
-                    onClick={logSend}
-                    disabled={logging || logged || !editedDraft.trim()}
-                    className="flex-1 min-w-[170px] rounded-md border border-white/20 hover:bg-white/[0.06] disabled:opacity-40 text-white text-[14px] py-2 transition-colors"
-                    title="Records to dialer_activities so the brain learns which angles work."
-                  >
-                    {logged
-                      ? "✓ Logged"
-                      : logging
-                      ? "Logging..."
-                      : "📝 Log this send (after sending)"}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={sendViaImessage}
+                      disabled={!editedDraft.trim() || !result.phone}
+                      className="flex-1 min-w-[170px] rounded-md border border-white/20 hover:bg-white/[0.06] disabled:opacity-40 text-white text-[13px] py-2 transition-colors"
+                      title="Legacy: opens iMessage on your cell. You'll have to log the send manually after."
+                    >
+                      📲 Send via iMessage (cell)
+                    </button>
+                    <button
+                      onClick={logSend}
+                      disabled={logging || logged || !editedDraft.trim()}
+                      className="flex-1 min-w-[170px] rounded-md border border-white/20 hover:bg-white/[0.06] disabled:opacity-40 text-white/70 text-[13px] py-2 transition-colors"
+                      title="Records to dialer_activities (use after sending via iMessage so the brain has context)."
+                    >
+                      {logged
+                        ? "✓ Logged"
+                        : logging
+                        ? "Logging..."
+                        : "📝 Log iMessage send"}
+                    </button>
+                  </div>
                 </div>
               )}
               {!result.phone && (
