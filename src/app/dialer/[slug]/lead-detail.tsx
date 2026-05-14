@@ -25,6 +25,7 @@ import MathSheetContent, {
 } from "@/app/admin/math-sheet/[id]/math-sheet-content"
 import DaleBriefSheet, { type DaleBrief } from "./dale-brief-sheet"
 import { ShareMathSheet } from "./share-math-sheet"
+import { AiComposePanel } from "./ai-compose-panel"
 
 function fmtPhone(raw?: string | null): string {
   if (!raw) return ""
@@ -1693,6 +1694,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
   const [copied, setCopied] = useState(false)
   const [openerLoading, setOpenerLoading] = useState(false)
   const [openerCopied, setOpenerCopied] = useState(false)
+  const [aiComposeOpen, setAiComposeOpen] = useState(false)
   const [openerPreview, setOpenerPreview] = useState<string | null>(null)
   const [showCustom, setShowCustom] = useState(false)
   const [customMessage, setCustomMessage] = useState("")
@@ -2450,8 +2452,22 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           🖼️ 1. Open math sheet (screenshot it)
         </button>
 
+        {/* AI compose — replaces the static opener templates with a
+            real sales brain that varies per lead, drafts replies, and
+            (after testing) flags drafts low-confidence for review. */}
+        <button
+          type="button"
+          onClick={() => setAiComposeOpen(true)}
+          title="AI sales brain — drafts a cold opener, follow-up, or reply using FALCO playbook + lead context. Pick mode in the panel."
+          className="rounded-lg border border-emerald-400/45 bg-emerald-400/20 hover:bg-emerald-400/30 px-3 py-1.5 text-sm text-emerald-50 font-semibold transition-colors"
+        >
+          ✦ AI compose
+        </button>
+
         {/* Step 2: Open the opener text — short, no math, attach the image
-            from camera roll when iMessage opens. */}
+            from camera roll when iMessage opens.
+            (Legacy static-template flow — kept as fallback while the AI
+            compose button above proves out.) */}
         <button
           type="button"
           onClick={fetchAndCopyOpener}
@@ -2463,7 +2479,7 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
             ? "Building..."
             : openerCopied
             ? "✓ Text copied & SMS opened — attach the image"
-            : "📲 2. Send opener text"}
+            : "📲 2. Send opener text (legacy template)"}
         </button>
 
         {/* Hidden by default — PDF is currently flaky on serverless.
@@ -2602,6 +2618,18 @@ function OutreachHelpers({ lead, caller }: { lead: DialerLeadView; caller: strin
           {smsTemplate}
         </div>
       </details>
+
+      {/* AI compose modal — opens when Patrick taps the "✦ AI compose"
+          button above. Self-contained: handles its own mode selector,
+          OpenAI call, draft editing, iMessage send, and activity log. */}
+      {aiComposeOpen && (
+        <AiComposePanel
+          slug={lead.slug}
+          ownerName={lead.ownerName}
+          caller={caller}
+          onClose={() => setAiComposeOpen(false)}
+        />
+      )}
     </section>
   )
 }
