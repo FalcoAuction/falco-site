@@ -30,8 +30,32 @@
  *   ← = previous
  */
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import type { InboxLead } from "./page"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { InboxLead, InboxPhone } from "./page"
+
+// Rank phones for default selection — prefer mobile/voip over landline,
+// and skip DNC numbers entirely.
+function pickDefaultPhone(phones: InboxPhone[]): string {
+  if (phones.length === 0) return ""
+  const score = (p: InboxPhone): number => {
+    if (p.dnc) return -100
+    const t = (p.lineType || "").toLowerCase()
+    if (t === "mobile") return 100
+    if (t === "fixedvoip" || t === "nonfixedvoip" || t === "voip") return 80
+    if (t === "landline" || t === "fixed_line_or_mobile") return 30
+    if (!t) return 50 // unknown
+    return 40
+  }
+  // Stable sort by score desc, primary first as tiebreak
+  const sorted = [...phones].sort((a, b) => {
+    const sb = score(b) - score(a)
+    if (sb !== 0) return sb
+    if (a.isPrimary && !b.isPrimary) return -1
+    if (b.isPrimary && !a.isPrimary) return 1
+    return 0
+  })
+  return sorted[0]?.number || ""
+}
 
 type DraftState = {
   loading: boolean
@@ -56,11 +80,29 @@ export function InboxRunner({
   const [drafts, setDrafts] = useState<Record<number, DraftState>>({})
   const [edits, setEdits] = useState<Record<number, string>>({})
   const [sentVia, setSentVia] = useState<Record<number, "twilio" | "imessage" | "skipped">>({})
+  // Per-lead phone selection — picks a mobile/voip by default, Patrick
+  // can override per lead via the chip selector below the lead card.
+  const [selectedPhone, setSelectedPhone] = useState<Record<number, string>>({})
   const [twilioCooldown, setTwilioCooldown] = useState(0)
   const draftTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const lead = leads[idx]
   const total = leads.length
+
+  // Currently-selected phone for this card (defaults to the best
+  // sendable one based on line_type ranking).
+  const currentPhone = useMemo(() => {
+    if (!lead) return ""
+    if (selectedPhone[idx]) return selectedPhone[idx]
+    return pickDefaultPhone(lead.phones)
+  }, [idx, lead, selectedPhone])
+  const currentPhoneObj = useMemo(() => {
+    if (!lead) return null
+    return lead.phones.find((p) => p.number === currentPhone) || null
+  }, [lead, currentPhone])
+  const currentLineType = (currentPhoneObj?.lineType || "").toLowerCase()
+  const currentIsLandline =
+    currentLineType === "landline" || currentLineType === "fixed_line_or_mobile"
 
   // Decrement cooldown each second
   useEffect(() => {
@@ -179,7 +221,7 @@ export function InboxRunner({
     if (twilioCooldown > 0) return
     const draftText = edits[idx] || drafts[idx]?.draft || ""
     if (!draftText.trim() || !lead) return
-    const phone = normalizeE164(lead.primaryPhone)
+    const phone = normalizeE164(currentPhone)
     if (!phone) return
     const res = await fetch(`/api/sms/twilio-send`, {
       method: "POST",
@@ -207,7 +249,7 @@ export function InboxRunner({
   function sendViaImessage() {
     const draftText = edits[idx] || drafts[idx]?.draft || ""
     if (!draftText.trim() || !lead) return
-    const phone = normalizeE164(lead.primaryPhone)
+    const phone = normalizeE164(currentPhone)
     if (!phone) return
     // Log the send first (best-effort, fire-and-forget) so the brain
     // sees it in conversation history next time.
@@ -353,21 +395,81 @@ export function InboxRunner({
           />
         </div>
 
-        <div className="flex items-center gap-2 mt-3 text-[12px] text-white/60">
-          <span className="font-mono">{fmtPhone(lead.primaryPhone)}</span>
-          {lead.lineType && (
-            <span
-              className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${
-                lead.lineType === "mobile"
-                  ? "border-emerald-400/40 text-emerald-200"
-                  : "border-blue-400/40 text-blue-200"
-              }`}
-            >
-              {lead.lineType}
-            </span>
-          )}
-          {lead.altCount > 0 && (
-            <span className="text-white/40">+{lead.altCount} alts</span>
+        {/* Phone selector — tap to switch which number we send to.
+            Default is the highest-rank line type (mobile > voip >
+            landline). Landline-selected shows a warning since SMS
+            won't deliver. */}
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-white/45 font-semibold">
+            <span>Send to</span>
+            {lead.phones.length === 0 && (
+              <span className="text-red-300 normal-case tracking-normal">
+                no phones on file
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {lead.phones.map((p, i) => {
+              const isSelected = currentPhone === p.number
+              const lt = (p.lineType || "").toLowerCase()
+              const isMobile = lt === "mobile"
+              const isLandline = lt === "landline" || lt === "fixed_line_or_mobile"
+              const isVoip = lt === "fixedvoip" || lt === "nonfixedvoip" || lt === "voip"
+              return (
+                <button
+                  key={p.number + i}
+                  type="button"
+                  onClick={() =>
+                    setSelectedPhone((s) => ({ ...s, [idx]: p.number }))
+                  }
+                  disabled={p.dnc}
+                  className={`rounded-md border px-2 py-1 text-[12px] font-mono leading-tight transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                    isSelected
+                      ? "bg-emerald-400/20 border-emerald-400/60 text-emerald-50"
+                      : "bg-white/[0.03] border-white/15 text-white/70 hover:bg-white/[0.07]"
+                  }`}
+                  title={
+                    p.dnc
+                      ? "DNC — do not contact"
+                      : `${p.isPrimary ? "primary" : "alternate"}${
+                          p.carrier ? ` · ${p.carrier}` : ""
+                        }`
+                  }
+                >
+                  <span>{fmtPhone(p.number)}</span>
+                  {p.lineType && (
+                    <span
+                      className={`ml-1.5 inline-block rounded-full border px-1 py-px text-[9px] uppercase tracking-wider align-middle ${
+                        isMobile
+                          ? "border-emerald-400/40 text-emerald-200"
+                          : isVoip
+                          ? "border-cyan-400/40 text-cyan-200"
+                          : isLandline
+                          ? "border-amber-400/40 text-amber-200"
+                          : "border-white/15 text-white/50"
+                      }`}
+                    >
+                      {p.lineType}
+                    </span>
+                  )}
+                  {p.isPrimary && (
+                    <span className="ml-1.5 text-[9px] uppercase tracking-wider text-white/40">
+                      1°
+                    </span>
+                  )}
+                  {p.dnc && (
+                    <span className="ml-1.5 text-[9px] uppercase tracking-wider text-red-300">
+                      DNC
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {currentIsLandline && (
+            <div className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2.5 py-1.5 text-[11px] text-amber-200">
+              ⚠ Landline selected — SMS won&apos;t deliver. Pick a mobile/VoIP number or call instead.
+            </div>
           )}
         </div>
 

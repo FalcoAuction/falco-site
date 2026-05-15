@@ -55,7 +55,13 @@ export type InboxLead = {
   daysToSale: number | null
   arv: number | null
   equity: number | null
+  /** All callable numbers for this lead, primary first. Each has a
+   *  line_type tag so the runner UI can show mobile/landline/voip
+   *  badges + warn when SMS won't deliver to a landline. */
+  phones: InboxPhone[]
+  /** Kept for back-compat — same as phones[0]?.number */
   primaryPhone: string
+  /** Kept for back-compat — line_type on the primary */
   lineType: string | null
   altCount: number
   priorOutboundCount: number
@@ -63,6 +69,14 @@ export type InboxLead = {
   // mode hint for the AI brain: 'opener' if no prior outbound, else 'followup'
   suggestedMode: "opener" | "followup" | "reply"
   lastInboundBody: string | null
+}
+
+export type InboxPhone = {
+  number: string        // raw digits or +E.164 as stored
+  lineType: string | null  // "mobile" | "landline" | "fixedVoip" | "nonFixedVoip" | null
+  isPrimary: boolean
+  dnc: boolean
+  carrier: string | null
 }
 
 export default async function InboxPage() {
@@ -170,7 +184,54 @@ export default async function InboxPage() {
     const equity = arv !== null ? arv - payoff : null
 
     const tw = pm["twilio_lookup"] as { line_type?: string } | undefined
-    const lineType = (tw?.line_type as string | undefined) || null
+    const primaryLineType = (tw?.line_type as string | undefined) || null
+
+    // Build the full phones list: primary first, then alternates.
+    // alternate_phones can be array-of-strings OR array-of-objects
+    // depending on which source populated it (BatchData writes objects,
+    // legacy scripts wrote raw strings). Handle both, dedupe by digits.
+    const phones: InboxPhone[] = []
+    const seenDigits = new Set<string>()
+    const primaryRaw = (r.phone as string) || ""
+    const primaryDigits = primaryRaw.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")
+    if (primaryRaw) {
+      phones.push({
+        number: primaryRaw,
+        lineType: primaryLineType,
+        isPrimary: true,
+        dnc: false,
+        carrier:
+          (tw as { carrier_name?: string } | undefined)?.carrier_name || null,
+      })
+      if (primaryDigits) seenDigits.add(primaryDigits)
+    }
+    if (Array.isArray(r.alternate_phones)) {
+      for (const a of r.alternate_phones as unknown[]) {
+        let number = ""
+        let lineType: string | null = null
+        let dnc = false
+        let carrier: string | null = null
+        if (typeof a === "string") {
+          number = a
+        } else if (a && typeof a === "object") {
+          const obj = a as {
+            number?: string
+            lineType?: string
+            dnc?: boolean
+            carrier?: string
+          }
+          number = obj.number || ""
+          lineType = obj.lineType || null
+          dnc = Boolean(obj.dnc)
+          carrier = obj.carrier || null
+        }
+        if (!number) continue
+        const digits = number.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")
+        if (!digits || seenDigits.has(digits)) continue
+        seenDigits.add(digits)
+        phones.push({ number, lineType, isPrimary: false, dnc, carrier })
+      }
+    }
 
     const slug = r.pipeline_lead_key as string
     const lastInbound = inboundByLead.get(slug) ?? null
@@ -192,11 +253,10 @@ export default async function InboxPage() {
       daysToSale,
       arv,
       equity,
-      primaryPhone: (r.phone as string) || "",
-      lineType,
-      altCount: Array.isArray(r.alternate_phones)
-        ? (r.alternate_phones as unknown[]).length
-        : 0,
+      phones,
+      primaryPhone: primaryRaw,
+      lineType: primaryLineType,
+      altCount: phones.length - 1,
       priorOutboundCount: priorOut,
       hasInboundReply: !!lastInbound,
       suggestedMode,
