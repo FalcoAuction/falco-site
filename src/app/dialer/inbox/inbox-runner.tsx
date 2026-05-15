@@ -72,9 +72,14 @@ const TWILIO_COOLDOWN_SECONDS = 30
 export function InboxRunner({
   leads,
   caller,
+  actionedCount = 0,
 }: {
   leads: InboxLead[]
   caller: string
+  /** Count of leads we've already actioned in the last 24h, filtered
+   *  out of `leads`. Surfaced as "X done today" in the progress bar
+   *  so Patrick can see the actual total worked. */
+  actionedCount?: number
 }) {
   const [idx, setIdx] = useState(0)
   const [drafts, setDrafts] = useState<Record<number, DraftState>>({})
@@ -213,9 +218,26 @@ export function InboxRunner({
   }, [idx])
 
   const handleSkip = useCallback(() => {
+    // Log the skip server-side so refresh + tomorrow's session don't
+    // bring this lead back to the top of the queue. The inbox query
+    // filters out anything with [SKIPPED] notes from the last 24h.
+    const skipLead = leads[idx]
+    if (skipLead) {
+      fetch(`/api/dialer/activity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listingSlug: skipLead.slug,
+          channel: "note",
+          outcome: "note_only",
+          notes: "[SKIPPED via AI inbox]",
+          createdBy: caller,
+        }),
+      }).catch(() => {})
+    }
     setSentVia((s) => ({ ...s, [idx]: "skipped" }))
     advance()
-  }, [idx, advance])
+  }, [idx, leads, caller, advance])
 
   async function sendViaTwilio() {
     if (twilioCooldown > 0) return
@@ -340,12 +362,17 @@ export function InboxRunner({
     <div className="mx-auto max-w-2xl px-4 md:px-5 py-5 space-y-4">
       {/* Progress + nav */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-[12px] text-white/55 tabular-nums">
+        <div className="flex items-center justify-between text-[12px] text-white/55 tabular-nums gap-3 flex-wrap">
           <span>
-            Lead {idx + 1} of {total}
+            Pending {idx + 1} of {total}
+            {actionedCount > 0 && (
+              <span className="ml-2 text-emerald-300/85">
+                · {actionedCount} done in last 24h
+              </span>
+            )}
           </span>
-          <span>
-            ←/→ navigate · S send · M iMsg · K skip · E edit
+          <span className="text-[11px]">
+            S send · M iMsg · K skip · E edit · ←/→
           </span>
         </div>
         <div className="h-1 bg-white/10 rounded-full overflow-hidden">

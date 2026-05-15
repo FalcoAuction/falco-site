@@ -115,32 +115,55 @@ export default async function InboxPage() {
 
   // 2. For each lead, count prior outbound activity + find UNREPLIED
   // inbound (inbound more recent than our last outbound).
+  // ALSO: track which leads we've already actioned in the last 24 hours
+  // so they drop off the queue (and refreshes pick up where we left off).
   const slugs = (rows ?? []).map((r) => r.pipeline_lead_key)
   const priorOutbound = new Map<string, number>()
   const inboundByLead = new Map<string, string>() // only set when unreplied
   const lastOutboundTs = new Map<string, number>()
   const lastInboundData = new Map<string, { body: string; ts: number }>()
+  // 24-hour rolling "done today" filter: any send-out or skip in the
+  // last 24h excludes the lead from this session's queue.
+  const actionedRecently = new Set<string>()
+  const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   if (slugs.length > 0) {
     const { data: acts } = await supabaseAdmin
       .from("dialer_activities")
       .select("listing_slug, notes, occurred_at, channel")
       .in("listing_slug", slugs)
-      .eq("channel", "text")
+      .in("channel", ["text", "note"])
       .order("occurred_at", { ascending: true }) // chronological
     for (const a of acts ?? []) {
-      const aTyped = a as { listing_slug: string; notes: string; occurred_at: string }
+      const aTyped = a as {
+        listing_slug: string
+        notes: string
+        occurred_at: string
+        channel: string
+      }
       const notes = aTyped.notes || ""
       const ts = new Date(aTyped.occurred_at).getTime()
       const isInbound = notes.startsWith("[IN]") || notes.startsWith("[IN ")
-      if (isInbound) {
-        const body = notes.replace(/^\[IN\]\s*/, "").trim()
-        lastInboundData.set(aTyped.listing_slug, { body, ts })
-      } else {
-        priorOutbound.set(
-          aTyped.listing_slug,
-          (priorOutbound.get(aTyped.listing_slug) ?? 0) + 1
-        )
-        lastOutboundTs.set(aTyped.listing_slug, ts)
+      const isOutbound = notes.startsWith("[OUT]")
+      const isSkipped = notes.startsWith("[SKIPPED")
+
+      if (aTyped.channel === "text") {
+        if (isInbound) {
+          const body = notes.replace(/^\[IN\]\s*/, "").trim()
+          lastInboundData.set(aTyped.listing_slug, { body, ts })
+        } else {
+          priorOutbound.set(
+            aTyped.listing_slug,
+            (priorOutbound.get(aTyped.listing_slug) ?? 0) + 1
+          )
+          lastOutboundTs.set(aTyped.listing_slug, ts)
+        }
+      }
+
+      // 24h rolling "done" set — sent or skipped via the inbox runner
+      if (aTyped.occurred_at >= cutoff24h) {
+        if ((aTyped.channel === "text" && isOutbound) || isSkipped) {
+          actionedRecently.add(aTyped.listing_slug)
+        }
       }
     }
     // After scanning all activity, inbound is "unreplied" only if it's
@@ -154,8 +177,9 @@ export default async function InboxPage() {
     }
   }
 
-  // 3. Shape into InboxLead, filter business owners + DNC
+  // 3. Shape into InboxLead, filter business owners + DNC + already-actioned
   const leads: InboxLead[] = []
+  let actionedCount = 0
   for (const r of rows ?? []) {
     const owner = (r.owner_name_records || r.full_name || "").trim()
     if (!owner) continue
@@ -171,6 +195,13 @@ export default async function InboxPage() {
         ss.status === "reinstated" ||
         ss.status === "ran")
     ) {
+      continue
+    }
+
+    // 24h-rolling: drop leads we've already actioned (sent or skipped)
+    // so refresh picks up where we left off.
+    if (actionedRecently.has(r.pipeline_lead_key as string)) {
+      actionedCount += 1
       continue
     }
 
@@ -292,12 +323,21 @@ export default async function InboxPage() {
             </div>
           </div>
           <div className="text-[12px] text-white/60 tabular-nums">
-            {leads.length} active leads
+            {leads.length} pending
+            {actionedCount > 0 && (
+              <span className="ml-2 text-emerald-300/85">
+                · {actionedCount} done in last 24h
+              </span>
+            )}
           </div>
         </div>
       </header>
 
-      <InboxRunner leads={leads} caller={session.caller || "patrick"} />
+      <InboxRunner
+        leads={leads}
+        caller={session.caller || "patrick"}
+        actionedCount={actionedCount}
+      />
     </main>
   )
 }
