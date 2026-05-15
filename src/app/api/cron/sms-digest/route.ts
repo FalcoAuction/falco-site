@@ -94,6 +94,21 @@ export async function GET(req: NextRequest) {
   )
   const failed = all.filter((r) => r.status === "failed")
 
+  // Carrier-level delivery breakdown (Twilio Status Callback updates
+  // twilio_status on each outbound from queued → sent → delivered, or
+  // failed/undelivered). Helps spot whether the Twilio number is
+  // getting carrier-filtered.
+  const outboundAll = all.filter((r) => r.direction === "out")
+  const delivered = outboundAll.filter((r) => r.twilio_status === "delivered")
+  const undelivered = outboundAll.filter(
+    (r) => r.twilio_status === "undelivered" || r.twilio_status === "failed"
+  )
+  const inFlight = outboundAll.filter(
+    (r) =>
+      r.twilio_status &&
+      ["queued", "sending", "sent", "accepted"].includes(r.twilio_status)
+  )
+
   // Group by lead for context
   const slugs = Array.from(new Set(all.map((r) => r.listing_slug).filter(Boolean)))
   const ownerByLead = new Map<string, string>()
@@ -174,6 +189,13 @@ export async function GET(req: NextRequest) {
     )
     .join("")
 
+  const undeliveredList = undelivered
+    .map(
+      (r) =>
+        `<li><strong>${escape(ownerName(r.listing_slug))}</strong> (${escape(r.to_phone)}): ${escape(r.escalation_reason || r.twilio_status || "no detail")}</li>`
+    )
+    .join("")
+
   const dncList = dncEvents
     .map(
       (r) =>
@@ -195,7 +217,7 @@ export async function GET(req: NextRequest) {
     <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Last 24 hours of inbound + bot activity</div>
   </div>
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
     <div style="background: #f8fafc; padding: 10px; border-radius: 6px;">
       <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Inbound</div>
       <div style="font-size: 24px; font-weight: 600; margin-top: 2px;">${inbound.length}</div>
@@ -211,6 +233,28 @@ export async function GET(req: NextRequest) {
     <div style="background: #fef2f2; padding: 10px; border-radius: 6px;">
       <div style="font-size: 11px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">DNC / failed</div>
       <div style="font-size: 24px; font-weight: 600; margin-top: 2px; color: #991b1b;">${dncEvents.length + failed.length}</div>
+    </div>
+  </div>
+
+  <!-- Delivery breakdown — Twilio Status Callback (carrier-level
+       confirmation, separate from API-accept). Shows the real
+       deliverability of the FALCO number's traffic. -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px;">
+    <div style="background: #ecfdf5; padding: 10px; border-radius: 6px;">
+      <div style="font-size: 11px; color: #047857; text-transform: uppercase; letter-spacing: 0.05em;">Outbound total</div>
+      <div style="font-size: 24px; font-weight: 600; margin-top: 2px; color: #047857;">${outboundAll.length}</div>
+    </div>
+    <div style="background: #d1fae5; padding: 10px; border-radius: 6px;">
+      <div style="font-size: 11px; color: #065f46; text-transform: uppercase; letter-spacing: 0.05em;">Delivered</div>
+      <div style="font-size: 24px; font-weight: 600; margin-top: 2px; color: #065f46;">${delivered.length}</div>
+    </div>
+    <div style="background: #fef9c3; padding: 10px; border-radius: 6px;">
+      <div style="font-size: 11px; color: #854d0e; text-transform: uppercase; letter-spacing: 0.05em;">In flight</div>
+      <div style="font-size: 24px; font-weight: 600; margin-top: 2px; color: #854d0e;">${inFlight.length}</div>
+    </div>
+    <div style="background: #fee2e2; padding: 10px; border-radius: 6px;">
+      <div style="font-size: 11px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">Undelivered</div>
+      <div style="font-size: 24px; font-weight: 600; margin-top: 2px; color: #991b1b;">${undelivered.length}</div>
     </div>
   </div>
 
@@ -231,6 +275,20 @@ export async function GET(req: NextRequest) {
       ? `<section style="margin-bottom: 24px;">
     <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #15803d;">✓ Auto-replied (${autoSent.length})</h2>
     <ul style="list-style: none; padding: 0;">${autoSentList}</ul>
+  </section>`
+      : ""
+  }
+
+  ${
+    undelivered.length > 0
+      ? `<section style="margin-bottom: 24px;">
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">✗ Carrier-undelivered (${undelivered.length})</h2>
+    <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">
+      Twilio accepted these but the carrier didn't deliver. Often = landline,
+      spam-filter, or disconnected number. If this count is high vs delivered,
+      your Twilio number may need A2P 10DLC registration.
+    </div>
+    <ul>${undeliveredList}</ul>
   </section>`
       : ""
   }

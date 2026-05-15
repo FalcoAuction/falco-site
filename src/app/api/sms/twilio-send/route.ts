@@ -152,6 +152,10 @@ export async function POST(req: NextRequest) {
 
   // ───── Send via Twilio REST API ────────────────────────────────────
   // Direct fetch (no twilio npm SDK dependency).
+  // StatusCallback tells Twilio to POST back delivery status updates
+  // (sent → delivered, or failed/undelivered) so we can track which
+  // sends actually landed vs got carrier-filtered.
+  const statusCallback = `https://${req.headers.get("host") || "falco.llc"}/api/sms/twilio-status`
   const tw = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
     {
@@ -164,6 +168,7 @@ export async function POST(req: NextRequest) {
         From: fromNumber,
         To: toPhone,
         Body: messageBody,
+        StatusCallback: statusCallback,
       }).toString(),
     }
   )

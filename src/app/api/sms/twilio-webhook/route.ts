@@ -540,6 +540,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ───── Auto-send via Twilio ─────────────────────────────────────────
+  const statusCallback = `https://${req.headers.get("host") || "falco.llc"}/api/sms/twilio-status`
   try {
     const tw = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
@@ -553,6 +554,7 @@ export async function POST(req: NextRequest) {
           From: fromNumber,
           To: fromPhone,
           Body: composeResult.draft,
+          StatusCallback: statusCallback,
         }).toString(),
       }
     )
