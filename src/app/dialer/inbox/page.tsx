@@ -99,34 +99,43 @@ export default async function InboxPage() {
     )
   }
 
-  // 2. For each lead, count prior outbound text activity + check for inbound
+  // 2. For each lead, count prior outbound activity + find UNREPLIED
+  // inbound (inbound more recent than our last outbound).
   const slugs = (rows ?? []).map((r) => r.pipeline_lead_key)
   const priorOutbound = new Map<string, number>()
-  const inboundByLead = new Map<string, string>() // slug → last inbound body
+  const inboundByLead = new Map<string, string>() // only set when unreplied
+  const lastOutboundTs = new Map<string, number>()
+  const lastInboundData = new Map<string, { body: string; ts: number }>()
   if (slugs.length > 0) {
     const { data: acts } = await supabaseAdmin
       .from("dialer_activities")
       .select("listing_slug, notes, occurred_at, channel")
       .in("listing_slug", slugs)
       .eq("channel", "text")
-      .order("occurred_at", { ascending: false })
+      .order("occurred_at", { ascending: true }) // chronological
     for (const a of acts ?? []) {
       const aTyped = a as { listing_slug: string; notes: string; occurred_at: string }
       const notes = aTyped.notes || ""
+      const ts = new Date(aTyped.occurred_at).getTime()
       const isInbound = notes.startsWith("[IN]") || notes.startsWith("[IN ")
       if (isInbound) {
-        if (!inboundByLead.has(aTyped.listing_slug)) {
-          // Most-recent first; we want the latest inbound
-          inboundByLead.set(
-            aTyped.listing_slug,
-            notes.replace(/^\[IN\]\s*/, "").trim()
-          )
-        }
+        const body = notes.replace(/^\[IN\]\s*/, "").trim()
+        lastInboundData.set(aTyped.listing_slug, { body, ts })
       } else {
         priorOutbound.set(
           aTyped.listing_slug,
           (priorOutbound.get(aTyped.listing_slug) ?? 0) + 1
         )
+        lastOutboundTs.set(aTyped.listing_slug, ts)
+      }
+    }
+    // After scanning all activity, inbound is "unreplied" only if it's
+    // more recent than the last outbound on that thread (so auto-replied
+    // threads don't show up as urgent).
+    for (const [slug, inbound] of lastInboundData) {
+      const lastOut = lastOutboundTs.get(slug) ?? 0
+      if (inbound.ts > lastOut) {
+        inboundByLead.set(slug, inbound.body)
       }
     }
   }
