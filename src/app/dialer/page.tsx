@@ -288,6 +288,16 @@ export default async function DialerQueuePage({
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {/* Bulk AI compose — drafts opener/followup/reply for every
+              active foreclosure lead, one card at a time, auto-advance.
+              The fastest way to plow through the whole pool. */}
+          <Link
+            href="/dialer/inbox"
+            className="rounded-md bg-emerald-400/20 hover:bg-emerald-400/30 border border-emerald-400/45 px-3 py-1.5 text-[12px] font-semibold text-emerald-50 transition-colors"
+            title="Bulk AI compose queue — go through every active foreclosure lead with AI-drafted texts. One card at a time, auto-advance."
+          >
+            ✦ AI Inbox
+          </Link>
           <CountyFilter options={countyOptions} selected={countyFilter} />
           <DistressFilter options={distressOptions} selected={distressFilter} />
         </div>
