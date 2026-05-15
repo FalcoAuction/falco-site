@@ -33,18 +33,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { InboxLead, InboxPhone } from "./page"
 
-// Rank phones for default selection — prefer mobile/voip over landline,
-// and skip DNC numbers entirely.
+// Rank phones for default auto-selection — prefer mobile/voip over
+// landline. DNC phones are penalized but NOT excluded — federal DNC
+// applies to telemarketing calls, not SMS; you can still text. The
+// chip selector lets Patrick override.
 function pickDefaultPhone(phones: InboxPhone[]): string {
   if (phones.length === 0) return ""
   const score = (p: InboxPhone): number => {
-    if (p.dnc) return -100
+    let s = 0
     const t = (p.lineType || "").toLowerCase()
-    if (t === "mobile") return 100
-    if (t === "fixedvoip" || t === "nonfixedvoip" || t === "voip") return 80
-    if (t === "landline" || t === "fixed_line_or_mobile") return 30
-    if (!t) return 50 // unknown
-    return 40
+    if (t === "mobile") s = 100
+    else if (t === "fixedvoip" || t === "nonfixedvoip" || t === "voip") s = 80
+    else if (t === "landline" || t === "fixed_line_or_mobile") s = 30
+    else if (!t) s = 50
+    else s = 40
+    // Soft DNC penalty — still selectable, just last choice when there's
+    // a non-DNC alternative.
+    if (p.dnc) s -= 50
+    return s
   }
   // Stable sort by score desc, primary first as tiebreak
   const sorted = [...phones].sort((a, b) => {
@@ -403,7 +409,7 @@ export function InboxRunner({
             )}
           </span>
           <span className="text-[11px]">
-            S send · M iMsg · K skip · D dnc · E edit · ←/→
+            S send · M iMsg · K skip · D opt-out · E edit · ←/→
           </span>
         </div>
         <div className="h-1 bg-white/10 rounded-full overflow-hidden">
@@ -480,18 +486,15 @@ export function InboxRunner({
                   onClick={() =>
                     setSelectedPhone((s) => ({ ...s, [idx]: p.number }))
                   }
-                  disabled={p.dnc}
-                  className={`rounded-md border px-2 py-1 text-[12px] font-mono leading-tight transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`rounded-md border px-2 py-1 text-[12px] font-mono leading-tight transition-colors ${
                     isSelected
                       ? "bg-emerald-400/20 border-emerald-400/60 text-emerald-50"
                       : "bg-white/[0.03] border-white/15 text-white/70 hover:bg-white/[0.07]"
                   }`}
                   title={
-                    p.dnc
-                      ? "DNC — do not contact"
-                      : `${p.isPrimary ? "primary" : "alternate"}${
-                          p.carrier ? ` · ${p.carrier}` : ""
-                        }`
+                    `${p.isPrimary ? "primary" : "alternate"}` +
+                    `${p.carrier ? ` · ${p.carrier}` : ""}` +
+                    `${p.dnc ? " · DNC (federal registry — informational, you can still text)" : ""}`
                   }
                 >
                   <span>{fmtPhone(p.number)}</span>
@@ -516,7 +519,10 @@ export function InboxRunner({
                     </span>
                   )}
                   {p.dnc && (
-                    <span className="ml-1.5 text-[9px] uppercase tracking-wider text-red-300">
+                    <span
+                      className="ml-1.5 text-[9px] uppercase tracking-wider text-amber-300/85"
+                      title="On federal DNC registry — informational only, you can still text"
+                    >
                       DNC
                     </span>
                   )}
@@ -527,6 +533,11 @@ export function InboxRunner({
           {currentIsLandline && (
             <div className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2.5 py-1.5 text-[11px] text-amber-200">
               ⚠ Landline selected — SMS won&apos;t deliver. Pick a mobile/VoIP number or call instead.
+            </div>
+          )}
+          {currentPhoneObj?.dnc && (
+            <div className="rounded-md border border-amber-400/35 bg-amber-400/[0.06] px-2.5 py-1.5 text-[11px] text-amber-200/90">
+              ⚠ DNC-listed number (federal registry). Sending is still legal — DNC is for telemarketing calls, not SMS — but proceed with awareness.
             </div>
           )}
         </div>
@@ -589,7 +600,7 @@ export function InboxRunner({
             : status === "imessage"
             ? "✓ Sent via iMessage"
             : status === "dnc"
-            ? "🚫 Marked DNC"
+            ? "🚫 Opted out"
             : "○ Skipped"}
         </div>
       )}
@@ -630,9 +641,9 @@ export function InboxRunner({
           onClick={handleDnc}
           disabled={!!status}
           className="w-full rounded-md border border-red-400/40 bg-red-400/[0.06] hover:bg-red-400/15 disabled:opacity-40 text-red-200 text-[13px] py-2 transition-colors"
-          title="Mark this lead's phone as DNC. Stops the auto-respond bot and refuses outbound. One-tap confirm."
+          title="Mark this LEAD as opted out — homeowner told you to stop, or you decided to drop them. Distinct from the per-phone DNC badge above which is informational only. One-tap confirm."
         >
-          🚫 DNC — never contact again (D)
+          🚫 Opt out — never contact again (D)
         </button>
         <div className="grid grid-cols-2 gap-2">
           <button
