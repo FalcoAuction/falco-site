@@ -310,9 +310,9 @@ export async function POST(
           { role: "user", content: userMessage },
         ],
         response_format: { type: "json_object" },
-        // Slight randomness so variant angles actually vary across leads,
-        // but not so much that voice gets weird.
-        temperature: 0.7,
+        // NOTE: gpt-5-mini only supports default temperature (1).
+        // Variant variety comes from the brain's angle-selection
+        // logic, not sampling temperature.
       }),
     })
   } catch (e) {

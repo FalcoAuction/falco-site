@@ -291,7 +291,9 @@ export async function POST(req: NextRequest) {
             { role: "user", content: userMessage },
           ],
           response_format: { type: "json_object" },
-          temperature: 0.5,
+          // NOTE: gpt-5-mini doesn't support custom temperature, only
+          // the default (1). Variant variety comes from the brain's
+          // angle-selection logic, not sampling temperature.
         }),
       }
     )
@@ -302,9 +304,14 @@ export async function POST(req: NextRequest) {
       const raw = j.choices?.[0]?.message?.content || ""
       if (raw) {
         composeResult = JSON.parse(raw) as ComposeResult
+      } else {
+        console.error("OpenAI returned empty content")
       }
     } else {
-      console.error("OpenAI returned", openAiResp.status)
+      const errText = await openAiResp.text().catch(() => "")
+      console.error(
+        `OpenAI ${openAiResp.status}: ${errText.slice(0, 500)}`
+      )
     }
   } catch (e) {
     console.error("OpenAI call / parse failed:", e)
