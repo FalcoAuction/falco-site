@@ -212,6 +212,21 @@ export async function POST(req: NextRequest) {
     return twimlResponse(EMPTY_TWIML)
   }
 
+  // Honor manual sale_status flag — if a lead is reinstated / cancelled
+  // / ran (sale already happened), do NOT auto-respond. Patrick has
+  // either explicitly resolved this lead or it's no longer actionable.
+  // The inbound is still logged (so it's not lost), but the brain skips
+  // the draft.
+  const pmCheck = (lead.phone_metadata ?? {}) as Record<string, unknown>
+  const ssCheck = pmCheck["sale_status"] as { status?: string } | undefined
+  const resolvedStatuses = new Set(["cancelled", "reinstated", "ran"])
+  if (ssCheck?.status && resolvedStatuses.has(ssCheck.status)) {
+    console.info(
+      `Sale status '${ssCheck.status}' set on ${leadSlug} — skipping auto-respond`
+    )
+    return twimlResponse(EMPTY_TWIML)
+  }
+
   // ───── Auto-respond is OFF? → log, no draft ─────────────────────────
   if (process.env.FALCO_SMS_AUTO_SEND === "0") {
     return twimlResponse(EMPTY_TWIML)
