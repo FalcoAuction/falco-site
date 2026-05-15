@@ -159,9 +159,15 @@ export default async function InboxPage() {
         }
       }
 
-      // 24h rolling "done" set — sent or skipped via the inbox runner
+      // 24h rolling "done" set — sent, skipped, or DNC'd via the
+      // inbox runner all drop the lead from the queue immediately.
+      const isDnc = notes.startsWith("[DNC]")
       if (aTyped.occurred_at >= cutoff24h) {
-        if ((aTyped.channel === "text" && isOutbound) || isSkipped) {
+        if (
+          (aTyped.channel === "text" && isOutbound) ||
+          isSkipped ||
+          isDnc
+        ) {
           actionedRecently.add(aTyped.listing_slug)
         }
       }

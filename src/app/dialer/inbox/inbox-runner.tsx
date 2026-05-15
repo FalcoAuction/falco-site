@@ -84,7 +84,9 @@ export function InboxRunner({
   const [idx, setIdx] = useState(0)
   const [drafts, setDrafts] = useState<Record<number, DraftState>>({})
   const [edits, setEdits] = useState<Record<number, string>>({})
-  const [sentVia, setSentVia] = useState<Record<number, "twilio" | "imessage" | "skipped">>({})
+  const [sentVia, setSentVia] = useState<
+    Record<number, "twilio" | "imessage" | "skipped" | "dnc">
+  >({})
   // Per-lead phone selection — picks a mobile/voip by default, Patrick
   // can override per lead via the chip selector below the lead card.
   const [selectedPhone, setSelectedPhone] = useState<Record<number, string>>({})
@@ -239,6 +241,32 @@ export function InboxRunner({
     advance()
   }, [idx, leads, caller, advance])
 
+  const handleDnc = useCallback(() => {
+    const dncLead = leads[idx]
+    if (!dncLead) return
+    // Single-tap confirm (window.confirm is intentional friction — DNC
+    // is permanent until manually undone, and it kills the auto-respond
+    // bot's ability to ever reply to this lead).
+    const ok = window.confirm(
+      `Mark ${dncLead.ownerName} (${dncLead.address.split(",")[0]}) as DNC?\n\n` +
+        `This will:\n` +
+        `  • Stop the auto-respond bot from ever replying to their texts\n` +
+        `  • Drop them from the inbox queue\n` +
+        `  • Refuse outbound Twilio sends to their phones\n\n` +
+        `Undo by editing phone_metadata.dnc in their lead detail page.`
+    )
+    if (!ok) return
+    fetch(`/api/dialer/${dncLead.slug}/mark-dnc`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reason: `marked DNC via /dialer/inbox by ${caller}`,
+      }),
+    }).catch((e) => console.error("DNC failed:", e))
+    setSentVia((s) => ({ ...s, [idx]: "dnc" }))
+    advance()
+  }, [idx, leads, caller, advance])
+
   async function sendViaTwilio() {
     if (twilioCooldown > 0) return
     const draftText = edits[idx] || drafts[idx]?.draft || ""
@@ -306,6 +334,9 @@ export function InboxRunner({
       } else if (e.key === "k" || e.key === "K" || e.key === "n" || e.key === "N") {
         e.preventDefault()
         handleSkip()
+      } else if (e.key === "d" || e.key === "D") {
+        e.preventDefault()
+        handleDnc()
       } else if (e.key === "e" || e.key === "E") {
         e.preventDefault()
         draftTextareaRef.current?.focus()
@@ -372,7 +403,7 @@ export function InboxRunner({
             )}
           </span>
           <span className="text-[11px]">
-            S send · M iMsg · K skip · E edit · ←/→
+            S send · M iMsg · K skip · D dnc · E edit · ←/→
           </span>
         </div>
         <div className="h-1 bg-white/10 rounded-full overflow-hidden">
@@ -557,6 +588,8 @@ export function InboxRunner({
             ? "✓ Sent via Twilio"
             : status === "imessage"
             ? "✓ Sent via iMessage"
+            : status === "dnc"
+            ? "🚫 Marked DNC"
             : "○ Skipped"}
         </div>
       )}
@@ -593,6 +626,14 @@ export function InboxRunner({
             ↪ Skip (K)
           </button>
         </div>
+        <button
+          onClick={handleDnc}
+          disabled={!!status}
+          className="w-full rounded-md border border-red-400/40 bg-red-400/[0.06] hover:bg-red-400/15 disabled:opacity-40 text-red-200 text-[13px] py-2 transition-colors"
+          title="Mark this lead's phone as DNC. Stops the auto-respond bot and refuses outbound. One-tap confirm."
+        >
+          🚫 DNC — never contact again (D)
+        </button>
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={goBack}
