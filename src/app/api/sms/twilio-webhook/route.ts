@@ -56,6 +56,78 @@ const ESCALATION_PATTERNS: Array<{ re: RegExp; reason: string }> = [
 const DEFAULT_AUTO_SEND_THRESHOLD = 0.7
 const DEFAULT_MODEL = "gpt-5-mini"
 
+// E.164 normalize helper for the notify-phone comparison
+function digitsOnly(raw: string): string {
+  const d = (raw || "").replace(/\D/g, "")
+  if (d.length === 11 && d.startsWith("1")) return d.slice(1)
+  return d
+}
+
+/**
+ * Fire-and-forget notify SMS to Patrick's cell when a homeowner texts
+ * the FALCO Twilio number. Includes the owner name, address snippet,
+ * inbound body snippet, and what the bot did (auto-sent / queued).
+ *
+ * Skipped when:
+ *   - FALCO_NOTIFY_PHONE env not set
+ *   - The inbound came FROM Patrick's notify phone (avoid loop)
+ *   - Twilio creds missing
+ */
+async function notifyPatrick(args: {
+  ownerName: string | null
+  addressSnippet: string
+  inboundBody: string
+  botAction: "auto_sent" | "queued" | "no_draft" | "opted_out_lead"
+  escalationReason: string | null
+}): Promise<void> {
+  const notifyPhone = (process.env.FALCO_NOTIFY_PHONE || "").trim()
+  if (!notifyPhone) return
+  const sid = (process.env.TWILIO_ACCOUNT_SID || "").trim()
+  const token = (process.env.TWILIO_AUTH_TOKEN || "").trim()
+  const fromNumber = (process.env.TWILIO_FROM_NUMBER || "").trim()
+  if (!sid || !token || !fromNumber) return
+
+  const owner = (args.ownerName || "unknown lead").trim()
+  const addr = args.addressSnippet || ""
+  const inboundSnip =
+    args.inboundBody.length > 90
+      ? args.inboundBody.slice(0, 87) + "..."
+      : args.inboundBody
+  const actionLine =
+    args.botAction === "auto_sent"
+      ? "Bot auto-replied."
+      : args.botAction === "queued"
+      ? `Bot draft queued (${args.escalationReason || "review"}). Approve at falco.llc/dialer/inbox`
+      : args.botAction === "opted_out_lead"
+      ? "Lead is on opt-out list. No bot reply."
+      : "No bot draft. Open inbox to compose."
+
+  const body =
+    `FALCO inbound · ${owner}${addr ? ` · ${addr}` : ""}\n` +
+    `"${inboundSnip}"\n` +
+    actionLine
+
+  try {
+    await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          From: fromNumber,
+          To: notifyPhone,
+          Body: body,
+        }).toString(),
+      }
+    )
+  } catch (e) {
+    console.error("notifyPatrick failed:", e)
+  }
+}
+
 const EMPTY_TWIML =
   '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
 const STOP_CONFIRMATION_TWIML = (msg: string) =>
@@ -104,6 +176,30 @@ export async function POST(req: NextRequest) {
   const messageSid = (formParams.MessageSid || "").trim()
 
   if (!fromPhone || !messageBody) {
+    return twimlResponse(EMPTY_TWIML)
+  }
+
+  // Self-notify loop guard — if Patrick texts the FALCO number from his
+  // own cell (his notify phone), log it but do NOT process or notify
+  // himself. Prevents infinite loops where he replies "ok send it" to a
+  // notify SMS and we'd then try to draft a reply to him.
+  const notifyPhone = (process.env.FALCO_NOTIFY_PHONE || "").trim()
+  if (notifyPhone && digitsOnly(fromPhone) === digitsOnly(notifyPhone)) {
+    console.info("Inbound from notify-phone (self) — logging only:", fromPhone)
+    if (supabaseAdmin) {
+      try {
+        await supabaseAdmin.from("sms_messages").insert({
+          listing_slug: null,
+          direction: "in",
+          from_phone: fromPhone,
+          to_phone: toPhone,
+          body: messageBody,
+          twilio_sid: messageSid,
+          received_at: new Date().toISOString(),
+          status: "received",
+        })
+      } catch {}
+    }
     return twimlResponse(EMPTY_TWIML)
   }
 
@@ -206,11 +302,22 @@ export async function POST(req: NextRequest) {
   }
 
   // If we couldn't match the lead, log + bail (no auto-respond without
-  // context).
+  // context). Still notify Patrick — unknown senders are often leads
+  // with newer phones we haven't matched yet, or referrals.
   if (!lead || !leadSlug) {
     console.warn("Twilio inbound from unknown number:", fromPhone)
+    await notifyPatrick({
+      ownerName: `unknown ${fromPhone}`,
+      addressSnippet: "",
+      inboundBody: messageBody,
+      botAction: "no_draft",
+      escalationReason: "unknown_sender",
+    })
     return twimlResponse(EMPTY_TWIML)
   }
+
+  const ownerLabel = lead.owner_name_records || lead.full_name || "lead"
+  const addrSnip = (lead.property_address || "").split(",")[0]?.trim() || ""
 
   // Honor manual sale_status flag — if a lead is reinstated / cancelled
   // / ran (sale already happened), do NOT auto-respond. Patrick has
@@ -224,6 +331,13 @@ export async function POST(req: NextRequest) {
     console.info(
       `Sale status '${ssCheck.status}' set on ${leadSlug} — skipping auto-respond`
     )
+    await notifyPatrick({
+      ownerName: ownerLabel,
+      addressSnippet: addrSnip,
+      inboundBody: messageBody,
+      botAction: "opted_out_lead",
+      escalationReason: `sale_status=${ssCheck.status}`,
+    })
     return twimlResponse(EMPTY_TWIML)
   }
 
@@ -334,6 +448,13 @@ export async function POST(req: NextRequest) {
 
   if (!composeResult || !composeResult.draft) {
     // No draft available — log empty pending for Patrick to handle
+    await notifyPatrick({
+      ownerName: ownerLabel,
+      addressSnippet: addrSnip,
+      inboundBody: messageBody,
+      botAction: "no_draft",
+      escalationReason: "openai_failed_or_empty",
+    })
     return twimlResponse(EMPTY_TWIML)
   }
 
@@ -408,6 +529,13 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       console.error("pending_approval insert failed:", e)
     }
+    await notifyPatrick({
+      ownerName: ownerLabel,
+      addressSnippet: addrSnip,
+      inboundBody: messageBody,
+      botAction: "queued",
+      escalationReason: escalationReason || "twilio_not_configured",
+    })
     return twimlResponse(EMPTY_TWIML)
   }
 
@@ -477,6 +605,13 @@ export async function POST(req: NextRequest) {
         }] ` + composeResult.draft,
       created_by: "twilio_auto_respond",
       occurred_at: new Date().toISOString(),
+    })
+    await notifyPatrick({
+      ownerName: ownerLabel,
+      addressSnippet: addrSnip,
+      inboundBody: messageBody,
+      botAction: "auto_sent",
+      escalationReason: null,
     })
   } catch (e) {
     console.error("Auto-send error:", e)
