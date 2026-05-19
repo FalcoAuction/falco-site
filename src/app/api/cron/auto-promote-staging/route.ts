@@ -1,21 +1,31 @@
 // GET /api/cron/auto-promote-staging
 //
-// Nightly auto-promote of pre-foreclosure-related staged leads into the
-// live homeowner_requests table. Fires via Vercel cron after the daily
-// bot runs so /admin/pipeline always shows fresh leads.
+// Nightly auto-promote of FULLY ENRICHED pre-foreclosure staged leads
+// into the live homeowner_requests table. Fires via Vercel cron twice
+// daily after the bot runs.
 //
-// Background: bots write to homeowner_requests_staging with
-// staging_status='pending'. Without auto-promote, leads sit forever
-// unless someone clicks promote in /admin/staging. From 2026-05-15 to
-// 2026-05-19 zero leads got promoted while ~1,600 stacked up. This
-// cron prevents that drought.
+// IMPORTANT QUALITY GATE
+// =======================
+// A staged lead is only promoted if it has the data needed to actually
+// work the lead — math sheet, dialer, SMS. Bar:
+//
+//   1. property_address contains a street number (\d)
+//   2. property_value > 0  (we know the AVM → can compute equity)
+//   3. mortgage_balance > 0  (we know the loan → can compute equity)
+//   4. at least one contact path: phone OR alternate_phones non-empty
+//
+// Leads that fail the gate stay in staging as 'pending' so that a
+// future BatchData enrichment pass can fill in the gaps and the cron
+// will pick them up on a later run.
+//
+// Background: on 2026-05-19 we discovered ~5,000 un-enriched leads
+// had been bulk-promoted with no property data — useless for the
+// dialer. The roll-back set them back to pending; this gate makes
+// sure that never happens again.
 //
 // Allowlist: only DISTRESS / pre-foreclosure sources auto-promote.
-// Code violations and demolition orders stay manual review (Patrick's
-// call — they're a different funnel).
-//
-// Calls Postgres function promote_staged_batch(bot_source, reviewer).
-// The function already handles dedupe + merge, so safe to re-run.
+// Code-violation sources (nashville_codes, memphis_codes,
+// davidson_demolition, etc) stay manual review.
 //
 // Auth: Vercel cron header check.
 
@@ -25,25 +35,59 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 export const dynamic = "force-dynamic"
 export const maxDuration = 300
 
-// Pre-foreclosure / distress sources that auto-promote.
-// Code-violation sources (nashville_codes, memphis_codes,
-// davidson_demolition, chattanooga_codes, mtn_cities_codes,
-// johnson_city_bdsr) stay manual review — they're a different
-// signal than imminent foreclosure.
 const AUTO_PROMOTE_SOURCES = [
-  "tn_public_notice", // TN trustee sale ads
-  "courtlistener_bankruptcy", // BK filings
-  "tn_lis_pendens", // lis pendens (pre-foreclosure)
-  "memphis_daily_news", // newspaper foreclosure ads
-  "nashville_ledger", // newspaper foreclosure ads
-  "mackie_wolf_trustee", // trustee law firm
-  "brock_scott_trustee", // trustee law firm
-  "hamilton_county_herald", // newspaper foreclosure ads
-  "tn_tax_delinquent", // tax delinquent → upcoming tax sale
-  "hamilton_tax_delinquent", // tax delinquent → upcoming tax sale
-  "knoxville_poh", // posted-on-house notices
-  "hud_reo", // HUD REO listings (distressed)
+  "tn_public_notice",
+  "courtlistener_bankruptcy",
+  "tn_lis_pendens",
+  "memphis_daily_news",
+  "nashville_ledger",
+  "mackie_wolf_trustee",
+  "brock_scott_trustee",
+  "hamilton_county_herald",
+  "tn_tax_delinquent",
+  "hamilton_tax_delinquent",
+  "knoxville_poh",
+  "hud_reo",
 ]
+
+type StagingRow = {
+  id: string
+  bot_source: string | null
+  property_address: string | null
+  property_value: number | null
+  mortgage_balance: number | null
+  phone: string | null
+  alternate_phones: unknown
+}
+
+function hasUsableAddress(addr: string | null): boolean {
+  if (!addr) return false
+  return /\d/.test(addr)
+}
+
+function hasUsableContact(row: StagingRow): boolean {
+  const phoneDigits = (row.phone || "").replace(/\D/g, "")
+  if (phoneDigits.length >= 10) return true
+  const alt = row.alternate_phones
+  if (Array.isArray(alt) && alt.length > 0) return true
+  if (typeof alt === "string") {
+    try {
+      const parsed = JSON.parse(alt)
+      if (Array.isArray(parsed) && parsed.length > 0) return true
+    } catch {
+      // ignore
+    }
+  }
+  return false
+}
+
+function passesQualityGate(row: StagingRow): boolean {
+  if (!hasUsableAddress(row.property_address)) return false
+  if (!row.property_value || row.property_value <= 0) return false
+  if (!row.mortgage_balance || row.mortgage_balance <= 0) return false
+  if (!hasUsableContact(row)) return false
+  return true
+}
 
 export async function GET(req: NextRequest) {
   const cronSecret = (process.env.CRON_SECRET || "").trim()
@@ -58,64 +102,86 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Supabase unavailable" }, { status: 503 })
   }
 
-  const results: Array<{
-    bot_source: string
-    inserted: number
-    merged: number
-    failed: number
-    error?: string
-  }> = []
+  // Pull every pending row from the allowlisted sources
+  const { data: rows, error } = await supabaseAdmin
+    .from("homeowner_requests_staging")
+    .select(
+      "id, bot_source, property_address, property_value, mortgage_balance, phone, alternate_phones"
+    )
+    .eq("staging_status", "pending")
+    .in("bot_source", AUTO_PROMOTE_SOURCES)
+    .limit(5000)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  const all = (rows || []) as StagingRow[]
+  const passing = all.filter(passesQualityGate)
+
+  // Per-source breakdown for logging
+  type Bucket = { eligible: number; promoted: number; merged: number; failed: number }
+  const perSource: Record<string, Bucket> = {}
+  for (const src of AUTO_PROMOTE_SOURCES) {
+    perSource[src] = { eligible: 0, promoted: 0, merged: 0, failed: 0 }
+  }
+  for (const r of passing) {
+    const s = r.bot_source || ""
+    if (perSource[s]) perSource[s].eligible++
+  }
+
   let totalInserted = 0
   let totalMerged = 0
   let totalFailed = 0
 
-  for (const src of AUTO_PROMOTE_SOURCES) {
+  for (const row of passing) {
     try {
-      const { data, error } = await supabaseAdmin.rpc("promote_staged_batch", {
-        p_bot_source: src,
+      const { data, error: rpcErr } = await supabaseAdmin.rpc("promote_staged_lead", {
+        p_staging_id: row.id,
         p_reviewer: "cron_auto_promote",
       })
-      if (error) {
-        results.push({
-          bot_source: src,
-          inserted: 0,
-          merged: 0,
-          failed: 0,
-          error: error.message,
-        })
+      if (rpcErr) {
+        totalFailed++
+        const s = row.bot_source || ""
+        if (perSource[s]) perSource[s].failed++
         continue
       }
-      const r = data as {
-        bot_source?: string
-        inserted?: number
-        merged?: number
-        failed?: number
+      const r = data as { ok?: boolean; action?: string }
+      if (r?.ok) {
+        const s = row.bot_source || ""
+        if (r.action === "inserted") {
+          totalInserted++
+          if (perSource[s]) perSource[s].promoted++
+        } else if (r.action === "merged") {
+          totalMerged++
+          if (perSource[s]) perSource[s].merged++
+        }
+      } else {
+        totalFailed++
+        const s = row.bot_source || ""
+        if (perSource[s]) perSource[s].failed++
       }
-      const inserted = r.inserted || 0
-      const merged = r.merged || 0
-      const failed = r.failed || 0
-      totalInserted += inserted
-      totalMerged += merged
-      totalFailed += failed
-      results.push({ bot_source: src, inserted, merged, failed })
-    } catch (e) {
-      results.push({
-        bot_source: src,
-        inserted: 0,
-        merged: 0,
-        failed: 0,
-        error: String(e).slice(0, 200),
-      })
+    } catch {
+      totalFailed++
+      const s = row.bot_source || ""
+      if (perSource[s]) perSource[s].failed++
     }
   }
 
   return NextResponse.json({
     ok: true,
-    sources_run: AUTO_PROMOTE_SOURCES.length,
+    total_pending_in_allowlist: all.length,
+    total_passing_gate: passing.length,
     total_inserted: totalInserted,
     total_merged: totalMerged,
     total_failed: totalFailed,
-    per_source: results,
+    per_source: perSource,
     ran_at: new Date().toISOString(),
+    gate: {
+      requires_street_address: true,
+      requires_property_value_gt_0: true,
+      requires_mortgage_balance_gt_0: true,
+      requires_contact_path: true,
+    },
   })
 }
