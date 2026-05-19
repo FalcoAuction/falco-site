@@ -22,6 +22,14 @@
     {
       "path": "/api/cron/sms-digest",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/auto-promote-staging",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/auto-promote-staging",
+      "schedule": "30 23 * * *"
     }
   ]
 }
