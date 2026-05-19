@@ -509,7 +509,15 @@ export async function POST(req: NextRequest) {
   const sid = (process.env.TWILIO_ACCOUNT_SID || "").trim()
   const token = (process.env.TWILIO_AUTH_TOKEN || "").trim()
   const fromNumber = (process.env.TWILIO_FROM_NUMBER || "").trim()
-  const canSend = sid && token && fromNumber
+  const a2pOk = (process.env.TWILIO_A2P_REGISTERED || "").trim() === "1"
+  const canSend = sid && token && fromNumber && a2pOk
+
+  // Until A2P 10DLC is approved, every outbound returns error 30034
+  // and gets carrier-dropped. Force-escalate to pending_approval so
+  // we don't burn money + waste a real human reply.
+  if (!a2pOk && !escalationReason) {
+    escalationReason = "a2p_not_registered"
+  }
 
   if (escalationReason || !canSend) {
     // Queue draft for Patrick's approval

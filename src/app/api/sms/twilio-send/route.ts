@@ -120,6 +120,31 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // A2P 10DLC gate. Until our +1 long code is registered with the
+  // carriers, every send returns error 30034 ("Message from an
+  // Unregistered Number") and is silently dropped before reaching
+  // any phone. Twilio still charges for the attempt. So we hard-block
+  // until TWILIO_A2P_REGISTERED=1 is set as an env flag.
+  //
+  // To clear this gate:
+  //   1. Submit A2P 10DLC registration in Twilio Console:
+  //      https://console.twilio.com/us1/develop/sms/regulatory-compliance/a2p-10dlc
+  //   2. Register Brand (FALCO LLC) + Campaign (distressed property outreach)
+  //   3. Attach +16154900837 to the campaign
+  //   4. Wait for carrier approval (5–15 business days typical)
+  //   5. Set TWILIO_A2P_REGISTERED=1 in Vercel prod env, redeploy.
+  const a2pOk = (process.env.TWILIO_A2P_REGISTERED || "").trim() === "1"
+  if (!a2pOk && !body.override_quiet_hours) {
+    return NextResponse.json(
+      {
+        error:
+          "BLOCKED: A2P 10DLC not registered. US carriers will drop every message (error 30034) until the FALCO outreach number is registered. Submit at https://console.twilio.com/us1/develop/sms/regulatory-compliance/a2p-10dlc and set TWILIO_A2P_REGISTERED=1 once approved. (Pass override_quiet_hours=true to force-send anyway — burns money, no recipient gets it.)",
+        code: 30034,
+      },
+      { status: 451 }
+    )
+  }
+
   // Quiet-hours check
   if (isQuietHourCT() && !body.override_quiet_hours) {
     return NextResponse.json(
