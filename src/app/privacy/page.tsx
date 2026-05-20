@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         </h1>
         <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-white/60">
           Short version: we use the information you share to respond to you, and
-          we don't sell it. Last updated April 21, 2026.
+          we don't sell it. Last updated May 20, 2026.
         </p>
       </section>
 
@@ -90,6 +90,60 @@ export default function PrivacyPage() {
             <p>
               We don't add you to a marketing list because you sent us a form.
               If we ever start a newsletter, it'll be opt-in only.
+            </p>
+          </Block>
+
+          <Block title="SMS / Text messaging">
+            <p>
+              When you provide your phone number to FALCO — through a form on
+              this site, by replying to outreach from us, or in conversation
+              with Patrick Armour or a FALCO representative — you may receive
+              text messages from <span className="text-emerald-200">+1 (615) 490-0837</span>.
+              These relate to your specific property situation: introductions,
+              follow-up on your foreclosure or auction-routing case,
+              scheduling, and answers to your questions.
+            </p>
+            <p>
+              <strong className="text-white/85">What we collect:</strong> the
+              phone number you used, the content of your messages, timestamps,
+              and (when known) the property or filing the conversation relates
+              to.
+            </p>
+            <p>
+              <strong className="text-white/85">Frequency:</strong> message
+              frequency varies based on the conversation. Most active cases
+              involve 1–10 messages.
+            </p>
+            <p>
+              <strong className="text-white/85">No marketing or third-party
+              sharing:</strong> No mobile information will be shared with third
+              parties or affiliates for marketing or promotional purposes. All
+              of the categories above exclude text-messaging originator opt-in
+              data and consent; this information will not be shared with any
+              third parties.
+            </p>
+            <p>
+              <strong className="text-white/85">Carrier costs:</strong> Message
+              and data rates may apply. FALCO does not control your carrier's
+              pricing.
+            </p>
+            <p>
+              <strong className="text-white/85">Opt out:</strong> Reply{" "}
+              <span className="text-emerald-200">STOP</span> at any time to
+              stop receiving messages. We also honor{" "}
+              <span className="text-emerald-200">UNSUBSCRIBE</span>,{" "}
+              <span className="text-emerald-200">CANCEL</span>,{" "}
+              <span className="text-emerald-200">END</span>, and{" "}
+              <span className="text-emerald-200">QUIT</span>. You can also
+              email{" "}
+              <span className="text-emerald-200">falco@falco.llc</span> with
+              the subject line "Stop SMS." Opt-out records are kept
+              indefinitely so we do not contact you again.
+            </p>
+            <p>
+              <strong className="text-white/85">Help:</strong> Reply{" "}
+              <span className="text-emerald-200">HELP</span> for sender
+              identification and contact information.
             </p>
           </Block>
 
@@ -149,6 +203,9 @@ export default function PrivacyPage() {
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-white/70 transition-colors">
               Home
+            </Link>
+            <Link href="/terms" className="hover:text-white/70 transition-colors">
+              Terms
             </Link>
             <Link href="/inquiry" className="hover:text-white/70 transition-colors">
               Contact
