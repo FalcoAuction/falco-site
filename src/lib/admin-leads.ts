@@ -147,13 +147,48 @@ type HomeownerRow = WorkflowRow & {
   lien_position: string | null
   pipeline_score: number | null
   pipeline_lead_key: string | null
+  sale_date_last_seen_at: string | null
+}
+
+// Sale-date freshness. Bots stamp sale_date_last_seen_at every time a
+// notice carrying this lead's sale is re-scraped; the sale-date-sync
+// cron keeps it current. A past date or a stale sighting means the
+// sale likely ran or was continued — verify before calling.
+function saleDateFreshness(
+  saleDate: string | null,
+  lastSeenAt: string | null
+): { short: string; long: string } | null {
+  if (!saleDate) return null
+  const now = Date.now()
+  const sale = new Date(saleDate).getTime()
+  if (sale < now - 24 * 60 * 60 * 1000) {
+    const days = Math.floor((now - sale) / 86400000)
+    return {
+      short: "sale date passed",
+      long: `Sale date passed ${days}d ago — ran, postponed, or cured. Verify with the trustee before calling.`,
+    }
+  }
+  if (lastSeenAt) {
+    const ageDays = Math.floor((now - new Date(lastSeenAt).getTime()) / 86400000)
+    if (ageDays > 14) {
+      return {
+        short: "possibly postponed",
+        long: `Notice not re-verified in ${ageDays}d — sale may have been postponed or cancelled. Check the trustee's current schedule.`,
+      }
+    }
+  }
+  return null
 }
 
 function mapHomeowner(r: HomeownerRow): Lead {
   const summaryBits: string[] = []
   if (r.property_address) summaryBits.push(r.property_address)
   if (r.property_value) summaryBits.push(`AVM ${fmtCurrency(r.property_value)}`)
-  if (r.trustee_sale_date) summaryBits.push(`sale ${fmtDateHuman(r.trustee_sale_date)}`)
+  const saleFlag = saleDateFreshness(r.trustee_sale_date, r.sale_date_last_seen_at)
+  if (r.trustee_sale_date)
+    summaryBits.push(
+      `sale ${fmtDateHuman(r.trustee_sale_date)}${saleFlag ? ` (${saleFlag.short})` : ""}`
+    )
   if (r.mortgage_balance) summaryBits.push(`bal ${fmtCurrency(r.mortgage_balance)}`)
 
   const bedBath =
@@ -204,6 +239,7 @@ function mapHomeowner(r: HomeownerRow): Lead {
       { label: "Last sale", value: lastSale },
       { label: "Lien position", value: r.lien_position ?? "" },
       { label: "Trustee sale", value: fmtDateHuman(r.trustee_sale_date) },
+      { label: "Sale date status", value: saleFlag ? saleFlag.long : "" },
       { label: "Mortgage balance", value: r.mortgage_balance ? fmtCurrency(r.mortgage_balance) : "" },
       { label: "Owner (records)", value: r.owner_name_records ?? "" },
       { label: "Best callback", value: r.best_callback ?? "" },

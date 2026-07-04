@@ -30,6 +30,14 @@
     {
       "path": "/api/cron/auto-promote-staging",
       "schedule": "30 23 * * *"
+    },
+    {
+      "path": "/api/cron/sale-date-sync",
+      "schedule": "30 16 * * *"
+    },
+    {
+      "path": "/api/cron/sale-date-sync",
+      "schedule": "45 23 * * *"
     }
   ]
 }

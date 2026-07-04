@@ -53,6 +53,10 @@ export type InboxLead = {
   distressType: string
   saleDate: string | null
   daysToSale: number | null
+  /** Days since a bot last saw a notice carrying this sale date.
+   *  Over 14 = the notice may have been pulled (postponed/cancelled) —
+   *  the runner card shows a "possibly postponed" warning. */
+  saleSeenDaysAgo: number | null
   arv: number | null
   equity: number | null
   /** All callable numbers for this lead, primary first. Each has a
@@ -97,7 +101,7 @@ export default async function InboxPage() {
   const { data: rows, error } = await supabaseAdmin
     .from("homeowner_requests")
     .select(
-      "pipeline_lead_key, owner_name_records, full_name, property_address, county, distress_type, trustee_sale_date, property_value, mortgage_balance, phone, alternate_phones, phone_metadata"
+      "pipeline_lead_key, owner_name_records, full_name, property_address, county, distress_type, trustee_sale_date, sale_date_last_seen_at, property_value, mortgage_balance, phone, alternate_phones, phone_metadata"
     )
     .eq("source", "bot")
     .in("distress_type", FORECLOSURE_DISTRESS as unknown as string[])
@@ -215,6 +219,10 @@ export default async function InboxPage() {
     const saleDtsMs = saleDate ? new Date(saleDate).getTime() - Date.now() : null
     const daysToSale =
       saleDtsMs !== null ? Math.ceil(saleDtsMs / (1000 * 60 * 60 * 24)) : null
+    const saleSeenRaw = (r.sale_date_last_seen_at as string | null) || null
+    const saleSeenDaysAgo = saleSeenRaw
+      ? Math.floor((Date.now() - new Date(saleSeenRaw).getTime()) / 86400000)
+      : null
 
     const arv = (r.property_value as number | null) ?? null
     const payoff = (r.mortgage_balance as number | null) ?? 0
@@ -288,6 +296,7 @@ export default async function InboxPage() {
       distressType: (r.distress_type as string) || "",
       saleDate,
       daysToSale,
+      saleSeenDaysAgo,
       arv,
       equity,
       phones,

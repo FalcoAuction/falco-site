@@ -446,6 +446,14 @@ export function InboxRunner({
                 {lead.daysToSale}d to sale
               </div>
             )}
+            {lead.saleSeenDaysAgo !== null && lead.saleSeenDaysAgo > 14 && (
+              <div
+                className="text-[10px] mt-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200/90 border border-amber-400/25 inline-block"
+                title={`No bot has re-seen this sale notice in ${lead.saleSeenDaysAgo} days. The sale may have been postponed or cancelled — check the trustee's current schedule before leaning on the date.`}
+              >
+                possibly postponed · unseen {lead.saleSeenDaysAgo}d
+              </div>
+            )}
           </div>
         </div>
 
