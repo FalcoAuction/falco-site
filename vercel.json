@@ -38,6 +38,10 @@
     {
       "path": "/api/cron/sale-date-sync",
       "schedule": "45 23 * * *"
+    },
+    {
+      "path": "/api/cron/sunday-call-sheet",
+      "schedule": "0 23 * * 0"
     }
   ]
 }
