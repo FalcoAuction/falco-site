@@ -162,49 +162,54 @@ BEGIN
   -- bots' notice_tracking touch, whichever is newer. Match by lead key
   -- OR normalized street line + zip (different sources hash different
   -- keys for the same property).
+  --
+  -- Normalization is materialized into temp tables and the key/address
+  -- matches run as two separate hash joins UNIONed together — a single
+  -- OR-join degrades to a nested loop over 20k+ staging rows and blows
+  -- PostgREST's statement timeout when called via rpc.
+  DROP TABLE IF EXISTS _staging_norm;
+  CREATE TEMP TABLE _staging_norm ON COMMIT DROP AS
+  SELECT
+    s.pipeline_lead_key,
+    lower(regexp_replace(split_part(s.property_address, ',', 1), '\s+', ' ', 'g')) AS addr_line,
+    substring(s.property_address from '\m(\d{5})\M') AS zip5,
+    s.trustee_sale_date,
+    GREATEST(
+      s.staged_at,
+      COALESCE((s.phone_metadata->'notice_tracking'->>'last_seen_at')::timestamptz, s.staged_at)
+    ) AS seen_at
+  FROM homeowner_requests_staging s
+  WHERE s.trustee_sale_date IS NOT NULL
+    AND s.property_address IS NOT NULL;
+
+  DROP TABLE IF EXISTS _live_norm;
+  CREATE TEMP TABLE _live_norm ON COMMIT DROP AS
+  SELECT
+    h.id,
+    h.pipeline_lead_key,
+    lower(regexp_replace(split_part(h.property_address, ',', 1), '\s+', ' ', 'g')) AS addr_line,
+    substring(h.property_address from '\m(\d{5})\M') AS zip5,
+    (h.phone_metadata->'sale_status'->>'status') AS manual_status
+  FROM homeowner_requests h
+  WHERE h.source = 'bot';
+
+  DROP TABLE IF EXISTS _freshest;
   CREATE TEMP TABLE _freshest ON COMMIT DROP AS
-  WITH staging_norm AS (
-    SELECT
-      s.pipeline_lead_key,
-      lower(regexp_replace(split_part(s.property_address, ',', 1), '\s+', ' ', 'g')) AS addr_line,
-      substring(s.property_address from '\m(\d{5})\M') AS zip5,
-      s.trustee_sale_date,
-      GREATEST(
-        s.staged_at,
-        COALESCE((s.phone_metadata->'notice_tracking'->>'last_seen_at')::timestamptz, s.staged_at)
-      ) AS seen_at
-    FROM homeowner_requests_staging s
-    WHERE s.trustee_sale_date IS NOT NULL
-      AND s.property_address IS NOT NULL
-  ),
-  live AS (
-    SELECT
-      h.id,
-      h.pipeline_lead_key,
-      lower(regexp_replace(split_part(h.property_address, ',', 1), '\s+', ' ', 'g')) AS addr_line,
-      substring(h.property_address from '\m(\d{5})\M') AS zip5,
-      (h.phone_metadata->'sale_status'->>'status') AS manual_status
-    FROM homeowner_requests h
-    WHERE h.source = 'bot'
-  ),
-  matched AS (
-    SELECT
-      l.id AS live_id,
-      l.manual_status,
-      sn.trustee_sale_date AS staged_date,
-      sn.seen_at,
-      ROW_NUMBER() OVER (PARTITION BY l.id ORDER BY sn.seen_at DESC) AS rn
-    FROM live l
-    JOIN staging_norm sn
-      ON sn.pipeline_lead_key = l.pipeline_lead_key
-      OR (
-        l.addr_line IS NOT NULL AND l.addr_line <> ''
-        AND sn.addr_line = l.addr_line
-        AND sn.zip5 IS NOT NULL AND sn.zip5 = l.zip5
-      )
-  )
-  SELECT live_id, manual_status, staged_date, seen_at
-  FROM matched WHERE rn = 1;
+  SELECT DISTINCT ON (live_id) live_id, manual_status, staged_date, seen_at
+  FROM (
+    SELECT l.id AS live_id, l.manual_status,
+           sn.trustee_sale_date AS staged_date, sn.seen_at
+    FROM _live_norm l
+    JOIN _staging_norm sn ON sn.pipeline_lead_key = l.pipeline_lead_key
+    UNION ALL
+    SELECT l.id, l.manual_status, sn.trustee_sale_date, sn.seen_at
+    FROM _live_norm l
+    JOIN _staging_norm sn
+      ON l.addr_line <> ''
+     AND sn.addr_line = l.addr_line
+     AND sn.zip5 IS NOT NULL AND sn.zip5 = l.zip5
+  ) m
+  ORDER BY live_id, seen_at DESC;
 
   -- Count leads we deliberately leave alone (Patrick set a manual
   -- sale_status like reinstated/cancelled — don't stomp his call).
