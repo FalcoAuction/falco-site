@@ -35,19 +35,26 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 export const dynamic = "force-dynamic"
 export const maxDuration = 300
 
+// Trustee-notice / pre-foreclosure family only — the leads the
+// auction-routing pitch actually works on. Deliberately excluded
+// (2026-07-04, Patrick's call — "drop the dead types"):
+//   courtlistener_bankruptcy — automatic stay freezes the sale; BK
+//     debtors are contacted through counsel, not cold outreach. The
+//     BK play is B2B with trustees/attorneys, later.
+//   tn_tax_delinquent / hamilton_tax_delinquent — 1-year redemption,
+//     multi-year timelines, no urgency to pitch.
+//   hud_reo — already bank-owned; no homeowner, no equity to save.
+//   code violations + demolition — excluded since day one.
+// All geographies stay (East TN sources included).
 const AUTO_PROMOTE_SOURCES = [
   "tn_public_notice",
-  "courtlistener_bankruptcy",
   "tn_lis_pendens",
   "memphis_daily_news",
   "nashville_ledger",
   "mackie_wolf_trustee",
   "brock_scott_trustee",
   "hamilton_county_herald",
-  "tn_tax_delinquent",
-  "hamilton_tax_delinquent",
   "knoxville_poh",
-  "hud_reo",
 ]
 
 type StagingRow = {

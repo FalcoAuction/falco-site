@@ -228,6 +228,14 @@ export default async function InboxPage() {
     const payoff = (r.mortgage_balance as number | null) ?? 0
     const equity = arv !== null ? arv - payoff : null
 
+    // Equity floor: the whole pitch is "keep your equity" — a lead with
+    // known equity under $25k has nothing to keep, so it doesn't belong
+    // in this queue. Unknown equity (no AVM yet) stays in; it just
+    // ranks last on the equity sort.
+    if (equity !== null && equity < 25000) {
+      continue
+    }
+
     const tw = pm["twilio_lookup"] as { line_type?: string } | undefined
     const primaryLineType = (tw?.line_type as string | undefined) || null
 
