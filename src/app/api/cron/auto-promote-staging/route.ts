@@ -117,7 +117,17 @@ export async function GET(req: NextRequest) {
     )
     .eq("staging_status", "pending")
     .in("bot_source", AUTO_PROMOTE_SOURCES)
-    .limit(5000)
+    // Push the gate's hard requirements into the query. PostgREST caps
+    // any single fetch at 1,000 rows regardless of .limit(), and with
+    // 6k+ pending rows and no filter, the cron only ever examined an
+    // arbitrary 1,000 un-enrichable rows and never saw newly-enriched
+    // ones. Filtering here means the cap applies only to rows that can
+    // actually pass (address + contact-path still checked in JS).
+    .gt("property_value", 0)
+    .gt("mortgage_balance", 0)
+    .not("phone", "is", null)
+    .order("trustee_sale_date", { ascending: true, nullsFirst: false })
+    .limit(1000)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
