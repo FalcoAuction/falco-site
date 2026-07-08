@@ -49,8 +49,31 @@ type LeadRow = {
   trustee_sale_date: string | null
   sale_date_last_seen_at: string | null
   phone: string | null
+  alternate_phones: unknown
   phone_metadata: Record<string, unknown> | null
   pipeline_lead_key: string | null
+}
+
+function altPhoneList(raw: unknown): string[] {
+  // alternate_phones can be array-of-strings or array-of-objects
+  // depending on which enricher wrote it.
+  if (!Array.isArray(raw)) return []
+  const out: string[] = []
+  for (const item of raw) {
+    const s =
+      typeof item === "string"
+        ? item
+        : item && typeof item === "object"
+        ? String(
+            (item as Record<string, unknown>)["number"] ||
+              (item as Record<string, unknown>)["phone"] ||
+              ""
+          )
+        : ""
+    const d = s.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")
+    if (d.length === 10) out.push(d)
+  }
+  return [...new Set(out)]
 }
 
 function fmtMoney(n: number): string {
@@ -81,6 +104,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "RESEND_API_KEY not set" }, { status: 503 })
   }
 
+  // ?limit=N (default 5, max 25) — manual fires can request a bigger
+  // sheet, e.g. a 20-lead calling-week list.
+  const leadLimit = Math.min(
+    Math.max(parseInt(req.nextUrl.searchParams.get("limit") || "5", 10) || 5, 1),
+    25
+  )
+
   const today = new Date().toISOString().slice(0, 10)
   const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
 
@@ -88,7 +118,7 @@ export async function GET(req: NextRequest) {
   const { data: rows, error } = await supabaseAdmin
     .from("homeowner_requests")
     .select(
-      "full_name, owner_name_records, property_address, county, property_value, mortgage_balance, trustee_sale_date, sale_date_last_seen_at, phone, phone_metadata, pipeline_lead_key"
+      "full_name, owner_name_records, property_address, county, property_value, mortgage_balance, trustee_sale_date, sale_date_last_seen_at, phone, alternate_phones, phone_metadata, pipeline_lead_key"
     )
     .eq("source", "bot")
     .in("distress_type", FORECLOSURE_DISTRESS)
@@ -147,7 +177,7 @@ export async function GET(req: NextRequest) {
       return b.equity - a.equity
     })
 
-  const top = candidates.slice(0, 5)
+  const top = candidates.slice(0, leadLimit)
 
   // ── Pipeline pulse ───────────────────────────────────────────────
   const weekAgoIso = new Date(now - 7 * 86400000).toISOString()
@@ -175,6 +205,21 @@ export async function GET(req: NextRequest) {
       const freshLabel = l.fresh
         ? `<span style="color:#059669;">verified ${l.seenDaysAgo}d ago</span>`
         : `<span style="color:#b45309;">unseen ${l.seenDaysAgo ?? "?"}d — verify with trustee first</span>`
+      const alts = altPhoneList(l.alternate_phones)
+      const altLine = alts.length
+        ? `<div style="margin-top:2px; color:#6b7280; font-size:13px;">alt: ${alts
+            .slice(0, 3)
+            .map((d) => fmtPhone(d))
+            .join(" · ")}</div>`
+        : ""
+      const slug = l.pipeline_lead_key || ""
+      const links = slug
+        ? `<div style="margin-top:6px; font-size:12px;">
+            <a href="https://falco.llc/dialer/${slug}" style="color:#2563eb;">dialer card</a>
+            &nbsp;·&nbsp;
+            <a href="https://falco.llc/dialer/${slug}/math-sheet" style="color:#2563eb;">math sheet</a>
+          </div>`
+        : ""
       return `
       <div style="border:1px solid #e5e7eb; border-radius:10px; padding:14px 16px; margin-bottom:10px;">
         <div style="font-size:15px; font-weight:600;">${i + 1}. ${name}</div>
@@ -184,9 +229,14 @@ export async function GET(req: NextRequest) {
           · sale ${l.trustee_sale_date} (${l.daysToSale}d)
           · ${freshLabel}
         </div>
+        <div style="margin-top:2px; color:#6b7280; font-size:13px;">
+          value ${fmtMoney(l.property_value || 0)} · owes ${fmtMoney(l.mortgage_balance || 0)}
+        </div>
         <div style="margin-top:6px; font-size:16px;">
           <a href="tel:${(l.phone || "").replace(/\D/g, "")}" style="color:#111827; text-decoration:none; font-weight:600;">${fmtPhone(l.phone || "")}</a>
         </div>
+        ${altLine}
+        ${links}
       </div>`
     })
     .join("\n")
