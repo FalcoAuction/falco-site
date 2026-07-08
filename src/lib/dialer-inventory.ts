@@ -53,8 +53,14 @@ export type DialerInventoryLead = {
   phoneValidated?: boolean
   /** True if the primary phone is on BatchData's DNC list. */
   phoneDnc?: boolean
-  /** Count of additional candidate phones in BatchData skip-trace
-   *  beyond the primary. Useful when primary doesn't ring. */
+  /** BatchData match mode on the primary: owner_name_verified |
+   *  owner_name_unverified | address_only. */
+  phoneMatchMode?: string
+  /** True when a second provider (Enformion) independently returned
+   *  the same primary number. */
+  phoneCrossVerified?: boolean
+  /** Count of additional candidate phones beyond the primary, across
+   *  all providers. Useful when primary doesn't ring. */
   alternatePhoneCount?: number
   /** Full BatchData phone candidates (every number we've pulled for
    *  this property + per-phone DNC, line-type, and confidence). The
@@ -235,6 +241,7 @@ type HomeownerRequestRow = {
   pipeline_score: number | null
   submitted_at: string | null
   phone_metadata: Record<string, unknown> | null
+  alternate_phones: unknown
 }
 
 /** Inspect phone_metadata to derive every field surfaced on the queue
@@ -258,6 +265,11 @@ export type AlternatePhone = {
   /** Twilio Lookup carrier when an alternate has been validated.
    *  Most alternates won't have this — Twilio runs primary-only. */
   carrier?: string
+  /** Which paid provider produced this number: "batchdata",
+   *  "enformion", or "record" (flat alternate_phones column when the
+   *  provider tag was lost upstream). We pay per number — every one
+   *  must be visible and attributed. */
+  source?: string
 }
 
 type PhoneMetaDerived = {
@@ -265,6 +277,12 @@ type PhoneMetaDerived = {
   phoneCarrier?: string
   phoneValidated?: boolean
   phoneDnc?: boolean
+  /** BatchData match mode on the primary: "owner_name_verified" |
+   *  "owner_name_unverified" | "address_only". */
+  phoneMatchMode?: string
+  /** True when a second provider (Enformion) independently returned
+   *  the same primary number — strongest non-dial signal we have. */
+  phoneCrossVerified?: boolean
   alternatePhoneCount?: number
   alternatePhones?: AlternatePhone[]
   mortgageDefensible?: boolean
@@ -292,10 +310,10 @@ type PhoneMetaDerived = {
 
 function deriveFromPhoneMetadata(
   pm: Record<string, unknown> | null | undefined,
-  avmMid: number | null
+  avmMid: number | null,
+  rowAlternates?: unknown
 ): PhoneMetaDerived & { amortizedCurrentBalance?: number } {
-  if (!pm || typeof pm !== "object") return {}
-  const obj = pm as Record<string, unknown>
+  const obj = (pm && typeof pm === "object" ? pm : {}) as Record<string, unknown>
   const out: ReturnType<typeof deriveFromPhoneMetadata> = {}
 
   // Phone validation (Twilio Lookup)
@@ -306,38 +324,38 @@ function deriveFromPhoneMetadata(
     if (typeof tl.carrier_name === "string") out.phoneCarrier = tl.carrier_name as string
   }
 
-  // BatchData primary DNC + alternate count + full alternate list
+  // Every paid-for phone from every provider, deduped by 10-digit
+  // form, each tagged with its source. We pay per number — all of them
+  // must reach the dialer, attributed.
+  const seen = new Set<string>()
+  const phones: AlternatePhone[] = []
+  const tenDigit = (v: unknown): string => {
+    const digits = String(v ?? "").replace(/\D/g, "")
+    return digits.length === 11 && digits.startsWith("1")
+      ? digits.slice(1)
+      : digits
+  }
+
+  // 1. BatchData: primary DNC/match flags + full candidate list
   const bd = obj.batchdata_skip_trace as Record<string, unknown> | undefined
   if (bd && typeof bd === "object") {
     if (bd.primary_dnc === true) out.phoneDnc = true
+    if (typeof bd.primary_match_mode === "string") {
+      out.phoneMatchMode = bd.primary_match_mode as string
+    }
+    if (bd.cross_verified === true) out.phoneCrossVerified = true
     const all = bd.all_phones as unknown[] | undefined
     if (Array.isArray(all)) {
-      out.alternatePhoneCount = Math.max(0, all.length - 1)
-      // Surface every phone candidate the dialer can fall through to
-      // when the primary doesn't connect. Strip leading +1 / non-digits
-      // and dedupe by 10-digit form. Caller-side rendering handles
-      // formatting + tel/sms links.
-      const seen = new Set<string>()
-      const phones: AlternatePhone[] = []
       for (const raw of all) {
         if (!raw || typeof raw !== "object") continue
         const r = raw as Record<string, unknown>
-        const numStr =
-          typeof r.phone === "string"
-            ? r.phone
-            : typeof r.number === "string"
-            ? (r.number as string)
-            : ""
-        const digits = numStr.replace(/\D/g, "")
-        const tenDigit =
-          digits.length === 11 && digits.startsWith("1")
-            ? digits.slice(1)
-            : digits
-        if (tenDigit.length !== 10) continue
-        if (seen.has(tenDigit)) continue
-        seen.add(tenDigit)
+        const num = tenDigit(
+          typeof r.phone === "string" ? r.phone : r.number
+        )
+        if (num.length !== 10 || seen.has(num)) continue
+        seen.add(num)
         phones.push({
-          number: tenDigit,
+          number: num,
           lineType:
             typeof r.phone_type === "string"
               ? (r.phone_type as string)
@@ -348,10 +366,46 @@ function deriveFromPhoneMetadata(
           score: typeof r.score === "number" ? (r.score as number) : undefined,
           tested: r.tested === true,
           reachable: r.reachable === true,
+          source: "batchdata",
         })
       }
-      if (phones.length > 0) out.alternatePhones = phones
     }
+  }
+
+  // 2. Enformion waterfall: plain 10-digit strings
+  const enf = obj.enformion_skip_trace as Record<string, unknown> | undefined
+  if (enf && typeof enf === "object") {
+    if (enf.agrees_with_primary === true) out.phoneCrossVerified = true
+    const list = enf.phones as unknown[] | undefined
+    if (Array.isArray(list)) {
+      for (const raw of list) {
+        const num = tenDigit(raw)
+        if (num.length !== 10 || seen.has(num)) continue
+        seen.add(num)
+        phones.push({ number: num, source: "enformion" })
+      }
+    }
+  }
+
+  // 3. Flat alternate_phones column (strings or objects) — catches
+  // numbers written by scripts that bypassed the metadata blobs.
+  if (Array.isArray(rowAlternates)) {
+    for (const raw of rowAlternates) {
+      const num = tenDigit(
+        raw && typeof raw === "object"
+          ? (raw as Record<string, unknown>).number ??
+              (raw as Record<string, unknown>).phone
+          : raw
+      )
+      if (num.length !== 10 || seen.has(num)) continue
+      seen.add(num)
+      phones.push({ number: num, source: "record" })
+    }
+  }
+
+  if (phones.length > 0) {
+    out.alternatePhones = phones
+    out.alternatePhoneCount = Math.max(0, phones.length - 1)
   }
 
   // Mortgage source — ROD wins, then HMDA-anchored, then nashville_ledger
@@ -465,7 +519,7 @@ async function loadHomeownerRequestsBots(): Promise<HomeownerRequestRow[]> {
   const { data, error } = await supabaseAdmin
     .from("homeowner_requests")
     .select(
-      "pipeline_lead_key, property_address, county, email, phone, full_name, owner_name_records, property_value, beds, baths, sqft, year_built, trustee_sale_date, distress_type, mortgage_balance, last_sale_date, pipeline_score, submitted_at, phone_metadata"
+      "pipeline_lead_key, property_address, county, email, phone, full_name, owner_name_records, property_value, beds, baths, sqft, year_built, trustee_sale_date, distress_type, mortgage_balance, last_sale_date, pipeline_score, submitted_at, phone_metadata, alternate_phones"
     )
     .eq("source", "bot")
   if (error) {
@@ -543,7 +597,11 @@ function buildLeadFromHR(
     // Strip amortizedCurrentBalance — that's already in mortgageAmount
     // because the amortizer wrote it back to the column.
     ...((): PhoneMetaDerived => {
-      const d = deriveFromPhoneMetadata(hr.phone_metadata, hr.property_value)
+      const d = deriveFromPhoneMetadata(
+        hr.phone_metadata,
+        hr.property_value,
+        hr.alternate_phones
+      )
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { amortizedCurrentBalance: _, ...rest } = d
       return rest
@@ -607,12 +665,35 @@ export async function loadDialerInventory(): Promise<DialerInventorySnapshot | n
 }
 
 /** Returns true if a lead should appear in active queues (dialer index,
- *  /admin/today priority list, etc). Excludes properties where the
- *  trustee sale ran more than 7 days ago — the house has already
- *  foreclosed; we can't help anymore. 7-day grace covers postponed sales
- *  that still show the old date in scraped data. Pre-foreclosure leads
- *  (no sale date) and future-dated sales always pass through. */
+ *  /admin/today priority list, etc). Excluded as trash:
+ *   - trustee sale ran more than 7 days ago (already foreclosed; the
+ *     7-day grace covers postponed sales still showing the old date)
+ *   - manually closed via sale-status: ran / cancelled / reinstated
+ *     ("postponed" stays — those sales are still coming)
+ *   - nothing to dial: no primary phone and no alternates
+ *  Pre-foreclosure leads (no sale date) pass through. Direct
+ *  lead-detail navigation bypasses this so closed leads stay
+ *  resolvable for workflow cleanup. */
 export function isLeadActive(lead: DialerInventoryLead): boolean {
+  // Dead lead types (Patrick, July 2026): code violations and
+  // demolition orders aren't dialable auction-routing pitches — no
+  // deadline, no forcing event. They were promoted before the
+  // auto-promote allowlist dropped them and made up 80% of the queue.
+  // Still visible in /admin; just not in active dial queues.
+  const dt = (lead.distressType || "").toUpperCase()
+  if (dt === "CODE_VIOLATION" || dt === "DEMOLITION") return false
+  if (
+    lead.trusteeSaleStatus === "ran" ||
+    lead.trusteeSaleStatus === "cancelled" ||
+    lead.trusteeSaleStatus === "reinstated"
+  ) {
+    return false
+  }
+  const hasDialPath =
+    !!(lead.ownerPhonePrimary || "").replace(/\D/g, "") ||
+    (lead.alternatePhones?.length ?? 0) > 0 ||
+    !!(lead.saleControllerPhonePrimary || "").replace(/\D/g, "")
+  if (!hasDialPath) return false
   if (!lead.currentSaleDate) return true
   const t = new Date(lead.currentSaleDate).getTime()
   if (Number.isNaN(t)) return true

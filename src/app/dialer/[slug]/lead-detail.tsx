@@ -211,11 +211,40 @@ export default function LeadDetail({
         </section>
       )}
 
-      {/* Alternate phones from BatchData skip-trace — every number we
-          have for the property with per-phone DNC + line-type metadata.
-          Lets the caller fall through to fallbacks when the primary
-          doesn't connect (cf. Cathy Hughes responding on the DNC
-          number). Hidden when there are no alternates. */}
+      {/* Primary-number provenance — match quality from the skip-trace
+          providers. Cross-verified means two independent providers
+          (BatchData + Enformion) returned the same number. */}
+      {(lead.phoneCrossVerified || lead.phoneMatchMode) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {lead.phoneCrossVerified && (
+            <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200">
+              primary cross-verified · 2 providers agree
+            </span>
+          )}
+          {!lead.phoneCrossVerified && lead.phoneMatchMode === "owner_name_verified" && (
+            <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/[0.07] px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-200/90">
+              primary owner-verified
+            </span>
+          )}
+          {!lead.phoneCrossVerified &&
+            lead.phoneMatchMode &&
+            lead.phoneMatchMode !== "owner_name_verified" && (
+              <span
+                title="Number is associated with the address but the provider couldn't confirm the owner's name on it. Open with the address, not the name."
+                className="inline-flex items-center rounded-full border border-amber-400/35 bg-amber-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-amber-200"
+              >
+                primary address-match only
+              </span>
+            )}
+        </div>
+      )}
+
+      {/* Alternate phones — every paid-for number from every provider
+          (BatchData, Enformion, record-level writes) with per-phone
+          DNC + line-type + source. Lets the caller fall through to
+          fallbacks when the primary doesn't connect (cf. Cathy Hughes
+          responding on the DNC number). Hidden when there are no
+          alternates. */}
       {lead.alternatePhones && lead.alternatePhones.length > 0 && (
         <AlternatePhonesPanel
           phones={lead.alternatePhones}
@@ -1360,6 +1389,18 @@ function AlternatePhonesPanel({
                 {p.dnc && (
                   <span className="text-[9px] uppercase tracking-wider text-red-300/80 font-semibold">
                     DNC
+                  </span>
+                )}
+                {p.source && (
+                  <span
+                    title={`Number sourced from ${p.source}`}
+                    className="inline-flex items-center rounded border border-white/15 bg-white/[0.04] px-1 py-px text-[9px] uppercase tracking-wider text-white/45"
+                  >
+                    {p.source === "batchdata"
+                      ? "BD"
+                      : p.source === "enformion"
+                      ? "ENF"
+                      : "REC"}
                   </span>
                 )}
                 {typeof p.score === "number" && (

@@ -402,6 +402,8 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     phoneCarrier: inv.phoneCarrier,
     phoneValidated: inv.phoneValidated,
     phoneDnc: inv.phoneDnc,
+    phoneMatchMode: inv.phoneMatchMode,
+    phoneCrossVerified: inv.phoneCrossVerified,
     alternatePhoneCount: inv.alternatePhoneCount,
     alternatePhones: inv.alternatePhones,
     mortgageDefensible: inv.mortgageDefensible,

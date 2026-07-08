@@ -149,9 +149,10 @@ export default async function DialerQueuePage({
 }) {
   await requireDialerSession("/dialer")
   const params = await searchParams
-  // Default to "ready" — the validated dial-ready set is what reps want
-  // first thing every morning. "open" / "new" / etc. are still one click.
-  const filter = params.filter ?? "ready"
+  // Default to "open" — every workable lead, urgency-sorted. "ready"
+  // (Twilio-validated subset) sits behind a click; with phone
+  // validation stale it was defaulting the queue to an empty page.
+  const filter = params.filter ?? "open"
   const countyFilter = params.county ?? ""
   const distressFilter = params.distress ?? ""
 

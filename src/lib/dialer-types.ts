@@ -82,9 +82,10 @@ export type DialerLeadView = {
   ownerPhonePrimary?: string
   ownerPhoneSecondary?: string
   ownerPhoneDncStatus?: string
-  /** All phone candidates from BatchData skip-trace beyond the
-   *  primary, with per-phone DNC + line-type. Surfaced on lead detail
-   *  as fallbacks when the primary doesn't connect. */
+  /** Every paid-for phone candidate from every provider (BatchData,
+   *  Enformion, flat-column writes), deduped, with per-phone DNC +
+   *  line-type + source attribution. Surfaced on lead detail as
+   *  fallbacks when the primary doesn't connect. */
   alternatePhones?: Array<{
     number: string
     lineType?: string
@@ -93,7 +94,14 @@ export type DialerLeadView = {
     tested?: boolean
     reachable?: boolean
     carrier?: string
+    source?: string
   }>
+  /** BatchData match mode on the primary number:
+   *  owner_name_verified | owner_name_unverified | address_only. */
+  phoneMatchMode?: string
+  /** True when a second provider independently returned the same
+   *  primary number (strongest non-dial confidence signal). */
+  phoneCrossVerified?: boolean
   saleControllerName?: string
   saleControllerPhonePrimary?: string
   saleControllerPhoneSecondary?: string
