@@ -152,6 +152,10 @@ export async function GET(req: NextRequest) {
           "status"
         ] as string) || ""
       const dncFlag = pm["dnc"] === true || pm["dnc"] === "true"
+      // Skiptrace match quality: name-verified numbers connect to the
+      // actual owner far more often than address-associated ones.
+      const trace = (pm["batchdata_skip_trace"] as Record<string, unknown> | undefined) || {}
+      const nameVerified = trace["primary_match_mode"] === "owner_name_verified"
       return {
         ...r,
         equity,
@@ -161,6 +165,7 @@ export async function GET(req: NextRequest) {
         fresh,
         manualStatus,
         dncFlag,
+        nameVerified,
       }
     })
     .filter(
@@ -174,6 +179,10 @@ export async function GET(req: NextRequest) {
       if (a.fresh !== b.fresh) return a.fresh ? -1 : 1
       if (a.daysToSale !== b.daysToSale)
         return (a.daysToSale ?? 99) - (b.daysToSale ?? 99)
+      // Same sale day: dial owner-verified numbers before
+      // address-associated ones — they connect to the actual owner
+      // far more often.
+      if (a.nameVerified !== b.nameVerified) return a.nameVerified ? -1 : 1
       return b.equity - a.equity
     })
 
@@ -212,6 +221,9 @@ export async function GET(req: NextRequest) {
             .map((d) => fmtPhone(d))
             .join(" · ")}</div>`
         : ""
+      const matchTag = l.nameVerified
+        ? `<span style="color:#059669; font-size:12px;">owner-verified line</span>`
+        : `<span style="color:#b45309; font-size:12px;">address-match only — confirm who you're talking to</span>`
       const slug = l.pipeline_lead_key || ""
       const links = slug
         ? `<div style="margin-top:6px; font-size:12px;">
@@ -234,6 +246,7 @@ export async function GET(req: NextRequest) {
         </div>
         <div style="margin-top:6px; font-size:16px;">
           <a href="tel:${(l.phone || "").replace(/\D/g, "")}" style="color:#111827; text-decoration:none; font-weight:600;">${fmtPhone(l.phone || "")}</a>
+          &nbsp;${matchTag}
         </div>
         ${altLine}
         ${links}
