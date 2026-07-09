@@ -35,6 +35,7 @@ import {
   type ConversationMessage,
 } from "@/lib/falco-sales-brain"
 import type { DialerLeadView } from "@/lib/dialer-types"
+import { settleSequenceOnInbound } from "@/lib/sms-outreach"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 30
@@ -275,6 +276,15 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       console.error("dialer_activities inbound insert failed:", e)
     }
+  }
+
+  // Any inbound retires the lead's campaign drip — a live conversation
+  // must never receive another scheduled touch.
+  if (leadSlug) {
+    await settleSequenceOnInbound(
+      leadSlug,
+      OPTOUT_RE.test(messageBody) ? "opted_out" : "replied"
+    )
   }
 
   // ───── STOP keyword → flag DNC + confirm ────────────────────────────
