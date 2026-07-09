@@ -299,6 +299,13 @@ export default async function DialerQueuePage({
           >
             ✦ AI Inbox
           </Link>
+          <Link
+            href="/dialer/drafts"
+            className="rounded-md bg-sky-400/15 hover:bg-sky-400/25 border border-sky-400/40 px-3 py-1.5 text-[12px] font-semibold text-sky-100 transition-colors"
+            title="Machine-drafted texts waiting for review — campaign dry runs and brain escalations. Read, edit, approve, or reject."
+          >
+            Drafts
+          </Link>
           <CountyFilter options={countyOptions} selected={countyFilter} />
           <DistressFilter options={distressOptions} selected={distressFilter} />
         </div>
