@@ -103,6 +103,32 @@ export function jitterMs(minS: number, maxS: number): number {
   return Math.round((minS + Math.random() * (maxS - minS)) * 1000)
 }
 
+// ─────────────────── Draft hygiene enforcement ───────────────────────
+// The prompt bans em/en dashes (AI tell, Patrick's hard rule) and
+// requires single-bubble openers, but models drift. Enforce in code so
+// a rule broken in composition never reaches a homeowner's phone.
+export function humanizeDraft(draft: string, opts?: { singleBubble?: boolean }): string {
+  let out = draft
+    // em/en dashes → sentence-friendly punctuation
+    .replace(/\s*[—–]\s*/g, ", ")
+    // double-spaces from the scrub
+    .replace(/ {2,}/g, " ")
+  if (opts?.singleBubble) {
+    // Openers are ONE bubble: collapse any paragraph breaks.
+    out = out.replace(/\s*\n+\s*/g, " ").trim()
+  }
+  return out.trim()
+}
+
+/** Stable per-lead opener-variant assignment: same lead always lands
+ *  in the same test arm, arms stay balanced across the pool. */
+export function openerVariantForSlug(slug: string): "not_buying" | "curiosity" | "straight" {
+  let h = 0
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0
+  const arms = ["not_buying", "curiosity", "straight"] as const
+  return arms[h % 3]
+}
+
 // ───────────────────── Human message rhythm ──────────────────────────
 // People frequently send two shorter texts instead of one wall. When a
 // draft has a natural break (paragraph, or >240 chars with multiple

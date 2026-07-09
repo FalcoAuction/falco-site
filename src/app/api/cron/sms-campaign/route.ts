@@ -45,6 +45,8 @@ import {
   jitterMs,
   splitForHumanRhythm,
   sendTwilioSms,
+  humanizeDraft,
+  openerVariantForSlug,
 } from "@/lib/sms-outreach"
 
 export const dynamic = "force-dynamic"
@@ -365,11 +367,18 @@ export async function GET(req: NextRequest) {
         continue
       }
 
-      // Compose — opener for step 0, followup after
+      // Compose — opener for step 0, followup after. Step 0 runs the
+      // opener-variant A/B test: stable arm per lead, attribution via
+      // the angle tag (opener_<variant>) on the message row.
       const context = leadContextFromRow(l, seq.step as number, seq.max_steps as number)
+      const openerVariant = openerVariantForSlug(seq.listing_slug as string)
       let composeReq: ComposeRequest
       if ((seq.step as number) === 0) {
-        composeReq = { mode: "opener", lead_context: context }
+        composeReq = {
+          mode: "opener",
+          lead_context: context,
+          opener_variant: openerVariant,
+        }
       } else {
         const { data: history } = await supabaseAdmin
           .from("sms_messages")
@@ -388,6 +397,8 @@ export async function GET(req: NextRequest) {
           lead_context: context,
           prior_angles: ((seq.angles_used as string[]) || []) as OutreachAngle[],
           conversation_history: conversationHistory,
+          campaign_message_number: (seq.step as number) + 1,
+          campaign_is_final: (seq.step as number) + 1 >= (seq.max_steps as number),
         }
       }
       const result = await composeDraft(composeReq)
@@ -395,6 +406,16 @@ export async function GET(req: NextRequest) {
         summary.errors.push(`compose ${seq.listing_slug}: ${result.error}`)
         continue
       }
+      // Code-level hygiene: strip AI-tell dashes everywhere; force
+      // openers down to a single bubble regardless of what the model
+      // returned. Attribution: step-0 messages carry the test arm.
+      result.draft = humanizeDraft(result.draft, {
+        singleBubble: (seq.step as number) === 0,
+      })
+      const angleTag =
+        (seq.step as number) === 0
+          ? `opener_${openerVariant}`
+          : result.angle_used || "unknown"
       if (
         result.suggested_action === "escalate_to_patrick" ||
         result.suggested_action === "honor_optout" ||
@@ -411,7 +432,7 @@ export async function GET(req: NextRequest) {
           bot_confidence: result.confidence,
           bot_rationale: `[campaign step ${(seq.step as number) + 1}] ${result.rationale || ""}`.slice(0, 500),
           escalation_reason: `campaign_${result.suggested_action}`,
-          angle: result.angle_used,
+          angle: angleTag,
         })
         await supabaseAdmin
           .from("sms_outreach_state")
@@ -432,7 +453,7 @@ export async function GET(req: NextRequest) {
           bot_confidence: result.confidence,
           bot_rationale: `[campaign DRY step ${(seq.step as number) + 1}] ${result.rationale || ""}`.slice(0, 500),
           escalation_reason: "campaign_dry_run",
-          angle: result.angle_used,
+          angle: angleTag,
         })
         summary.drafted_dry++
         continue // state untouched — dry runs never consume steps
@@ -476,7 +497,7 @@ export async function GET(req: NextRequest) {
           status: "auto_sent",
           bot_confidence: result.confidence,
           bot_rationale: `[campaign step ${(seq.step as number) + 1}${parts.length > 1 ? ` part ${i + 1}/${parts.length}` : ""}] ${result.rationale || ""}`.slice(0, 500),
-          angle: result.angle_used,
+          angle: angleTag,
           sent_at: new Date().toISOString(),
         })
         if (i < parts.length - 1) {
@@ -498,7 +519,7 @@ export async function GET(req: NextRequest) {
       const done = newStep >= (seq.max_steps as number)
       const angles = [
         ...(((seq.angles_used as string[]) || []) as string[]),
-        result.angle_used || "unknown",
+        angleTag,
       ]
       await supabaseAdmin
         .from("sms_outreach_state")

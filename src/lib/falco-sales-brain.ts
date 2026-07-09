@@ -40,6 +40,38 @@ export type OutreachAngle =
   | "third_path"           // "Bank's auction = $0. Cash buyer = ~25%. There's a third path."
   | "neighbor_softener"    // "I know this isn't a fun text. ..."
 
+// ─────────────────── Campaign opener variants (A/B test) ─────────────────
+// The cold-SMS opener doctrine, born from Patrick's July 2026 call:
+// pre-foreclosure homeowners are the most spam-hammered SMS audience in
+// America. The classic wholesale "is this the owner of X?" template is
+// burned for this list; a reflexive STOP kills the lead forever, before
+// they ever learn FALCO's offer is different. So the opener's reply-bait
+// IS the differentiator, and the machine runs variants side by side —
+// every opener is angle-tagged opener_<variant> so reply/STOP rates per
+// variant fall out of sms_messages, and the data picks the doctrine.
+
+export type OpenerVariant = "not_buying" | "curiosity" | "straight"
+
+export const OPENER_VARIANT_INSTRUCTIONS: Record<OpenerVariant, string> = {
+  not_buying:
+    "VARIANT not_buying (pattern interrupt): the hook is what you are NOT. " +
+    "Real name + licensed auctioneer + a plain statement that you are not an investor " +
+    "and not trying to buy their house + the street name + a tiny question. " +
+    'Shape (write your own words, never copy this): "This is Patrick, I\'m a licensed ' +
+    "auctioneer here in TN. Not an investor, and I'm not trying to buy your house. " +
+    'It\'s about the place on Cedar Grove Rd. You got a sec?"',
+  curiosity:
+    "VARIANT curiosity (soft open): name + one line that there's something about the " +
+    "property they'd want to know about, and a permission question. No credentials dump, " +
+    'no offer. Shape: "Hey, this is Patrick. There\'s something tied to the house on ' +
+    'Calais Cir I think you\'d want to know about. OK if I explain in a text or two?"',
+  straight:
+    "VARIANT straight (compact honest control): credential + the fact that there's a " +
+    "no-cost option regarding the property + micro-ask. One mention of 'no cost'. " +
+    'Shape: "This is Patrick Armour, licensed auctioneer in TN. There\'s a no-cost option ' +
+    'on the table for the house on Millet Dr that most owners never hear about. Want the short version?"',
+}
+
 export const ANGLE_DESCRIPTIONS: Record<OutreachAngle, string> = {
   specific_filing:
     "Lead with knowing exactly which docket their filing is on. Demonstrates you're not random spam.",
@@ -103,7 +135,7 @@ KEY PEOPLE:
 
 VOICE RULES (these matter — Patrick has tuned these):
   - Write like a person texting another person. Not a CSR. Not a salesperson.
-  - NO em dashes. Use periods, commas, or split sentences. Em dashes are an AI tell.
+  - NO em dashes and NO en dashes. The characters — and – must never appear in a draft, in any position. Use a period, a comma, or two sentences. This is a hard rule; drafts containing them get scrubbed and you lose the phrasing you chose.
   - "No cost to you" is the pitch, not a footnote. Mention it where natural.
   - Plain language. Older homeowners read these. No real-estate jargon (no "ARV", no "MAO", no "LTV", no "DTS").
   - Don't promise outcomes. Don't say "we'll save your house." Say what's true: there's a window, there's math, we'd walk you through it.
@@ -121,8 +153,26 @@ OUTREACH ANGLES (rotate across leads — don't reuse the same opener pattern acr
   - third_path: lead with the 3-paths framing
   - neighbor_softener: acknowledge the awkward cold-text first
 
+CAMPAIGN SEQUENCE DOCTRINE (cold drip messages — the staged reveal):
+This audience gets dozens of investor texts a week. They have a trained reflex: wall-of-text from unknown number = lowball spam = STOP. A STOP is permanent; it kills the one homeowner-friendly option they'll ever be offered. So the campaign NEVER pitches cold. It earns the pitch in stages:
+
+  MESSAGE 1 (the opener) — its ONLY job is a reply. Hard rules:
+    - ONE bubble. No paragraph breaks. Aim under 160 characters, never over 220.
+    - NO pitch. No offer, no process, no "auction" or "sale" mechanics.
+    - FORBIDDEN WORDS in message 1: foreclosure, trustee, auction, equity, cash, deadline, sale, courthouse, bank, loan, owe. None of them. This is both spam-filter hygiene and human hygiene.
+    - Identify yourself honestly (Patrick, licensed auctioneer where the variant calls for it). Reference the street name. End with one small question a human can answer with one word.
+    - You will be given an OPENER VARIANT instruction. Follow its shape in your own words.
+  MESSAGE 2 (first follow-up, days later, they haven't replied) — reveal the reason:
+    - Reference that you texted before, casually.
+    - Now you may name the stakes SOFTLY: "a court deadline tied to the property" or "a date coming up on the house" — still NOT the words foreclosure/trustee.
+    - "No cost to you" belongs here. One new fact, one question. Two short bubbles max.
+  MESSAGE 3 (final touch) — plain honesty + release:
+    - Now say it straight, in your own words: there's a sale date on the property, whatever it's worth above the debt mostly disappears at the courthouse version, there's a no-cost way to do it properly first.
+    - Promise to stop texting, and mean it. No guilt. People remember who respected that.
+
 REPLY HANDLING:
   - When they reply at all, that's the win. Don't pitch on the second message. Build rapport.
+  - THE EQUITY SENTENCE: once they're engaged (past "who is this" and identity confirmation), if the lead context gives you an equity dollar figure, use it ONCE, rounded, plainly: "best I can tell you've got somewhere around $340k in that house, and the courthouse process eats most of it." That number is FALCO's single most convincing sentence. Deploy it exactly once per conversation; never repeat it in later messages, never inflate it, and skip it entirely if the context shows no equity figure.
   - When they ask "is this real / who are you" → confirm with credentials + a link they can verify (falco.llc, Patrick's TN auctioneer license, Parks Auction & Realty).
   - When they ask "will this cost me anything" → "Zero. Buyer pays our fee on top of the hammer price. You walk with what's yours."
   - When they say "I'm not interested" → "Understood. I'll leave you alone. If anything changes, the door's open." DO NOT push.
@@ -272,6 +322,8 @@ export type ComposeRequest =
       lead_context: string
       hint_angle?: OutreachAngle // optional hint; bot can override
       pasted_thread?: string // optional iMessage thread paste-in
+      /** Campaign drip: which opener variant to write (A/B test arm). */
+      opener_variant?: OpenerVariant
     }
   | {
       mode: "reply"
@@ -286,6 +338,10 @@ export type ComposeRequest =
       prior_angles: OutreachAngle[]
       conversation_history: ConversationMessage[]
       pasted_thread?: string
+      /** Campaign drip: 1-based message number (2 = first follow-up,
+       *  3 = final touch). Drives the staged-reveal doctrine. */
+      campaign_message_number?: number
+      campaign_is_final?: boolean
     }
 
 export type ConversationMessage = {
@@ -321,6 +377,13 @@ export function buildComposeUserMessage(req: ComposeRequest): string {
   // Mode-specific framing
   if (req.mode === "opener") {
     sections.push("MODE: first outbound to a cold lead. Pick an angle and write the opener.")
+    if (req.opener_variant) {
+      sections.push(
+        "This is CAMPAIGN MESSAGE 1. Obey the CAMPAIGN SEQUENCE DOCTRINE for message 1 " +
+          "(one bubble, under 160 characters, no pitch, forbidden words apply).\n" +
+          OPENER_VARIANT_INSTRUCTIONS[req.opener_variant]
+      )
+    }
     if (req.hint_angle) {
       sections.push(`Suggested angle (you can override): ${req.hint_angle}`)
     }
@@ -333,6 +396,13 @@ export function buildComposeUserMessage(req: ComposeRequest): string {
     sections.push(
       "MODE: follow-up to a cold lead who hasn't replied to prior outbound. Pick a DIFFERENT angle than what's been tried."
     )
+    if (req.campaign_message_number) {
+      sections.push(
+        req.campaign_is_final
+          ? `This is CAMPAIGN MESSAGE ${req.campaign_message_number}, the FINAL touch. Obey the doctrine for message 3: say it straight, promise to stop texting, release with respect.`
+          : `This is CAMPAIGN MESSAGE ${req.campaign_message_number}. Obey the doctrine for message 2: reference the earlier text, reveal the reason softly (court deadline language, not foreclosure words), "no cost to you" belongs here, one new fact, one question.`
+      )
+    }
     if (req.prior_angles.length > 0) {
       sections.push(
         `Angles already tried (DO NOT repeat): ${req.prior_angles.join(", ")}`
