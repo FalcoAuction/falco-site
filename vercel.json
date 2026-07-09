@@ -42,10 +42,6 @@
     {
       "path": "/api/cron/sunday-call-sheet",
       "schedule": "0 23 * * 0"
-    },
-    {
-      "path": "/api/cron/sms-campaign",
-      "schedule": "*/20 14-23 * * *"
     }
   ]
 }
