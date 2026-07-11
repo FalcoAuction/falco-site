@@ -85,14 +85,14 @@ export default function TermsPage() {
               outreach.
             </p>
             <p>
-              <strong className="text-white/85">Description:</strong> When
-              FALCO identifies your property in a Tennessee public foreclosure
-              record (Secretary of State notices, lis pendens, trustee sale
-              ads, federal bankruptcy filings), or when you've shared your
-              phone number with us through a form, a phone call, or in
-              conversation, you may receive text messages from{" "}
-              <span className="text-emerald-200">+1 (615) 490-0837</span>{" "}
-              regarding your specific case.
+              <strong className="text-white/85">Description:</strong> FALCO
+              sends text messages only to people who have opted in. Consent
+              is given verbally during a phone conversation with Patrick
+              Armour (Tennessee licensed auctioneer), or by submitting the
+              consent form on this site. The date and manner of consent are
+              recorded. Messages are case-specific follow-up: scheduling,
+              documents you requested, and answers to questions from your
+              conversation with us. We do not send promotional blasts.
             </p>
             <p>
               <strong className="text-white/85">Message frequency:</strong>{" "}

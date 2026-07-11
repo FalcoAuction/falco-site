@@ -95,19 +95,24 @@ export default function PrivacyPage() {
 
           <Block title="SMS / Text messaging">
             <p>
-              When you provide your phone number to FALCO — through a form on
-              this site, by replying to outreach from us, or in conversation
-              with Patrick Armour or a FALCO representative — you may receive
-              text messages from <span className="text-emerald-200">+1 (615) 490-0837</span>.
-              These relate to your specific property situation: introductions,
-              follow-up on your foreclosure or auction-routing case,
-              scheduling, and answers to your questions.
+              FALCO sends text messages only with your consent. You opt in
+              during a phone conversation with Patrick Armour (Tennessee
+              licensed auctioneer) by verbally agreeing to receive text
+              follow-up about your property, or by submitting the consent
+              form on this site. We record the date and manner of your
+              consent. We do not send marketing blasts, and we do not text
+              anyone who has not opted in.
+            </p>
+            <p>
+              Messages relate to your specific case: follow-up on the
+              conversation you had with us, scheduling, documents you
+              requested, and answers to your questions.
             </p>
             <p>
               <strong className="text-white/85">What we collect:</strong> the
-              phone number you used, the content of your messages, timestamps,
-              and (when known) the property or filing the conversation relates
-              to.
+              phone number you provided, the content of your messages,
+              timestamps, your consent record, and (when known) the property
+              the conversation relates to.
             </p>
             <p>
               <strong className="text-white/85">Frequency:</strong> message
