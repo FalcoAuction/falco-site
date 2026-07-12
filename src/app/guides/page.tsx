@@ -16,6 +16,12 @@ const GUIDES: Array<{ href: string; title: string; blurb: string }> = [
       "How a non-judicial (trustee sale) foreclosure works in Tennessee: the notice, the timeline, sale day, and the exits available at each stage.",
   },
   {
+    href: "/guides/postpone-trustee-sale-tennessee",
+    title: "Can You Postpone a Trustee Sale in Tennessee?",
+    blurb:
+      "If your sale date is close: the real ways a Tennessee trustee sale gets pushed back or stopped, who controls each one, and how to use the time.",
+  },
+  {
     href: "/guides/cash-offer-vs-auction",
     title: "Cash Offer vs. Marketed Auction",
     blurb:
