@@ -475,7 +475,7 @@ export default function ManifestoPage() {
             manifesto holds all this math but targets no search query;
             these guide pages do. */}
         <div className="mt-8">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-white/50 font-semibold mb-3">
             Go deeper
           </div>
           <div className="grid sm:grid-cols-2 gap-3">

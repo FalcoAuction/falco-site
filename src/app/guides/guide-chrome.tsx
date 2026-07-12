@@ -65,9 +65,9 @@ export function GuideShell({
         <p className="mt-7 text-[16px] md:text-[20px] leading-[1.6] text-white/65">
           {standfirst}
         </p>
-        <div className="mt-6 flex items-center gap-3 text-[12px] text-white/40">
+        <div className="mt-6 flex items-center gap-3 text-[12px] text-white/55">
           <span>By Patrick Yuri Armour, Licensed Tennessee Auctioneer</span>
-          <span className="text-white/20">·</span>
+          <span className="text-white/30">·</span>
           <span>Updated {updated}</span>
         </div>
       </section>
@@ -123,7 +123,7 @@ export function GuideNote({
   return (
     <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-4">
       {label && (
-        <div className="text-[11px] uppercase tracking-[0.16em] text-white/45 font-semibold mb-1.5">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-white/55 font-semibold mb-1.5">
           {label}
         </div>
       )}
@@ -154,7 +154,7 @@ export function GuideRelated({
 }) {
   return (
     <section className="mx-auto max-w-3xl px-6 md:px-10 mt-4">
-      <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+      <div className="text-[11px] uppercase tracking-[0.2em] text-white/50 font-semibold mb-3">
         Keep reading
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
@@ -194,7 +194,7 @@ function GuideCta() {
           >
             Get your numbers →
           </Link>
-          <span className="text-[12px] text-white/45">
+          <span className="text-[12px] text-white/55">
             Or email{" "}
             <a
               href="mailto:falco@falco.llc"
@@ -215,7 +215,7 @@ function GuideCta() {
 function GuideDisclaimer() {
   return (
     <section className="mx-auto max-w-3xl px-6 md:px-10 mt-8">
-      <p className="text-[12px] leading-[1.65] text-white/35">
+      <p className="text-[12px] leading-[1.65] text-white/55">
         This page is general information about Tennessee foreclosure, not
         legal, tax, or financial advice, and not a promise about any
         outcome. Every situation is different. For advice specific to your
@@ -235,7 +235,7 @@ function GuideDisclaimer() {
 function GuideFooter() {
   return (
     <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 mt-10 border-t border-white/[0.06]">
-      <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+      <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/50">
         <div>FALCO · Tennessee</div>
         <div className="flex items-center gap-5">
           <Link href="/" className="hover:text-white/70 transition-colors">

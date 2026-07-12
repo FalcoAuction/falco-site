@@ -127,9 +127,9 @@ export function CountyPage({ d }: { d: CountyData }) {
           and the option most homeowners never hear about: selling before the
           sale to protect the equity that the courthouse auction would erase.
         </p>
-        <div className="mt-6 flex items-center gap-3 text-[12px] text-white/40">
+        <div className="mt-6 flex items-center gap-3 text-[12px] text-white/55">
           <span>By Patrick Yuri Armour, Licensed Tennessee Auctioneer</span>
-          <span className="text-white/20">·</span>
+          <span className="text-white/30">·</span>
           <span>Updated July 2026</span>
         </div>
       </section>
@@ -194,7 +194,7 @@ export function CountyPage({ d }: { d: CountyData }) {
             </GuideNote>
           </div>
           {d.officesCite && (
-            <p className="text-white/45 text-[12px]">
+            <p className="text-white/55 text-[12px]">
               Office details verified from the county government website.
               <Cite href={d.officesCite} n={3} />
             </p>
@@ -257,7 +257,7 @@ export function CountyPage({ d }: { d: CountyData }) {
             <Link href="/homeowners" className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors">
               Get your numbers →
             </Link>
-            <span className="text-[12px] text-white/45">
+            <span className="text-[12px] text-white/55">
               Or call{" "}
               <a href="tel:6012138868" className="text-emerald-300 hover:text-emerald-200">
                 601-213-8868
@@ -269,7 +269,7 @@ export function CountyPage({ d }: { d: CountyData }) {
 
       {/* YMYL disclaimer — same guardrails as the guides. */}
       <section className="mx-auto max-w-3xl px-6 md:px-10 mt-8">
-        <p className="text-[12px] leading-[1.65] text-white/35">
+        <p className="text-[12px] leading-[1.65] text-white/55">
           This page is general information about foreclosure in {d.county}{" "}
           County, Tennessee, not legal, tax, or financial advice, and not a
           promise about any outcome. Sale locations, times, and publications
@@ -284,7 +284,7 @@ export function CountyPage({ d }: { d: CountyData }) {
 
       {/* Related */}
       <section className="mx-auto max-w-3xl px-6 md:px-10 mt-8">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-white/50 font-semibold mb-3">
           Keep reading
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
@@ -302,7 +302,7 @@ export function CountyPage({ d }: { d: CountyData }) {
       </section>
 
       <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 mt-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/50">
           <div>FALCO · Tennessee</div>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-white/70 transition-colors">Home</Link>
