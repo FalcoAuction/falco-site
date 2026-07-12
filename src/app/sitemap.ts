@@ -1,11 +1,21 @@
 import type { MetadataRoute } from "next"
+import { COUNTIES } from "./foreclosure/county-list"
 
 // Public marketing surface only. Operational routes are excluded via
 // robots.ts. lastModified is intentionally omitted on pages we don't
 // version — a fake timestamp on every deploy erodes crawler trust.
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://falco.llc"
+  const countyPages: MetadataRoute.Sitemap = [
+    { url: `${base}/foreclosure`, changeFrequency: "weekly", priority: 0.8 },
+    ...COUNTIES.map((c) => ({
+      url: `${base}/foreclosure/${c.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  ]
   return [
+    ...countyPages,
     { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/homeowners`, changeFrequency: "weekly", priority: 0.9 },
     // Guides — the SEO content hub. Pillar highest, comparisons below it.
