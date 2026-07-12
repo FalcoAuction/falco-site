@@ -8,6 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://falco.llc"
   const countyPages: MetadataRoute.Sitemap = [
     { url: `${base}/foreclosure`, changeFrequency: "weekly", priority: 0.8 },
+    // Memphis city page — distinct from the Shelby County logistics page,
+    // targets the high-intent "foreclosure Memphis" search.
+    { url: `${base}/foreclosure/memphis`, changeFrequency: "monthly", priority: 0.8 },
     ...COUNTIES.map((c) => ({
       url: `${base}/foreclosure/${c.slug}`,
       changeFrequency: "monthly" as const,

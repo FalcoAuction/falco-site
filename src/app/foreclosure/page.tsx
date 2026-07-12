@@ -51,9 +51,18 @@ export default function ForeclosureCountyIndex() {
             <div className="text-[17px] font-semibold text-white group-hover:text-emerald-100">
               {c.county} County
             </div>
-            <div className="mt-0.5 text-[13px] text-white/50">{c.seat} area</div>
+            <div className="mt-0.5 text-[13px] text-white/55">{c.seat} area</div>
           </Link>
         ))}
+        <Link
+          href="/foreclosure/memphis"
+          className="group rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 hover:border-emerald-400/30 transition-colors"
+        >
+          <div className="text-[17px] font-semibold text-white group-hover:text-emerald-100">
+            Memphis
+          </div>
+          <div className="mt-0.5 text-[13px] text-white/55">City guide (Shelby County)</div>
+        </Link>
       </section>
 
       <section className="mx-auto max-w-3xl px-6 pb-24 md:px-10">
