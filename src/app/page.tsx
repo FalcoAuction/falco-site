@@ -1,5 +1,6 @@
 import V2Content from "./v2/v2-content"
 import { FAQ_ITEMS } from "./v2/faq-items"
+import { MobileCtaBar } from "./v2/mobile-cta-bar"
 
 // Fully static: no server-side data on this page. force-dynamic was
 // costing every crawler hit a cold render (1.1s+ TTFB, cache MISS).
@@ -65,6 +66,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
       />
       <V2Content />
+      <MobileCtaBar />
     </>
   )
 }

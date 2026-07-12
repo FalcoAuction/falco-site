@@ -157,6 +157,23 @@ export default function V2Content() {
                   </a>
                 </div>
               </div>
+
+              {/* Trust signals above the fold — the three things a
+                  distressed homeowner needs to hear first. */}
+              <div className="falco-hero-reveal mt-8 md:mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[12px] md:text-[13px] text-white/60">
+                {[
+                  "Licensed Tennessee auctioneer",
+                  "No cost to you",
+                  "You keep the equity",
+                ].map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5">
+                    <span className="text-emerald-400" aria-hidden="true">
+                      ✓
+                    </span>
+                    {s}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </SnapSection>
@@ -487,7 +504,8 @@ export default function V2Content() {
               </Link>
             </div>
 
-            <div className="mt-10 pt-6 border-t border-white/[0.06]">
+            {/* pb on mobile clears the sticky MobileCtaBar (~60px). */}
+            <div className="mt-10 pt-6 pb-24 md:pb-0 border-t border-white/[0.06]">
               <div className="flex items-center justify-between flex-wrap gap-4 text-[12px] tracking-[0.18em] text-white/40">
                 <div>FALCO · Tennessee</div>
                 <div className="flex items-center gap-5">
