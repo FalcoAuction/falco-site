@@ -470,6 +470,31 @@ export default function ManifestoPage() {
             </span>
           </div>
         </div>
+
+        {/* Guides — internal links from body copy, not just nav. The
+            manifesto holds all this math but targets no search query;
+            these guide pages do. */}
+        <div className="mt-8">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3">
+            Go deeper
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              { href: "/guides/tennessee-foreclosure-process", label: "How the Tennessee foreclosure process works" },
+              { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. marketed auction: the math" },
+              { href: "/guides/wholesaler-economics", label: "How a wholesaler prices your house" },
+              { href: "/guides/short-sale-vs-auction", label: "Short sale vs. selling before the sale" },
+            ].map((g) => (
+              <Link
+                key={g.href}
+                href={g.href}
+                className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-[14px] text-white/75 hover:border-emerald-400/30 hover:text-white transition-colors"
+              >
+                {g.label} →
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Footer */}

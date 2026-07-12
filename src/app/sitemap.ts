@@ -8,6 +8,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/homeowners`, changeFrequency: "weekly", priority: 0.9 },
+    // Guides — the SEO content hub. Pillar highest, comparisons below it.
+    { url: `${base}/guides`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${base}/guides/tennessee-foreclosure-process`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${base}/guides/cash-offer-vs-auction`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/guides/short-sale-vs-auction`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/guides/wholesaler-economics`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/manifesto`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/buyers`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/partners`, changeFrequency: "monthly", priority: 0.6 },

@@ -500,6 +500,9 @@ export default function V2Content() {
                   <Link href="/partners" className="hover:text-white transition-colors">
                     Auction partners
                   </Link>
+                  <Link href="/guides" className="hover:text-white transition-colors">
+                    Guides
+                  </Link>
                   <Link href="/inquiry" className="hover:text-white transition-colors">
                     Contact
                   </Link>
