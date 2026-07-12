@@ -570,3 +570,26 @@ body {
   opacity: 1;
   animation: falcoBorderGlow 3s linear infinite;
 }
+
+/* ================================================================
+   HERO LOAD REVEAL — pure CSS, no JS dependency.
+   The hero sits at scroll position zero, so its "scroll reveal" was
+   really a load animation gated on the full JS bundle (hydrate +
+   IntersectionObserver + class add). On throttled mobile that held
+   the page's largest content invisible for seconds (LCP 8.6s).
+   Same curve/duration/stagger as .falco-scroll-reveal, but driven by
+   an autoplaying animation that starts at first paint.
+   ================================================================ */
+@keyframes falco-hero-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.falco-hero-reveal {
+  opacity: 0;
+  animation: falco-hero-in 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.falco-hero-reveal:nth-child(2) { animation-delay: 80ms; }
+.falco-hero-reveal:nth-child(3) { animation-delay: 160ms; }
+@media (prefers-reduced-motion: reduce) {
+  .falco-hero-reveal { animation: none; opacity: 1; transform: none; }
+}

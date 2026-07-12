@@ -125,13 +125,13 @@ export default function V2Content() {
 
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="max-w-3xl">
-              <h1 className="falco-scroll-reveal text-[44px] md:text-[96px] leading-[0.98] md:leading-[0.9] tracking-[-0.03em] md:tracking-[-0.04em] font-semibold text-white">
+              <h1 className="falco-hero-reveal text-[44px] md:text-[96px] leading-[0.98] md:leading-[0.9] tracking-[-0.03em] md:tracking-[-0.04em] font-semibold text-white">
                 <span className="block">Tennessee foreclosure?</span>
                 <span className="block text-emerald-400">Run a real auction.</span>
                 <span className="block text-white/45">Keep your equity.</span>
               </h1>
 
-              <p className="falco-scroll-reveal mt-7 md:mt-9 max-w-2xl text-[16px] md:text-[21px] leading-[1.5] text-white/80">
+              <p className="falco-hero-reveal mt-7 md:mt-9 max-w-2xl text-[16px] md:text-[21px] leading-[1.5] text-white/80">
                 FALCO routes Tennessee homes through state-licensed marketed auctions —
                 fast enough to beat the trustee sale, structured to clear at market.
                 The buyer pays our fee.{" "}
@@ -140,7 +140,7 @@ export default function V2Content() {
 
               {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
                   stops the trio of buttons from competing visually. */}
-              <div className="falco-scroll-reveal mt-7 md:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+              <div className="falco-hero-reveal mt-7 md:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                 <a
                   href="#homeowners"
                   className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors w-fit"

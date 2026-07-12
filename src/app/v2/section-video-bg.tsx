@@ -118,16 +118,20 @@ export function SectionVideoBg({
   }, [skipVideo])
 
   // On mobile/slow: just paint the poster. No video element at all.
+  // Rendered as a lazy <img>, not a CSS background — CSS backgrounds
+  // can't lazy-load, and these below-the-fold section posters were
+  // pulling ~750KB eagerly on mobile, starving the hero LCP.
   if (skipVideo) {
     return (
-      <div
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={poster}
+        alt=""
+        loading="lazy"
+        decoding="async"
         aria-hidden="true"
-        className="absolute inset-0 -z-30 pointer-events-none bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${poster})`,
-          opacity,
-          filter: "grayscale(100%)",
-        }}
+        className="absolute inset-0 -z-30 h-full w-full object-cover pointer-events-none"
+        style={{ opacity, filter: "grayscale(100%)" }}
       />
     )
   }
