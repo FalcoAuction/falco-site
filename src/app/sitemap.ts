@@ -25,6 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/guides/cash-offer-vs-auction`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/guides/short-sale-vs-auction`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/guides/wholesaler-economics`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/guides/tennessee-foreclosure-surplus-funds`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/manifesto`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/buyers`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/partners`, changeFrequency: "monthly", priority: 0.6 },

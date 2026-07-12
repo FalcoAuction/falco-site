@@ -12,9 +12,10 @@ const DATA: CountyData = {
   saleLocationCite: "https://www.sissmanlaw.com/foreclosure-defense/tennessee-foreclosure-law/",
   noticePublications: ["The Daily News (Memphis)"],
   noticeCite: "https://www.memphisdailynews.com/Notices.aspx",
-  // Shelby's Clerk & Master publishes an excess-proceeds FAQ + claim
-  // process online.
-  clerkAndMaster: "Shelby County Clerk & Master (excess proceeds), (901) 222-3900",
+  // Clerk & Master of Chancery Court — venue for disputed foreclosure
+  // surplus. (The county's published excess-proceeds material is for
+  // delinquent TAX sales, not mortgage foreclosure.)
+  clerkAndMaster: "Shelby County Clerk & Master (Chancery Court), (901) 222-3900",
   clerkAndMasterUrl: "https://www.shelbycountytn.gov/332/The-Clerk-Master",
   registerOfDeeds: "Shelby County Register of Deeds, (901) 222-8100",
   registerOfDeedsUrl: "https://register.shelby.tn.us/",

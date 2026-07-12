@@ -12,7 +12,10 @@ const DATA: CountyData = {
   saleLocationCite: "https://hamiltoncountyherald.com/PublicNotices.aspx",
   noticePublications: ["Hamilton County Herald", "Chattanooga Times Free Press"],
   noticeCite: "https://hamiltoncountyherald.com/PublicNotices.aspx",
-  clerkAndMaster: "Hamilton County Clerk & Master (excess proceeds forms), (423) 209-6600",
+  // Clerk & Master of Chancery Court — venue for disputed foreclosure
+  // surplus. (Hamilton's downloadable "Motion to Claim Excess Sale
+  // Proceeds" form 285T is a TAX-sale form, not mortgage foreclosure.)
+  clerkAndMaster: "Hamilton County Clerk & Master (Chancery Court), (423) 209-6600",
   clerkAndMasterUrl: "https://www.hamiltontn.gov/Chancery_RulesFees.aspx",
   registerOfDeeds: "Hamilton County Register of Deeds, (423) 209-6560",
   registerOfDeedsUrl: "https://register.hamiltontn.gov/",

@@ -39,6 +39,12 @@ const GUIDES: Array<{ href: string; title: string; blurb: string }> = [
     blurb:
       "The 70% formula behind every cash offer, why the discount exists, and where your equity goes when you take one.",
   },
+  {
+    href: "/guides/tennessee-foreclosure-surplus-funds",
+    title: "Foreclosure Surplus Funds: Is Money Owed to You?",
+    blurb:
+      "If your home sold at foreclosure for more than you owed, the surplus may be yours. How to claim it for free, and the recovery-company traps to avoid.",
+  },
 ]
 
 export default function GuidesIndexPage() {

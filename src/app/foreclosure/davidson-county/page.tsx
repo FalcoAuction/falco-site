@@ -14,9 +14,11 @@ const DATA: CountyData = {
     "https://mainstreetmediatn.com/articles/bargainbrowser/public-notices-week-of-march-5-2026-4/",
   noticePublications: ["The Nashville Ledger", "The Tennessean"],
   noticeCite: "https://foreclosuretennessee.com/",
-  // Davidson's Clerk & Master publishes an actual "Motion to Claim
-  // Excess Sale Proceeds" form online — link straight to it.
-  clerkAndMaster: "Davidson County Clerk & Master (excess proceeds forms), (615) 862-5710",
+  // The Clerk & Master of Chancery Court is where disputed foreclosure
+  // surplus is interpleaded. (Note: the county's downloadable "excess
+  // proceeds" forms are for delinquent TAX sales, not mortgage
+  // foreclosure — so we point to the office, not a form.)
+  clerkAndMaster: "Davidson County Clerk & Master (Chancery Court), (615) 862-5710",
   clerkAndMasterUrl: "https://chanceryclerkandmaster.nashville.gov/",
   registerOfDeeds: "Davidson County Register of Deeds, (615) 862-6790",
   registerOfDeedsUrl: "https://www.nashville.gov/departments/register-deeds",
