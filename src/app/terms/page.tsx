@@ -4,6 +4,7 @@ export const metadata = {
   title: "Terms · FALCO Tennessee",
   description:
     "Terms of service covering FALCO's website, communications, and outreach.",
+  alternates: { canonical: "/terms" },
 }
 
 export default function TermsPage() {

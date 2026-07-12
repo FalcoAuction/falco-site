@@ -32,13 +32,20 @@ export function HeroVideoBg({
   poster: string
   opacity?: number
 }) {
-  const [skipVideo, setSkipVideo] = useState(false)
+  // Mount-after-check, not render-then-remove: the old version rendered
+  // the <video> in SSR HTML (skipVideo started false), so mobile began
+  // downloading the 4.6MB loop before the capability effect could flip
+  // it — measured as an 18.7s mobile LCP. Now SSR and first paint are
+  // the poster everywhere; the video mounts a tick later only on
+  // capable devices. Poster matches the video's first frame, so the
+  // swap is invisible on desktop.
+  const [showVideo, setShowVideo] = useState(false)
 
   useEffect(() => {
-    setSkipVideo(shouldSkipVideo())
+    if (!shouldSkipVideo()) setShowVideo(true)
   }, [])
 
-  if (skipVideo) {
+  if (!showVideo) {
     return (
       <div
         aria-hidden="true"

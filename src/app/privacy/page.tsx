@@ -4,6 +4,7 @@ export const metadata = {
   title: "Privacy · FALCO Tennessee",
   description:
     "How FALCO handles the information you share through our forms, calls, and emails.",
+  alternates: { canonical: "/privacy" },
 }
 
 export default function PrivacyPage() {

@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
           "/operator",
           "/pilot/",
           "/team/",
+          "/v2", // duplicate of / (the homepage renders v2 content)
           "/vault",
           "/vault-routing",
           "/approve-access",

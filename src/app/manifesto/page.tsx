@@ -4,6 +4,7 @@ export const metadata = {
   title: "Why FALCO exists — Manifesto",
   description:
     "Tennessee homeowners lose six figures of equity to foreclosure every week. Most of it doesn't have to. The math, the three paths, and the one that keeps the money in the homeowner's pocket.",
+  alternates: { canonical: "/manifesto" },
 }
 
 export default function ManifestoPage() {

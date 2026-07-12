@@ -1,12 +1,11 @@
 import Link from "next/link"
 import BuyerSignupForm from "./buyer-signup-form"
 
-export const dynamic = "force-dynamic"
-
 export const metadata = {
   title: "Tennessee Distressed Inventory · FALCO Buyer Access",
   description:
     "Cash buyers and active investors — get first look at Tennessee distressed properties hitting marketed auction. Registered buyers get notified the moment new inventory lists.",
+  alternates: { canonical: "/buyers" },
   openGraph: {
     title: "Tennessee Distressed Inventory · FALCO Buyer Access",
     description:

@@ -1,6 +1,8 @@
 import V2Content from "./v2/v2-content"
+import { FAQ_ITEMS } from "./v2/faq-items"
 
-export const dynamic = "force-dynamic"
+// Fully static: no server-side data on this page. force-dynamic was
+// costing every crawler hit a cold render (1.1s+ TTFB, cache MISS).
 
 // Title/description lead with what distressed owners actually type
 // into Google ("facing foreclosure Tennessee", "keep equity", "sell
@@ -9,6 +11,7 @@ export const metadata = {
   title: "Facing Foreclosure in Tennessee? Keep Your Equity | FALCO",
   description:
     "Sell your Tennessee home through a licensed marketed auction before the trustee sale takes it. No cost to you, the buyer pays the fee. You keep the equity.",
+  alternates: { canonical: "/" },
 }
 
 // ProfessionalService structured data — the only entity markup on the
@@ -38,12 +41,28 @@ const JSON_LD = {
   priceRange: "Free to homeowners (buyer pays premium)",
 }
 
+// FAQPage schema mirrors the on-page FAQ accordion verbatim — Google
+// requires schema content to match visible content.
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+}
+
 export default function HomePage() {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
       />
       <V2Content />
     </>

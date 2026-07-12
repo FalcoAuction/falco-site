@@ -5,6 +5,7 @@ export const metadata = {
   title: "Text Message Opt-In | FALCO Tennessee",
   description:
     "Opt in to receive case-specific text messages from FALCO. Consent is optional, message frequency varies, and you can reply STOP at any time.",
+  alternates: { canonical: "/sms-consent" },
 }
 
 // Public SMS opt-in page. This is the URL registered as the web-form

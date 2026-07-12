@@ -503,8 +503,17 @@ export default function V2Content() {
                   <Link href="/inquiry" className="hover:text-white transition-colors">
                     Contact
                   </Link>
+                  <Link href="/manifesto" className="hover:text-white transition-colors">
+                    Manifesto
+                  </Link>
                   <Link href="/privacy" className="hover:text-white transition-colors">
                     Privacy
+                  </Link>
+                  <Link href="/terms" className="hover:text-white transition-colors">
+                    Terms
+                  </Link>
+                  <Link href="/sms-consent" className="hover:text-white transition-colors">
+                    Text opt-in
                   </Link>
                   <span className="text-white/15">falco.llc</span>
                 </div>
