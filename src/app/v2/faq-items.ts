@@ -5,8 +5,8 @@
 // reference proxy, not the array.
 export const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
-    q: "Wait — is this the foreclosure auction at the courthouse?",
-    a: "No. The trustee sale at the courthouse is exactly the thing we're trying to prevent. That's a 60-second formality on the courthouse steps where the bank takes the property for the loan balance and your equity disappears. What we run is a marketed public auction through a state-licensed Tennessee auction firm: photos, advertising, a 30-to-60-day campaign, a defined sale day, and buyers competing openly on price. Two completely different things — one takes your equity, the other captures it for you.",
+    q: "Wait, is this the foreclosure auction at the courthouse?",
+    a: "No. The trustee sale at the courthouse is exactly the thing we're trying to prevent. That's a 60-second formality on the courthouse steps where the bank takes the property for the loan balance and your equity disappears. What we run is a marketed public auction through a state-licensed Tennessee auction firm: photos, advertising, a 30-to-60-day campaign, a defined sale day, and buyers competing openly on price. Two completely different things. One takes your equity, the other captures it for you.",
   },
   {
     q: "Do I have to sell?",
@@ -14,7 +14,7 @@ export const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "How is this different from a cash buyer / wholesaler?",
-    a: "A cash buyer — wholesaler, iBuyer, 'we buy houses' operator, whatever flavor — purchases your house at a discount, fast, then resells at market. The speed-discount is the trade. We don't buy your house at all. We market it to the open buyer pool through a state-licensed Tennessee auction firm with a 30-to-60-day campaign and let the highest bidder set the price. Same urgency. Same finality of sale. The equity goes home with you instead of with the buyer.",
+    a: "A cash buyer (wholesaler, iBuyer, 'we buy houses' operator, whatever flavor) purchases your house at a discount, fast, then resells at market. The speed-discount is the trade. We don't buy your house at all. We market it to the open buyer pool through a state-licensed Tennessee auction firm with a 30-to-60-day campaign and let the highest bidder set the price. Same urgency. Same finality of sale. The equity goes home with you instead of with the buyer.",
   },
   {
     q: "What if the auction doesn't sell for enough?",

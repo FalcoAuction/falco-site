@@ -2,10 +2,8 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { DotOrbit } from "../dot-orbit"
 import FaqSection from "./faq-section"
 import { SectionVideoBg, HeroVideoBg } from "./section-video-bg"
-import { RequestDropdown } from "./request-dropdown"
 
 /**
  * Reveal each .falco-scroll-reveal child as it enters the viewport.
@@ -75,16 +73,27 @@ export default function V2Content() {
             FALCO
           </Link>
           <nav className="flex items-center gap-6 text-[14px] tracking-wide text-white/70">
-            <a href="#homeowners" className="hover:text-white transition-colors hidden md:inline">
+            <Link href="/homeowners" className="hover:text-white transition-colors hidden md:inline">
               Homeowners
-            </a>
-            <a href="#buyers" className="hover:text-white transition-colors hidden md:inline">
+            </Link>
+            <Link href="/buyers" className="hover:text-white transition-colors hidden md:inline">
               Buyers
-            </a>
-            <a href="#auction-partners" className="hover:text-white transition-colors hidden md:inline">
+            </Link>
+            <Link href="/partners" className="hover:text-white transition-colors hidden md:inline">
               Auction Partners
+            </Link>
+            <Link href="/guides" className="hover:text-white transition-colors hidden md:inline">
+              Guides
+            </Link>
+            {/* Direct contact as the header CTA — replaces the animated
+                Request Access dropdown (the hero lanes now do that job).
+                Email until the inbound phone line is live. */}
+            <a
+              href="mailto:falco@falco.llc"
+              className="rounded-lg border border-white/[0.12] bg-white/[0.03] px-4 py-2 text-[13px] font-medium text-white/85 hover:border-emerald-400/40 hover:text-white transition-colors whitespace-nowrap"
+            >
+              falco@falco.llc
             </a>
-            <RequestDropdown />
           </nav>
         </div>
       </header>
@@ -111,92 +120,94 @@ export default function V2Content() {
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_55%)]" />
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
 
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <DotOrbit
-              dotColor="rgba(16, 185, 129, 0.5)"
-              lineColor="rgba(16, 185, 129, 0.06)"
-              density={0.55}
-              speed={0.3}
-              dotSize={1.1}
-              linkDistance={120}
-              opacity={0.6}
-            />
-          </div>
+          {/* Particle-constellation animation removed — it read as a
+              dated 2020-era startup trope and was the heaviest thing on
+              the hero. The video + layered gradients carry the depth. */}
 
+          {/* The hero is a ROUTER, not a pitch. Three audiences hit this
+              page; each gets one card straight to their page (which holds
+              the full pitch + form). One CTA per lane — no duplicate
+              buttons, no paragraph to read first. */}
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="max-w-3xl">
-              <h1 className="falco-hero-reveal text-[44px] md:text-[96px] leading-[0.98] md:leading-[0.9] tracking-[-0.03em] md:tracking-[-0.04em] font-semibold text-white">
-                <span className="block">Tennessee foreclosure?</span>
-                <span className="block text-emerald-400">Run a real auction.</span>
-                <span className="block text-white/45">Keep your equity.</span>
-              </h1>
+            <h1 className="falco-hero-reveal max-w-3xl text-[40px] md:text-[72px] leading-[1.02] md:leading-[0.98] font-semibold text-white">
+              <span className="block">Tennessee foreclosure?</span>
+              <span className="block italic text-emerald-300">Keep your equity.</span>
+            </h1>
 
-              <p className="falco-hero-reveal mt-7 md:mt-9 max-w-2xl text-[16px] md:text-[21px] leading-[1.5] text-white/80">
-                FALCO routes Tennessee homes through state-licensed marketed auctions —
-                fast enough to beat the trustee sale, structured to clear at market.
-                The buyer pays our fee.{" "}
-                <span className="text-emerald-300/90 font-medium">You keep what's yours.</span>
-              </p>
+            <div className="falco-hero-reveal mt-9 md:mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
+              <LaneCard
+                href="/homeowners"
+                label="Homeowners"
+                headline="Facing a trustee sale?"
+                body="We run a marketed auction before the courthouse date. No cost to you."
+                cta="See your numbers"
+              />
+              <LaneCard
+                href="/buyers"
+                label="Buyers"
+                headline="Want first look at inventory?"
+                body="Equity-positive Tennessee properties. Clean title. Bid and close."
+                cta="Get on the list"
+              />
+              <LaneCard
+                href="/partners"
+                label="Auction partners"
+                headline="Run a TN auction house?"
+                body="Pre-qualified sellers routed to your block. We source, you execute."
+                cta="Partner with us"
+              />
+            </div>
 
-              {/* Primary CTA + secondary text links — sharper hierarchy on mobile,
-                  stops the trio of buttons from competing visually. */}
-              <div className="falco-hero-reveal mt-7 md:mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
-                <a
-                  href="#homeowners"
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors w-fit"
-                >
-                  For Homeowners
-                </a>
-                <div className="flex items-center gap-1 text-[13px] text-white/55">
-                  <a href="#buyers" className="hover:text-white transition-colors px-1 py-2">
-                    For Buyers
-                  </a>
-                  <span className="text-white/25">·</span>
-                  <a href="#auction-partners" className="hover:text-white transition-colors px-1 py-2">
-                    For Auction Partners
-                  </a>
-                </div>
-              </div>
-
-              {/* Trust signals above the fold — the three things a
-                  distressed homeowner needs to hear first. */}
-              <div className="falco-hero-reveal mt-8 md:mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[12px] md:text-[13px] text-white/60">
-                {[
-                  "Licensed Tennessee auctioneer",
-                  "No cost to you",
-                  "You keep the equity",
-                ].map((s) => (
-                  <span key={s} className="inline-flex items-center gap-1.5">
-                    <span className="text-emerald-400" aria-hidden="true">
-                      ✓
-                    </span>
-                    {s}
-                  </span>
-                ))}
-              </div>
+            {/* One thin trust line — replaces the old checkmark chips. */}
+            <div className="falco-hero-reveal mt-7 md:mt-8 text-[12px] md:text-[13px] text-white/50">
+              Licensed Tennessee auctioneer · No cost to homeowners · The buyer pays our fee
             </div>
           </div>
         </SnapSection>
 
-        {/* === THESIS === */}
+        {/* === THE MATH ===
+            The three-exits table is the site's single most persuasive
+            element (was buried in the old #homeowners section). It IS
+            the thesis, so the two sections merged into one. */}
         <SnapSection>
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
               <div className="falco-scroll-reveal">
                 <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
-                  Our thesis
+                  The math
                 </div>
               </div>
               <div className="max-w-2xl">
-                <p className="falco-scroll-reveal text-[22px] md:text-[32px] leading-[1.35] md:leading-[1.4] text-white font-light tracking-tight">
-                  A homeowner facing foreclosure is sitting on{" "}
-                  <span className="font-medium">$100K–$250K</span> of equity they're
-                  about to lose. We're built so they don't.
+                <h2 className="falco-scroll-reveal text-[26px] md:text-[40px] leading-[1.1] font-semibold">
+                  Same house. Three ways out.
+                </h2>
+                <p className="falco-scroll-reveal mt-5 text-[16px] md:text-[17px] leading-[1.6] text-white/75">
+                  A homeowner facing foreclosure is often sitting on six figures
+                  of equity. Where it ends up depends on the exit:
                 </p>
-                <p className="falco-scroll-reveal mt-6 text-[16px] md:text-[17px] leading-[1.65] text-white/70">
-                  We don't buy your house. The buyer pays our fee. The equity
-                  goes home with you.
-                </p>
+
+                <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
+                  <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
+                    Example: $500K home, $300K loan balance
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
+                    <div>Your option</div>
+                    <div>You walk away with</div>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
+                    <div className="text-[15px] text-white/85">Do nothing → trustee sale</div>
+                    <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
+                    <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
+                    <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
+                    <div className="text-[15px] text-emerald-100 font-medium">List with us → marketed auction</div>
+                    <div className="text-[15px] text-emerald-300 font-bold tabular-nums">~$130K</div>
+                  </div>
+                </div>
+
                 <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
                   <Link
                     href="/manifesto"
@@ -242,141 +253,10 @@ export default function V2Content() {
           </div>
         </SnapSection>
 
-        {/* === FOR HOMEOWNERS === */}
-        <SnapSection id="homeowners" videoSrc="/video/section-homeowners.mp4">
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
-              <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
-                  For homeowners
-                </div>
-              </div>
-              <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Facing foreclosure in Tennessee?
-                </h2>
-
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
-                  The cash buyers calling will pay you a fraction of what your home
-                  actually clears at a real auction. Here's the math, three ways:
-                </p>
-
-                <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
-                  <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
-                    Example: $500K home, $300K loan balance
-                  </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
-                    <div>Your option</div>
-                    <div>You walk away with</div>
-                  </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Do nothing → trustee sale</div>
-                    <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
-                  </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
-                    <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
-                  </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
-                    <div className="text-[15px] text-emerald-100 font-medium">List with us → marketed auction</div>
-                    <div className="text-[15px] text-emerald-300 font-bold tabular-nums">~$130K</div>
-                  </div>
-                </div>
-
-                <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
-                  <Link
-                    href="/homeowners"
-                    className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
-                  >
-                    Get a free 15-min call
-                  </Link>
-                  <div className="text-[13px] text-white/55 self-center">
-                    No pitch. Real math.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === FOR BUYERS === */}
-        <SnapSection id="buyers" videoSrc="/video/section-buyers.mp4">
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
-              <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
-                  For buyers
-                </div>
-              </div>
-              <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  First look at TN distressed inventory.
-                </h2>
-
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
-                  Equity-rich properties, sourced at the courthouse-filing layer, listed
-                  through our auction pipeline. Clean title, 10% buyer's premium. Bid and close.
-                </p>
-
-                <ul className="falco-scroll-reveal mt-6 space-y-2.5 text-[15px] text-white/85">
-                  <BuyerBullet text="First-look on TN inventory" />
-                  <BuyerBullet text="Equity-positive only" />
-                  <BuyerBullet text="Clean title, 10% buyer's premium" />
-                </ul>
-
-                <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
-                  <Link
-                    href="/buyers"
-                    className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
-                  >
-                    Get notified →
-                  </Link>
-                  <div className="text-[13px] text-white/55 self-center">
-                    90 seconds. No spam.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === FOR AUCTION PARTNERS === */}
-        <SnapSection id="auction-partners" videoSrc="/video/section-partners.mp4">
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="grid md:grid-cols-[220px_1fr] gap-8 md:gap-16">
-              <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
-                  For auction partners
-                </div>
-              </div>
-              <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Run a TN auction company?
-                </h2>
-
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.65] text-white/85">
-                  Steady pre-qualified inventory you don't have to source. You bring the
-                  licensing and execution. We bring the pipeline.
-                </p>
-
-                <ul className="falco-scroll-reveal mt-6 space-y-2.5 text-[15px] text-white/85">
-                  <BuyerBullet text="Pre-qualified inventory, delivered as it surfaces" />
-                  <BuyerBullet text="Sellers educated before handoff" />
-                  <BuyerBullet text="No sourcing cost" />
-                </ul>
-
-                <div className="falco-scroll-reveal mt-7 flex flex-wrap gap-3">
-                  <Link
-                    href="/partners"
-                    className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
-                  >
-                    Open a conversation
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </SnapSection>
+        {/* Audience-specific pitches now live on their own pages
+            (/homeowners, /buyers, /partners) — the hero routes there.
+            Stacking all three here made every visitor scroll through
+            two other audiences' content. */}
 
         {/* === WHY DIFFERENT === */}
         <SnapSection>
@@ -393,7 +273,7 @@ export default function V2Content() {
             <div className="grid gap-6 md:grid-cols-3">
               <Diff
                 label="vs. cash buyers"
-                body="Cash buyers profit on the gap between what they pay you and what the home actually clears. We don't buy your house — the open market sets the price."
+                body="Cash buyers profit on the gap between what they pay you and what the home actually clears. We don't buy your house. The open market sets the price."
               />
               <Diff
                 label="vs. traditional MLS"
@@ -405,67 +285,13 @@ export default function V2Content() {
               />
             </div>
 
-            <div className="falco-scroll-reveal mt-12 text-[14px] text-white/55">
-              Want the math behind this?{" "}
-              <Link
-                href="/manifesto"
-                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors font-medium"
-              >
-                Read the long version →
-              </Link>
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === ABOUT === */}
-        <SnapSection>
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
-              <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
-                  About FALCO
-                </div>
-              </div>
-              <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                  Built in Tennessee. For Tennessee.
-                </h2>
-
-                <p className="falco-scroll-reveal mt-6 text-[17px] leading-[1.7] text-white/85">
-                  Tennessee sees roughly{" "}
-                  <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
-                  per week. We read every one and call the homeowner — usually
-                  before any cash buyer does.
-                </p>
-
-                <p className="falco-scroll-reveal mt-5 text-[17px] leading-[1.65] text-white/70">
-                  We don't buy houses. We don't broker mortgages. We don't run a webinar.
-                  We connect distressed sellers to a marketed auction and get paid only
-                  when the buyer pays the premium.
-                </p>
-
-                <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">
-                  Sources for our claims live on the{" "}
-                  <Link
-                    href="/manifesto#sources"
-                    className="text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline"
-                  >
-                    manifesto page
-                  </Link>
-                  .
-                </p>
-
-                <p className="falco-scroll-reveal mt-5 text-[14px] leading-[1.7] text-white/55">
-                  Questions, press, or partnership outside the three core forms?{" "}
-                  <Link
-                    href="/inquiry"
-                    className="text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline"
-                  >
-                    Drop us a note
-                  </Link>
-                  .
-                </p>
-              </div>
+            {/* The one load-bearing fact from the old About section —
+                the rest of it now lives on /manifesto and the FAQ. */}
+            <div className="falco-scroll-reveal mt-12 max-w-2xl text-[15px] leading-[1.7] text-white/70">
+              Tennessee sees roughly{" "}
+              <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
+              per week. We read every one and call the homeowner, usually before
+              any cash buyer does.
             </div>
           </div>
         </SnapSection>
@@ -492,7 +318,7 @@ export default function V2Content() {
                   Still have a question?
                 </div>
                 <div className="text-[13px] text-white/60 mt-1">
-                  Press, partnership, or anything else — drop us a note and we'll come
+                  Press, partnership, or anything else. Drop us a note and we'll come
                   back within one business day.
                 </div>
               </div>
@@ -626,11 +452,44 @@ function Diff({ label, body }: { label: string; body: string }) {
   )
 }
 
-function BuyerBullet({ text }: { text: string }) {
+/**
+ * Hero router card — one per audience. The whole card is the CTA (single
+ * link target per lane, no separate button), using the top-lit surface
+ * treatment so the three lanes read as physical doors, not flat panels.
+ */
+function LaneCard({
+  href,
+  label,
+  headline,
+  body,
+  cta,
+}: {
+  href: string
+  label: string
+  headline: string
+  body: string
+  cta: string
+}) {
   return (
-    <li className="flex items-start gap-3">
-      <span className="mt-2 inline-block h-1 w-1 rounded-full bg-emerald-400 shrink-0" />
-      <span>{text}</span>
-    </li>
+    <Link
+      href={href}
+      className="falco-surface group relative block rounded-xl border border-white/[0.08] p-5 md:p-6 transition-all duration-200 hover:border-emerald-400/35 hover:-translate-y-0.5"
+    >
+      <div className="text-[11px] uppercase tracking-[0.2em] text-emerald-300/85">
+        {label}
+      </div>
+      <div className="mt-2.5 text-[17px] md:text-[18px] font-semibold leading-snug text-white">
+        {headline}
+      </div>
+      <p className="mt-2 text-[13px] md:text-[14px] leading-[1.55] text-white/60">
+        {body}
+      </p>
+      <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-400 group-hover:text-emerald-300 transition-colors">
+        {cta}
+        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
+      </div>
+    </Link>
   )
 }
