@@ -1,16 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Fraunces, Geist_Mono } from "next/font/google";
 import LoadingScreen from "./loading-screen";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body / UI: Inter — clean, professional, the workhorse of serious
+// product sites. Replaces Geist (Vercel's default starter font, which
+// read as a generic template).
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
+// Display / headlines: Fraunces — an editorial "old-style" serif with
+// real character. It gives headings the authority of an established
+// firm or a serious publication, which is exactly the credibility the
+// foreclosure-help positioning needs, while staying premium on dark.
+const fraunces = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+});
+
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -92,7 +107,7 @@ export default function RootLayout({
           media="(min-width: 768px)"
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${inter.variable} ${fraunces.variable} ${geistMono.variable}`}>
         <LoadingScreen />
         {children}
       </body>

@@ -121,7 +121,7 @@ export function GuideNote({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-4">
+    <div className="falco-surface rounded-xl border border-white/[0.08] px-5 py-4">
       {label && (
         <div className="text-[11px] uppercase tracking-[0.16em] text-white/55 font-semibold mb-1.5">
           {label}
