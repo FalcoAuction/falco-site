@@ -19,12 +19,15 @@ export const metadata: Metadata = {
   title: "FALCO — Save the equity. Skip the wholesaler.",
   description:
     "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
+  // Square (512x512) white falcon on the dark brand background. The old
+  // /falco-logo.png favicon was non-square (341x512) AND white-on-
+  // transparent, so Google rejected it on shape and it was invisible on
+  // white — hence no icon in search results. This one is square and
+  // visible on any background.
   icons: {
-    icon: [
-      { url: "/falco-logo.png", type: "image/png" },
-    ],
-    shortcut: "/falco-logo.png",
-    apple: "/falco-logo.png",
+    icon: [{ url: "/favicon-512.png", type: "image/png", sizes: "512x512" }],
+    shortcut: "/favicon-512.png",
+    apple: "/favicon-512.png",
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
