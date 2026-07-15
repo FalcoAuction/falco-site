@@ -186,23 +186,25 @@ export default function V2Content() {
                   of equity. Where it ends up depends on the exit:
                 </p>
 
-                <div className="falco-scroll-reveal mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
-                  <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
+                {/* Rows land one at a time as the section scrolls into view
+                    (existing stagger machinery — normal scroll, no hijack). */}
+                <div className="falco-scroll-stagger mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
+                  <div className="falco-scroll-reveal px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
                     Example: $500K home, $300K loan balance
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
+                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
                     <div>Your option</div>
                     <div>You walk away with</div>
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
+                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
                     <div className="text-[15px] text-white/85">Do nothing → trustee sale</div>
                     <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
+                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
                     <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
                     <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
+                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
                     <div className="text-[15px] text-emerald-100 font-medium">List with us → marketed auction</div>
                     <div className="text-[15px] text-emerald-300 font-bold tabular-nums">~$130K</div>
                   </div>
@@ -210,10 +212,10 @@ export default function V2Content() {
 
                 <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
                   <Link
-                    href="/manifesto"
+                    href="/math"
                     className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors"
                   >
-                    Read the math, county by county →
+                    Walk the math, one number at a time →
                   </Link>
                 </p>
               </div>
