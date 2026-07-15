@@ -70,8 +70,7 @@ export default function SmsConsentPage() {
           <p>
             <strong className="text-white/80">Opt out:</strong> reply STOP to
             any message to stop immediately. Reply HELP for help, or contact{" "}
-            <span className="text-emerald-200">falco@falco.llc</span> /
-            601-213-8868.
+            <span className="text-emerald-200">falco@falco.llc</span>.
           </p>
           <p>
             Consent is not a condition of any purchase or service. See our{" "}

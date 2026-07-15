@@ -56,7 +56,7 @@ export default function TermsPage() {
               auction-routing operation run by Patrick Yuri Armour, a
               Tennessee-licensed auctioneer. Contact:{" "}
               <span className="text-emerald-200">falco@falco.llc</span>,{" "}
-              601-213-8868, falco.llc. By using this site or communicating
+              falco.llc. By using this site or communicating
               with us, you agree to these terms.
             </p>
           </Block>

@@ -258,9 +258,9 @@ export function CountyPage({ d }: { d: CountyData }) {
               Get your numbers →
             </Link>
             <span className="text-[12px] text-white/55">
-              Or call{" "}
-              <a href="tel:6012138868" className="text-emerald-300 hover:text-emerald-200">
-                601-213-8868
+              Or email{" "}
+              <a href="mailto:falco@falco.llc" className="text-emerald-300 hover:text-emerald-200">
+                falco@falco.llc
               </a>
             </span>
           </div>

@@ -32,7 +32,6 @@ const JSON_LD = {
     "@type": "State",
     name: "Tennessee",
   },
-  telephone: "+1-601-213-8868",
   email: "falco@falco.llc",
   founder: {
     "@type": "Person",
