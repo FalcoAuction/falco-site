@@ -349,6 +349,12 @@ export default function V2Content() {
                   <Link href="/guides" className="hover:text-white transition-colors">
                     Guides
                   </Link>
+                  {/* Crawl path: the homepage is the only page Google has
+                      indexed with any weight — the county hub must be
+                      reachable from it, not just from the sitemap. */}
+                  <Link href="/foreclosure" className="hover:text-white transition-colors">
+                    Counties
+                  </Link>
                   <Link href="/inquiry" className="hover:text-white transition-colors">
                     Contact
                   </Link>
