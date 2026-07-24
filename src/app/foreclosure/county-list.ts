@@ -22,4 +22,17 @@ export const COUNTIES: Array<{ slug: string; county: string; seat: string }> = [
   { slug: "sullivan-county", county: "Sullivan", seat: "Blountville" },
   { slug: "bradley-county", county: "Bradley", seat: "Cleveland" },
   { slug: "putnam-county", county: "Putnam", seat: "Cookeville" },
+  // Tranche 3 — next-largest uncovered counties, research-verified July 2026.
+  { slug: "anderson-county", county: "Anderson", seat: "Clinton" },
+  { slug: "greene-county", county: "Greene", seat: "Greeneville" },
+  { slug: "hamblen-county", county: "Hamblen", seat: "Morristown" },
+  { slug: "cumberland-county", county: "Cumberland", seat: "Crossville" },
+  { slug: "tipton-county", county: "Tipton", seat: "Covington" },
+  { slug: "coffee-county", county: "Coffee", seat: "Manchester" },
+  { slug: "hawkins-county", county: "Hawkins", seat: "Rogersville" },
+  { slug: "carter-county", county: "Carter", seat: "Elizabethton" },
+  { slug: "jefferson-county", county: "Jefferson", seat: "Dandridge" },
+  { slug: "loudon-county", county: "Loudon", seat: "Loudon" },
+  { slug: "mcminn-county", county: "McMinn", seat: "Athens" },
+  { slug: "roane-county", county: "Roane", seat: "Kingston" },
 ]
