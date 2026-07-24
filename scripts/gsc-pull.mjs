@@ -95,9 +95,7 @@ if (mode === "sitemaps") {
   process.exit(0)
 }
 
-if (mode === "inspect") {
-  // URL Inspection API lives on a different host than webmasters/v3.
-  const url = process.argv[3]
+async function inspectOne(url) {
   const res = await fetch("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect", {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -105,13 +103,54 @@ if (mode === "inspect") {
   })
   const json = await res.json()
   if (!res.ok) {
-    console.error(`INSPECT_ERROR ${res.status}`, JSON.stringify(json.error?.message ?? json))
-    process.exit(1)
+    return { url, error: json.error?.message ?? JSON.stringify(json) }
   }
   const r = json.inspectionResult?.indexStatusResult
-  console.log(
-    `${url}\tverdict=${r?.verdict}\tstate=${r?.coverageState}\tlastCrawl=${r?.lastCrawlTime ?? "never"}\tcanonical=${r?.googleCanonical ?? "-"}`
+  return {
+    url,
+    verdict: r?.verdict,
+    state: r?.coverageState,
+    lastCrawl: r?.lastCrawlTime ?? "never",
+  }
+}
+
+if (mode === "inspect") {
+  const r = await inspectOne(process.argv[3])
+  if (r.error) {
+    console.error(`INSPECT_ERROR`, r.error)
+    process.exit(1)
+  }
+  console.log(`${r.url}\tverdict=${r.verdict}\tstate=${r.state}\tlastCrawl=${r.lastCrawl}`)
+  process.exit(0)
+}
+
+if (mode === "sweep") {
+  // Inspect every sitemap URL in one process (fast on Windows — avoids
+  // per-URL node spawn overhead). Runs in small concurrent batches.
+  const sm = await api(
+    token,
+    `/sites/${encodeURIComponent("https://falco.llc/")}/sitemaps`
   )
+  const sitemapUrl = sm.sitemap?.[0]?.path
+  const xml = await (await fetch(sitemapUrl)).text()
+  const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+  const results = []
+  const CONC = 5
+  for (let i = 0; i < urls.length; i += CONC) {
+    const batch = urls.slice(i, i + CONC)
+    results.push(...(await Promise.all(batch.map(inspectOne))))
+  }
+  const tally = {}
+  for (const r of results) {
+    const key = r.error ? "ERROR" : r.state
+    tally[key] = (tally[key] ?? 0) + 1
+    const path = r.url.replace("https://falco.llc", "") || "/"
+    console.log(`${r.error ? "ERR " : r.verdict === "PASS" ? "IDX " : "--- "}${path}\t${r.state ?? r.error}`)
+  }
+  console.log("\n# TALLY")
+  for (const [k, v] of Object.entries(tally).sort((a, b) => b[1] - a[1])) {
+    console.log(`${v}\t${k}`)
+  }
   process.exit(0)
 }
 
