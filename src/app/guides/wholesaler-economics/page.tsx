@@ -31,7 +31,7 @@ export default function WholesalerEconomicsGuide() {
         title={
           <>
             How a wholesaler{" "}
-            <span className="text-emerald-400">prices your house</span>.
+            <span className="text-[var(--mocha)]">prices your house</span>.
           </>
         }
         standfirst={
@@ -56,7 +56,7 @@ export default function WholesalerEconomicsGuide() {
           <GuideNote label="Why this matters to you">
             None of this makes wholesalers villains. It is a legal, understood
             business. But it means their offer is engineered around{" "}
-            <strong className="text-white/85">their</strong> margin, not your
+            <strong className="text-[var(--ink)]">their</strong> margin, not your
             equity. The number they give you is the largest discount they think
             you will accept, not the most your home is worth.
           </GuideNote>
@@ -65,13 +65,13 @@ export default function WholesalerEconomicsGuide() {
         <GuideSection id="the-formula" title="The 70% rule, line by line">
           <p>
             The industry-standard formula is called the{" "}
-            <strong className="text-white/90">maximum allowable offer</strong>,
+            <strong className="text-[var(--ink)]">maximum allowable offer</strong>,
             and its ceiling is 70% of a home&apos;s fixed-up value, minus
             repairs.
             <Cite href="https://www.investopedia.com/terms/1/70-percent-rule.asp" n={1} /> Here it
             is on a home worth about $484,000 fixed up:
           </p>
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+          <div className="rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] overflow-hidden">
             {[
               ["After-repair value (what it's worth fixed up)", "$484,000"],
               ["× 70% ceiling", "$338,800"],
@@ -81,15 +81,15 @@ export default function WholesalerEconomicsGuide() {
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-white/[0.05] text-[14px]"
+                className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-[var(--rule)] text-[14px]"
               >
-                <span className="text-white/60">{label}</span>
-                <span className="tabular-nums text-white/70 whitespace-nowrap">{value}</span>
+                <span className="text-[var(--ink-soft)]">{label}</span>
+                <span className="tabular-nums text-[var(--ink-soft)] whitespace-nowrap">{value}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-white/[0.02] text-[15px] font-semibold">
-              <span className="text-white/85">Offer to you</span>
-              <span className="tabular-nums text-white/70 whitespace-nowrap">≈ $263,800</span>
+            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[var(--paper-raised)] text-[15px] font-semibold">
+              <span className="text-[var(--ink)]">Offer to you</span>
+              <span className="tabular-nums text-[var(--ink-soft)] whitespace-nowrap">≈ $263,800</span>
             </div>
           </div>
           <p>
@@ -106,7 +106,7 @@ export default function WholesalerEconomicsGuide() {
             assignment fee is the wholesaler&apos;s cut for making the
             introduction. The profit margin is exactly that. Add them up and
             you are looking at roughly{" "}
-            <strong className="text-white/85">$75,000</strong> that leaves your
+            <strong className="text-[var(--ink)]">$75,000</strong> that leaves your
             side of the table on this one house, on top of the 30% haircut the
             formula started with.
           </p>
@@ -137,9 +137,9 @@ export default function WholesalerEconomicsGuide() {
                 "Agents do not chase distress. Auction firms do not market to homeowners. Lenders certainly do not. The cash buyer is often the only voice in the room.",
               ],
             ].map(([h, b]) => (
-              <div key={h} className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4">
-                <div className="text-[13px] font-semibold text-emerald-300/85">{h}</div>
-                <div className="mt-2 text-[13px] leading-[1.6] text-white/60">{b}</div>
+              <div key={h} className="rounded-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-4">
+                <div className="text-[13px] font-semibold text-[var(--mocha)]/85">{h}</div>
+                <div className="mt-2 text-[13px] leading-[1.6] text-[var(--ink-soft)]">{b}</div>
               </div>
             ))}
           </div>
@@ -151,7 +151,7 @@ export default function WholesalerEconomicsGuide() {
             competing buyers on a timeline that still beats the sale. That is
             what a marketed auction does, and it is what FALCO helps Tennessee
             homeowners set up, at no cost to you. See the{" "}
-            <a href="/guides/cash-offer-vs-auction" className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4">
+            <a href="/guides/cash-offer-vs-auction" className="text-[var(--mocha)] hover:text-[var(--mocha-deep)] underline underline-offset-4">
               full side-by-side math
             </a>
             .

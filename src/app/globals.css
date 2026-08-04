@@ -6,6 +6,22 @@
   --falco-accent-rgb: 16 185 129;
   --falco-accent-strong-rgb: 52 211 153;
   --falco-accent-ink: #03110b;
+
+  /* ── La Masion editorial palette ──────────────────────────────
+     Warm ivory ground, near-black ink, an earthy mocha accent that
+     replaces emerald on the content (SEO) pages. Exposed as tokens so
+     templates reference the system rather than hardcoding hexes. */
+  --paper: #f8f7f4;        /* page ground */
+  --paper-raised: #ffffff; /* cards */
+  --ink: #111111;          /* headings / strong text */
+  --ink-soft: #444444;     /* body text */
+  --ink-faint: #6f6d66;    /* captions / labels */
+  --rule: #e6e3dc;         /* hairlines */
+  --rule-strong: #d6d2c8;
+  --mocha: #6b4f3a;        /* the accent */
+  --mocha-deep: #4e3a2a;   /* hover / darker */
+  --mocha-wash: rgba(107, 79, 58, 0.07);
+  --oxblood: #8b3220;      /* semantic: equity-erasure moment */
 }
 
 @theme inline {
@@ -26,20 +42,20 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont,
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Display serif on all headings, site-wide. Fraunces gives headlines
-   the editorial authority of an established firm. Per-element tracking
-   classes still apply on top; the serif reads best a touch looser than
-   the old Geist tracking, so we relax letter-spacing slightly here. */
-h1, h2, h3 {
+/* Display serif on the large headings only. Cormorant Garamond is a
+   high-contrast old-style serif: gorgeous at display sizes, too delicate
+   for small text, so h3 stays on the sans (set per-component). */
+h1, h2 {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 
 /* ================================================================

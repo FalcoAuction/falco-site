@@ -31,7 +31,7 @@ export default function CashOfferVsAuctionGuide() {
         title={
           <>
             Cash offer vs. marketed auction:{" "}
-            <span className="text-emerald-400">the math they skip</span>.
+            <span className="text-[var(--mocha)]">the math they skip</span>.
           </>
         }
         standfirst={
@@ -64,7 +64,7 @@ export default function CashOfferVsAuctionGuide() {
           <p>
             Cash buyers do not pull numbers out of the air. They price
             distressed property with a published formula, the{" "}
-            <strong className="text-white/90">70% rule</strong>.
+            <strong className="text-[var(--ink)]">70% rule</strong>.
             <Cite href="https://www.investopedia.com/terms/1/70-percent-rule.asp" n={1} /> Take
             a home worth about $484,000 fixed up:
           </p>
@@ -81,11 +81,11 @@ export default function CashOfferVsAuctionGuide() {
           />
           <p>
             Now subtract a $290,000 loan payoff. On paper the homeowner is{" "}
-            <strong className="text-white/85">underwater by about $26,000</strong>,
+            <strong className="text-[var(--ink)]">underwater by about $26,000</strong>,
             so the buyer either asks you to bring cash to closing or walks. In
             practice, many sellers accept a slightly higher offer, around
             $314,000, that nets roughly{" "}
-            <strong className="text-white/85">$24,000</strong> after the loan is
+            <strong className="text-[var(--ink)]">$24,000</strong> after the loan is
             paid.
           </p>
           <GuideNote label="What you are really paying for">
@@ -113,7 +113,7 @@ export default function CashOfferVsAuctionGuide() {
             covers the auction firm. You do not pay it and you do not see it.
             No listing fee, no commission from your side.
           </p>
-          <p className="text-white/55 text-[14px]">
+          <p className="text-[var(--ink-faint)] text-[14px]">
             A note on the range so it stays honest: courthouse-step foreclosure
             auctions, which are cash-only distress sales with no marketing,
             historically clear around 59% of a home&apos;s fixed-up value.
@@ -126,35 +126,35 @@ export default function CashOfferVsAuctionGuide() {
         </GuideSection>
 
         <GuideSection id="side-by-side" title="Side by side, same house, same deadline">
-          <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
+          <div className="overflow-x-auto rounded-xl border border-[var(--rule-strong)]">
             <table className="w-full text-[13px] md:text-[14px]">
               <thead>
-                <tr className="border-b border-white/[0.08] text-white/50">
+                <tr className="border-b border-[var(--rule-strong)] text-[var(--ink-faint)]">
                   <th className="text-left font-medium py-3 px-4">Path</th>
                   <th className="text-right font-medium py-3 px-4">You net (after $290k loan)</th>
                   <th className="text-right font-medium py-3 px-4">Speed</th>
                 </tr>
               </thead>
-              <tbody className="text-white/75">
-                <tr className="border-b border-white/[0.05]">
+              <tbody className="text-[var(--ink-soft)]">
+                <tr className="border-b border-[var(--rule)]">
                   <td className="py-3 px-4">Do nothing, trustee sale runs</td>
-                  <td className="py-3 px-4 text-right text-red-300/70 tabular-nums">$0</td>
-                  <td className="py-3 px-4 text-right text-white/50">n/a</td>
+                  <td className="py-3 px-4 text-right text-[var(--oxblood)]/70 tabular-nums">$0</td>
+                  <td className="py-3 px-4 text-right text-[var(--ink-faint)]">n/a</td>
                 </tr>
-                <tr className="border-b border-white/[0.05]">
+                <tr className="border-b border-[var(--rule)]">
                   <td className="py-3 px-4">Cash offer</td>
-                  <td className="py-3 px-4 text-right text-white/60 tabular-nums">≈ $24,000</td>
-                  <td className="py-3 px-4 text-right text-white/50">~7 days</td>
+                  <td className="py-3 px-4 text-right text-[var(--ink-soft)] tabular-nums">≈ $24,000</td>
+                  <td className="py-3 px-4 text-right text-[var(--ink-faint)]">~7 days</td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4">Marketed auction</td>
-                  <td className="py-3 px-4 text-right text-emerald-300 font-semibold tabular-nums">≈ $95k – $130k</td>
-                  <td className="py-3 px-4 text-right text-white/50">30 – 45 days</td>
+                  <td className="py-3 px-4 text-right text-[var(--mocha)] font-semibold tabular-nums">≈ $95k – $130k</td>
+                  <td className="py-3 px-4 text-right text-[var(--ink-faint)]">30 – 45 days</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p className="text-white/45 text-[12px] leading-[1.6]">
+          <p className="text-[var(--ink-faint)] text-[12px] leading-[1.6]">
             Illustration using round numbers on a $484k-value home with a $290k
             loan. Your figures depend on your home&apos;s value, your balance,
             condition, and buyer turnout. Auction outcomes are not guaranteed.
@@ -194,20 +194,20 @@ function MathRows({
   total: [string, string]
   tone: "win" | "meh"
 }) {
-  const totalColor = tone === "win" ? "text-emerald-300" : "text-white/70"
+  const totalColor = tone === "win" ? "text-[var(--mocha)]" : "text-[var(--ink-soft)]"
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+    <div className="rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] overflow-hidden">
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-white/[0.05] text-[14px]"
+          className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-[var(--rule)] text-[14px]"
         >
-          <span className="text-white/60">{label}</span>
-          <span className="tabular-nums text-white/70 whitespace-nowrap">{value}</span>
+          <span className="text-[var(--ink-soft)]">{label}</span>
+          <span className="tabular-nums text-[var(--ink-soft)] whitespace-nowrap">{value}</span>
         </div>
       ))}
-      <div className="flex items-center justify-between gap-4 px-4 py-3 bg-white/[0.02] text-[15px] font-semibold">
-        <span className="text-white/85">{total[0]}</span>
+      <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[var(--paper-raised)] text-[15px] font-semibold">
+        <span className="text-[var(--ink)]">{total[0]}</span>
         <span className={`tabular-nums whitespace-nowrap ${totalColor}`}>{total[1]}</span>
       </div>
     </div>

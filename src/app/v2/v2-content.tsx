@@ -60,7 +60,7 @@ export default function V2Content() {
   useBodyScrollLock()
 
   return (
-    <div className="md:h-screen md:flex md:flex-col bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
+    <div className="md:h-screen md:flex md:flex-col bg-[#060606] text-white selection:bg-[#cbb08c]/20 selection:text-white">
       {/* === HEADER ===
           Mobile: sticky top of viewport so it stays as user scrolls naturally.
           Desktop: shrink-0 inside the fixed-viewport flex column. */}
@@ -68,7 +68,7 @@ export default function V2Content() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-10 md:py-5">
           <Link
             href="/"
-            className="text-[14px] md:text-[16px] font-semibold tracking-[0.28em] md:tracking-[0.32em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[14px] md:text-[16px] font-semibold tracking-[0.28em] md:tracking-[0.32em] text-white hover:text-[#cbb08c] transition-colors"
           >
             FALCO
           </Link>
@@ -90,7 +90,7 @@ export default function V2Content() {
                 Email until the inbound phone line is live. */}
             <a
               href="mailto:falco@falco.llc"
-              className="rounded-lg border border-white/[0.12] bg-white/[0.03] px-4 py-2 text-[13px] font-medium text-white/85 hover:border-emerald-400/40 hover:text-white transition-colors whitespace-nowrap"
+              className="rounded-lg border border-white/[0.12] bg-white/[0.03] px-4 py-2 text-[13px] font-medium text-white/85 hover:border-[#cbb08c]/40 hover:text-white transition-colors whitespace-nowrap"
             >
               falco@falco.llc
             </a>
@@ -117,7 +117,7 @@ export default function V2Content() {
 
           <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
           <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_55%)]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(203,176,140,0.06),transparent_55%)]" />
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
 
           {/* Particle-constellation animation removed — it read as a
@@ -131,7 +131,7 @@ export default function V2Content() {
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <h1 className="falco-hero-reveal max-w-3xl text-[40px] md:text-[72px] leading-[1.02] md:leading-[0.98] font-semibold text-white">
               <span className="block">Tennessee foreclosure?</span>
-              <span className="block italic text-emerald-300">Keep your equity.</span>
+              <span className="block italic text-[#cbb08c]">Keep your equity.</span>
             </h1>
 
             <div className="falco-hero-reveal mt-9 md:mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
@@ -173,7 +173,7 @@ export default function V2Content() {
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
               <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85">
+                <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85">
                   The math
                 </div>
               </div>
@@ -204,16 +204,16 @@ export default function V2Content() {
                     <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
                     <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
                   </div>
-                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-emerald-400/[0.08]">
-                    <div className="text-[15px] text-emerald-100 font-medium">List with us → marketed auction</div>
-                    <div className="text-[15px] text-emerald-300 font-bold tabular-nums">~$130K</div>
+                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-[#cbb08c]/[0.08]">
+                    <div className="text-[15px] text-[#e8dcc9] font-medium">List with us → marketed auction</div>
+                    <div className="text-[15px] text-[#cbb08c] font-bold tabular-nums">~$130K</div>
                   </div>
                 </div>
 
                 <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
                   <Link
                     href="/math"
-                    className="text-emerald-400 hover:text-emerald-300 underline underline-offset-[6px] decoration-emerald-400/40 hover:decoration-emerald-300 transition-colors"
+                    className="text-[#cbb08c] hover:text-[#cbb08c] underline underline-offset-[6px] decoration-[#cbb08c]/40 hover:decoration-[#cbb08c] transition-colors"
                   >
                     Walk the math, one number at a time →
                   </Link>
@@ -227,7 +227,7 @@ export default function V2Content() {
         <SnapSection id="how">
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="falco-scroll-reveal mb-14 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
+              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
                 How it works
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
@@ -264,7 +264,7 @@ export default function V2Content() {
         <SnapSection>
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="falco-scroll-reveal mb-14 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
+              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
                 What makes us different
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
@@ -291,7 +291,7 @@ export default function V2Content() {
                 the rest of it now lives on /manifesto and the FAQ. */}
             <div className="falco-scroll-reveal mt-12 max-w-2xl text-[15px] leading-[1.7] text-white/70">
               Tennessee sees roughly{" "}
-              <span className="text-emerald-300 font-medium">100 trustee sale filings</span>{" "}
+              <span className="text-[#cbb08c] font-medium">100 trustee sale filings</span>{" "}
               per week. We read every one and call the homeowner, usually before
               any cash buyer does.
             </div>
@@ -302,7 +302,7 @@ export default function V2Content() {
         <SnapSection videoSrc="/video/section-faq.mp4" noSnap>
           <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
             <div className="falco-scroll-reveal mb-10 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-emerald-300/85 mb-4">
+              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
                 Common questions
               </div>
               <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
@@ -314,7 +314,7 @@ export default function V2Content() {
             </div>
 
             {/* Closing CTA — catches anyone still scrolling past the FAQ */}
-            <div className="falco-scroll-reveal mt-10 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.04] p-6 md:p-7 flex flex-wrap items-center justify-between gap-5">
+            <div className="falco-scroll-reveal mt-10 rounded-lg border border-[#cbb08c]/25 bg-[#cbb08c]/[0.04] p-6 md:p-7 flex flex-wrap items-center justify-between gap-5">
               <div>
                 <div className="text-[15px] md:text-[16px] font-medium text-white">
                   Still have a question?
@@ -326,7 +326,7 @@ export default function V2Content() {
               </div>
               <Link
                 href="/inquiry"
-                className="inline-flex items-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
+                className="inline-flex items-center rounded-md bg-[#cbb08c] hover:bg-[#d8c3a5] text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
               >
                 Get in touch →
               </Link>
@@ -440,7 +440,7 @@ function SnapSection({
 function Step({ num, title, body }: { num: string; title: string; body: string }) {
   return (
     <div className="falco-scroll-reveal">
-      <div className="text-[12px] text-emerald-400/90 font-semibold tracking-[0.18em] tabular-nums">
+      <div className="text-[12px] text-[#cbb08c]/90 font-semibold tracking-[0.18em] tabular-nums">
         {num}
       </div>
       <div className="mt-3 text-[20px] font-semibold text-white">{title}</div>
@@ -481,9 +481,9 @@ function LaneCard({
   return (
     <Link
       href={href}
-      className="falco-surface group relative block rounded-xl border border-white/[0.08] p-5 md:p-6 transition-all duration-200 hover:border-emerald-400/35 hover:-translate-y-0.5"
+      className="falco-surface group relative block rounded-xl border border-white/[0.08] p-5 md:p-6 transition-all duration-200 hover:border-[#cbb08c]/35 hover:-translate-y-0.5"
     >
-      <div className="text-[11px] uppercase tracking-[0.2em] text-emerald-300/85">
+      <div className="text-[11px] uppercase tracking-[0.2em] text-[#cbb08c]/85">
         {label}
       </div>
       <div className="mt-2.5 text-[17px] md:text-[18px] font-semibold leading-snug text-white">
@@ -492,7 +492,7 @@ function LaneCard({
       <p className="mt-2 text-[13px] md:text-[14px] leading-[1.55] text-white/60">
         {body}
       </p>
-      <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-400 group-hover:text-emerald-300 transition-colors">
+      <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#cbb08c] group-hover:text-[#cbb08c] transition-colors">
         {cta}
         <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
           →

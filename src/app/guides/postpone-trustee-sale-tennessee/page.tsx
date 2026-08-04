@@ -31,7 +31,7 @@ export default function PostponeTrusteeSaleGuide() {
         title={
           <>
             Can you{" "}
-            <span className="text-emerald-400">postpone a trustee sale</span> in
+            <span className="text-[var(--mocha)]">postpone a trustee sale</span> in
             Tennessee?
           </>
         }
@@ -49,7 +49,7 @@ export default function PostponeTrusteeSaleGuide() {
           <p>
             A trustee sale in Tennessee is run by the trustee named in your deed
             of trust, on behalf of your lender. That means{" "}
-            <strong className="text-white/90">the lender ultimately controls
+            <strong className="text-[var(--ink)]">the lender ultimately controls
             whether the sale is postponed</strong>. There is no form you file at
             the courthouse to push the date yourself. What you can do is give the
             lender, or the law, a reason to move it.
@@ -64,7 +64,7 @@ export default function PostponeTrusteeSaleGuide() {
         <GuideSection id="reinstate" title="Lever 1: Reinstate (pay the past-due amount)">
           <p>
             Most Tennessee deeds of trust give you a contractual right to{" "}
-            <strong className="text-white/85">reinstate</strong> the loan, that
+            <strong className="text-[var(--ink)]">reinstate</strong> the loan, that
             is, pay the arrears plus fees and stop the sale, any time before it
             happens. If you can raise the back-due amount, this is the cleanest
             stop: the loan goes back to current and the sale is called off. The
@@ -77,7 +77,7 @@ export default function PostponeTrusteeSaleGuide() {
           <p>
             Lenders would generally rather be paid in full than take a property
             back at auction. If there is a{" "}
-            <strong className="text-white/85">genuine, active sale of the home
+            <strong className="text-[var(--ink)]">genuine, active sale of the home
             already underway</strong>, a signed listing or a scheduled marketed
             auction that would pay off the loan, that is a concrete reason to ask
             for a postponement.
@@ -96,7 +96,7 @@ export default function PostponeTrusteeSaleGuide() {
         <GuideSection id="bankruptcy" title="Lever 3: Bankruptcy's automatic stay">
           <p>
             Filing bankruptcy triggers an{" "}
-            <strong className="text-white/85">automatic stay</strong> that halts
+            <strong className="text-[var(--ink)]">automatic stay</strong> that halts
             the trustee sale immediately, even the morning of the sale. Chapter
             13 in particular lets many homeowners cure their arrears over time
             and keep the home. It is the one tool that reliably stops a sale in
@@ -123,7 +123,7 @@ export default function PostponeTrusteeSaleGuide() {
             Postponements of more than 30 days generally require the trustee to
             mail notice of the new date at least 10 days beforehand.
           </p>
-          <p className="text-white/55 text-[14px]">
+          <p className="text-[var(--ink-faint)] text-[14px]">
             Practical point: a postponement buys time, it does not erase the
             debt. Unless you use that time to reinstate, sell, or restructure,
             the sale simply happens on the new date. Time is only worth
@@ -140,7 +140,7 @@ export default function PostponeTrusteeSaleGuide() {
             a marketed sale that beats the deadline is usually worth far more
             than the delay itself.
           </GuideKey>
-          <p className="text-white/55 text-[14px]">
+          <p className="text-[var(--ink-faint)] text-[14px]">
             Sources: Public Chapter 515 (2025), amending Tenn. Code Ann. Title
             35 (foreclosure notice and postponement rules); reinstatement and
             trustee-sale mechanics are governed by your deed of trust and Tenn.

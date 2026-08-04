@@ -30,7 +30,7 @@ export default function ShortSaleVsAuctionGuide() {
         title={
           <>
             Short sale, or{" "}
-            <span className="text-emerald-400">sell before the sale</span>?
+            <span className="text-[var(--mocha)]">sell before the sale</span>?
           </>
         }
         standfirst={
@@ -46,8 +46,8 @@ export default function ShortSaleVsAuctionGuide() {
         <GuideSection title="The one question that decides everything">
           <p>
             Before anything else, answer this: is your home worth{" "}
-            <strong className="text-white/90">more</strong> than you owe, or{" "}
-            <strong className="text-white/90">less</strong>? That single fact
+            <strong className="text-[var(--ink)]">more</strong> than you owe, or{" "}
+            <strong className="text-[var(--ink)]">less</strong>? That single fact
             splits the road.
           </p>
           <GuideKey>
@@ -61,7 +61,7 @@ export default function ShortSaleVsAuctionGuide() {
         <GuideSection id="what-is-short-sale" title="What a short sale actually is">
           <p>
             A short sale is when you sell the home for{" "}
-            <strong className="text-white/85">less than you owe</strong> and
+            <strong className="text-[var(--ink)]">less than you owe</strong> and
             the lender agrees to accept that lower amount and release the
             mortgage. It is a tool for people who are underwater. The lender has
             to approve it, which takes time and paperwork, and there can be tax
@@ -70,7 +70,7 @@ export default function ShortSaleVsAuctionGuide() {
           <GuideNote label="Who should handle a short sale">
             Because a short sale requires negotiating with your lender, it is
             best run through a{" "}
-            <strong className="text-white/85">licensed Tennessee real estate
+            <strong className="text-[var(--ink)]">licensed Tennessee real estate
             broker</strong> experienced with lender approvals, and it is worth
             a conversation with a tax advisor about forgiven-debt consequences.
             This is not a do-it-yourself situation, and it is not something to
@@ -84,7 +84,7 @@ export default function ShortSaleVsAuctionGuide() {
             doing a normal sale, just on a faster clock than a leisurely retail
             listing allows, because the trustee sale date is coming. The goal
             is to sell the home for close to full value, pay off the loan, and{" "}
-            <strong className="text-white/85">walk away with the difference</strong>
+            <strong className="text-[var(--ink)]">walk away with the difference</strong>
             . A marketed auction is built for exactly this: real buyer
             competition, a compressed 30-to-45-day timeline, and your equity
             preserved.
@@ -92,38 +92,38 @@ export default function ShortSaleVsAuctionGuide() {
         </GuideSection>
 
         <GuideSection id="compare" title="How they compare">
-          <div className="overflow-x-auto rounded-xl border border-white/[0.08]">
+          <div className="overflow-x-auto rounded-xl border border-[var(--rule-strong)]">
             <table className="w-full text-[13px] md:text-[14px]">
               <thead>
-                <tr className="border-b border-white/[0.08] text-white/50">
+                <tr className="border-b border-[var(--rule-strong)] text-[var(--ink-faint)]">
                   <th className="text-left font-medium py-3 px-4"></th>
                   <th className="text-left font-medium py-3 px-4">Short sale</th>
                   <th className="text-left font-medium py-3 px-4">Sell before the sale (auction)</th>
                 </tr>
               </thead>
-              <tbody className="text-white/70">
-                <tr className="border-b border-white/[0.05]">
-                  <td className="py-3 px-4 text-white/50">For whom</td>
+              <tbody className="text-[var(--ink-soft)]">
+                <tr className="border-b border-[var(--rule)]">
+                  <td className="py-3 px-4 text-[var(--ink-faint)]">For whom</td>
                   <td className="py-3 px-4">Owe more than it&apos;s worth</td>
-                  <td className="py-3 px-4 text-emerald-200/90">Have equity to protect</td>
+                  <td className="py-3 px-4 text-[var(--mocha-deep)]/90">Have equity to protect</td>
                 </tr>
-                <tr className="border-b border-white/[0.05]">
-                  <td className="py-3 px-4 text-white/50">Lender approval</td>
+                <tr className="border-b border-[var(--rule)]">
+                  <td className="py-3 px-4 text-[var(--ink-faint)]">Lender approval</td>
                   <td className="py-3 px-4">Required</td>
                   <td className="py-3 px-4">Not required (loan is paid in full)</td>
                 </tr>
-                <tr className="border-b border-white/[0.05]">
-                  <td className="py-3 px-4 text-white/50">What you walk with</td>
+                <tr className="border-b border-[var(--rule)]">
+                  <td className="py-3 px-4 text-[var(--ink-faint)]">What you walk with</td>
                   <td className="py-3 px-4">Usually nothing; goal is to avoid the shortfall</td>
-                  <td className="py-3 px-4 text-emerald-200/90">Your equity, after the loan and costs</td>
+                  <td className="py-3 px-4 text-[var(--mocha-deep)]/90">Your equity, after the loan and costs</td>
                 </tr>
-                <tr className="border-b border-white/[0.05]">
-                  <td className="py-3 px-4 text-white/50">Timeline</td>
+                <tr className="border-b border-[var(--rule)]">
+                  <td className="py-3 px-4 text-[var(--ink-faint)]">Timeline</td>
                   <td className="py-3 px-4">Slower; depends on lender</td>
                   <td className="py-3 px-4">30 – 45 days typical</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 text-white/50">Run it through</td>
+                  <td className="py-3 px-4 text-[var(--ink-faint)]">Run it through</td>
                   <td className="py-3 px-4">Licensed real estate broker</td>
                   <td className="py-3 px-4">Licensed Tennessee auction firm</td>
                 </tr>
