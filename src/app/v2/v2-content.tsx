@@ -128,26 +128,24 @@ function SiteHeader() {
 /* ── Hero: cinematic dark video, giant serif headline, two actions ── */
 function Hero() {
   return (
-    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#17110a]">
-      {/* The drone footage is monochrome at the source, so we warm it with a
-          mocha wash (multiply) instead of leaving it flat gray, and keep the
-          overlays light + warm so the footage actually reads. */}
-      {/* Footage is monochrome at the source, so it gets a warm sepia
-          treatment plus a very slow ambient drift so the frame is alive. */}
-      <div className="hero-media absolute inset-0 -z-30 [filter:sepia(0.6)_saturate(1.6)_contrast(1.03)_brightness(1.05)]">
+    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#0e1109]">
+      {/* Full-colour stitched drone reel (five Tennessee neighbourhood
+          scenes, cross-faded). Only a slight lift in saturation and a
+          very slow ambient drift so the frame is never static. */}
+      <div className="hero-media absolute inset-0 -z-30 [filter:saturate(1.12)_contrast(1.04)]">
         <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={1} />
       </div>
-      <div className="hero-veil absolute inset-0 -z-20 bg-gradient-to-b from-[#17110a]/55 via-[#17110a]/20 to-[#120d08]/85" />
-      <div className="hero-veil absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(18,13,8,0.5)_100%)]" />
+      <div className="hero-veil absolute inset-0 -z-20 bg-gradient-to-b from-[#0e1109]/60 via-[#0e1109]/25 to-[#0e1109]/88" />
+      <div className="hero-veil absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_52%,rgba(14,17,9,0.5)_100%)]" />
 
       <div className="mx-auto w-full max-w-6xl px-6 md:px-10 py-24 md:py-28">
         <div className="max-w-3xl">
-          <div className="hero-in hero-in-1 text-[12px] uppercase tracking-[0.28em] text-[#d8c3a5] font-medium">
+          <div className="hero-in hero-in-1 text-[12px] uppercase tracking-[0.28em] text-[#cbd6a8] font-medium">
             Tennessee · Distressed property, handled
           </div>
           <h1 className="hero-in hero-in-2 mt-6 font-[family-name:var(--font-display)] text-[52px] md:text-[92px] leading-[0.98] font-semibold text-white text-balance">
             Foreclosure?{" "}
-            <span className="italic text-[#e6d5bd]">Keep your equity.</span>
+            <span className="italic text-[#dfe8c4]">Keep your equity.</span>
           </h1>
           <p className="hero-in hero-in-3 mt-7 max-w-xl text-[17px] md:text-[19px] leading-[1.55] text-white/80">
             From the first notice to sale day, we help Tennessee homeowners sell
@@ -291,16 +289,15 @@ function Services() {
 
 /* ── Featured counties (mirrors "Featured properties": image-topped cards) ── */
 function FeaturedCounties() {
-  // Drone-footage stills are monochrome at the source, so each card image
-  // gets the same warm sepia treatment as the hero to read as intentional
-  // editorial photography rather than flat gray.
+  // Full-colour aerial stills pulled from the same drone reel as the hero,
+  // so the grid and the hero read as one shoot.
   const counties = [
-    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", img: "/video/hero-poster.jpg" },
-    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", img: "/video/section-homeowners-poster.jpg" },
-    { slug: "knox-county", name: "Knox County", seat: "Knoxville", img: "/video/section-buyers-poster.jpg" },
-    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", img: "/video/section-partners-poster.jpg" },
-    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", img: "/video/section-faq-poster.jpg" },
-    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", img: "/video/hero-poster.jpg" },
+    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", img: "/video/county-2.jpg" },
+    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", img: "/video/county-3.jpg" },
+    { slug: "knox-county", name: "Knox County", seat: "Knoxville", img: "/video/county-4.jpg" },
+    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", img: "/video/county-6.jpg" },
+    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", img: "/video/county-1.jpg" },
+    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", img: "/video/county-5.jpg" },
   ]
   return (
     <section className="border-b border-[var(--rule)]">
@@ -331,9 +328,9 @@ function FeaturedCounties() {
                   alt={`Aerial view over ${c.seat}, ${c.name}, Tennessee`}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-cover group-hover:scale-[1.06] [filter:sepia(0.55)_saturate(1.5)_contrast(1.02)]"
+                  className="h-full w-full object-cover group-hover:scale-[1.06] [filter:saturate(1.08)]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#17110a]/45 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0e1109]/40 via-transparent to-transparent" />
                 <div className="absolute left-4 top-4 rounded-full bg-[var(--paper)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mocha)] backdrop-blur-sm">
                   {c.seat}
                 </div>
@@ -491,7 +488,7 @@ function ClosingCta() {
   return (
     <section className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
       <div className="rounded-2xl bg-[var(--ink)] px-8 py-14 md:px-16 md:py-20 text-center">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-[#c9a98a] font-semibold">
+        <div className="text-[11px] uppercase tracking-[0.22em] text-[#c2b16a] font-semibold">
           Facing a sale date?
         </div>
         <h2 className="mx-auto mt-4 max-w-2xl font-[family-name:var(--font-display)] text-[34px] md:text-[52px] leading-[1.08] font-semibold text-[var(--paper)] text-balance">

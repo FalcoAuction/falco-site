@@ -253,7 +253,7 @@ export function CountyPage({ d }: { d: CountyData }) {
       {/* CTA — deep ink card, mocha button (matches the guide CTA) */}
       <section className="mx-auto max-w-3xl px-6 md:px-10 mt-14">
         <div className="rounded-2xl bg-[var(--ink)] p-8 md:p-11 text-[var(--paper)]">
-          <div className="mb-3 text-[11px] uppercase tracking-[0.22em] text-[#c9a98a] font-semibold">
+          <div className="mb-3 text-[11px] uppercase tracking-[0.22em] text-[#c2b16a] font-semibold">
             {d.county} County homeowners
           </div>
           <h3 className="font-[family-name:var(--font-display)] text-[28px] md:text-[38px] leading-[1.12] font-semibold text-[var(--paper)]">

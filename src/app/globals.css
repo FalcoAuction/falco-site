@@ -7,20 +7,29 @@
   --falco-accent-strong-rgb: 52 211 153;
   --falco-accent-ink: #03110b;
 
-  /* ── La Masion editorial palette ──────────────────────────────
-     Warm ivory ground, near-black ink, an earthy mocha accent that
-     replaces emerald on the content (SEO) pages. Exposed as tokens so
-     templates reference the system rather than hardcoding hexes. */
-  --paper: #f8f7f4;        /* page ground */
+  /* ── Editorial palette, molded to the hero footage ─────────────
+     Sampled the stitched drone reel: it averages warm olive-moss
+     greens (#606c56, #5e614a) and warm taupes. So the ground is a
+     warm ivory and the accent is a deep foliage green pulled from
+     the trees in the footage, with golden-hour light as the warm
+     secondary. Deep green also returns FALCO to its own brand color,
+     matured out of the old neon emerald. */
+  --paper: #f7f6f1;        /* page ground, warm ivory */
   --paper-raised: #ffffff; /* cards */
-  --ink: #111111;          /* headings / strong text */
-  --ink-soft: #444444;     /* body text */
-  --ink-faint: #6f6d66;    /* captions / labels */
-  --rule: #e6e3dc;         /* hairlines */
-  --rule-strong: #d6d2c8;
-  --mocha: #6b4f3a;        /* the accent */
-  --mocha-deep: #4e3a2a;   /* hover / darker */
-  --mocha-wash: rgba(107, 79, 58, 0.07);
+  --ink: #16180f;          /* headings / strong text, warm near-black */
+  --ink-soft: #454a3c;     /* body text, warm olive-gray */
+  --ink-faint: #6e7263;    /* captions / labels */
+  --rule: #e5e3d9;         /* hairlines */
+  --rule-strong: #d3d1c4;
+  --gold: #a8812f;         /* golden-hour light, warm secondary */
+
+  /* The accent. Templates reference --mocha throughout; kept as an
+     alias so the whole system remoulds from these two lines. */
+  --accent: #3e5233;       /* deep foliage green from the footage */
+  --accent-deep: #2c3b24;  /* hover / darker */
+  --mocha: var(--accent);
+  --mocha-deep: var(--accent-deep);
+  --mocha-wash: rgba(62, 82, 51, 0.08);
   --oxblood: #8b3220;      /* semantic: equity-erasure moment */
 }
 
