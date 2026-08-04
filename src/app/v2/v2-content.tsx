@@ -17,7 +17,7 @@ import { HeroVideoBg } from "./section-video-bg"
 // Reveal each .reveal element as it scrolls into view (whole page).
 function useScrollReveal() {
   useEffect(() => {
-    const targets = document.querySelectorAll(".reveal")
+    const targets = document.querySelectorAll(".reveal, .reveal-line")
     if (!targets.length) return
     const io = new IntersectionObserver(
       (entries) => {
@@ -132,36 +132,38 @@ function Hero() {
       {/* The drone footage is monochrome at the source, so we warm it with a
           mocha wash (multiply) instead of leaving it flat gray, and keep the
           overlays light + warm so the footage actually reads. */}
-      <div className="absolute inset-0 -z-30 [filter:sepia(0.6)_saturate(1.6)_contrast(1.03)_brightness(1.05)]">
+      {/* Footage is monochrome at the source, so it gets a warm sepia
+          treatment plus a very slow ambient drift so the frame is alive. */}
+      <div className="hero-media absolute inset-0 -z-30 [filter:sepia(0.6)_saturate(1.6)_contrast(1.03)_brightness(1.05)]">
         <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={1} />
       </div>
-      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#17110a]/55 via-[#17110a]/20 to-[#120d08]/85" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(18,13,8,0.5)_100%)]" />
+      <div className="hero-veil absolute inset-0 -z-20 bg-gradient-to-b from-[#17110a]/55 via-[#17110a]/20 to-[#120d08]/85" />
+      <div className="hero-veil absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(18,13,8,0.5)_100%)]" />
 
       <div className="mx-auto w-full max-w-6xl px-6 md:px-10 py-24 md:py-28">
         <div className="max-w-3xl">
-          <div className="falco-hero-reveal text-[12px] uppercase tracking-[0.28em] text-[#d8c3a5] font-medium">
+          <div className="hero-in hero-in-1 text-[12px] uppercase tracking-[0.28em] text-[#d8c3a5] font-medium">
             Tennessee · Distressed property, handled
           </div>
-          <h1 className="falco-hero-reveal mt-6 font-[family-name:var(--font-display)] text-[52px] md:text-[92px] leading-[0.98] font-semibold text-white text-balance">
+          <h1 className="hero-in hero-in-2 mt-6 font-[family-name:var(--font-display)] text-[52px] md:text-[92px] leading-[0.98] font-semibold text-white text-balance">
             Foreclosure?{" "}
             <span className="italic text-[#e6d5bd]">Keep your equity.</span>
           </h1>
-          <p className="falco-hero-reveal mt-7 max-w-xl text-[17px] md:text-[19px] leading-[1.55] text-white/80">
+          <p className="hero-in hero-in-3 mt-7 max-w-xl text-[17px] md:text-[19px] leading-[1.55] text-white/80">
             From the first notice to sale day, we help Tennessee homeowners sell
             through a licensed marketed auction before the trustee sale, and keep
             the equity that auction would otherwise erase.
           </p>
-          <div className="falco-hero-reveal mt-9 flex flex-wrap items-center gap-4">
+          <div className="hero-in hero-in-4 mt-9 flex flex-wrap items-center gap-4">
             <Link
               href="/homeowners"
-              className="inline-flex items-center gap-2 rounded-md bg-[var(--paper)] px-7 py-3.5 text-[15px] font-semibold text-[var(--ink)] hover:bg-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-md bg-[var(--paper)] px-7 py-3.5 text-[15px] font-semibold text-[var(--ink)] hover:bg-white hover:-translate-y-0.5 transition-all duration-300"
             >
               See your numbers →
             </Link>
             <a
               href="#how"
-              className="inline-flex items-center gap-2 rounded-md border border-white/30 px-7 py-3.5 text-[15px] font-medium text-white hover:border-white/70 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md border border-white/30 px-7 py-3.5 text-[15px] font-medium text-white hover:border-white/70 hover:-translate-y-0.5 transition-all duration-300"
             >
               How it works
             </a>
@@ -181,11 +183,19 @@ function StatBand() {
           We read every trustee sale filing in Tennessee and call the homeowner,
           usually before any cash buyer does.
         </p>
-        <div className="reveal mt-14 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-6 border-t border-[var(--rule)] pt-12">
-          <Stat n={100} suffix="+" label="Trustee filings read every week" />
-          <Stat n={32} label="Tennessee counties covered" />
-          <StatStatic value="$0" label="Cost to the homeowner" />
-          <Stat n={10} suffix="%" label="Buyer's premium, they pay, not you" />
+        <div className="stagger mt-14 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-6 border-t border-[var(--rule)] pt-12">
+          <div className="reveal">
+            <Stat n={100} suffix="+" label="Trustee filings read every week" />
+          </div>
+          <div className="reveal">
+            <Stat n={32} label="Tennessee counties covered" />
+          </div>
+          <div className="reveal">
+            <StatStatic value="$0" label="Cost to the homeowner" />
+          </div>
+          <div className="reveal">
+            <Stat n={10} suffix="%" label="Buyer's premium, they pay, not you" />
+          </div>
         </div>
         <div className="reveal mt-10 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)]">
           Built in Tennessee · Licensed auctioneer · Est. 2026
@@ -252,12 +262,12 @@ function Services() {
     <section id="how" className="scroll-mt-20 border-b border-[var(--rule)]">
       <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
         <SectionHead eyebrow="What we do" title="One team, three ways in." />
-        <div className="mt-12 grid gap-4 md:grid-cols-3 md:gap-5">
+        <div className="stagger mt-12 grid gap-4 md:grid-cols-3 md:gap-5">
           {lanes.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="reveal group flex flex-col rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-7 md:p-8 transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-0.5"
+              className="reveal group flex flex-col rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-7 md:p-8 transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-30px_rgba(17,17,17,0.4)]"
             >
               <div className="text-[11px] uppercase tracking-[0.2em] text-[var(--mocha)] font-semibold">
                 {l.kicker}
@@ -307,12 +317,12 @@ function FeaturedCounties() {
             All 32 counties →
           </Link>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {counties.map((c) => (
             <Link
               key={c.slug + c.img}
               href={`/foreclosure/${c.slug}`}
-              className="reveal group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(17,17,17,0.35)]"
+              className="reveal reveal-img group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-28px_rgba(17,17,17,0.42)]"
             >
               <div className="relative aspect-[16/11] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -321,7 +331,7 @@ function FeaturedCounties() {
                   alt={`Aerial view over ${c.seat}, ${c.name}, Tennessee`}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 [filter:sepia(0.55)_saturate(1.5)_contrast(1.02)]"
+                  className="h-full w-full object-cover group-hover:scale-[1.06] [filter:sepia(0.55)_saturate(1.5)_contrast(1.02)]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#17110a]/45 via-transparent to-transparent" />
                 <div className="absolute left-4 top-4 rounded-full bg-[var(--paper)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mocha)] backdrop-blur-sm">
@@ -375,7 +385,7 @@ function WhyTrust() {
     <section className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
       <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
         <SectionHead eyebrow="Why us" title="Why homeowners work with FALCO." />
-        <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2">
+        <div className="stagger mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2">
           {points.map((p) => (
             <div key={p.n} className="reveal flex gap-6">
               <div className="font-[family-name:var(--font-display)] text-[30px] leading-none font-semibold text-[var(--mocha)] tabular-nums pt-1">
@@ -592,12 +602,12 @@ function SiteFooter() {
 /* ── Shared section header ── */
 function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
-    <div className="reveal max-w-2xl">
-      <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
+    <div className="max-w-2xl">
+      <div className="reveal flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
         {eyebrow}
         <span className="h-px w-12 bg-[var(--rule-strong)]" />
       </div>
-      <h2 className="mt-5 font-[family-name:var(--font-display)] text-[36px] md:text-[54px] leading-[1.04] font-semibold text-[var(--ink)] text-balance">
+      <h2 className="reveal-line mt-5 font-[family-name:var(--font-display)] text-[36px] md:text-[54px] leading-[1.04] font-semibold text-[var(--ink)] text-balance">
         {title}
       </h2>
     </div>
