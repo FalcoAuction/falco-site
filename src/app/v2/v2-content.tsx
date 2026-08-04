@@ -1,503 +1,582 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import FaqSection from "./faq-section"
-import { SectionVideoBg, HeroVideoBg } from "./section-video-bg"
+import { HeroVideoBg } from "./section-video-bg"
 
 /**
- * Reveal each .falco-scroll-reveal child as it enters the viewport.
- * Desktop uses the snap-scroll container as root; mobile uses the actual
- * viewport (root: null) since mobile no longer uses an inner scroller.
+ * Homepage, rebuilt to mirror the La Masion editorial real-estate layout,
+ * made FALCO. Normal scrolling page (no snap), warm ivory ground to match
+ * the content pages, with the cinematic dark video as the one dark moment
+ * in the hero. Section rhythm mirrors the reference:
+ *   hero -> stat band -> services (3 lanes) -> featured counties ->
+ *   why-trust (numbered) -> the math -> FAQ -> CTA -> footer.
  */
-function useScrollReveal(rootRef: React.RefObject<HTMLElement | null>) {
+
+// Reveal each .reveal element as it scrolls into view (whole page).
+function useScrollReveal() {
   useEffect(() => {
-    const isDesktop = window.matchMedia("(min-width: 768px)").matches
-    const root = isDesktop ? rootRef.current : null
-    if (isDesktop && !root) return
-    const targets = (root ?? document).querySelectorAll(".falco-scroll-reveal")
+    const targets = document.querySelectorAll(".reveal")
     if (!targets.length) return
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("falco-visible")
-            observer.unobserve(entry.target)
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible")
+            io.unobserve(e.target)
           }
         }
       },
-      { root, threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
     )
-    for (const target of targets) observer.observe(target)
-    return () => observer.disconnect()
-  }, [rootRef])
-}
-
-/**
- * Lock body scroll for the snap-scroll layout — DESKTOP ONLY.
- * Mobile lets the body scroll naturally (snap-mandatory + iOS momentum
- * scrolling fight each other and the result is janky on touch devices).
- */
-function useBodyScrollLock() {
-  useEffect(() => {
-    if (!window.matchMedia("(min-width: 768px)").matches) return
-    const html = document.documentElement
-    const body = document.body
-    const prevHtml = html.style.overflow
-    const prevBody = body.style.overflow
-    html.style.overflow = "hidden"
-    body.style.overflow = "hidden"
-    return () => {
-      html.style.overflow = prevHtml
-      body.style.overflow = prevBody
-    }
+    for (const t of targets) io.observe(t)
+    return () => io.disconnect()
   }, [])
 }
 
+// Count 0 -> target when the element scrolls into view.
+function useCountUp(target: number, ms = 1100) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setVal(target)
+      return
+    }
+    let raf = 0
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        io.disconnect()
+        const t0 = performance.now()
+        const tick = (t: number) => {
+          const p = Math.min(1, (t - t0) / ms)
+          setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+          if (p < 1) raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+      },
+      { threshold: 0.6 }
+    )
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      cancelAnimationFrame(raf)
+    }
+  }, [target, ms])
+  return { ref, val }
+}
+
 export default function V2Content() {
-  const scrollerRef = useRef<HTMLElement>(null)
-  useScrollReveal(scrollerRef)
-  useBodyScrollLock()
+  useScrollReveal()
 
   return (
-    <div className="md:h-screen md:flex md:flex-col bg-[#060606] text-white selection:bg-[#cbb08c]/20 selection:text-white">
-      {/* === HEADER ===
-          Mobile: sticky top of viewport so it stays as user scrolls naturally.
-          Desktop: shrink-0 inside the fixed-viewport flex column. */}
-      <header className="sticky top-0 md:static md:shrink-0 border-b border-white/[0.06] bg-[#060606]/90 backdrop-blur-xl z-30">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-10 md:py-5">
-          <Link
-            href="/"
-            className="text-[14px] md:text-[16px] font-semibold tracking-[0.28em] md:tracking-[0.32em] text-white hover:text-[#cbb08c] transition-colors"
-          >
-            FALCO
-          </Link>
-          <nav className="flex items-center gap-6 text-[14px] tracking-wide text-white/70">
-            <Link href="/homeowners" className="hover:text-white transition-colors hidden md:inline">
-              Homeowners
-            </Link>
-            <Link href="/buyers" className="hover:text-white transition-colors hidden md:inline">
-              Buyers
-            </Link>
-            <Link href="/partners" className="hover:text-white transition-colors hidden md:inline">
-              Auction Partners
-            </Link>
-            <Link href="/guides" className="hover:text-white transition-colors hidden md:inline">
-              Guides
-            </Link>
-            {/* Direct contact as the header CTA — replaces the animated
-                Request Access dropdown (the hero lanes now do that job).
-                Email until the inbound phone line is live. */}
-            <a
-              href="mailto:falco@falco.llc"
-              className="rounded-lg border border-white/[0.12] bg-white/[0.03] px-4 py-2 text-[13px] font-medium text-white/85 hover:border-[#cbb08c]/40 hover:text-white transition-colors whitespace-nowrap"
-            >
-              falco@falco.llc
-            </a>
-          </nav>
-        </div>
-      </header>
-
-      {/* === MAIN ===
-          Mobile: just a flow container, body scrolls naturally, no snap.
-          Desktop: flex-1 scroll-snap container that owns the viewport. */}
-      <main
-        ref={scrollerRef}
-        className="md:flex-1 md:overflow-y-scroll md:overflow-x-hidden md:snap-y md:snap-proximity md:scroll-smooth"
-      >
-        {/* === HERO ===
-            On mobile we force min-h-[88vh] so the video has room to breathe
-            even though we removed snap fit-to-viewport on small screens. */}
-        <SnapSection mobileMinH="min-h-[88vh]">
-          <HeroVideoBg
-            src="/video/hero-loop.mp4"
-            poster="/video/hero-poster.jpg"
-            opacity={0.62}
-          />
-
-          <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.42)_0%,rgba(6,6,6,0.78)_72%,#060606_100%)]" />
-          <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]" />
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(203,176,140,0.06),transparent_55%)]" />
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.30]" />
-
-          {/* Particle-constellation animation removed — it read as a
-              dated 2020-era startup trope and was the heaviest thing on
-              the hero. The video + layered gradients carry the depth. */}
-
-          {/* The hero is a ROUTER, not a pitch. Three audiences hit this
-              page; each gets one card straight to their page (which holds
-              the full pitch + form). One CTA per lane — no duplicate
-              buttons, no paragraph to read first. */}
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <h1 className="falco-hero-reveal max-w-3xl text-[40px] md:text-[72px] leading-[1.02] md:leading-[0.98] font-semibold text-white">
-              <span className="block">Tennessee foreclosure?</span>
-              <span className="block italic text-[#cbb08c]">Keep your equity.</span>
-            </h1>
-
-            <div className="falco-hero-reveal mt-9 md:mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
-              <LaneCard
-                href="/homeowners"
-                label="Homeowners"
-                headline="Facing a trustee sale?"
-                body="We run a marketed auction before the courthouse date. No cost to you."
-                cta="See your numbers"
-              />
-              <LaneCard
-                href="/buyers"
-                label="Buyers"
-                headline="Want first look at inventory?"
-                body="Equity-positive Tennessee properties. Clean title. Bid and close."
-                cta="Get on the list"
-              />
-              <LaneCard
-                href="/partners"
-                label="Auction partners"
-                headline="Run a TN auction house?"
-                body="Pre-qualified sellers routed to your block. We source, you execute."
-                cta="Partner with us"
-              />
-            </div>
-
-            {/* One thin trust line — replaces the old checkmark chips. */}
-            <div className="falco-hero-reveal mt-7 md:mt-8 text-[12px] md:text-[13px] text-white/50">
-              Licensed Tennessee auctioneer · No cost to homeowners · The buyer pays our fee
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === THE MATH ===
-            The three-exits table is the site's single most persuasive
-            element (was buried in the old #homeowners section). It IS
-            the thesis, so the two sections merged into one. */}
-        <SnapSection>
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="grid md:grid-cols-[200px_1fr] gap-8 md:gap-16">
-              <div className="falco-scroll-reveal">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85">
-                  The math
-                </div>
-              </div>
-              <div className="max-w-2xl">
-                <h2 className="falco-scroll-reveal text-[26px] md:text-[40px] leading-[1.1] font-semibold">
-                  Same house. Three ways out.
-                </h2>
-                <p className="falco-scroll-reveal mt-5 text-[16px] md:text-[17px] leading-[1.6] text-white/75">
-                  A homeowner facing foreclosure is often sitting on six figures
-                  of equity. Where it ends up depends on the exit:
-                </p>
-
-                {/* Rows land one at a time as the section scrolls into view
-                    (existing stagger machinery — normal scroll, no hijack). */}
-                <div className="falco-scroll-stagger mt-7 rounded-lg border border-white/[0.12] overflow-hidden bg-black/40 backdrop-blur-sm">
-                  <div className="falco-scroll-reveal px-5 pt-3 pb-1 text-[11px] uppercase tracking-wider text-white/45">
-                    Example: $500K home, $300K loan balance
-                  </div>
-                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3 bg-white/[0.04] text-[11px] uppercase tracking-wider text-white/60 border-t border-white/[0.06]">
-                    <div>Your option</div>
-                    <div>You walk away with</div>
-                  </div>
-                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Do nothing → trustee sale</div>
-                    <div className="text-[15px] text-red-300 font-semibold tabular-nums">$0</div>
-                  </div>
-                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06]">
-                    <div className="text-[15px] text-white/85">Take a fast-cash offer at 65%</div>
-                    <div className="text-[15px] text-amber-200 font-semibold tabular-nums">~$25K</div>
-                  </div>
-                  <div className="falco-scroll-reveal grid grid-cols-[1fr_auto] gap-4 px-5 py-3.5 border-t border-white/[0.06] bg-[#cbb08c]/[0.08]">
-                    <div className="text-[15px] text-[#e8dcc9] font-medium">List with us → marketed auction</div>
-                    <div className="text-[15px] text-[#cbb08c] font-bold tabular-nums">~$130K</div>
-                  </div>
-                </div>
-
-                <p className="falco-scroll-reveal mt-6 text-[14px] leading-[1.7]">
-                  <Link
-                    href="/math"
-                    className="text-[#cbb08c] hover:text-[#cbb08c] underline underline-offset-[6px] decoration-[#cbb08c]/40 hover:decoration-[#cbb08c] transition-colors"
-                  >
-                    Walk the math, one number at a time →
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === HOW IT WORKS === */}
-        <SnapSection id="how">
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="falco-scroll-reveal mb-14 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
-                How it works
-              </div>
-              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Three steps. Your equity stays put.
-              </h2>
-            </div>
-
-            <div className="grid gap-10 md:grid-cols-3">
-              <Step
-                num="01"
-                title="We watch the docket"
-                body="Daily monitoring of every foreclosure filing across 95 TN counties."
-              />
-              <Step
-                num="02"
-                title="We show you the math"
-                body="One call. Three paths side by side. Your real take-home on each."
-              />
-              <Step
-                num="03"
-                title="We run the auction"
-                body="State-licensed marketed sale on the lender's deadline. Buyer pays the premium. Seller pays nothing."
-              />
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* Audience-specific pitches now live on their own pages
-            (/homeowners, /buyers, /partners) — the hero routes there.
-            Stacking all three here made every visitor scroll through
-            two other audiences' content. */}
-
-        {/* === WHY DIFFERENT === */}
-        <SnapSection>
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="falco-scroll-reveal mb-14 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
-                What makes us different
-              </div>
-              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Homeowner-side, not buyer-side.
-              </h2>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              <Diff
-                label="vs. cash buyers"
-                body="Cash buyers profit on the gap between what they pay you and what the home actually clears. We don't buy your house. The open market sets the price."
-              />
-              <Diff
-                label="vs. traditional MLS"
-                body="90 days, 6% commission, showings. We run 45–75 days, zero seller commission, defined sale day."
-              />
-              <Diff
-                label="vs. Auction.com / Hubzu"
-                body="Buyer-side, post-foreclosure. We work with the homeowner before the foreclosure hits."
-              />
-            </div>
-
-            {/* The one load-bearing fact from the old About section —
-                the rest of it now lives on /manifesto and the FAQ. */}
-            <div className="falco-scroll-reveal mt-12 max-w-2xl text-[15px] leading-[1.7] text-white/70">
-              Tennessee sees roughly{" "}
-              <span className="text-[#cbb08c] font-medium">100 trustee sale filings</span>{" "}
-              per week. We read every one and call the homeowner, usually before
-              any cash buyer does.
-            </div>
-          </div>
-        </SnapSection>
-
-        {/* === FAQ (no snap — let the page scroll naturally to the footer) === */}
-        <SnapSection videoSrc="/video/section-faq.mp4" noSnap>
-          <div className="mx-auto w-full max-w-5xl px-6 md:px-10 relative">
-            <div className="falco-scroll-reveal mb-10 max-w-2xl">
-              <div className="text-[12px] uppercase tracking-[0.22em] text-[#cbb08c]/85 mb-4">
-                Common questions
-              </div>
-              <h2 className="text-[28px] md:text-[48px] leading-[1.05] tracking-[-0.02em] font-semibold">
-                Straight answers.
-              </h2>
-            </div>
-            <div className="falco-scroll-reveal">
-              <FaqSection />
-            </div>
-
-            {/* Closing CTA — catches anyone still scrolling past the FAQ */}
-            <div className="falco-scroll-reveal mt-10 rounded-lg border border-[#cbb08c]/25 bg-[#cbb08c]/[0.04] p-6 md:p-7 flex flex-wrap items-center justify-between gap-5">
-              <div>
-                <div className="text-[15px] md:text-[16px] font-medium text-white">
-                  Still have a question?
-                </div>
-                <div className="text-[13px] text-white/60 mt-1">
-                  Press, partnership, or anything else. Drop us a note and we'll come
-                  back within one business day.
-                </div>
-              </div>
-              <Link
-                href="/inquiry"
-                className="inline-flex items-center rounded-md bg-[#cbb08c] hover:bg-[#d8c3a5] text-black font-semibold text-[13px] tracking-wide px-5 py-2.5 transition-colors"
-              >
-                Get in touch →
-              </Link>
-            </div>
-
-            {/* pb on mobile clears the sticky MobileCtaBar (~60px). */}
-            <div className="mt-10 pt-6 pb-24 md:pb-0 border-t border-white/[0.06]">
-              <div className="flex items-center justify-between flex-wrap gap-4 text-[12px] tracking-[0.18em] text-white/40">
-                <div>FALCO · Tennessee</div>
-                <div className="flex items-center gap-5">
-                  <Link href="/buyers" className="hover:text-white transition-colors">
-                    Buyers
-                  </Link>
-                  <Link href="/homeowners" className="hover:text-white transition-colors">
-                    Homeowners
-                  </Link>
-                  <Link href="/partners" className="hover:text-white transition-colors">
-                    Auction partners
-                  </Link>
-                  <Link href="/guides" className="hover:text-white transition-colors">
-                    Guides
-                  </Link>
-                  {/* Crawl path: the homepage is the only page Google has
-                      indexed with any weight — the county hub must be
-                      reachable from it, not just from the sitemap. */}
-                  <Link href="/foreclosure" className="hover:text-white transition-colors">
-                    Counties
-                  </Link>
-                  <Link href="/inquiry" className="hover:text-white transition-colors">
-                    Contact
-                  </Link>
-                  <Link href="/manifesto" className="hover:text-white transition-colors">
-                    Manifesto
-                  </Link>
-                  <Link href="/privacy" className="hover:text-white transition-colors">
-                    Privacy
-                  </Link>
-                  <Link href="/terms" className="hover:text-white transition-colors">
-                    Terms
-                  </Link>
-                  <Link href="/sms-consent" className="hover:text-white transition-colors">
-                    Text opt-in
-                  </Link>
-                  <span className="text-white/15">falco.llc</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </SnapSection>
-      </main>
+    <div className="bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
+      <SiteHeader />
+      <Hero />
+      <StatBand />
+      <Services />
+      <FeaturedCounties />
+      <WhyTrust />
+      <TheMath />
+      <HomeFaq />
+      <ClosingCta />
+      <SiteFooter />
     </div>
   )
 }
 
-/**
- * Each snap-stop section: fits the viewport exactly (h-full = remainder of
- * scroll container after header). Content vertically centered. Optional
- * lazy-loaded video bg. allowOverflow lets long content (e.g. FAQ when items
- * are expanded) scroll within the section before snapping to next.
- */
-function SnapSection({
-  id,
-  children,
-  videoSrc,
-  allowOverflow = false,
-  mobileMinH,
-  noSnap = false,
-}: {
-  id?: string
-  children: React.ReactNode
-  videoSrc?: string
-  allowOverflow?: boolean
-  mobileMinH?: string
-  /** Skip the snap-start behavior so the page scrolls naturally past this
-   *  section. Used on the FAQ section so the page just ends at the footer
-   *  instead of trying to snap-fit a long collapsible list. */
-  noSnap?: boolean
-}) {
-  // Mobile: natural-height sections with generous breathing room (no snap).
-  // Desktop: snap-start (soft snap target). NOT snap-always — that was forcing
-  // the browser to keep pulling users back to the previous snap point when
-  // they tried to scroll into the FAQ section (which has no snap point).
-  // snap-start + snap-proximity on the parent gives clean snap on the way
-  // down without trapping anyone at the bottom.
-  const snapClasses = noSnap ? "" : "snap-start"
-  const desktopHeight = noSnap ? "" : allowOverflow ? "md:min-h-full" : "md:h-full"
+/* ── Sticky header: translucent ivory over the hero and the page alike ── */
+function SiteHeader() {
   return (
-    <section
-      id={id}
-      className={`relative isolate ${snapClasses} ${mobileMinH ?? ""} ${desktopHeight} grid place-items-center overflow-hidden bg-[#060606] py-16 md:py-20 px-1`}
-    >
-      {videoSrc && (
-        <>
-          <SectionVideoBg
-            src={videoSrc}
-            // Convention: /video/foo.mp4 has a sibling /video/foo-poster.jpg.
-            // Generated via ffmpeg in public/video. Used for fast-paint and
-            // as the fallback on mobile / slow connections.
-            poster={videoSrc.replace(/\.mp4$/, "-poster.jpg")}
-            opacity={0.32}
-          />
-          <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,rgba(6,6,6,0.55)_0%,rgba(6,6,6,0.85)_75%,#060606_100%)]" />
-          <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#060606]/30 via-transparent to-[#060606]/30" />
-        </>
-      )}
-      <div className="w-full">{children}</div>
+    <header className="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_82%,transparent)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-10">
+        <Link
+          href="/"
+          className="text-[15px] md:text-[16px] font-semibold tracking-[0.32em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
+        >
+          FALCO
+        </Link>
+        <nav className="flex items-center gap-6 text-[14px] text-[var(--ink-soft)]">
+          <Link href="/homeowners" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
+            Homeowners
+          </Link>
+          <Link href="/buyers" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
+            Buyers
+          </Link>
+          <Link href="/partners" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
+            Auction partners
+          </Link>
+          <Link href="/guides" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
+            Guides
+          </Link>
+          <a
+            href="mailto:falco@falco.llc"
+            className="rounded-md bg-[var(--ink)] px-4 py-2 text-[13px] font-medium text-[var(--paper)] hover:bg-[var(--mocha)] transition-colors"
+          >
+            Talk to us
+          </a>
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+/* ── Hero: cinematic dark video, giant serif headline, two actions ── */
+function Hero() {
+  return (
+    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#0b0a09]">
+      <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={0.55} />
+      {/* Legibility washes over the footage. */}
+      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#0b0a09]/70 via-[#0b0a09]/45 to-[#0b0a09]/85" />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(11,10,9,0.7)_100%)]" />
+
+      <div className="mx-auto w-full max-w-6xl px-6 md:px-10 py-24 md:py-28">
+        <div className="max-w-3xl">
+          <div className="falco-hero-reveal text-[12px] uppercase tracking-[0.28em] text-[#d8c3a5] font-medium">
+            Tennessee · Distressed property, handled
+          </div>
+          <h1 className="falco-hero-reveal mt-6 font-[family-name:var(--font-display)] text-[52px] md:text-[92px] leading-[0.98] font-semibold text-white text-balance">
+            Foreclosure?{" "}
+            <span className="italic text-[#e6d5bd]">Keep your equity.</span>
+          </h1>
+          <p className="falco-hero-reveal mt-7 max-w-xl text-[17px] md:text-[19px] leading-[1.55] text-white/80">
+            From the first notice to sale day, we help Tennessee homeowners sell
+            through a licensed marketed auction before the trustee sale, and keep
+            the equity that auction would otherwise erase.
+          </p>
+          <div className="falco-hero-reveal mt-9 flex flex-wrap items-center gap-4">
+            <Link
+              href="/homeowners"
+              className="inline-flex items-center gap-2 rounded-md bg-[var(--paper)] px-7 py-3.5 text-[15px] font-semibold text-[var(--ink)] hover:bg-white transition-colors"
+            >
+              See your numbers →
+            </Link>
+            <a
+              href="#how"
+              className="inline-flex items-center gap-2 rounded-md border border-white/30 px-7 py-3.5 text-[15px] font-medium text-white hover:border-white/70 transition-colors"
+            >
+              How it works
+            </a>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
 
-function Step({ num, title, body }: { num: string; title: string; body: string }) {
+/* ── Stat band: thesis + count-up figures + established line ── */
+function StatBand() {
   return (
-    <div className="falco-scroll-reveal">
-      <div className="text-[12px] text-[#cbb08c]/90 font-semibold tracking-[0.18em] tabular-nums">
-        {num}
+    <section className="border-b border-[var(--rule)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+        <p className="reveal max-w-4xl font-[family-name:var(--font-display)] text-[28px] md:text-[44px] leading-[1.2] font-medium text-[var(--ink)] text-balance">
+          We read every trustee sale filing in Tennessee and call the homeowner,
+          usually before any cash buyer does.
+        </p>
+        <div className="reveal mt-14 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-6 border-t border-[var(--rule)] pt-12">
+          <Stat n={100} suffix="+" label="Trustee filings read every week" />
+          <Stat n={32} label="Tennessee counties covered" />
+          <StatStatic value="$0" label="Cost to the homeowner" />
+          <Stat n={10} suffix="%" label="Buyer's premium, they pay, not you" />
+        </div>
+        <div className="reveal mt-10 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)]">
+          Built in Tennessee · Licensed auctioneer · Est. 2026
+        </div>
       </div>
-      <div className="mt-3 text-[20px] font-semibold text-white">{title}</div>
-      <p className="mt-3 text-[15px] leading-[1.7] text-white/80">{body}</p>
-    </div>
+    </section>
   )
 }
 
-function Diff({ label, body }: { label: string; body: string }) {
+function Stat({ n, label, suffix = "" }: { n: number; label: string; suffix?: string }) {
+  const { ref, val } = useCountUp(n)
   return (
-    <div className="falco-scroll-reveal">
-      <div className="text-[12px] uppercase tracking-[0.18em] text-white/55 font-medium">
+    <div>
+      <div className="font-[family-name:var(--font-display)] text-[52px] md:text-[68px] leading-none font-semibold text-[var(--ink)] tabular-nums">
+        <span ref={ref}>{val}</span>
+        {suffix}
+      </div>
+      <div className="mt-3 text-[13px] md:text-[14px] leading-[1.4] text-[var(--ink-faint)] max-w-[22ch]">
         {label}
       </div>
-      <p className="mt-3 text-[15px] leading-[1.7] text-white/90">{body}</p>
     </div>
   )
 }
 
-/**
- * Hero router card — one per audience. The whole card is the CTA (single
- * link target per lane, no separate button), using the top-lit surface
- * treatment so the three lanes read as physical doors, not flat panels.
- */
-function LaneCard({
-  href,
+function StatStatic({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <div className="font-[family-name:var(--font-display)] text-[52px] md:text-[68px] leading-none font-semibold text-[var(--mocha)] tabular-nums">
+        {value}
+      </div>
+      <div className="mt-3 text-[13px] md:text-[14px] leading-[1.4] text-[var(--ink-faint)] max-w-[22ch]">
+        {label}
+      </div>
+    </div>
+  )
+}
+
+/* ── Services: one team, three ways in (mirrors Buy / Sell / Rental) ── */
+function Services() {
+  const lanes = [
+    {
+      href: "/homeowners",
+      kicker: "For homeowners",
+      title: "Sell before the sale",
+      body: "Facing a trustee sale? We run a licensed marketed auction before the courthouse date so the open market sets your price. No cost to you.",
+      cta: "See your numbers",
+    },
+    {
+      href: "/buyers",
+      kicker: "For buyers",
+      title: "First look at inventory",
+      body: "Equity-positive Tennessee properties, sourced at the courthouse-filing layer. Clean title, 10% buyer's premium. Bid and close.",
+      cta: "Get on the list",
+    },
+    {
+      href: "/partners",
+      kicker: "For auction partners",
+      title: "Inventory, delivered",
+      body: "Pre-qualified sellers routed to your block. You bring the license and execution. We bring the pipeline and educate the seller first.",
+      cta: "Partner with us",
+    },
+  ]
+  return (
+    <section id="how" className="scroll-mt-20 border-b border-[var(--rule)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+        <SectionHead eyebrow="What we do" title="One team, three ways in." />
+        <div className="mt-12 grid gap-4 md:grid-cols-3 md:gap-5">
+          {lanes.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="reveal group flex flex-col rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-7 md:p-8 transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-0.5"
+            >
+              <div className="text-[11px] uppercase tracking-[0.2em] text-[var(--mocha)] font-semibold">
+                {l.kicker}
+              </div>
+              <h3 className="mt-4 font-[family-name:var(--font-display)] text-[28px] md:text-[32px] leading-tight font-semibold text-[var(--ink)]">
+                {l.title}
+              </h3>
+              <p className="mt-3 flex-1 text-[15px] leading-[1.6] text-[var(--ink-soft)]">
+                {l.body}
+              </p>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--mocha)] group-hover:gap-2.5 transition-all">
+                {l.cta} <span aria-hidden="true">→</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Featured counties (mirrors "Featured properties") ── */
+function FeaturedCounties() {
+  const counties = [
+    { slug: "davidson-county", name: "Davidson County", seat: "Nashville" },
+    { slug: "shelby-county", name: "Shelby County", seat: "Memphis" },
+    { slug: "knox-county", name: "Knox County", seat: "Knoxville" },
+    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga" },
+    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro" },
+    { slug: "williamson-county", name: "Williamson County", seat: "Franklin" },
+  ]
+  return (
+    <section className="border-b border-[var(--rule)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+        <div className="flex items-end justify-between gap-6 flex-wrap">
+          <SectionHead
+            eyebrow="Where we work"
+            title="Foreclosure help, county by county."
+          />
+          <Link
+            href="/foreclosure"
+            className="reveal shrink-0 text-[14px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
+          >
+            All 32 counties →
+          </Link>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {counties.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/foreclosure/${c.slug}`}
+              className="reveal group rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-0.5"
+            >
+              <div className="font-[family-name:var(--font-display)] text-[26px] leading-tight font-semibold text-[var(--ink)]">
+                {c.name}
+              </div>
+              <div className="mt-1 text-[13px] text-[var(--ink-faint)]">
+                {c.seat} area · trustee sale details
+              </div>
+              <span className="mt-5 inline-block text-[13px] font-semibold text-[var(--mocha)]">
+                View county guide →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Why trust: numbered value props (mirrors "Why Thousands Trust") ── */
+function WhyTrust() {
+  const points = [
+    {
+      n: "01",
+      title: "Homeowner-side, not buyer-side",
+      body: "We don't buy your house. Cash buyers profit on the gap between what they pay you and what the home clears. We let the open market set the price.",
+    },
+    {
+      n: "02",
+      title: "The buyer pays our fee",
+      body: "Zero dollars out of pocket for you. No listing fee, no commission from your side. The auction is funded by a standard buyer's premium.",
+    },
+    {
+      n: "03",
+      title: "A licensed Tennessee auctioneer",
+      body: "A real, regulated marketed sale run by a state-licensed auction firm. Photos, advertising, a defined sale day, buyers competing on price.",
+    },
+    {
+      n: "04",
+      title: "We read every filing",
+      body: "Roughly 100 trustee sale notices are filed across Tennessee every week. We read them and reach the homeowner, often before any cash buyer.",
+    },
+  ]
+  return (
+    <section className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+        <SectionHead eyebrow="Why us" title="Why homeowners work with FALCO." />
+        <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2">
+          {points.map((p) => (
+            <div key={p.n} className="reveal flex gap-6">
+              <div className="font-[family-name:var(--font-display)] text-[30px] leading-none font-semibold text-[var(--mocha)] tabular-nums pt-1">
+                {p.n}
+              </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-display)] text-[24px] md:text-[27px] leading-tight font-semibold text-[var(--ink)]">
+                  {p.title}
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.65] text-[var(--ink-soft)] max-w-[46ch]">
+                  {p.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── The math (real, verifiable transparency in place of testimonials) ── */
+function TheMath() {
+  return (
+    <section className="border-b border-[var(--rule)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+        <div className="grid md:grid-cols-[1fr_1.1fr] gap-10 md:gap-16 items-center">
+          <div>
+            <SectionHead eyebrow="The math" title="Same house. Three ways out." />
+            <p className="reveal mt-6 text-[16px] md:text-[17px] leading-[1.6] text-[var(--ink-soft)] max-w-[46ch]">
+              A homeowner facing foreclosure is often sitting on six figures of
+              equity. Where it ends up depends only on the exit they choose.
+            </p>
+            <Link
+              href="/math"
+              className="reveal mt-6 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
+            >
+              Walk the math, one number at a time →
+            </Link>
+          </div>
+
+          <div className="reveal rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] overflow-hidden">
+            <div className="px-6 pt-4 pb-2 text-[11px] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
+              Example: $500K home, $300K loan balance
+            </div>
+            <Row label="Do nothing → trustee sale" value="$0" tone="oxblood" />
+            <Row label="Take a fast-cash offer at 65%" value="~$25K" tone="amber" />
+            <Row label="List with us → marketed auction" value="~$130K" tone="mocha" highlight />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Row({
   label,
-  headline,
-  body,
-  cta,
+  value,
+  tone,
+  highlight = false,
 }: {
-  href: string
   label: string
-  headline: string
-  body: string
-  cta: string
+  value: string
+  tone: "oxblood" | "amber" | "mocha"
+  highlight?: boolean
 }) {
+  const color =
+    tone === "oxblood"
+      ? "text-[var(--oxblood)]"
+      : tone === "amber"
+        ? "text-[#8a6d1f]"
+        : "text-[var(--mocha)]"
   return (
-    <Link
-      href={href}
-      className="falco-surface group relative block rounded-xl border border-white/[0.08] p-5 md:p-6 transition-all duration-200 hover:border-[#cbb08c]/35 hover:-translate-y-0.5"
+    <div
+      className={`flex items-center justify-between gap-4 px-6 py-4 border-t border-[var(--rule)] ${
+        highlight ? "bg-[var(--mocha-wash)]" : ""
+      }`}
     >
-      <div className="text-[11px] uppercase tracking-[0.2em] text-[#cbb08c]/85">
-        {label}
+      <span className="text-[15px] text-[var(--ink-soft)]">{label}</span>
+      <span className={`font-[family-name:var(--font-display)] text-[28px] md:text-[32px] font-semibold tabular-nums ${color}`}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+/* ── FAQ — kept so the FAQPage schema mirrors visible content ── */
+function HomeFaq() {
+  return (
+    <section className="border-b border-[var(--rule)]">
+      <div className="mx-auto max-w-3xl px-6 md:px-10 py-16 md:py-24">
+        <SectionHead eyebrow="Common questions" title="Straight answers." />
+        <div className="reveal mt-10">
+          <FaqSection />
+        </div>
       </div>
-      <div className="mt-2.5 text-[17px] md:text-[18px] font-semibold leading-snug text-white">
-        {headline}
+    </section>
+  )
+}
+
+/* ── Closing CTA band ── */
+function ClosingCta() {
+  return (
+    <section className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
+      <div className="rounded-2xl bg-[var(--ink)] px-8 py-14 md:px-16 md:py-20 text-center">
+        <div className="text-[11px] uppercase tracking-[0.22em] text-[#c9a98a] font-semibold">
+          Facing a sale date?
+        </div>
+        <h2 className="mx-auto mt-4 max-w-2xl font-[family-name:var(--font-display)] text-[34px] md:text-[52px] leading-[1.08] font-semibold text-[var(--paper)] text-balance">
+          Get your numbers before you take any cash offer.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-[15px] md:text-[16px] leading-[1.6] text-[color-mix(in_oklab,var(--paper)_72%,transparent)]">
+          Free 15-minute call. We show you what your home would likely clear at a
+          marketed auction versus the trustee sale. No cost, no pressure, no
+          obligation to sell.
+        </p>
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/homeowners"
+            className="inline-flex items-center gap-2 rounded-md bg-[var(--mocha)] px-7 py-3.5 text-[15px] font-semibold text-white hover:bg-[var(--mocha-deep)] transition-colors"
+          >
+            See your numbers →
+          </Link>
+          <a
+            href="mailto:falco@falco.llc"
+            className="text-[14px] text-[color-mix(in_oklab,var(--paper)_70%,transparent)] hover:text-[var(--paper)]"
+          >
+            or email falco@falco.llc
+          </a>
+        </div>
       </div>
-      <p className="mt-2 text-[13px] md:text-[14px] leading-[1.55] text-white/60">
-        {body}
-      </p>
-      <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#cbb08c] group-hover:text-[#cbb08c] transition-colors">
-        {cta}
-        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
-          →
-        </span>
+    </section>
+  )
+}
+
+/* ── Footer ── */
+function SiteFooter() {
+  const cols: Array<{ head: string; links: Array<{ href: string; label: string }> }> = [
+    {
+      head: "Start here",
+      links: [
+        { href: "/homeowners", label: "Homeowners" },
+        { href: "/buyers", label: "Buyers" },
+        { href: "/partners", label: "Auction partners" },
+      ],
+    },
+    {
+      head: "Learn",
+      links: [
+        { href: "/guides", label: "Guides" },
+        { href: "/foreclosure", label: "Foreclosure by county" },
+        { href: "/math", label: "The math" },
+        { href: "/manifesto", label: "Manifesto" },
+      ],
+    },
+    {
+      head: "Company",
+      links: [
+        { href: "/inquiry", label: "Contact" },
+        { href: "/privacy", label: "Privacy" },
+        { href: "/terms", label: "Terms" },
+        { href: "/sms-consent", label: "Text opt-in" },
+      ],
+    },
+  ]
+  return (
+    <footer className="border-t border-[var(--rule)] bg-[var(--paper-raised)]">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div>
+            <div className="text-[16px] font-semibold tracking-[0.32em] text-[var(--ink)]">
+              FALCO
+            </div>
+            <p className="mt-4 max-w-[30ch] text-[14px] leading-[1.6] text-[var(--ink-faint)]">
+              Tennessee distressed-property intelligence and auction routing. We
+              help homeowners keep the equity a foreclosure would take.
+            </p>
+            <a
+              href="mailto:falco@falco.llc"
+              className="mt-4 inline-block text-[14px] font-medium text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
+            >
+              falco@falco.llc
+            </a>
+          </div>
+          {cols.map((col) => (
+            <div key={col.head}>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)] font-semibold">
+                {col.head}
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      className="text-[14px] text-[var(--ink-soft)] hover:text-[var(--mocha)] transition-colors"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-14 border-t border-[var(--rule)] pt-6 flex flex-wrap items-center justify-between gap-3 font-[family-name:var(--font-mono)] text-[12px] text-[var(--ink-faint)]">
+          <span>FALCO · Tennessee · Licensed auctioneer</span>
+          <span>© 2026 FALCO</span>
+        </div>
       </div>
-    </Link>
+    </footer>
+  )
+}
+
+/* ── Shared section header ── */
+function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div className="reveal max-w-2xl">
+      <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
+        {eyebrow}
+        <span className="h-px w-12 bg-[var(--rule-strong)]" />
+      </div>
+      <h2 className="mt-5 font-[family-name:var(--font-display)] text-[36px] md:text-[54px] leading-[1.04] font-semibold text-[var(--ink)] text-balance">
+        {title}
+      </h2>
+    </div>
   )
 }

@@ -59,6 +59,29 @@ h1, h2 {
 }
 
 /* ================================================================
+   SCROLL REVEAL — homepage sections rise in as they enter view.
+   JS adds .is-visible (IntersectionObserver in v2-content).
+   ================================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ================================================================
    PRELOADER
    ================================================================ */
 @keyframes falcoPreloaderFade {
