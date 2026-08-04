@@ -128,11 +128,15 @@ function SiteHeader() {
 /* ── Hero: cinematic dark video, giant serif headline, two actions ── */
 function Hero() {
   return (
-    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#0b0a09]">
-      <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={0.55} />
-      {/* Legibility washes over the footage. */}
-      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#0b0a09]/70 via-[#0b0a09]/45 to-[#0b0a09]/85" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(11,10,9,0.7)_100%)]" />
+    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#17110a]">
+      {/* The drone footage is monochrome at the source, so we warm it with a
+          mocha wash (multiply) instead of leaving it flat gray, and keep the
+          overlays light + warm so the footage actually reads. */}
+      <div className="absolute inset-0 -z-30 [filter:sepia(0.6)_saturate(1.6)_contrast(1.03)_brightness(1.05)]">
+        <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={1} />
+      </div>
+      <div className="absolute inset-0 -z-20 bg-gradient-to-b from-[#17110a]/55 via-[#17110a]/20 to-[#120d08]/85" />
+      <div className="absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(18,13,8,0.5)_100%)]" />
 
       <div className="mx-auto w-full max-w-6xl px-6 md:px-10 py-24 md:py-28">
         <div className="max-w-3xl">
@@ -275,15 +279,18 @@ function Services() {
   )
 }
 
-/* ── Featured counties (mirrors "Featured properties") ── */
+/* ── Featured counties (mirrors "Featured properties": image-topped cards) ── */
 function FeaturedCounties() {
+  // Drone-footage stills are monochrome at the source, so each card image
+  // gets the same warm sepia treatment as the hero to read as intentional
+  // editorial photography rather than flat gray.
   const counties = [
-    { slug: "davidson-county", name: "Davidson County", seat: "Nashville" },
-    { slug: "shelby-county", name: "Shelby County", seat: "Memphis" },
-    { slug: "knox-county", name: "Knox County", seat: "Knoxville" },
-    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga" },
-    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro" },
-    { slug: "williamson-county", name: "Williamson County", seat: "Franklin" },
+    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", img: "/video/hero-poster.jpg" },
+    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", img: "/video/section-homeowners-poster.jpg" },
+    { slug: "knox-county", name: "Knox County", seat: "Knoxville", img: "/video/section-buyers-poster.jpg" },
+    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", img: "/video/section-partners-poster.jpg" },
+    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", img: "/video/section-faq-poster.jpg" },
+    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", img: "/video/hero-poster.jpg" },
   ]
   return (
     <section className="border-b border-[var(--rule)]">
@@ -300,22 +307,38 @@ function FeaturedCounties() {
             All 32 counties →
           </Link>
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {counties.map((c) => (
             <Link
-              key={c.slug}
+              key={c.slug + c.img}
               href={`/foreclosure/${c.slug}`}
-              className="reveal group rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-0.5"
+              className="reveal group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-200 hover:border-[var(--mocha)] hover:-translate-y-1 hover:shadow-[0_20px_40px_-24px_rgba(17,17,17,0.35)]"
             >
-              <div className="font-[family-name:var(--font-display)] text-[26px] leading-tight font-semibold text-[var(--ink)]">
-                {c.name}
+              <div className="relative aspect-[16/11] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={c.img}
+                  alt={`Aerial view over ${c.seat}, ${c.name}, Tennessee`}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 [filter:sepia(0.55)_saturate(1.5)_contrast(1.02)]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#17110a]/45 via-transparent to-transparent" />
+                <div className="absolute left-4 top-4 rounded-full bg-[var(--paper)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mocha)] backdrop-blur-sm">
+                  {c.seat}
+                </div>
               </div>
-              <div className="mt-1 text-[13px] text-[var(--ink-faint)]">
-                {c.seat} area · trustee sale details
+              <div className="p-5">
+                <div className="font-[family-name:var(--font-display)] text-[25px] leading-tight font-semibold text-[var(--ink)]">
+                  {c.name}
+                </div>
+                <div className="mt-1 text-[13px] text-[var(--ink-faint)]">
+                  Trustee sale location, notices, and your options
+                </div>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--mocha)] group-hover:gap-2.5 transition-all">
+                  View county guide <span aria-hidden="true">→</span>
+                </span>
               </div>
-              <span className="mt-5 inline-block text-[13px] font-semibold text-[var(--mocha)]">
-                View county guide →
-              </span>
             </Link>
           ))}
         </div>
