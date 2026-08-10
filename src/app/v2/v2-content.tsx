@@ -287,17 +287,78 @@ function Services() {
   )
 }
 
-/* ── Featured counties (mirrors "Featured properties": image-topped cards) ── */
+/**
+ * Looping aerial clip for a county card. Paints the poster instantly, then
+ * lazy-mounts the video once the card nears the viewport and fades it in
+ * over the poster. Six autoplaying videos would be brutal on cell, so
+ * mobile / save-data / slow connections get the poster only.
+ */
+function CardVideo({ src, poster, alt }: { src: string; poster: string; alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [play, setPlay] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const narrow = window.matchMedia("(max-width: 767px)").matches
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    type Conn = { saveData?: boolean; effectiveType?: string }
+    const conn = (navigator as Navigator & { connection?: Conn }).connection
+    const slow =
+      conn?.saveData === true ||
+      (conn?.effectiveType ? ["slow-2g", "2g", "3g"].includes(conn.effectiveType) : false)
+    if (narrow || reduced || slow) return
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setPlay(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: "300px 0px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className="absolute inset-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={poster}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover [filter:saturate(1.08)]"
+      />
+      {play && (
+        <video
+          className="absolute inset-0 h-full w-full object-cover [filter:saturate(1.08)] animate-[falcoFadeIn_600ms_ease_forwards]"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster={poster}
+          aria-hidden="true"
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      )}
+    </div>
+  )
+}
+
+/* ── Featured counties: looping aerial clips, same reel as the hero ── */
 function FeaturedCounties() {
-  // Full-colour aerial stills pulled from the same drone reel as the hero,
-  // so the grid and the hero read as one shoot.
   const counties = [
-    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", img: "/video/county-2.jpg" },
-    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", img: "/video/county-3.jpg" },
-    { slug: "knox-county", name: "Knox County", seat: "Knoxville", img: "/video/county-4.jpg" },
-    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", img: "/video/county-6.jpg" },
-    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", img: "/video/county-1.jpg" },
-    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", img: "/video/county-5.jpg" },
+    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", clip: "card-2" },
+    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", clip: "card-3" },
+    { slug: "knox-county", name: "Knox County", seat: "Knoxville", clip: "card-4" },
+    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", clip: "card-6" },
+    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", clip: "card-1" },
+    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", clip: "card-5" },
   ]
   return (
     <section className="border-b border-[var(--rule)]">
@@ -317,20 +378,17 @@ function FeaturedCounties() {
         <div className="stagger mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {counties.map((c) => (
             <Link
-              key={c.slug + c.img}
+              key={c.slug}
               href={`/foreclosure/${c.slug}`}
-              className="reveal reveal-img group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-28px_rgba(17,17,17,0.42)]"
+              className="reveal group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-28px_rgba(17,17,17,0.42)]"
             >
               <div className="relative aspect-[16/11] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.img}
-                  alt={`Aerial view over ${c.seat}, ${c.name}, Tennessee`}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover group-hover:scale-[1.06] [filter:saturate(1.08)]"
+                <CardVideo
+                  src={`/video/${c.clip}.mp4`}
+                  poster={`/video/${c.clip}.jpg`}
+                  alt={`Aerial view of a Tennessee residential neighbourhood`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0e1109]/40 via-transparent to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0e1109]/40 via-transparent to-transparent" />
                 <div className="absolute left-4 top-4 rounded-full bg-[var(--paper)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mocha)] backdrop-blur-sm">
                   {c.seat}
                 </div>
