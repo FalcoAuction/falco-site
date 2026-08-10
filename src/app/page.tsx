@@ -37,6 +37,17 @@ const JSON_LD = {
     "@type": "Person",
     name: "Patrick Yuri Armour",
     jobTitle: "Licensed Tennessee Auctioneer",
+    // A verifiable credential is the strongest E-E-A-T signal available
+    // on a YMYL (foreclosure) page.
+    hasCredential: {
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: "Professional License",
+      name: "Tennessee Auctioneer License #7622",
+      recognizedBy: {
+        "@type": "Organization",
+        name: "Tennessee Auctioneer Commission",
+      },
+    },
   },
   priceRange: "Free to homeowners (buyer pays premium)",
 }
