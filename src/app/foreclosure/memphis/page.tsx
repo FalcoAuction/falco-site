@@ -88,7 +88,7 @@ export default function MemphisForeclosurePage() {
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[var(--rule)] pt-5 text-[13px] text-[var(--ink-faint)]">
             <span className="font-semibold text-[var(--ink-soft)]">Patrick Yuri Armour</span>
-            <span>Licensed Tennessee Auctioneer #7622</span>
+            <span>Licensed Tennessee Auctioneer</span>
             <span className="text-[var(--rule-strong)]">·</span>
             <span>Updated July 2026</span>
           </div>

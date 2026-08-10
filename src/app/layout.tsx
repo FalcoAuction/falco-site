@@ -60,8 +60,20 @@ export const metadata: Metadata = {
         alt: "FALCO routes distressed Tennessee homes to auction",
       },
     ],
-    // og:video removed with the hero footage — the share preview is the
-    // static og:image everywhere now.
+    // Some platforms (Discord, Facebook) play a linked og:video alongside
+    // the og:image preview. Most (iMessage, Slack, Twitter, LinkedIn,
+    // WhatsApp) ignore it and just show the image — that's expected.
+    videos: [
+      {
+        // hero-share.mp4 is the hero loop with the headline burned in via
+        // ffmpeg drawtext, sized + vignetted for share previews. Used by
+        // platforms that play og:video inline (iMessage, Discord, Facebook).
+        url: "https://falco.llc/video/hero-share.mp4",
+        width: 1280,
+        height: 720,
+        type: "video/mp4",
+      },
+    ],
     locale: "en_US",
     type: "website",
   },
@@ -81,8 +93,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* No media preloads: the site no longer renders hero footage, so
-          the old poster/video prefetch was pure wasted bandwidth. */}
+      <head>
+        {/* Always preload the lightweight hero poster — it's what the loading
+            screen waits on and the painted background on mobile. */}
+        <link rel="preload" as="image" href="/video/hero-poster.jpg" type="image/jpeg" />
+        {/* Only pre-fetch the heavy hero video on desktop. Mobile renders the
+            poster only (see HeroVideoBg) so pre-fetching ~4.7MB on cell would
+            waste data and slow first paint. */}
+        <link
+          rel="preload"
+          as="video"
+          href="/video/hero-loop.mp4"
+          type="video/mp4"
+          media="(min-width: 768px)"
+        />
+      </head>
       <body className={`${dmSans.variable} ${cormorant.variable} ${geistMono.variable}`}>
         <LoadingScreen />
         {children}

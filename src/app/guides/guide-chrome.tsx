@@ -68,7 +68,7 @@ export function GuideShell({
           <span className="font-semibold text-[var(--ink-soft)]">
             Patrick Yuri Armour
           </span>
-          <span>Licensed Tennessee Auctioneer #7622</span>
+          <span>Licensed Tennessee Auctioneer</span>
           <span className="text-[var(--rule-strong)]">·</span>
           <span>Updated {updated}</span>
         </div>

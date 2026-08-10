@@ -58,10 +58,7 @@ export default function LoadingScreen() {
     }
 
     const synthCap = () => (allReady() ? 100 : 88)
-    // The hero no longer renders a video/poster, so window load is the
-    // only real gate. Waiting on an image we never paint just delayed
-    // first view.
-    const allReady = () => ready.windowLoad
+    const allReady = () => ready.windowLoad && ready.heroPoster
 
     // Synthetic progress — eased ramp to either 88 (still loading something)
     // or 100 (everything ready). Keeps the bar moving so the user doesn't
