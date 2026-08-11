@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { DotOrbit } from "../dot-orbit"
 
 /** Reveal each .falco-scroll-reveal child as it enters the viewport. */
 function useScrollReveal() {
@@ -45,36 +44,22 @@ export function FormShell({
   return (
     <main
       ref={scrollRef}
-      className="min-h-screen bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white"
+      className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]"
     >
-      {/* Background — same v2 stack */}
-      <div className="absolute inset-0 -z-30 bg-[#060606]" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_45%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.45]" />
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <DotOrbit
-          dotColor="rgba(16, 185, 129, 0.5)"
-          lineColor="rgba(16, 185, 129, 0.07)"
-          density={0.65}
-          speed={0.3}
-          dotSize={1.2}
-          linkDistance={120}
-          opacity={0.7}
-        />
-      </div>
-
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4 md:px-10">
-          <Link
-            href="/"
-            className="text-[13px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
-          >
-            FALCO
+      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_88%,transparent)] backdrop-blur-md">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4 md:px-10">
+          <Link href="/" className="group leading-none">
+            <span className="block text-[14px] font-semibold tracking-[0.3em] text-[var(--ink)] group-hover:text-[var(--mocha)] transition-colors">
+              FALCO
+            </span>
+            <span className="mt-1 block text-[10px] tracking-[0.06em] text-[var(--ink-faint)]">
+              Patrick Armour · TN Auctioneer #7622
+            </span>
           </Link>
           <Link
             href="/"
-            className="text-[12px] tracking-wide text-white/55 hover:text-white transition-colors"
+            className="text-[13px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--mocha)] transition-colors"
           >
             ← Back
           </Link>
@@ -82,42 +67,42 @@ export function FormShell({
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-3xl px-6 pt-20 pb-10 md:px-10 md:pt-28">
+      <section className="mx-auto max-w-3xl px-6 pt-16 pb-8 md:px-10 md:pt-24">
         <div className="falco-scroll-reveal">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/75">
+          <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
             {eyebrow}
+            <span className="h-px flex-1 bg-gradient-to-r from-[var(--rule-strong)] to-transparent" />
           </div>
-          <h1 className="mt-4 text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] font-semibold">
+          <h1 className="mt-6 font-[family-name:var(--font-display)] text-[38px] md:text-[58px] leading-[1.04] font-semibold text-balance">
             {title}
           </h1>
-          <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-white/60">
+          <p className="mt-6 text-[16px] md:text-[18px] leading-[1.6] text-[var(--ink-soft)] max-w-[58ch]">
             {intro}
           </p>
         </div>
       </section>
 
       {/* Form */}
-      <section className="mx-auto max-w-3xl px-6 pb-24 md:px-10 md:pb-32">
-        <div className="falco-scroll-reveal rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-10 backdrop-blur-sm">
+      <section className="mx-auto max-w-3xl px-6 pb-20 md:px-10 md:pb-28">
+        <div className="falco-scroll-reveal rounded-2xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 md:p-10 shadow-[0_20px_50px_-40px_rgba(17,17,17,0.4)]">
           {children}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
-          <div>FALCO · Tennessee</div>
+      <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 border-t border-[var(--rule)]">
+        <div className="flex items-center justify-between flex-wrap gap-4 font-[family-name:var(--font-mono)] text-[12px] text-[var(--ink-faint)]">
+          <div>FALCO · Patrick Armour, TN Auctioneer #7622</div>
           <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-white/70 transition-colors">
+            <Link href="/" className="hover:text-[var(--mocha)] transition-colors">
               Home
             </Link>
-            <Link href="/buyers" className="hover:text-white/70 transition-colors">
-              Buyers
+            <Link href="/guides" className="hover:text-[var(--mocha)] transition-colors">
+              Guides
             </Link>
-            <Link href="/partner-login" className="hover:text-white/70 transition-colors">
-              Partner login
+            <Link href="/privacy" className="hover:text-[var(--mocha)] transition-colors">
+              Privacy
             </Link>
-            <span className="text-white/15">falco.llc</span>
           </div>
         </div>
       </footer>
@@ -130,7 +115,7 @@ export function FormShell({
 // ============================================================================
 
 export const inputCls =
-  "w-full rounded-md bg-black/40 border border-white/12 px-3 py-2.5 text-[14px] text-white placeholder-white/30 outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40 transition-colors"
+  "w-full rounded-md bg-[var(--paper)] border border-[var(--rule-strong)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] placeholder-[var(--ink-faint)] outline-none focus:border-[var(--mocha)] focus:ring-2 focus:ring-[var(--mocha-wash)] transition-colors"
 
 export function Field({
   label,
@@ -145,12 +130,12 @@ export function Field({
 }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-[0.18em] text-white/55 mb-1.5">
+      <label className="block text-[11px] uppercase tracking-[0.16em] text-[var(--ink-faint)] font-semibold mb-2">
         {label}
-        {required && <span className="text-emerald-400/70 ml-1">*</span>}
+        {required && <span className="text-[var(--mocha)] ml-1">*</span>}
       </label>
       {children}
-      {hint && <div className="mt-1 text-[11px] text-white/35">{hint}</div>}
+      {hint && <div className="mt-1.5 text-[12px] text-[var(--ink-faint)]">{hint}</div>}
     </div>
   )
 }
@@ -158,7 +143,7 @@ export function Field({
 export function FormError({ msg }: { msg: string | null }) {
   if (!msg) return null
   return (
-    <div className="rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-[12px] text-red-200">
+    <div className="rounded-md border border-[var(--oxblood)]/30 bg-[var(--oxblood)]/[0.06] px-3.5 py-2.5 text-[13px] text-[var(--oxblood)]">
       {msg}
     </div>
   )
@@ -166,13 +151,16 @@ export function FormError({ msg }: { msg: string | null }) {
 
 export function FormSuccess({ msg }: { msg: string }) {
   return (
-    <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-6 text-center">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300 mb-2">
+    <div className="rounded-xl border border-[var(--mocha)]/30 bg-[var(--mocha-wash)] p-7 text-center">
+      <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold mb-2">
         Received
       </div>
-      <div className="text-white text-[16px] font-medium">{msg}</div>
-      <div className="mt-3 text-[12px] text-emerald-100/70">
-        We'll reach out from <span className="text-emerald-200">falco@falco.llc</span>.
+      <div className="font-[family-name:var(--font-display)] text-[22px] font-semibold text-[var(--ink)]">
+        {msg}
+      </div>
+      <div className="mt-3 text-[13px] text-[var(--ink-soft)]">
+        We&apos;ll reach out from{" "}
+        <span className="font-medium text-[var(--mocha)]">falco@falco.llc</span>.
       </div>
     </div>
   )
@@ -189,7 +177,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className="w-full sm:w-auto rounded-md bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-[13px] tracking-wide px-6 py-2.5 transition-colors"
+      className="w-full sm:w-auto rounded-md bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-[14px] tracking-wide px-7 py-3 transition-colors"
     >
       {pending ? "Sending..." : children}
     </button>

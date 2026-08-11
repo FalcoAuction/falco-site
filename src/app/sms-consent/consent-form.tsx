@@ -45,9 +45,9 @@ export function ConsentForm() {
 
   if (state === "done") {
     return (
-      <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.07] p-6">
-        <div className="text-[16px] font-semibold text-emerald-100">You're opted in.</div>
-        <p className="mt-2 text-[14px] text-white/60 leading-relaxed">
+      <div className="rounded-2xl border border-[var(--mocha)]/30 bg-[var(--mocha-wash)] p-6">
+        <div className="text-[16px] font-semibold text-[var(--ink)]">You're opted in.</div>
+        <p className="mt-2 text-[14px] text-[var(--ink-soft)] leading-relaxed">
           Patrick will follow up by text. Reply STOP to any message if you
           change your mind.
         </p>
@@ -58,22 +58,22 @@ export function ConsentForm() {
   return (
     <form
       onSubmit={submit}
-      className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4"
+      className="rounded-2xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 space-y-4"
     >
       <div>
-        <label className="block text-[11px] uppercase tracking-[0.18em] text-white/50 mb-1.5">
+        <label className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-soft)] mb-1.5">
           Your name
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-[15px] text-white focus:border-emerald-400/50 focus:outline-none"
+          className="w-full rounded-xl border border-[var(--rule-strong)] bg-[var(--paper)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] focus:border-[var(--mocha)] focus:outline-none"
           placeholder="First and last name"
         />
       </div>
       <div>
-        <label className="block text-[11px] uppercase tracking-[0.18em] text-white/50 mb-1.5">
+        <label className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-soft)] mb-1.5">
           Mobile number
         </label>
         <input
@@ -81,18 +81,18 @@ export function ConsentForm() {
           onChange={(e) => setPhone(e.target.value)}
           required
           inputMode="tel"
-          className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-[15px] text-white focus:border-emerald-400/50 focus:outline-none"
+          className="w-full rounded-xl border border-[var(--rule-strong)] bg-[var(--paper)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] focus:border-[var(--mocha)] focus:outline-none"
           placeholder="(615) 555-1234"
         />
       </div>
       <div>
-        <label className="block text-[11px] uppercase tracking-[0.18em] text-white/50 mb-1.5">
+        <label className="block text-[11px] uppercase tracking-[0.18em] text-[var(--ink-soft)] mb-1.5">
           Property address (optional)
         </label>
         <input
           value={property}
           onChange={(e) => setProperty(e.target.value)}
-          className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-[15px] text-white focus:border-emerald-400/50 focus:outline-none"
+          className="w-full rounded-xl border border-[var(--rule-strong)] bg-[var(--paper)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] focus:border-[var(--mocha)] focus:outline-none"
           placeholder="Street, city"
         />
       </div>
@@ -111,14 +111,14 @@ export function ConsentForm() {
           checked={consent}
           onChange={(e) => setConsent(e.target.checked)}
           required
-          className="mt-1 h-4 w-4 accent-emerald-400"
+          className="mt-1 h-4 w-4 accent-[var(--mocha)]"
         />
-        <span className="text-[13px] leading-[1.6] text-white/65">{CONSENT_TEXT}</span>
+        <span className="text-[13px] leading-[1.6] text-[var(--ink-soft)]">{CONSENT_TEXT}</span>
       </label>
       <button
         type="submit"
         disabled={state === "busy" || !consent}
-        className="w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 hover:bg-emerald-400/25 px-4 py-3 text-[15px] font-semibold text-emerald-100 transition-colors disabled:opacity-50"
+        className="w-full rounded-xl border border-[var(--mocha)] bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] px-4 py-3 text-[15px] font-semibold text-white transition-colors disabled:opacity-50"
       >
         {state === "busy" ? "Submitting..." : "Opt in to text messages"}
       </button>

@@ -9,24 +9,21 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
       {/* Background — same v2 stack, static */}
-      <div className="absolute inset-0 -z-30 bg-[#060606]" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_45%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.45]" />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[var(--paper)]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4 md:px-10">
           <Link
             href="/"
-            className="text-[13px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[13px] font-semibold tracking-[0.28em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
           >
             FALCO
           </Link>
           <Link
             href="/"
-            className="text-[12px] tracking-wide text-white/55 hover:text-white transition-colors"
+            className="text-[12px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
             ← Back
           </Link>
@@ -35,13 +32,13 @@ export default function TermsPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-8 md:px-10 md:pt-28">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/75">
+        <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)]">
           Terms
         </div>
         <h1 className="mt-4 text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] font-semibold">
           The rules of the road.
         </h1>
-        <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-white/60">
+        <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-[var(--ink-soft)]">
           Plain-language terms covering the website, our communications, and
           the work FALCO does. Last updated May 20, 2026.
         </p>
@@ -49,13 +46,13 @@ export default function TermsPage() {
 
       {/* Body */}
       <section className="mx-auto max-w-3xl px-6 pb-24 md:px-10 md:pb-32">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-10 backdrop-blur-sm space-y-8 text-[14px] md:text-[15px] leading-[1.7] text-white/70">
+        <div className="rounded-2xl border border-[var(--rule)] bg-[var(--paper-raised)] p-6 md:p-10 backdrop-blur-sm space-y-8 text-[14px] md:text-[15px] leading-[1.7] text-[var(--ink-soft)]">
           <Block title="Who we are">
             <p>
               FALCO is a Tennessee distressed-real-estate intelligence and
               auction-routing operation run by Patrick Yuri Armour, a
               Tennessee-licensed auctioneer. Contact:{" "}
-              <span className="text-emerald-200">falco@falco.llc</span>,{" "}
+              <span className="text-[var(--mocha)]">falco@falco.llc</span>,{" "}
               falco.llc. By using this site or communicating
               with us, you agree to these terms.
             </p>
@@ -82,11 +79,11 @@ export default function TermsPage() {
 
           <Block title="SMS / text messaging program">
             <p>
-              <strong className="text-white/85">Program name:</strong> FALCO
+              <strong className="text-[var(--ink)]">Program name:</strong> FALCO
               outreach.
             </p>
             <p>
-              <strong className="text-white/85">Description:</strong> FALCO
+              <strong className="text-[var(--ink)]">Description:</strong> FALCO
               sends text messages only to people who have opted in. Consent
               is given verbally during a phone conversation with Patrick
               Armour (Tennessee licensed auctioneer), or by submitting the
@@ -96,44 +93,44 @@ export default function TermsPage() {
               conversation with us. We do not send promotional blasts.
             </p>
             <p>
-              <strong className="text-white/85">Message frequency:</strong>{" "}
+              <strong className="text-[var(--ink)]">Message frequency:</strong>{" "}
               recurring messages may be sent. Frequency varies based on the
               conversation; most active cases involve 1–10 messages.
             </p>
             <p>
-              <strong className="text-white/85">Message and data rates:</strong>{" "}
+              <strong className="text-[var(--ink)]">Message and data rates:</strong>{" "}
               may apply. Check with your wireless carrier; FALCO does not
               control your carrier's pricing.
             </p>
             <p>
-              <strong className="text-white/85">Opt out:</strong> Reply{" "}
-              <span className="text-emerald-200">STOP</span> at any time. We
+              <strong className="text-[var(--ink)]">Opt out:</strong> Reply{" "}
+              <span className="text-[var(--mocha)]">STOP</span> at any time. We
               also honor{" "}
-              <span className="text-emerald-200">UNSUBSCRIBE</span>,{" "}
-              <span className="text-emerald-200">CANCEL</span>,{" "}
-              <span className="text-emerald-200">END</span>, and{" "}
-              <span className="text-emerald-200">QUIT</span>. You will receive
+              <span className="text-[var(--mocha)]">UNSUBSCRIBE</span>,{" "}
+              <span className="text-[var(--mocha)]">CANCEL</span>,{" "}
+              <span className="text-[var(--mocha)]">END</span>, and{" "}
+              <span className="text-[var(--mocha)]">QUIT</span>. You will receive
               a confirmation, then no further messages.
             </p>
             <p>
-              <strong className="text-white/85">Help:</strong> Reply{" "}
-              <span className="text-emerald-200">HELP</span> for sender
+              <strong className="text-[var(--ink)]">Help:</strong> Reply{" "}
+              <span className="text-[var(--mocha)]">HELP</span> for sender
               identification and contact information, or email{" "}
-              <span className="text-emerald-200">falco@falco.llc</span>.
+              <span className="text-[var(--mocha)]">falco@falco.llc</span>.
             </p>
             <p>
-              <strong className="text-white/85">Supported carriers:</strong>{" "}
+              <strong className="text-[var(--ink)]">Supported carriers:</strong>{" "}
               AT&T, T-Mobile, Verizon, US Cellular, and other US wireless
               carriers. Carriers are not liable for delayed or undelivered
               messages.
             </p>
             <p>
-              <strong className="text-white/85">Privacy:</strong> SMS
+              <strong className="text-[var(--ink)]">Privacy:</strong> SMS
               opt-in data and consent are not shared with third parties. See
               the{" "}
               <Link
                 href="/privacy"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Privacy Policy
               </Link>{" "}
@@ -231,11 +228,11 @@ export default function TermsPage() {
           <Block title="Contact">
             <p>
               Questions about these terms:{" "}
-              <span className="text-emerald-200">falco@falco.llc</span>, or
+              <span className="text-[var(--mocha)]">falco@falco.llc</span>, or
               use the{" "}
               <Link
                 href="/inquiry"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 general inquiry form
               </Link>
@@ -246,20 +243,20 @@ export default function TermsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-[var(--rule)]">
+        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-[var(--ink-faint)]">
           <div>FALCO · Tennessee</div>
           <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-white/70 transition-colors">
+            <Link href="/" className="hover:text-[var(--ink-soft)] transition-colors">
               Home
             </Link>
-            <Link href="/privacy" className="hover:text-white/70 transition-colors">
+            <Link href="/privacy" className="hover:text-[var(--ink-soft)] transition-colors">
               Privacy
             </Link>
-            <Link href="/inquiry" className="hover:text-white/70 transition-colors">
+            <Link href="/inquiry" className="hover:text-[var(--ink-soft)] transition-colors">
               Contact
             </Link>
-            <span className="text-white/15">falco.llc</span>
+            <span className="text-[var(--ink-faint)]">falco.llc</span>
           </div>
         </div>
       </footer>
@@ -276,7 +273,7 @@ function Block({
 }) {
   return (
     <div>
-      <h2 className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/75 mb-3">
+      <h2 className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)] mb-3">
         {title}
       </h2>
       <div className="space-y-3">{children}</div>

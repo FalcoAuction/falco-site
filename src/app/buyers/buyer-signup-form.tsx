@@ -58,10 +58,10 @@ export default function BuyerSignupForm() {
 
   if (success) {
     return (
-      <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-6 text-center">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300 mb-2">Registered</div>
-        <div className="text-white text-lg font-semibold mb-1">{success}</div>
-        <div className="text-xs text-emerald-100/70 mt-3">
+      <div className="rounded-xl border border-[var(--mocha)]/30 bg-[var(--mocha-wash)] p-6 text-center">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold mb-2">Registered</div>
+        <div className="text-[var(--ink)] text-lg font-semibold mb-1">{success}</div>
+        <div className="text-xs text-[var(--ink-soft)] mt-3">
           You'll hear from us when matching Tennessee inventory lists. Typically 2–8 new listings per month.
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function BuyerSignupForm() {
         </Field>
       </div>
 
-      <div className="h-px bg-white/[0.06]" />
+      <div className="h-px bg-[var(--rule)]" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Target price min (USD)">
@@ -163,7 +163,7 @@ export default function BuyerSignupForm() {
         </Field>
       </div>
 
-      <div className="h-px bg-white/[0.06]" />
+      <div className="h-px bg-[var(--rule)]" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Funding source">
@@ -190,9 +190,9 @@ export default function BuyerSignupForm() {
           type="checkbox"
           checked={cashReady}
           onChange={(e) => setCashReady(e.target.checked)}
-          className="h-4 w-4 accent-emerald-400"
+          className="h-4 w-4 accent-[var(--mocha)]"
         />
-        <span className="text-sm text-white/85">I can close all-cash, no lender contingency.</span>
+        <span className="text-sm text-[var(--ink-soft)]">I can close all-cash, no lender contingency.</span>
       </label>
 
       <Field label="How'd you find us?">
@@ -223,12 +223,12 @@ export default function BuyerSignupForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-sm py-3 transition-colors"
+        className="w-full rounded-md bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-3 transition-colors"
       >
         {pending ? "Registering..." : "Get Early Access to TN Inventory"}
       </button>
 
-      <p className="text-[10px] text-white/35 text-center">
+      <p className="text-[10px] text-[var(--ink-faint)] text-center">
         We'll email you when inventory matches your buy box. No spam, no list-selling, unsubscribe anytime.
       </p>
     </form>
@@ -236,7 +236,7 @@ export default function BuyerSignupForm() {
 }
 
 const inputCls =
-  "w-full rounded-md bg-black/40 border border-white/12 px-3 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40"
+  "w-full rounded-md bg-[var(--paper)] border border-[var(--rule-strong)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] placeholder-[var(--ink-faint)] outline-none focus:border-[var(--mocha)] focus:ring-2 focus:ring-[var(--mocha-wash)]"
 
 function Field({
   label,
@@ -249,9 +249,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-[0.18em] text-white/55 mb-1.5">
+      <label className="block text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-1.5">
         {label}
-        {required && <span className="text-emerald-400/60 ml-1">*</span>}
+        {required && <span className="text-[var(--mocha)] ml-1">*</span>}
       </label>
       {children}
     </div>

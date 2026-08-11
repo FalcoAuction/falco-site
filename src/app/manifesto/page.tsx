@@ -9,24 +9,21 @@ export const metadata = {
 
 export default function ManifestoPage() {
   return (
-    <main className="min-h-screen bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
       {/* Background */}
-      <div className="absolute inset-0 -z-30 bg-[#060606]" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_45%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.4]" />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[var(--paper)]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4 md:px-10">
           <Link
             href="/"
-            className="text-[13px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[13px] font-semibold tracking-[0.28em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
           >
             FALCO
           </Link>
           <Link
             href="/"
-            className="text-[12px] tracking-wide text-white/55 hover:text-white transition-colors"
+            className="text-[12px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
             ← Back
           </Link>
@@ -35,15 +32,15 @@ export default function ManifestoPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-12 md:px-10 md:pt-32 md:pb-20">
-        <div className="text-[11px] uppercase tracking-[0.28em] text-emerald-300/85 font-semibold">
+        <div className="text-[11px] uppercase tracking-[0.28em] text-[var(--mocha)] font-semibold">
           Manifesto
         </div>
         <h1 className="mt-6 text-[42px] md:text-[68px] leading-[1.0] tracking-[-0.03em] font-semibold">
           Tennessee homeowners lose{" "}
-          <span className="text-emerald-400">six figures of equity</span>{" "}
+          <span className="text-[var(--mocha)]">six figures of equity</span>{" "}
           to foreclosure every week. Most of it doesn't have to.
         </h1>
-        <p className="mt-8 text-[16px] md:text-[20px] leading-[1.6] text-white/65">
+        <p className="mt-8 text-[16px] md:text-[20px] leading-[1.6] text-[var(--ink-soft)]">
           When a home heads toward the courthouse, the equity disappears in
           one of three ways. FALCO is built to make sure none of them is
           the default. The math, the paths, the alternative — with sources,
@@ -68,7 +65,7 @@ export default function ManifestoPage() {
             Over the next 6–12 weeks, the equity in their home walks out
             the door one of three ways:
           </p>
-          <ul className="space-y-2.5 text-[15px] md:text-[17px] text-white/72 mt-3 list-disc pl-5 marker:text-emerald-400/60">
+          <ul className="space-y-2.5 text-[15px] md:text-[17px] text-[var(--ink-soft)] mt-3 list-disc pl-5 marker:text-[var(--mocha)]">
             <li>The bank takes it at the trustee sale. Equity = $0.</li>
             <li>A fast-cash buyer takes most of it under deadline pressure. Equity walks with the buyer.</li>
             <li>No one shows up. The trustee sale runs by default. See path one.</li>
@@ -90,7 +87,7 @@ export default function ManifestoPage() {
             <Sup>1</Sup> — carrying a <Hl>$290,000</Hl> mortgage balance
             (60% LTV is typical). Trustee sale is six weeks out.
           </p>
-          <p className="text-white/55">Three paths. Three very different numbers.</p>
+          <p className="text-[var(--ink-faint)]">Three paths. Three very different numbers.</p>
         </Block>
 
         {/* Stat trio */}
@@ -117,7 +114,7 @@ export default function ManifestoPage() {
 
         {/* How the cash offer gets to ~$24K */}
         <Block n="02a" title="How a fast-cash offer arrives at $24,000">
-          <p className="text-white/55 text-[14px]">
+          <p className="text-[var(--ink-faint)] text-[14px]">
             It's not arbitrary. The cash-buyer market — wholesalers, iBuyers,
             "we buy houses" operators — prices distressed property using a
             published formula called the 70% rule
@@ -152,7 +149,7 @@ export default function ManifestoPage() {
 
         {/* How marketed auction gets to ~$95-120K */}
         <Block n="02b" title="How a marketed auction arrives at $95,000–$120,000">
-          <p className="text-white/55 text-[14px]">Same house. Different process.</p>
+          <p className="text-[var(--ink-faint)] text-[14px]">Same house. Different process.</p>
           <MathTable
             rows={[
               { label: "Final winning bid (80–88% of retail target)", value: "$390,000–$425,000" },
@@ -167,7 +164,7 @@ export default function ManifestoPage() {
             the auction firm + FALCO. The homeowner doesn't see it and
             doesn't pay it.
           </p>
-          <p className="text-white/55 text-[13px]">
+          <p className="text-[var(--ink-faint)] text-[13px]">
             Note on the range: ATTOM data puts foreclosure-auction winning
             bids at ~59.5% of after-repair value
             <Sup>3</Sup> — those are courthouse-step distress sales with
@@ -244,7 +241,7 @@ export default function ManifestoPage() {
             scripts, courthouse-record subscriptions, and YouTube
             "real estate guru" courses teaching the next wave of operators
             how to buy distress at a discount. The pitch is always the
-            same: <em className="text-white/85">no money down, no license
+            same: <em className="text-[var(--ink)]">no money down, no license
             required, just send a thousand mailers a week and wait for
             someone desperate to call.</em>
           </p>
@@ -260,7 +257,7 @@ export default function ManifestoPage() {
           <p>It depends on three things.</p>
           <ThreeReasons />
           <p>FALCO breaks all three.</p>
-          <ul className="space-y-2.5 text-[14px] md:text-[15px] text-white/65 mt-4 list-disc pl-5 marker:text-emerald-400/60">
+          <ul className="space-y-2.5 text-[14px] md:text-[15px] text-[var(--ink-soft)] mt-4 list-disc pl-5 marker:text-[var(--mocha)]">
             <li>We monitor public records every day. We reach the homeowner before the equity decision gets locked in.</li>
             <li>We show all three numbers in writing, on the first call — trustee sale, fast-cash offer, marketed auction.</li>
             <li>
@@ -326,30 +323,30 @@ export default function ManifestoPage() {
         </Block>
 
         {/* Sources */}
-        <div id="sources" className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-8 scroll-mt-20">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/85 font-semibold mb-4">
+        <div id="sources" className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] p-6 md:p-8 scroll-mt-20">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold mb-4">
             Sources
           </div>
-          <ol className="space-y-3 text-[13px] leading-[1.65] text-white/65 list-decimal pl-5 marker:text-emerald-400/60">
+          <ol className="space-y-3 text-[13px] leading-[1.65] text-[var(--ink-soft)] list-decimal pl-5 marker:text-[var(--mocha)]">
             <li>
               County median home values, December 2025.{" "}
               <a
                 href="https://www.redfin.com/county/2563/TN/Davidson-County/housing-market"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4 break-words"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4 break-words"
               >
                 Redfin · Davidson County housing market
               </a>
               ;{" "}
               <a
                 href="https://www.redfin.com/county/2591/TN/Knox-County/housing-market"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Knox
               </a>
               ;{" "}
               <a
                 href="https://www.zillow.com/home-values/1388/shelby-county-tn/"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Shelby (Zillow)
               </a>
@@ -360,14 +357,14 @@ export default function ManifestoPage() {
               standard wholesale-industry math.{" "}
               <a
                 href="https://www.realestateskills.com/blog/wholesale-formula"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Real Estate Skills · Wholesale formula guide
               </a>
               ;{" "}
               <a
                 href="https://www.limaone.com/70-rule-real-estate/"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Lima One Capital · 70% rule
               </a>
@@ -387,7 +384,7 @@ export default function ManifestoPage() {
               estimates.{" "}
               <a
                 href="https://thda.org/research-and-reports/"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Tennessee Housing Development Agency · Research & Reports
               </a>
@@ -398,7 +395,7 @@ export default function ManifestoPage() {
               residential mortgages.{" "}
               <a
                 href="https://www.atlantafed.org/center-for-housing-and-policy/data-and-tools/mortgage-analytics-and-performance-dashboard.aspx"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 Federal Reserve Bank of Atlanta · Mortgage Analytics &
                 Performance Dashboard
@@ -406,7 +403,7 @@ export default function ManifestoPage() {
               ; cross-referenced against{" "}
               <a
                 href="https://www.mba.org/news-and-research/research-and-economics/single-family-research/national-delinquency-survey"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 MBA National Delinquency Survey
               </a>
@@ -417,7 +414,7 @@ export default function ManifestoPage() {
               median).{" "}
               <a
                 href="https://batchleads.io/blog/wholesaling-real-estate-salary-potential-in-2024"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 BatchLeads · Wholesaling income data
               </a>
@@ -427,11 +424,11 @@ export default function ManifestoPage() {
               data.
             </li>
           </ol>
-          <p className="mt-5 text-[12px] text-white/35 leading-[1.6]">
+          <p className="mt-5 text-[12px] text-[var(--ink-faint)] leading-[1.6]">
             Spot a number that looks wrong or has a better source? Email{" "}
             <a
               href="mailto:falco@falco.llc"
-              className="text-emerald-300/85 hover:text-emerald-200"
+              className="text-[var(--mocha)] hover:text-[var(--mocha)]"
             >
               falco@falco.llc
             </a>{" "}
@@ -440,14 +437,14 @@ export default function ManifestoPage() {
         </div>
 
         {/* CTA */}
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.05] p-8 md:p-10">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300 mb-3 font-semibold">
+        <div className="rounded-2xl border border-[var(--mocha)]/30 bg-[var(--mocha-wash)] p-8 md:p-10">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)] mb-3 font-semibold">
             Talk to us
           </div>
           <h3 className="text-[26px] md:text-[34px] leading-tight tracking-tight font-semibold">
             Free 15-minute call. Real numbers for your specific situation.
           </h3>
-          <p className="mt-3 text-[14px] md:text-[16px] text-white/65 leading-[1.65]">
+          <p className="mt-3 text-[14px] md:text-[16px] text-[var(--ink-soft)] leading-[1.65]">
             Within one business day we'll come back to you with what your
             home would clear at a marketed auction vs. what you'd lose at
             the trustee sale.
@@ -455,15 +452,15 @@ export default function ManifestoPage() {
           <div className="mt-7 flex flex-wrap gap-3 items-center">
             <Link
               href="/homeowners"
-              className="inline-flex items-center justify-center rounded-md bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] text-white font-semibold text-[14px] tracking-wide px-6 py-3 transition-colors"
             >
               Start with the form →
             </Link>
-            <span className="text-[12px] text-white/45">
+            <span className="text-[12px] text-[var(--ink-faint)]">
               Or email{" "}
               <a
                 href="mailto:falco@falco.llc"
-                className="text-emerald-300 hover:text-emerald-200"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)]"
               >
                 falco@falco.llc
               </a>
@@ -475,7 +472,7 @@ export default function ManifestoPage() {
             manifesto holds all this math but targets no search query;
             these guide pages do. */}
         <div className="mt-8">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-white/50 font-semibold mb-3">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold mb-3">
             Go deeper
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -488,7 +485,7 @@ export default function ManifestoPage() {
               <Link
                 key={g.href}
                 href={g.href}
-                className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-[14px] text-white/75 hover:border-emerald-400/30 hover:text-white transition-colors"
+                className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] px-4 py-3 text-[14px] text-[var(--ink-soft)] hover:border-[var(--mocha)]/30 hover:text-[var(--ink)] transition-colors"
               >
                 {g.label} →
               </Link>
@@ -498,14 +495,14 @@ export default function ManifestoPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+      <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 border-t border-[var(--rule)]">
+        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-[var(--ink-faint)]">
           <div>FALCO · Tennessee</div>
           <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-white/70 transition-colors">Home</Link>
-            <Link href="/homeowners" className="hover:text-white/70 transition-colors">Homeowners</Link>
-            <Link href="/inquiry" className="hover:text-white/70 transition-colors">Contact</Link>
-            <Link href="/privacy" className="hover:text-white/70 transition-colors">Privacy</Link>
+            <Link href="/" className="hover:text-[var(--ink-soft)] transition-colors">Home</Link>
+            <Link href="/homeowners" className="hover:text-[var(--ink-soft)] transition-colors">Homeowners</Link>
+            <Link href="/inquiry" className="hover:text-[var(--ink-soft)] transition-colors">Contact</Link>
+            <Link href="/privacy" className="hover:text-[var(--ink-soft)] transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>
@@ -528,14 +525,14 @@ function Block({
 }) {
   return (
     <div className="grid md:grid-cols-[80px_1fr] gap-3 md:gap-10">
-      <div className="text-emerald-400/85 text-[12px] font-semibold tracking-[0.18em] tabular-nums pt-1">
+      <div className="text-[var(--mocha)] text-[12px] font-semibold tracking-[0.18em] tabular-nums pt-1">
         {n}
       </div>
       <div>
-        <h2 className="text-[26px] md:text-[36px] tracking-tight font-semibold text-white leading-[1.1]">
+        <h2 className="text-[26px] md:text-[36px] tracking-tight font-semibold text-[var(--ink)] leading-[1.1]">
           {title}
         </h2>
-        <div className="mt-6 space-y-4 text-[16px] md:text-[18px] leading-[1.7] text-white/72">
+        <div className="mt-6 space-y-4 text-[16px] md:text-[18px] leading-[1.7] text-[var(--ink-soft)]">
           {children}
         </div>
       </div>
@@ -546,7 +543,7 @@ function Block({
 /** Inline highlight — emerald number/keyword to draw the eye. */
 function Hl({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-emerald-300 font-medium tabular-nums">{children}</span>
+    <span className="text-[var(--mocha)] font-medium tabular-nums">{children}</span>
   )
 }
 
@@ -555,7 +552,7 @@ function Sup({ children }: { children: React.ReactNode }) {
   return (
     <a
       href="#sources"
-      className="text-emerald-400/85 hover:text-emerald-300 text-[10px] font-semibold align-super ml-0.5 no-underline"
+      className="text-[var(--mocha)] hover:text-[var(--mocha)] text-[10px] font-semibold align-super ml-0.5 no-underline"
       aria-label={`Source ${children}`}
     >
       [{children}]
@@ -566,7 +563,7 @@ function Sup({ children }: { children: React.ReactNode }) {
 function PullQuote({ children }: { children: React.ReactNode }) {
   return (
     <div className="md:pl-[120px] py-4 md:py-6">
-      <blockquote className="border-l-2 border-emerald-400/60 pl-5 md:pl-7 text-[20px] md:text-[26px] leading-[1.4] tracking-tight font-medium text-white/85">
+      <blockquote className="border-l-2 border-[var(--mocha)]/30 pl-5 md:pl-7 text-[20px] md:text-[26px] leading-[1.4] tracking-tight font-medium text-[var(--ink)]">
         {children}
       </blockquote>
     </div>
@@ -586,35 +583,35 @@ function StatCard({
 }) {
   const accent =
     tone === "win"
-      ? "border-emerald-400/30 bg-emerald-400/[0.05]"
+      ? "border-[var(--mocha)]/30 bg-[var(--mocha-wash)]"
       : tone === "loss"
       ? "border-red-400/25 bg-red-400/[0.04]"
-      : "border-white/[0.08] bg-white/[0.02]"
+      : "border-[var(--rule)] bg-[var(--paper-raised)]"
   const valueColor =
-    tone === "win" ? "text-emerald-300" : tone === "loss" ? "text-red-300/85" : "text-white/85"
+    tone === "win" ? "text-[var(--mocha)]" : tone === "loss" ? "text-red-300/85" : "text-[var(--ink)]"
   return (
     <div className={`rounded-xl border ${accent} p-5 md:p-6`}>
-      <div className="text-[10px] uppercase tracking-[0.2em] text-white/55 font-semibold">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">
         {label}
       </div>
       <div className={`mt-3 text-[36px] md:text-[42px] font-semibold tracking-tight tabular-nums ${valueColor}`}>
         {value}
       </div>
-      <div className="mt-3 text-[13px] leading-[1.55] text-white/55">{sub}</div>
+      <div className="mt-3 text-[13px] leading-[1.55] text-[var(--ink-faint)]">{sub}</div>
     </div>
   )
 }
 
 function BigStat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-xl border border-emerald-400/25 bg-emerald-400/[0.04] p-6 md:p-8">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-300/85 font-semibold">
+    <div className="rounded-xl border border-[var(--mocha)]/30 bg-[var(--mocha-wash)] p-6 md:p-8">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
         {label}
       </div>
-      <div className="mt-3 text-[48px] md:text-[60px] font-semibold tabular-nums tracking-tight text-emerald-300 leading-none">
+      <div className="mt-3 text-[48px] md:text-[60px] font-semibold tabular-nums tracking-tight text-[var(--mocha)] leading-none">
         {value}
       </div>
-      <div className="mt-3 text-[14px] leading-[1.55] text-white/65">{sub}</div>
+      <div className="mt-3 text-[14px] leading-[1.55] text-[var(--ink-soft)]">{sub}</div>
     </div>
   )
 }
@@ -628,21 +625,21 @@ function MathTable({
   total: { label: string; value: string }
   totalTone: "win" | "meh"
 }) {
-  const totalColor = totalTone === "win" ? "text-emerald-300" : "text-white/85"
+  const totalColor = totalTone === "win" ? "text-[var(--mocha)]" : "text-[var(--ink)]"
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+    <div className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] overflow-hidden">
       <table className="w-full text-[14px] md:text-[15px]">
         <tbody>
           {rows.map((r) => (
-            <tr key={r.label} className="border-b border-white/[0.04]">
-              <td className="py-3 px-4 text-white/65">{r.label}</td>
-              <td className="py-3 px-4 text-right text-white/75 tabular-nums whitespace-nowrap">
+            <tr key={r.label} className="border-b border-[var(--rule)]">
+              <td className="py-3 px-4 text-[var(--ink-soft)]">{r.label}</td>
+              <td className="py-3 px-4 text-right text-[var(--ink-soft)] tabular-nums whitespace-nowrap">
                 {r.value}
               </td>
             </tr>
           ))}
-          <tr className="bg-white/[0.03]">
-            <td className="py-4 px-4 text-[13px] uppercase tracking-[0.18em] font-semibold text-white/65">
+          <tr className="bg-[var(--paper-raised)]">
+            <td className="py-4 px-4 text-[13px] uppercase tracking-[0.18em] font-semibold text-[var(--ink-soft)]">
               {total.label}
             </td>
             <td
@@ -685,41 +682,41 @@ function ExampleGrid() {
     },
   ]
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden -mt-10 md:-mt-16">
+    <div className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] overflow-hidden -mt-10 md:-mt-16">
       <table className="w-full text-[13px] md:text-[14px]">
         <thead>
-          <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-            <th className="py-3 px-4 text-left text-[11px] uppercase tracking-[0.18em] text-white/55 font-semibold">
+          <tr className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
+            <th className="py-3 px-4 text-left text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)] font-semibold">
               Property
             </th>
             <th className="py-3 px-3 text-right text-[11px] uppercase tracking-[0.18em] text-red-300/65 font-semibold">
               Trustee sale
             </th>
-            <th className="py-3 px-3 text-right text-[11px] uppercase tracking-[0.18em] text-white/55 font-semibold">
+            <th className="py-3 px-3 text-right text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)] font-semibold">
               Fast-cash offer
             </th>
-            <th className="py-3 px-4 text-right text-[11px] uppercase tracking-[0.18em] text-emerald-300/85 font-semibold">
+            <th className="py-3 px-4 text-right text-[11px] uppercase tracking-[0.18em] text-[var(--mocha)] font-semibold">
               Marketed auction
             </th>
           </tr>
         </thead>
         <tbody>
           {examples.map((e, i) => (
-            <tr key={i} className="border-b border-white/[0.04] last:border-b-0">
-              <td className="py-3 px-4 text-white/85">
+            <tr key={i} className="border-b border-[var(--rule)] last:border-b-0">
+              <td className="py-3 px-4 text-[var(--ink)]">
                 <div className="font-medium">{e.home}</div>
-                <div className="text-[12px] text-white/45 mt-0.5">{e.sub}</div>
+                <div className="text-[12px] text-[var(--ink-faint)] mt-0.5">{e.sub}</div>
               </td>
               <td className="py-3 px-3 text-right text-red-300/65 tabular-nums whitespace-nowrap">{e.trustee}</td>
-              <td className="py-3 px-3 text-right text-white/55 tabular-nums whitespace-nowrap">{e.whole}</td>
-              <td className="py-3 px-4 text-right text-emerald-300 tabular-nums font-semibold whitespace-nowrap">
+              <td className="py-3 px-3 text-right text-[var(--ink-faint)] tabular-nums whitespace-nowrap">{e.whole}</td>
+              <td className="py-3 px-4 text-right text-[var(--mocha)] tabular-nums font-semibold whitespace-nowrap">
                 {e.auction}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="px-4 py-2.5 text-[11px] text-white/40 leading-[1.5] border-t border-white/[0.06]">
+      <div className="px-4 py-2.5 text-[11px] text-[var(--ink-faint)] leading-[1.5] border-t border-[var(--rule)]">
         County medians from Redfin (Dec 2025)<Sup>1</Sup>. Fast-cash offer net derived
         from the 70% rule formula<Sup>2</Sup> the cash-buyer market uses to price
         distressed property; marketed auction net assumes 80–88% of retail less loan
@@ -749,12 +746,12 @@ function ThreeReasons() {
       {items.map((it) => (
         <div
           key={it.h}
-          className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4"
+          className="rounded-lg border border-[var(--rule)] bg-[var(--paper-raised)] p-4"
         >
-          <div className="text-[12px] uppercase tracking-[0.16em] text-emerald-300/85 font-semibold">
+          <div className="text-[12px] uppercase tracking-[0.16em] text-[var(--mocha)] font-semibold">
             {it.h}
           </div>
-          <div className="mt-2 text-[13px] leading-[1.6] text-white/65">{it.b}</div>
+          <div className="mt-2 text-[13px] leading-[1.6] text-[var(--ink-soft)]">{it.b}</div>
         </div>
       ))}
     </div>

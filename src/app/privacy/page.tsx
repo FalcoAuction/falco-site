@@ -9,24 +9,21 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#060606] text-white selection:bg-emerald-400/20 selection:text-white">
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
       {/* Background — same v2 stack, static */}
-      <div className="absolute inset-0 -z-30 bg-[#060606]" />
-      <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.06),transparent_45%)]" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.45]" />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060606]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[var(--paper)]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4 md:px-10">
           <Link
             href="/"
-            className="text-[13px] font-semibold tracking-[0.28em] text-white hover:text-emerald-300 transition-colors"
+            className="text-[13px] font-semibold tracking-[0.28em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
           >
             FALCO
           </Link>
           <Link
             href="/"
-            className="text-[12px] tracking-wide text-white/55 hover:text-white transition-colors"
+            className="text-[12px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
             ← Back
           </Link>
@@ -35,13 +32,13 @@ export default function PrivacyPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-8 md:px-10 md:pt-28">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/75">
+        <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)]">
           Privacy
         </div>
         <h1 className="mt-4 text-[36px] md:text-[52px] leading-[1.05] tracking-[-0.02em] font-semibold">
           How we handle what you tell us.
         </h1>
-        <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-white/60">
+        <p className="mt-6 text-[15px] md:text-[17px] leading-[1.65] text-[var(--ink-soft)]">
           Short version: we use the information you share to respond to you, and
           we don't sell it. Last updated May 20, 2026.
         </p>
@@ -49,7 +46,7 @@ export default function PrivacyPage() {
 
       {/* Body */}
       <section className="mx-auto max-w-3xl px-6 pb-24 md:px-10 md:pb-32">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 md:p-10 backdrop-blur-sm space-y-8 text-[14px] md:text-[15px] leading-[1.7] text-white/70">
+        <div className="rounded-2xl border border-[var(--rule)] bg-[var(--paper-raised)] p-6 md:p-10 backdrop-blur-sm space-y-8 text-[14px] md:text-[15px] leading-[1.7] text-[var(--ink-soft)]">
           <Block title="What we collect">
             <p>
               When you submit a form on this site (homeowner request, buyer
@@ -59,7 +56,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               When you email us at{" "}
-              <span className="text-emerald-200">falco@falco.llc</span>, we
+              <span className="text-[var(--mocha)]">falco@falco.llc</span>, we
               receive whatever you send.
             </p>
             <p>
@@ -110,18 +107,18 @@ export default function PrivacyPage() {
               requested, and answers to your questions.
             </p>
             <p>
-              <strong className="text-white/85">What we collect:</strong> the
+              <strong className="text-[var(--ink)]">What we collect:</strong> the
               phone number you provided, the content of your messages,
               timestamps, your consent record, and (when known) the property
               the conversation relates to.
             </p>
             <p>
-              <strong className="text-white/85">Frequency:</strong> message
+              <strong className="text-[var(--ink)]">Frequency:</strong> message
               frequency varies based on the conversation. Most active cases
               involve 1–10 messages.
             </p>
             <p>
-              <strong className="text-white/85">No marketing or third-party
+              <strong className="text-[var(--ink)]">No marketing or third-party
               sharing:</strong> No mobile information will be shared with third
               parties or affiliates for marketing or promotional purposes. All
               of the categories above exclude text-messaging originator opt-in
@@ -129,26 +126,26 @@ export default function PrivacyPage() {
               third parties.
             </p>
             <p>
-              <strong className="text-white/85">Carrier costs:</strong> Message
+              <strong className="text-[var(--ink)]">Carrier costs:</strong> Message
               and data rates may apply. FALCO does not control your carrier's
               pricing.
             </p>
             <p>
-              <strong className="text-white/85">Opt out:</strong> Reply{" "}
-              <span className="text-emerald-200">STOP</span> at any time to
+              <strong className="text-[var(--ink)]">Opt out:</strong> Reply{" "}
+              <span className="text-[var(--mocha)]">STOP</span> at any time to
               stop receiving messages. We also honor{" "}
-              <span className="text-emerald-200">UNSUBSCRIBE</span>,{" "}
-              <span className="text-emerald-200">CANCEL</span>,{" "}
-              <span className="text-emerald-200">END</span>, and{" "}
-              <span className="text-emerald-200">QUIT</span>. You can also
+              <span className="text-[var(--mocha)]">UNSUBSCRIBE</span>,{" "}
+              <span className="text-[var(--mocha)]">CANCEL</span>,{" "}
+              <span className="text-[var(--mocha)]">END</span>, and{" "}
+              <span className="text-[var(--mocha)]">QUIT</span>. You can also
               email{" "}
-              <span className="text-emerald-200">falco@falco.llc</span> with
+              <span className="text-[var(--mocha)]">falco@falco.llc</span> with
               the subject line "Stop SMS." Opt-out records are kept
               indefinitely so we do not contact you again.
             </p>
             <p>
-              <strong className="text-white/85">Help:</strong> Reply{" "}
-              <span className="text-emerald-200">HELP</span> for sender
+              <strong className="text-[var(--ink)]">Help:</strong> Reply{" "}
+              <span className="text-[var(--mocha)]">HELP</span> for sender
               identification and contact information.
             </p>
           </Block>
@@ -158,7 +155,7 @@ export default function PrivacyPage() {
               Form submissions and email correspondence are retained for our
               records and to maintain continuity if you reach out again. You
               can ask us to delete your information at any time by emailing{" "}
-              <span className="text-emerald-200">falco@falco.llc</span> with
+              <span className="text-[var(--mocha)]">falco@falco.llc</span> with
               the subject line "Delete my information."
             </p>
           </Block>
@@ -188,11 +185,11 @@ export default function PrivacyPage() {
           <Block title="Contact">
             <p>
               Questions about privacy go to{" "}
-              <span className="text-emerald-200">falco@falco.llc</span>, or use
+              <span className="text-[var(--mocha)]">falco@falco.llc</span>, or use
               the{" "}
               <Link
                 href="/inquiry"
-                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+                className="text-[var(--mocha)] hover:text-[var(--mocha)] underline underline-offset-4"
               >
                 general inquiry form
               </Link>
@@ -203,20 +200,20 @@ export default function PrivacyPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-white/35">
+      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-[var(--rule)]">
+        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-[var(--ink-faint)]">
           <div>FALCO · Tennessee</div>
           <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-white/70 transition-colors">
+            <Link href="/" className="hover:text-[var(--ink-soft)] transition-colors">
               Home
             </Link>
-            <Link href="/terms" className="hover:text-white/70 transition-colors">
+            <Link href="/terms" className="hover:text-[var(--ink-soft)] transition-colors">
               Terms
             </Link>
-            <Link href="/inquiry" className="hover:text-white/70 transition-colors">
+            <Link href="/inquiry" className="hover:text-[var(--ink-soft)] transition-colors">
               Contact
             </Link>
-            <span className="text-white/15">falco.llc</span>
+            <span className="text-[var(--ink-faint)]">falco.llc</span>
           </div>
         </div>
       </footer>
@@ -233,7 +230,7 @@ function Block({
 }) {
   return (
     <div>
-      <h2 className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/75 mb-3">
+      <h2 className="text-[11px] uppercase tracking-[0.22em] text-[var(--mocha)] mb-3">
         {title}
       </h2>
       <div className="space-y-3">{children}</div>

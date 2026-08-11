@@ -107,7 +107,7 @@ export default function HomeownerForm() {
             </Field>
           </div>
 
-          <div className="h-px bg-white/[0.06]" />
+          <div className="h-px bg-[var(--rule)]" />
 
           <Field label="Property address" required>
             <input
@@ -178,9 +178,9 @@ export default function HomeownerForm() {
 
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <SubmitButton pending={pending}>Send my request</SubmitButton>
-            <div className="text-[11px] text-white/40">
+            <div className="text-[11px] text-[var(--ink-faint)]">
               We respond within one business day from{" "}
-              <span className="text-white/65">falco@falco.llc</span>. Nothing you tell us is shared.
+              <span className="text-[var(--ink-soft)]">falco@falco.llc</span>. Nothing you tell us is shared.
             </div>
           </div>
         </form>

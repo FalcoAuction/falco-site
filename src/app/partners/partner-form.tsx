@@ -166,9 +166,9 @@ export default function PartnerForm() {
 
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <SubmitButton pending={pending}>Open the conversation</SubmitButton>
-            <div className="text-[11px] text-white/40">
+            <div className="text-[11px] text-[var(--ink-faint)]">
               We respond within one business day from{" "}
-              <span className="text-white/65">falco@falco.llc</span>.
+              <span className="text-[var(--ink-soft)]">falco@falco.llc</span>.
             </div>
           </div>
         </form>
