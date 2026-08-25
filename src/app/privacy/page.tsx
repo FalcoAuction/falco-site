@@ -60,9 +60,23 @@ export default function PrivacyPage() {
               receive whatever you send.
             </p>
             <p>
-              We don't run third-party analytics that track you across the web.
-              Our hosting provider keeps standard server logs (IP address,
-              request time, page) for operational and security purposes.
+              We use Google Analytics to understand how people find and use
+              this site (pages viewed, approximate location, device type, and
+              the search or link that brought you here). Google sets cookies
+              to do this. We use it only to improve the site; we do not use it
+              to build advertising profiles, and we do not sell or share this
+              data. You can opt out with Google&apos;s{" "}
+              <a
+                href="https://tools.google.com/dlpage/gaoptout"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="text-[var(--mocha)] underline underline-offset-4"
+              >
+                browser add-on
+              </a>{" "}
+              or by blocking cookies in your browser. Our hosting provider also
+              keeps standard server logs (IP address, request time, page) for
+              operational and security purposes.
             </p>
           </Block>
 

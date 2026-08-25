@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Cormorant_Garamond, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import LoadingScreen from "./loading-screen";
 import "./globals.css";
 
@@ -30,6 +31,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
 });
+
+const GA_ID = "G-PYSVEK735L";
 
 export const metadata: Metadata = {
   title: "FALCO — Save the equity. Skip the wholesaler.",
@@ -111,6 +114,23 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${cormorant.variable} ${geistMono.variable}`}>
         <LoadingScreen />
         {children}
+        {/* Google Analytics 4. Loaded afterInteractive so it never blocks
+            first paint, and only in production so local dev traffic does not
+            pollute the property. Disclosed in /privacy. */}
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );
