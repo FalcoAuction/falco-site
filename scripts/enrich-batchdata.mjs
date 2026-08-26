@@ -254,11 +254,25 @@ async function main() {
   console.log(`estimated cost per lead: $${ESTIMATED_COST_PER_LEAD_USD}`)
   console.log("---")
 
-  const { data: leads, error } = await supabase
+  // Foreclosure-family gate is ON by default (Patrick 2026-05-14).
+  // CV / demolition / probate / FSBO / tax-lien convert at much lower
+  // rates than foreclosure leads; this script's BatchData spend now
+  // stays in the high-conversion pool. Pass --all-distress to lift the
+  // gate (e.g. after a credit reset).
+  const ALL_DISTRESS = args.includes("--all-distress")
+  const FORECLOSURE_DISTRESS = [
+    "PRE_FORECLOSURE", "PREFORECLOSURE", "TRUSTEE_NOTICE",
+    "LIS_PENDENS", "SOT", "SUBSTITUTION_OF_TRUSTEE",
+    "NOD", "NOTICE_OF_DEFAULT", "FORECLOSURE",
+  ]
+
+  let q = supabase
     .from("homeowner_requests")
-    .select("id, property_address, county, property_value, beds, baths, sqft, year_built, last_sale_date")
+    .select("id, property_address, county, property_value, beds, baths, sqft, year_built, last_sale_date, distress_type")
     .eq("source", "bot")
     .is("property_value", null)
+  if (!ALL_DISTRESS) q = q.in("distress_type", FORECLOSURE_DISTRESS)
+  const { data: leads, error } = await q
     .order("submitted_at", { ascending: true })
     .limit(LIMIT)
 
