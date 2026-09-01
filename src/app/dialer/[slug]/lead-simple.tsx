@@ -274,7 +274,7 @@ export default function LeadSimple({ lead, caller }: Props) {
 
       {/* Everything else, deliberately out of the way. */}
       <Link
-        href={`/dialer/${lead.slug}?full=1`}
+        href={`/dialer/${lead.slug}`}
         className="mt-4 block rounded-xl border border-white/12 px-4 py-3 text-center text-[14px] text-white/60 hover:border-white/30 hover:text-white/90 transition-colors"
       >
         Full record: pitch, math sheet, property, notice, share →

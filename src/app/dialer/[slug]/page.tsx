@@ -45,12 +45,12 @@ export default async function DialerLeadPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ full?: string }>
+  searchParams: Promise<{ simple?: string }>
 }) {
   const { slug } = await params
-  // Call-first screen by default; the original full record is one tap
-  // away at ?full=1 so nothing is lost.
-  const { full } = await searchParams
+  // The full record is the default. The stripped-down call-first screen
+  // is still available at ?simple=1.
+  const { simple } = await searchParams
   const session = await requireDialerSession(`/dialer/${slug}`)
   const [lead, skiptraceData, badPhones] = await Promise.all([
     getDialerLead(slug),
@@ -64,7 +64,7 @@ export default async function DialerLeadPage({
       <BackToQueueLink className="inline-flex items-center text-xs text-white/55 hover:text-white/85">
         ← Back to queue
       </BackToQueueLink>
-      {full === "1" ? (
+      {simple !== "1" ? (
         <LeadDetail
           lead={lead}
           caller={session?.caller ?? "caller"}
