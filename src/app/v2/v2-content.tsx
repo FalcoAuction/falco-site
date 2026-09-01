@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { FAQ_ITEMS } from "./faq-items"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
@@ -152,6 +153,7 @@ export default function V2Content() {
         <Ledger />
         <ThreeSteps />
         <Incentive />
+        <Faq />
         <ClosingCta />
       </main>
       <Foot />
@@ -161,27 +163,59 @@ export default function V2Content() {
 
 function Nav() {
   const [stuck, setStuck] = useState(false)
+  const [open, setOpen] = useState(false)
+
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 8)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
+
+  // The mobile menu is a full-screen overlay, so lock the page behind it
+  // and let Escape close it.
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  const close = () => setOpen(false)
+
   return (
     <header className={`nav${stuck ? " stuck" : ""}`}>
-      <Link className="brand" href="/">
+      <Link className="brand" href="/" onClick={close}>
         FALCO
       </Link>
-      <nav>
-        <Link href="/homeowners">Homeowners</Link>
-        <Link href="/buyers">Buyers</Link>
-        <Link href="/partners">Partners</Link>
-        <Link href="/foreclosure">Counties</Link>
-        <Link href="/guides">Guides</Link>
-        <Link className="pill light" href="/homeowners">
+      <nav id="menu" className={open ? "open" : undefined}>
+        <Link href="/homeowners" onClick={close}>Homeowners</Link>
+        <Link href="/buyers" onClick={close}>Buyers</Link>
+        <Link href="/partners" onClick={close}>Partners</Link>
+        <Link href="/foreclosure" onClick={close}>Counties</Link>
+        <Link href="/guides" onClick={close}>Guides</Link>
+        <Link className="pill dark" href="/homeowners" onClick={close}>
           Get your numbers <sub>→</sub>
         </Link>
       </nav>
+      {/* Without this the mobile breakpoint hides the nav entirely and
+          there is no way to reach any page from a phone. */}
+      <button
+        className="navtog"
+        type="button"
+        aria-expanded={open}
+        aria-controls="menu"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "Close" : "Menu"}
+      </button>
     </header>
   )
 }
@@ -602,6 +636,32 @@ function Incentive() {
               reason to push your price down and every reason to push it up.
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* The page emits FAQPage structured data, which Google requires to mirror
+   content the visitor can actually see, so the questions have to be on the
+   page. Native <details> keeps every answer in the server-rendered HTML. */
+function Faq() {
+  return (
+    <section className="sec full" id="faq">
+      <div className="wrap">
+        <div className="head">
+          <div data-stagger="80">
+            <p className="lbl r">Common questions</p>
+            <h2 className="d2 r">Straight answers.</h2>
+          </div>
+        </div>
+        <div className="faq r">
+          {FAQ_ITEMS.map((item) => (
+            <details key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
