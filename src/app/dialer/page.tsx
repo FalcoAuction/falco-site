@@ -306,6 +306,12 @@ export default async function DialerQueuePage({
           >
             Drafts
           </Link>
+            <Link
+              href="/dialer/surplus"
+              className="rounded-md border border-white/12 px-3 py-1.5 text-[12px] text-white/70 hover:border-white/30 hover:text-white transition-colors"
+            >
+              Surplus watch
+            </Link>
           <CountyFilter options={countyOptions} selected={countyFilter} />
           <DistressFilter options={distressOptions} selected={distressFilter} />
         </div>

@@ -19,6 +19,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 const CLOSING = 5000
 
+// Auction.com Q2 2026 (~40% of all US foreclosure auctions): third-party
+// buyers paid an average 67.6% of retail value, and nearly 5,000 of the
+// 10,000+ properties taken to auction sold to a third party rather than
+// reverting to the lender. So "the trustee sale leaves you nothing" is
+// only true for the roughly half that go back to the bank. Where the
+// homeowner has real equity, a third-party bid often clears the debt and
+// the excess is surplus that legally belongs to them.
+const FORECLOSURE_BID_RATIO = 0.676
+
 const usd = (n: number) =>
   "$" + Math.round(Math.max(n, 0)).toLocaleString("en-US")
 
@@ -383,8 +392,11 @@ function Ledger() {
     const cash = 0.65 * value - owed
     const lo = 0.8 * value - owed - CLOSING
     const hi = 0.88 * value - owed - CLOSING
+    // What a third-party bidder at auction would likely leave behind
+    // once the debt is paid. Zero when the debt swallows the bid.
+    const surplus = Math.max(0, FORECLOSURE_BID_RATIO * value - owed)
     const scale = Math.max(hi, cash, 1)
-    return { owed, cash, lo, hi, scale }
+    return { owed, cash, lo, hi, surplus, scale }
   }, [value, ltv])
 
   const pickMedian = useCallback((v: number) => setValue(v), [])
@@ -485,11 +497,22 @@ function Ledger() {
               <div className="res">
                 <div className="row r-zero">
                   <span className="nm">Trustee sale runs</span>
-                  <span className="vv">$0</span>
-                  <span className="sub">
-                    The bank takes it for the loan balance.
+                  <span className="vv">
+                    {m.surplus > 0 ? `$0 – ${usd(m.surplus)}` : "$0"}
                   </span>
-                  <span className="bar">
+                  <span className="sub">
+                    {m.surplus > 0
+                      ? "Nothing if the bank takes it back, which is about half of sales. If a bidder clears your debt the surplus is yours, but you have to claim it and it takes months."
+                      : "The bank takes it for the loan balance."}
+                  </span>
+                  <span
+                    className="bar"
+                    style={
+                      {
+                        "--w": `${((m.surplus / m.scale) * 100).toFixed(1)}%`,
+                      } as React.CSSProperties
+                    }
+                  >
                     <i />
                   </span>
                 </div>
@@ -551,7 +574,10 @@ function Ledger() {
 
         <p className="disc">
           Illustrative, not an appraisal or an offer. Your real numbers depend
-          on condition, title, lien position and the sale date.
+          on condition, title, lien position and the sale date. Trustee-sale
+          range assumes a third-party bidder at 67.6% of value, the Q2 2026
+          national average reported by Auction.com; surplus is paid only
+          after junior liens and only if you claim it.
         </p>
       </div>
     </section>

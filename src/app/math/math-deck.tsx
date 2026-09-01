@@ -20,8 +20,12 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * aria-live on the stage. prefers-reduced-motion keeps the mechanic but
  * swaps transforms/blur for plain fades.
  *
- * The numbers deliberately match the homepage three-exits table
- * ($500K home / $300K loan / $0 / ~$25K / ~$130K): one consistent story.
+ * The numbers deliberately match the homepage ledger: one consistent
+ * story. The trustee-sale beats are deliberately not a flat "$0" —
+ * roughly half of foreclosure auctions sell to a third party rather than
+ * reverting to the lender, and where the owner has equity that bid often
+ * clears the debt and leaves claimable surplus. Saying "you get nothing"
+ * is the kind of overstatement this company exists to argue against.
  */
 
 type Tone = "white" | "dim" | "emerald" | "red" | "amber"
@@ -60,13 +64,22 @@ const SCRIPT: Beat[] = [
   {
     overline: "Exit one · Do nothing",
     line: "The trustee sale takes about 60 seconds on the courthouse steps.",
-    sub: "The house typically goes for what's owed on it.",
+    sub: "About half the time nobody outbids the bank, and it takes the house for the loan balance.",
   },
   {
-    line: "What you walk away with:",
+    line: "Then you walk away with:",
     num: { value: 0, tone: "red" },
-    sub: "Occasionally a surplus exists. Most people get nothing.",
+    sub: "That is the outcome roughly half of these sales end in.",
     tint: "red",
+  },
+  {
+    line: "The other half, a bidder shows up and clears your debt.",
+    sub: "In Q2 2026 buyers at foreclosure auction paid about 67.6% of value, so on this house that is a bid near $338,000.",
+  },
+  {
+    line: "Whatever is left after the debt is surplus. It is yours.",
+    num: { value: 38_000, tone: "amber", approx: true },
+    sub: "But only after junior liens, only if you file a claim, and usually months later. Most people never claim it.",
   },
   {
     overline: "Exit two · The cash buyer",
