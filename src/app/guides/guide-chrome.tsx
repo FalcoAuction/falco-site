@@ -47,7 +47,7 @@ export function GuideShell({
         <Link href="/" className="hover:text-[var(--mocha)]">
           Home
         </Link>
-        <span className="mx-2 text-[var(--rule-strong)]">/</span>
+        <span className="mx-2 text-[var(--ink-faint)]">/</span>
         <Link href="/guides" className="hover:text-[var(--mocha)]">
           Guides
         </Link>
@@ -69,7 +69,7 @@ export function GuideShell({
             Patrick Yuri Armour
           </span>
           <span>Licensed Tennessee Auctioneer</span>
-          <span className="text-[var(--rule-strong)]">·</span>
+          <span className="text-[var(--ink-faint)]">·</span>
           <span>Updated {updated}</span>
         </div>
       </section>

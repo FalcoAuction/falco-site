@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Ported design system from the new FALCO site (light ground, dark
+   plates, Inter, no accent). Loaded before our own rules so Tailwind
+   utilities and the overrides below can still win where needed. */
+@import "./falco-design.css";
 
 :root {
   --background: #ffffff;
@@ -7,30 +11,34 @@
   --falco-accent-strong-rgb: 52 211 153;
   --falco-accent-ink: #03110b;
 
-  /* ── Editorial palette, molded to the hero footage ─────────────
-     Sampled the stitched drone reel: it averages warm olive-moss
-     greens (#606c56, #5e614a) and warm taupes. So the ground is a
-     warm ivory and the accent is a deep foliage green pulled from
-     the trees in the footage, with golden-hour light as the warm
-     secondary. Deep green also returns FALCO to its own brand color,
-     matured out of the old neon emerald. */
-  --paper: #f7f6f1;        /* page ground, warm ivory */
+  /* ── Design system, ported from the new FALCO site ─────────────
+     "Light ground, rounded dark plates, one typeface, no accent."
+     The canonical values live in falco-design.css as --page/--plate/
+     etc. The names below are what the 40 existing pages (counties,
+     guides, forms, legal) already reference, so re-pointing them here
+     reskins every one of those pages without touching them. */
+  --paper: #f3f2f0;        /* page ground */
   --paper-raised: #ffffff; /* cards */
-  --ink: #16180f;          /* headings / strong text, warm near-black */
-  --ink-soft: #454a3c;     /* body text, warm olive-gray */
-  --ink-faint: #6e7263;    /* captions / labels */
-  --rule: #e5e3d9;         /* hairlines */
-  --rule-strong: #d3d1c4;
-  --gold: #a8812f;         /* golden-hour light, warm secondary */
+  --ink: #0c0c0b;          /* headings / strong text */
+  --ink-soft: #6d6c66;     /* body text */
+  /* Their --muted-2 (#8e8d86) is 2.98:1 on this ground: fine for the
+     decorative use it gets on the static site, but our templates use
+     --ink-faint for real caption text (bylines, breadcrumbs), so it
+     resolves to their --muted, which clears AA at 4.65:1. */
+  --ink-faint: #6d6c66;    /* captions / labels */
+  --rule: rgba(12, 12, 11, 0.07);
+  --rule-strong: rgba(12, 12, 11, 0.12);
+  --gold: #6d6c66;         /* no accent in this system: fall back to muted */
 
-  /* The accent. Templates reference --mocha throughout; kept as an
-     alias so the whole system remoulds from these two lines. */
-  --accent: #3e5233;       /* deep foliage green from the footage */
-  --accent-deep: #2c3b24;  /* hover / darker */
+  /* This design has no accent colour by design. Everything that used
+     to be green resolves to ink, which is what its own buttons and
+     links do. --oxblood keeps the one real colour: loss. */
+  --accent: #0c0c0b;
+  --accent-deep: #000000;
   --mocha: var(--accent);
   --mocha-deep: var(--accent-deep);
-  --mocha-wash: rgba(62, 82, 51, 0.08);
-  --oxblood: #8b3220;      /* semantic: equity-erasure moment */
+  --mocha-wash: rgba(12, 12, 11, 0.05);
+  --oxblood: #8d3f31;      /* semantic: equity-erasure moment */
 }
 
 @theme inline {
@@ -41,16 +49,14 @@
   --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* No dark-mode inversion: this design system is a single light theme.
+   The old block flipped --foreground to near-white, which the body rule
+   below then applied over the light ground, making text invisible for
+   anyone whose OS is set to dark. */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--page);
+  color: var(--ink);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -58,14 +64,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Display serif on the large headings only. Cormorant Garamond is a
-   high-contrast old-style serif: gorgeous at display sizes, too delicate
-   for small text, so h3 stays on the sans (set per-component). */
-h1, h2 {
-  font-family: var(--font-display), Georgia, "Times New Roman", serif;
-  letter-spacing: 0;
-  font-weight: 600;
-}
+/* This design system is single-typeface (Inter). Heading weight and
+   tracking come from falco-design.css; no display serif anywhere. */
 
 /* ================================================================
    MOTION SYSTEM — editorial, La Masion-caliber.

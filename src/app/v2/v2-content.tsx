@@ -1,51 +1,68 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import FaqSection from "./faq-section"
-import { HeroVideoBg } from "./section-video-bg"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * Homepage, rebuilt to mirror the La Masion editorial real-estate layout,
- * made FALCO. Normal scrolling page (no snap), warm ivory ground to match
- * the content pages, with the cinematic dark video as the one dark moment
- * in the hero. Section rhythm mirrors the reference:
- *   hero -> stat band -> services (3 lanes) -> featured counties ->
- *   why-trust (numbered) -> the math -> FAQ -> CTA -> footer.
+ * Homepage, ported from the standalone static build into Next.js.
+ *
+ * Markup and class names match falco-design.css one-for-one so the design
+ * is identical; the behaviours that were plain-JS on the static site are
+ * reimplemented here as React:
+ *   - .r  -> .in       reveal-on-scroll (data-stagger cascade)
+ *   - data-count       count-up figures
+ *   - data-src         lazy video (mobile gets the lighter cut)
+ *   - the ledger       interactive three-exit calculator
+ * Links point at real app routes instead of the static .html files.
  */
 
-// Reveal each .reveal element as it scrolls into view (whole page).
-function useScrollReveal() {
+const CLOSING = 5000
+
+const usd = (n: number) =>
+  "$" + Math.round(Math.max(n, 0)).toLocaleString("en-US")
+
+/* Reveal: adds .in to .r elements as they enter, cascading within a
+   [data-stagger] group the way the static build did. */
+function useReveals() {
   useEffect(() => {
-    const targets = document.querySelectorAll(".reveal, .reveal-line")
-    if (!targets.length) return
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".r"))
+    if (!els.length) return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      els.forEach((el) => el.classList.add("in"))
+      return
+    }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-visible")
-            io.unobserve(e.target)
+          if (!e.isIntersecting) continue
+          const el = e.target as HTMLElement
+          const group = el.closest<HTMLElement>("[data-stagger]")
+          let delay = 0
+          if (group) {
+            const step = Number(group.dataset.stagger || 0)
+            const sibs = Array.from(group.querySelectorAll(".r"))
+            delay = sibs.indexOf(el) * step
           }
+          window.setTimeout(() => el.classList.add("in"), delay)
+          io.unobserve(el)
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     )
-    for (const t of targets) io.observe(t)
+    els.forEach((el) => io.observe(el))
     return () => io.disconnect()
   }, [])
 }
 
-// Count 0 -> target when the element scrolls into view.
-function useCountUp(target: number, ms = 1100) {
+/* Count-up for the hero figures. */
+function Count({ to, dur = 1100 }: { to: number; dur?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
-  const [val, setVal] = useState(0)
+  const [n, setN] = useState(to)
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setVal(target)
-      return
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    setN(0)
     let raf = 0
     const io = new IntersectionObserver(
       (entries) => {
@@ -53,231 +70,261 @@ function useCountUp(target: number, ms = 1100) {
         io.disconnect()
         const t0 = performance.now()
         const tick = (t: number) => {
-          const p = Math.min(1, (t - t0) / ms)
-          setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+          const p = Math.min(1, (t - t0) / dur)
+          setN(Math.round(to * (1 - Math.pow(1 - p, 3))))
           if (p < 1) raf = requestAnimationFrame(tick)
         }
         raf = requestAnimationFrame(tick)
       },
-      { threshold: 0.6 }
+      { threshold: 0.5 }
     )
     io.observe(el)
     return () => {
       io.disconnect()
       cancelAnimationFrame(raf)
     }
-  }, [target, ms])
-  return { ref, val }
+  }, [to, dur])
+  return <span ref={ref}>{n}</span>
 }
 
-export default function V2Content() {
-  useScrollReveal()
-
+/* Lazy video: mounts the source only near the viewport, and serves the
+   lighter mobile cut on narrow screens. */
+function LiteVideo({
+  src,
+  srcMob,
+  poster,
+  className,
+}: {
+  src: string
+  srcMob?: string
+  poster: string
+  className?: string
+}) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const [mounted, setMounted] = useState(false)
+  const [chosen, setChosen] = useState(src)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const narrow = window.matchMedia("(max-width: 820px)").matches
+    type Conn = { saveData?: boolean; effectiveType?: string }
+    const c = (navigator as Navigator & { connection?: Conn }).connection
+    if (c?.saveData || (c?.effectiveType && ["slow-2g", "2g"].includes(c.effectiveType))) return
+    setChosen(narrow && srcMob ? srcMob : src)
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setMounted(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: "300px 0px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [src, srcMob])
   return (
-    <div className="bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
-      <SiteHeader />
-      <Hero />
-      <StatBand />
-      <Services />
-      <FeaturedCounties />
-      <WhyTrust />
-      <TheMath />
-      <HomeFaq />
-      <ClosingCta />
-      <SiteFooter />
-    </div>
+    <video
+      ref={ref}
+      className={className}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="none"
+      aria-hidden="true"
+    >
+      {mounted && <source src={chosen} type="video/mp4" />}
+    </video>
   )
 }
 
-/* ── Sticky header: translucent ivory over the hero and the page alike ── */
-function SiteHeader() {
+export default function V2Content() {
+  useReveals()
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_82%,transparent)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-10">
-        <Link
-          href="/"
-          className="text-[15px] md:text-[16px] font-semibold tracking-[0.32em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
-        >
-          FALCO
+    <>
+      <Nav />
+      <main id="main">
+        <Hero />
+        <WhyWeExist />
+        <ThreeWaysIn />
+        <Ledger />
+        <ThreeSteps />
+        <Incentive />
+        <ClosingCta />
+      </main>
+      <Foot />
+    </>
+  )
+}
+
+function Nav() {
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 8)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+  return (
+    <header className={`nav${stuck ? " stuck" : ""}`}>
+      <Link className="brand" href="/">
+        FALCO
+      </Link>
+      <nav>
+        <Link href="/homeowners">Homeowners</Link>
+        <Link href="/buyers">Buyers</Link>
+        <Link href="/partners">Partners</Link>
+        <Link href="/foreclosure">Counties</Link>
+        <Link href="/guides">Guides</Link>
+        <Link className="pill light" href="/homeowners">
+          Get your numbers <sub>→</sub>
         </Link>
-        <nav className="flex items-center gap-6 text-[14px] text-[var(--ink-soft)]">
-          <Link href="/homeowners" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
-            Homeowners
-          </Link>
-          <Link href="/buyers" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
-            Buyers
-          </Link>
-          <Link href="/partners" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
-            Auction partners
-          </Link>
-          <Link href="/guides" className="hidden md:inline hover:text-[var(--mocha)] transition-colors">
-            Guides
-          </Link>
-          <a
-            href="mailto:falco@falco.llc"
-            className="rounded-md bg-[var(--ink)] px-4 py-2 text-[13px] font-medium text-[var(--paper)] hover:bg-[var(--mocha)] transition-colors"
-          >
-            Talk to us
-          </a>
-        </nav>
-      </div>
+      </nav>
     </header>
   )
 }
 
-/* ── Hero: cinematic dark video, giant serif headline, two actions ── */
 function Hero() {
   return (
-    <section className="relative isolate flex min-h-[86vh] items-center overflow-hidden bg-[#0e1109]">
-      {/* Full-colour stitched drone reel (five Tennessee neighbourhood
-          scenes, cross-faded). Only a slight lift in saturation and a
-          very slow ambient drift so the frame is never static. */}
-      <div className="hero-media absolute inset-0 -z-30 [filter:saturate(1.12)_contrast(1.04)]">
-        <HeroVideoBg src="/video/hero-loop.mp4" poster="/video/hero-poster.jpg" opacity={1} />
-      </div>
-      <div className="hero-veil absolute inset-0 -z-20 bg-gradient-to-b from-[#0e1109]/60 via-[#0e1109]/25 to-[#0e1109]/88" />
-      <div className="hero-veil absolute inset-0 -z-20 bg-[radial-gradient(ellipse_at_center,transparent_52%,rgba(14,17,9,0.5)_100%)]" />
-
-      <div className="mx-auto w-full max-w-6xl px-6 md:px-10 py-24 md:py-28">
-        <div className="max-w-3xl">
-          <div className="hero-in hero-in-1 text-[12px] uppercase tracking-[0.28em] text-[#cbd6a8] font-medium">
-            Tennessee · Distressed property, handled
-          </div>
-          <h1 className="hero-in hero-in-2 mt-6 font-[family-name:var(--font-display)] text-[52px] md:text-[92px] leading-[0.98] font-semibold text-white text-balance">
-            Foreclosure?{" "}
-            <span className="italic text-[#dfe8c4]">Keep your equity.</span>
-          </h1>
-          <p className="hero-in hero-in-3 mt-7 max-w-xl text-[17px] md:text-[19px] leading-[1.55] text-white/80">
-            From the first notice to sale day, we help Tennessee homeowners sell
-            through a licensed marketed auction before the trustee sale, and keep
-            the equity that auction would otherwise erase.
+    <section className="hero full">
+      <div className="hcard">
+        <div className="hcopy" data-stagger="90">
+          <h1 className="d1 r">Built to keep your equity.</h1>
+          <p className="lede r">
+            We find Tennessee homes headed for the courthouse and route them to
+            a marketed auction, before the trustee sale takes what you&apos;ve
+            spent years building.
           </p>
-          <div className="hero-in hero-in-4 mt-9 flex flex-wrap items-center gap-4">
-            <Link
-              href="/homeowners"
-              className="inline-flex items-center gap-2 rounded-md bg-[var(--paper)] px-7 py-3.5 text-[15px] font-semibold text-[var(--ink)] hover:bg-white hover:-translate-y-0.5 transition-all duration-300"
-            >
-              See your numbers →
+          <div className="pills r">
+            <Link className="pill light" href="/homeowners">
+              Get your numbers <sub>→</sub>
             </Link>
-            <a
-              href="#how"
-              className="inline-flex items-center gap-2 rounded-md border border-white/30 px-7 py-3.5 text-[15px] font-medium text-white hover:border-white/70 hover:-translate-y-0.5 transition-all duration-300"
-            >
-              How it works
+            <a className="pill line" href="#math">
+              See the math
             </a>
           </div>
         </div>
+        <div className="hmedia">
+          <div className="frame">
+            <LiteVideo
+              src="/media/hero.mp4"
+              srcMob="/media/hero-mob.mp4"
+              poster="/media/hero.jpg"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="hero-stats">
+        <div className="stats" data-stagger="90">
+          <div className="stat r">
+            <b>
+              <Count to={32} />
+            </b>
+            <span>Counties with a local guide.</span>
+          </div>
+          <div className="stat r">
+            <b>${<Count to={0} />}</b>
+            <span>Cost to the homeowner.</span>
+          </div>
+          <div className="stat r">
+            <b>45&ndash;75</b>
+            <span>Days from decision to closing.</span>
+          </div>
+          <div className="stat r">
+            <b>10%</b>
+            <span>Buyer&rsquo;s premium. They pay it, not you.</span>
+          </div>
+        </div>
       </div>
     </section>
   )
 }
 
-/* ── Stat band: thesis + count-up figures + established line ── */
-function StatBand() {
+function WhyWeExist() {
   return (
-    <section className="border-b border-[var(--rule)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-        <p className="reveal max-w-4xl font-[family-name:var(--font-display)] text-[28px] md:text-[44px] leading-[1.2] font-medium text-[var(--ink)] text-balance">
-          We read every trustee sale filing in Tennessee and call the homeowner,
-          usually before any cash buyer does.
-        </p>
-        <div className="stagger mt-14 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-6 border-t border-[var(--rule)] pt-12">
-          <div className="reveal">
-            <Stat n={100} suffix="+" label="Trustee filings read every week" />
+    <section className="sec full">
+      <div className="wrap">
+        <div className="split">
+          <div data-stagger="80">
+            <p className="lbl r">Why we exist</p>
+            <h2 className="d2 r">
+              Two of three ways
+              <br />
+              out end at zero.
+            </h2>
           </div>
-          <div className="reveal">
-            <Stat n={32} label="Tennessee counties covered" />
+          <div data-stagger="80">
+            <p className="lede r">
+              When a home heads for the courthouse the bank takes it, or a cash
+              buyer takes most of it. Both are the default.
+            </p>
+            <p className="lede r">
+              The third way, keeping the equity and still hitting the
+              lender&apos;s deadline, only happens if someone builds it. So we
+              did.
+            </p>
+            <p className="r">
+              <Link className="pill line" href="/manifesto">
+                Read the manifesto <sub>→</sub>
+              </Link>
+            </p>
           </div>
-          <div className="reveal">
-            <StatStatic value="$0" label="Cost to the homeowner" />
-          </div>
-          <div className="reveal">
-            <Stat n={10} suffix="%" label="Buyer's premium, they pay, not you" />
-          </div>
-        </div>
-        <div className="reveal mt-10 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)]">
-          Built in Tennessee · Licensed auctioneer · Est. 2026
         </div>
       </div>
     </section>
   )
 }
 
-function Stat({ n, label, suffix = "" }: { n: number; label: string; suffix?: string }) {
-  const { ref, val } = useCountUp(n)
-  return (
-    <div>
-      <div className="font-[family-name:var(--font-display)] text-[52px] md:text-[68px] leading-none font-semibold text-[var(--ink)] tabular-nums">
-        <span ref={ref}>{val}</span>
-        {suffix}
-      </div>
-      <div className="mt-3 text-[13px] md:text-[14px] leading-[1.4] text-[var(--ink-faint)] max-w-[22ch]">
-        {label}
-      </div>
-    </div>
-  )
-}
-
-function StatStatic({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <div className="font-[family-name:var(--font-display)] text-[52px] md:text-[68px] leading-none font-semibold text-[var(--mocha)] tabular-nums">
-        {value}
-      </div>
-      <div className="mt-3 text-[13px] md:text-[14px] leading-[1.4] text-[var(--ink-faint)] max-w-[22ch]">
-        {label}
-      </div>
-    </div>
-  )
-}
-
-/* ── Services: one team, three ways in (mirrors Buy / Sell / Rental) ── */
-function Services() {
+function ThreeWaysIn() {
   const lanes = [
     {
       href: "/homeowners",
-      kicker: "For homeowners",
-      title: "Sell before the sale",
-      body: "Facing a trustee sale? We run a licensed marketed auction before the courthouse date so the open market sets your price. No cost to you.",
-      cta: "See your numbers",
+      img: "/media/homeowner.jpg",
+      h: "Homeowners",
+      p: "There's a sale date on your house. Get all three numbers before you sign anything.",
+      cta: "Get my numbers",
     },
     {
       href: "/buyers",
-      kicker: "For buyers",
-      title: "First look at inventory",
-      body: "Equity-positive Tennessee properties, sourced at the courthouse-filing layer. Clean title, 10% buyer's premium. Bid and close.",
-      cta: "Get on the list",
+      img: "/media/house-single.jpg",
+      h: "Buyers",
+      p: "Equity-positive Tennessee homes with clean title. Before the MLS, before Auction.com.",
+      cta: "Register for access",
     },
     {
       href: "/partners",
-      kicker: "For auction partners",
-      title: "Inventory, delivered",
-      body: "Pre-qualified sellers routed to your block. You bring the license and execution. We bring the pipeline and educate the seller first.",
+      img: "/media/partner.jpg",
+      h: "Auction firms",
+      p: "Qualified sellers with verified equity and real deadlines. You run the sale.",
       cta: "Partner with us",
     },
   ]
   return (
-    <section id="how" className="scroll-mt-20 border-b border-[var(--rule)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-        <SectionHead eyebrow="What we do" title="One team, three ways in." />
-        <div className="stagger mt-12 grid gap-4 md:grid-cols-3 md:gap-5">
+    <section className="sec full">
+      <div className="wrap">
+        <div className="head">
+          <div data-stagger="80">
+            <p className="lbl r">Who you are</p>
+            <h2 className="d2 r">Three ways in.</h2>
+          </div>
+          <p className="lede note r">
+            Whichever one is yours, the numbers are on the table from the first
+            conversation.
+          </p>
+        </div>
+        <div className="grid3" data-stagger="90">
           {lanes.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="reveal group flex flex-col rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-7 md:p-8 transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-30px_rgba(17,17,17,0.4)]"
-            >
-              <div className="text-[11px] uppercase tracking-[0.2em] text-[var(--mocha)] font-semibold">
-                {l.kicker}
-              </div>
-              <h3 className="mt-4 font-[family-name:var(--font-display)] text-[28px] md:text-[32px] leading-tight font-semibold text-[var(--ink)]">
-                {l.title}
-              </h3>
-              <p className="mt-3 flex-1 text-[15px] leading-[1.6] text-[var(--ink-soft)]">
-                {l.body}
-              </p>
-              <span className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--mocha)] group-hover:gap-2.5 transition-all">
-                {l.cta} <span aria-hidden="true">→</span>
+            <Link className="tile r" key={l.href} href={l.href}>
+              <span className="media">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={l.img} alt="" loading="lazy" decoding="async" />
+              </span>
+              <h3 className="d3">{l.h}</h3>
+              <p>{l.p}</p>
+              <span className="pill line">
+                {l.cta} <sub>→</sub>
               </span>
             </Link>
           ))}
@@ -287,208 +334,243 @@ function Services() {
   )
 }
 
-/**
- * Looping aerial clip for a county card. Paints the poster instantly, then
- * lazy-mounts the video once the card nears the viewport and fades it in
- * over the poster. Six autoplaying videos would be brutal on cell, so
- * mobile / save-data / slow connections get the poster only.
- */
-function CardVideo({ src, poster, alt }: { src: string; poster: string; alt: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [play, setPlay] = useState(false)
+const MEDIANS = [
+  { label: "Davidson · $484k", v: 484000 },
+  { label: "Knox · $391k", v: 391000 },
+  { label: "Shelby · $222k", v: 222000 },
+]
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const narrow = window.matchMedia("(max-width: 767px)").matches
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    type Conn = { saveData?: boolean; effectiveType?: string }
-    const conn = (navigator as Navigator & { connection?: Conn }).connection
-    const slow =
-      conn?.saveData === true ||
-      (conn?.effectiveType ? ["slow-2g", "2g", "3g"].includes(conn.effectiveType) : false)
-    if (narrow || reduced || slow) return
+function Ledger() {
+  const [value, setValue] = useState(484000)
+  const [ltv, setLtv] = useState(60)
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setPlay(true)
-          io.disconnect()
-        }
-      },
-      { rootMargin: "300px 0px" }
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
+  const m = useMemo(() => {
+    const owed = Math.round(value * (ltv / 100))
+    const cash = 0.65 * value - owed
+    const lo = 0.8 * value - owed - CLOSING
+    const hi = 0.88 * value - owed - CLOSING
+    const scale = Math.max(hi, cash, 1)
+    return { owed, cash, lo, hi, scale }
+  }, [value, ltv])
+
+  const pickMedian = useCallback((v: number) => setValue(v), [])
 
   return (
-    <div ref={ref} className="absolute inset-0">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={poster}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover [filter:saturate(1.08)]"
-      />
-      {play && (
-        <video
-          className="absolute inset-0 h-full w-full object-cover [filter:saturate(1.08)] animate-[falcoFadeIn_600ms_ease_forwards]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          poster={poster}
-          aria-hidden="true"
-        >
-          <source src={src} type="video/mp4" />
-        </video>
-      )}
-    </div>
-  )
-}
-
-/* ── Featured counties: looping aerial clips, same reel as the hero ── */
-function FeaturedCounties() {
-  const counties = [
-    { slug: "davidson-county", name: "Davidson County", seat: "Nashville", clip: "card-2" },
-    { slug: "shelby-county", name: "Shelby County", seat: "Memphis", clip: "card-3" },
-    { slug: "knox-county", name: "Knox County", seat: "Knoxville", clip: "card-4" },
-    { slug: "hamilton-county", name: "Hamilton County", seat: "Chattanooga", clip: "card-6" },
-    { slug: "rutherford-county", name: "Rutherford County", seat: "Murfreesboro", clip: "card-1" },
-    { slug: "williamson-county", name: "Williamson County", seat: "Franklin", clip: "card-5" },
-  ]
-  return (
-    <section className="border-b border-[var(--rule)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-        <div className="flex items-end justify-between gap-6 flex-wrap">
-          <SectionHead
-            eyebrow="Where we work"
-            title="Foreclosure help, county by county."
-          />
-          <Link
-            href="/foreclosure"
-            className="reveal shrink-0 text-[14px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
-          >
-            All 32 counties →
-          </Link>
+    <section className="sec full" id="math">
+      <div className="wrap">
+        <div className="head">
+          <div data-stagger="80">
+            <p className="lbl r">The math</p>
+            <h2 className="d2 r">Run your numbers.</h2>
+          </div>
+          <p className="lede note r">
+            One house, three exits. Move the sliders. This is the same
+            arithmetic we put in writing on the first call.
+          </p>
         </div>
-        <div className="stagger mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {counties.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/foreclosure/${c.slug}`}
-              className="reveal group overflow-hidden rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] transition-all duration-300 hover:border-[var(--mocha)] hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-28px_rgba(17,17,17,0.42)]"
-            >
-              <div className="relative aspect-[16/11] overflow-hidden">
-                <CardVideo
-                  src={`/video/${c.clip}.mp4`}
-                  poster={`/video/${c.clip}.jpg`}
-                  alt={`Aerial view of a Tennessee residential neighbourhood`}
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0e1109]/40 via-transparent to-transparent" />
-                <div className="absolute left-4 top-4 rounded-full bg-[var(--paper)]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--mocha)] backdrop-blur-sm">
-                  {c.seat}
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="font-[family-name:var(--font-display)] text-[25px] leading-tight font-semibold text-[var(--ink)]">
-                  {c.name}
-                </div>
-                <div className="mt-1 text-[13px] text-[var(--ink-faint)]">
-                  Trustee sale location, notices, and your options
-                </div>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--mocha)] group-hover:gap-2.5 transition-all">
-                  View county guide <span aria-hidden="true">→</span>
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
 
-/* ── Why trust: numbered value props (mirrors "Why Thousands Trust") ── */
-function WhyTrust() {
-  const points = [
-    {
-      n: "01",
-      title: "Homeowner-side, not buyer-side",
-      body: "We don't buy your house. Cash buyers profit on the gap between what they pay you and what the home clears. We let the open market set the price.",
-    },
-    {
-      n: "02",
-      title: "The buyer pays our fee",
-      body: "Zero dollars out of pocket for you. No listing fee, no commission from your side. The auction is funded by a standard buyer's premium.",
-    },
-    {
-      n: "03",
-      title: "A licensed Tennessee auctioneer",
-      body: "A real, regulated marketed sale run by a state-licensed auction firm. Photos, advertising, a defined sale day, buyers competing on price.",
-    },
-    {
-      n: "04",
-      title: "We read every filing",
-      body: "Roughly 100 trustee sale notices are filed across Tennessee every week. We read them and reach the homeowner, often before any cash buyer.",
-    },
-  ]
-  return (
-    <section className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-        <SectionHead eyebrow="Why us" title="Why homeowners work with FALCO." />
-        <div className="stagger mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2">
-          {points.map((p) => (
-            <div key={p.n} className="reveal flex gap-6">
-              <div className="font-[family-name:var(--font-display)] text-[30px] leading-none font-semibold text-[var(--mocha)] tabular-nums pt-1">
-                {p.n}
-              </div>
-              <div>
-                <h3 className="font-[family-name:var(--font-display)] text-[24px] md:text-[27px] leading-tight font-semibold text-[var(--ink)]">
-                  {p.title}
-                </h3>
-                <p className="mt-2 text-[15px] leading-[1.65] text-[var(--ink-soft)] max-w-[46ch]">
-                  {p.body}
-                </p>
+        <div className="ledger r" id="ledger">
+          <div className="lg-top">
+            <div>
+              <p className="lbl" style={{ marginBottom: 12 }}>
+                Start from a county median
+              </p>
+              <div className="chips">
+                {MEDIANS.map((c) => (
+                  <button
+                    key={c.v}
+                    className="chip"
+                    type="button"
+                    aria-pressed={value === c.v}
+                    onClick={() => pickMedian(c.v)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ── The math (real, verifiable transparency in place of testimonials) ── */
-function TheMath() {
-  return (
-    <section className="border-b border-[var(--rule)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-        <div className="grid md:grid-cols-[1fr_1.1fr] gap-10 md:gap-16 items-center">
-          <div>
-            <SectionHead eyebrow="The math" title="Same house. Three ways out." />
-            <p className="reveal mt-6 text-[16px] md:text-[17px] leading-[1.6] text-[var(--ink-soft)] max-w-[46ch]">
-              A homeowner facing foreclosure is often sitting on six figures of
-              equity. Where it ends up depends only on the exit they choose.
+            <p className="xs" style={{ maxWidth: "28ch", margin: 0 }}>
+              Medians per Redfin and Zillow, December 2025.
             </p>
-            <Link
-              href="/math"
-              className="reveal mt-6 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
-            >
-              Walk the math, one number at a time →
+          </div>
+
+          <div className="lg-body">
+            <div className="lg-in">
+              <div className="fld">
+                <div className="top">
+                  <label htmlFor="lgValue">What it&apos;s worth</label>
+                  <output id="lgValueOut">{usd(value)}</output>
+                </div>
+                <input
+                  type="range"
+                  id="lgValue"
+                  min={80000}
+                  max={1500000}
+                  step={1000}
+                  value={value}
+                  onChange={(e) => setValue(+e.target.value)}
+                />
+              </div>
+              <div className="fld">
+                <div className="top">
+                  <label htmlFor="lgLtv">What&apos;s still owed</label>
+                  <output id="lgLtvOut">
+                    {usd(m.owed)} &middot; {ltv}%
+                  </output>
+                </div>
+                <input
+                  type="range"
+                  id="lgLtv"
+                  min={0}
+                  max={98}
+                  step={1}
+                  value={ltv}
+                  onChange={(e) => setLtv(+e.target.value)}
+                />
+              </div>
+
+              {/* Only claim the auction clears when it actually does. */}
+              {m.hi <= 0 ? (
+                <div className="warn">
+                  At this balance nothing clears the loan, not a cash offer and
+                  not an auction. That usually points toward a short sale, a
+                  loan modification or bankruptcy counsel instead. Call us
+                  anyway and we&apos;ll tell you straight what we see.
+                </div>
+              ) : m.cash < 0 ? (
+                <div className="warn">
+                  At this balance a cash buyer can&apos;t clear your loan. To
+                  make it work they&apos;d ask you to bring{" "}
+                  <strong>{usd(Math.abs(m.cash))}</strong> to closing, or they
+                  walk away. A marketed auction still clears it.
+                </div>
+              ) : null}
+            </div>
+
+            <div className="lg-out">
+              <div className="res">
+                <div className="row r-zero">
+                  <span className="nm">Trustee sale runs</span>
+                  <span className="vv">$0</span>
+                  <span className="sub">
+                    The bank takes it for the loan balance.
+                  </span>
+                  <span className="bar">
+                    <i />
+                  </span>
+                </div>
+                <div className="row r-cash">
+                  <span className="nm">Fast-cash offer</span>
+                  <span className="vv">{usd(m.cash)}</span>
+                  <span className="sub">
+                    About 65% of value, less what you owe.
+                  </span>
+                  <span
+                    className="bar"
+                    style={
+                      {
+                        "--w": `${((Math.max(m.cash, 0) / m.scale) * 100).toFixed(1)}%`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <i />
+                  </span>
+                </div>
+                <div className="row r-auct">
+                  <span className="nm">Marketed auction</span>
+                  <span className="vv">
+                    {m.hi <= 0 ? "$0" : `${usd(m.lo)} – ${usd(m.hi)}`}
+                  </span>
+                  <span className="sub">
+                    Open bidding through a state-licensed firm, less loan and
+                    closing.
+                  </span>
+                  <span
+                    className="bar"
+                    style={
+                      {
+                        "--w": `${((Math.max(m.hi, 0) / m.scale) * 100).toFixed(1)}%`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <i />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg-foot">
+            <p className="sm" style={{ margin: 0, maxWidth: "46ch" }}>
+              The gap between those last two,{" "}
+              <strong style={{ color: "var(--ink)" }}>
+                {usd(Math.max(m.hi, 0) - Math.max(m.cash, 0))}
+              </strong>
+              , isn&apos;t a service fee. It&apos;s the price of speed, paid out
+              of your pocket.
+            </p>
+            <Link className="pill light" href="/math">
+              Show the math <sub>→</sub>
             </Link>
           </div>
+        </div>
 
-          <div className="reveal rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] overflow-hidden">
-            <div className="px-6 pt-4 pb-2 text-[11px] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
-              Example: $500K home, $300K loan balance
-            </div>
-            <Row label="Do nothing → trustee sale" value="$0" tone="oxblood" />
-            <Row label="Take a fast-cash offer at 65%" value="~$25K" tone="amber" />
-            <Row label="List with us → marketed auction" value="~$130K" tone="mocha" highlight />
+        <p className="disc">
+          Illustrative, not an appraisal or an offer. Your real numbers depend
+          on condition, title, lien position and the sale date.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function ThreeSteps() {
+  const steps = [
+    {
+      n: "Step 01",
+      h: "We read the filings",
+      p: "Trustee notices are public record. We read them daily, so we reach you while there's still time.",
+    },
+    {
+      n: "Step 02",
+      h: "You get all three numbers",
+      p: "A free 15-minute call: what the trustee sale, a cash offer and an auction each leave you. In writing.",
+    },
+    {
+      n: "Step 03",
+      h: "We sell before the date",
+      p: "A state-licensed Tennessee firm runs the sale, timed to close ahead of your trustee date.",
+    },
+  ]
+  return (
+    <section className="sec full">
+      <div className="wrap">
+        <div className="head">
+          <div data-stagger="80">
+            <p className="lbl r">How it works</p>
+            <h2 className="d2 r">Three steps.</h2>
+          </div>
+          <p className="lede note r">
+            Stop after any one of them. Nothing is owed either way.
+          </p>
+        </div>
+        <div className="fcard plate r">
+          <div className="steps" data-stagger="90">
+            {steps.map((s) => (
+              <div className="step r" key={s.n}>
+                <p className="lbl">{s.n}</p>
+                <h3 className="d3">{s.h}</h3>
+                <p>{s.p}</p>
+              </div>
+            ))}
+          </div>
+          <div className="r plate-foot">
+            <p className="sm" style={{ margin: 0 }}>
+              Every filing we can reach, across Tennessee, every business day.
+            </p>
+            <Link className="pill light" href="/homeowners">
+              Get your numbers <sub>→</sub>
+            </Link>
           </div>
         </div>
       </div>
@@ -496,99 +578,83 @@ function TheMath() {
   )
 }
 
-function Row({
-  label,
-  value,
-  tone,
-  highlight = false,
-}: {
-  label: string
-  value: string
-  tone: "oxblood" | "amber" | "mocha"
-  highlight?: boolean
-}) {
-  const color =
-    tone === "oxblood"
-      ? "text-[var(--oxblood)]"
-      : tone === "amber"
-        ? "text-[#8a6d1f]"
-        : "text-[var(--mocha)]"
+function Incentive() {
   return (
-    <div
-      className={`flex items-center justify-between gap-4 px-6 py-4 border-t border-[var(--rule)] ${
-        highlight ? "bg-[var(--mocha-wash)]" : ""
-      }`}
-    >
-      <span className="text-[15px] text-[var(--ink-soft)]">{label}</span>
-      <span className={`font-[family-name:var(--font-display)] text-[28px] md:text-[32px] font-semibold tabular-nums ${color}`}>
-        {value}
-      </span>
-    </div>
-  )
-}
-
-/* ── FAQ — kept so the FAQPage schema mirrors visible content ── */
-function HomeFaq() {
-  return (
-    <section className="border-b border-[var(--rule)]">
-      <div className="mx-auto max-w-3xl px-6 md:px-10 py-16 md:py-24">
-        <SectionHead eyebrow="Common questions" title="Straight answers." />
-        <div className="reveal mt-10">
-          <FaqSection />
+    <section className="sec full">
+      <div className="wrap">
+        <div className="split">
+          <div data-stagger="80">
+            <p className="lbl r">The incentive</p>
+            <h2 className="d2 r">
+              We don&apos;t buy
+              <br />
+              your house.
+            </h2>
+          </div>
+          <div data-stagger="80">
+            <p className="lede r">
+              If we did, every dollar we made on the spread would be a dollar
+              out of your equity.
+            </p>
+            <p className="lede r">
+              Instead we&apos;re paid from the buyer&apos;s premium, the way
+              auction houses have been paid for two hundred years. So we have no
+              reason to push your price down and every reason to push it up.
+            </p>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-/* ── Closing CTA band ── */
 function ClosingCta() {
   return (
-    <section className="mx-auto max-w-6xl px-6 md:px-10 py-16 md:py-24">
-      <div className="rounded-2xl bg-[var(--ink)] px-8 py-14 md:px-16 md:py-20 text-center">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-[#c2b16a] font-semibold">
-          Facing a sale date?
-        </div>
-        <h2 className="mx-auto mt-4 max-w-2xl font-[family-name:var(--font-display)] text-[34px] md:text-[52px] leading-[1.08] font-semibold text-[var(--paper)] text-balance">
-          Get your numbers before you take any cash offer.
-        </h2>
-        <p className="mx-auto mt-5 max-w-xl text-[15px] md:text-[16px] leading-[1.6] text-[color-mix(in_oklab,var(--paper)_72%,transparent)]">
-          Free 15-minute call. We show you what your home would likely clear at a
-          marketed auction versus the trustee sale. No cost, no pressure, no
-          obligation to sell.
-        </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href="/homeowners"
-            className="inline-flex items-center gap-2 rounded-md bg-[var(--mocha)] px-7 py-3.5 text-[15px] font-semibold text-white hover:bg-[var(--mocha-deep)] transition-colors"
+    <section className="sec full">
+      <div className="wrap">
+        <div className="fcard plate r" style={{ textAlign: "center" }}>
+          <h2 className="d2" style={{ margin: "0 auto", maxWidth: "18ch" }}>
+            Get the math before
+            <br />
+            you sign anything.
+          </h2>
+          <p
+            className="lede"
+            style={{ margin: "18px auto 0", maxWidth: "52ch" }}
           >
-            See your numbers →
-          </Link>
-          <a
-            href="mailto:falco@falco.llc"
-            className="text-[14px] text-[color-mix(in_oklab,var(--paper)_70%,transparent)] hover:text-[var(--paper)]"
+            Thirty minutes to learn what your house would actually clear is the
+            highest-paying half hour you&apos;ll ever work. We&apos;ll do it
+            free, even if you go elsewhere.
+          </p>
+          <div
+            className="pills"
+            style={{ justifyContent: "center", marginTop: 26 }}
           >
-            or email falco@falco.llc
-          </a>
+            <Link className="pill light" href="/homeowners">
+              Get your numbers <sub>→</sub>
+            </Link>
+            <a className="pill line" href="mailto:falco@falco.llc">
+              falco@falco.llc
+            </a>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-/* ── Footer ── */
-function SiteFooter() {
-  const cols: Array<{ head: string; links: Array<{ href: string; label: string }> }> = [
+function Foot() {
+  const cols: Array<{ h: string; links: Array<{ href: string; label: string }> }> = [
     {
-      head: "Start here",
+      h: "Start here",
       links: [
         { href: "/homeowners", label: "Homeowners" },
         { href: "/buyers", label: "Buyers" },
-        { href: "/partners", label: "Auction partners" },
+        { href: "/partners", label: "Auction firms" },
       ],
     },
     {
-      head: "Learn",
+      h: "Learn",
       links: [
         { href: "/guides", label: "Guides" },
         { href: "/foreclosure", label: "Foreclosure by county" },
@@ -597,7 +663,7 @@ function SiteFooter() {
       ],
     },
     {
-      head: "Company",
+      h: "Company",
       links: [
         { href: "/inquiry", label: "Contact" },
         { href: "/privacy", label: "Privacy" },
@@ -607,64 +673,39 @@ function SiteFooter() {
     },
   ]
   return (
-    <footer className="border-t border-[var(--rule)] bg-[var(--paper-raised)]">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 py-16">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <footer className="foot">
+      <div className="wrap">
+        <div className="fgrid">
           <div>
-            <div className="text-[16px] font-semibold tracking-[0.32em] text-[var(--ink)]">
+            <Link className="brand" href="/">
               FALCO
-            </div>
-            <p className="mt-4 max-w-[30ch] text-[14px] leading-[1.6] text-[var(--ink-faint)]">
-              Tennessee distressed-property intelligence and auction routing. We
-              help homeowners keep the equity a foreclosure would take.
+            </Link>
+            <p className="sm" style={{ maxWidth: "30ch", marginTop: 14 }}>
+              Tennessee distressed property intelligence and auction routing.
+              Patrick Armour, TN Auctioneer #7622.
             </p>
-            <a
-              href="mailto:falco@falco.llc"
-              className="mt-4 inline-block text-[14px] font-medium text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
-            >
-              falco@falco.llc
-            </a>
+            <p className="sm" style={{ marginTop: 10 }}>
+              <a href="mailto:falco@falco.llc">falco@falco.llc</a>
+            </p>
           </div>
-          {cols.map((col) => (
-            <div key={col.head}>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)] font-semibold">
-                {col.head}
-              </div>
-              <ul className="mt-4 space-y-2.5">
-                {col.links.map((l) => (
+          {cols.map((c) => (
+            <div key={c.h}>
+              <p className="lbl">{c.h}</p>
+              <ul className="clist">
+                {c.links.map((l) => (
                   <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-[14px] text-[var(--ink-soft)] hover:text-[var(--mocha)] transition-colors"
-                    >
-                      {l.label}
-                    </Link>
+                    <Link href={l.href}>{l.label}</Link>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
-        <div className="mt-14 border-t border-[var(--rule)] pt-6 flex flex-wrap items-center justify-between gap-3 font-[family-name:var(--font-mono)] text-[12px] text-[var(--ink-faint)]">
-          <span>FALCO · Tennessee · Licensed auctioneer</span>
+        <div className="fbot">
           <span>© 2026 FALCO</span>
+          <span>Tennessee</span>
         </div>
       </div>
     </footer>
-  )
-}
-
-/* ── Shared section header ── */
-function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return (
-    <div className="max-w-2xl">
-      <div className="reveal flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
-        {eyebrow}
-        <span className="h-px w-12 bg-[var(--rule-strong)]" />
-      </div>
-      <h2 className="reveal-line mt-5 font-[family-name:var(--font-display)] text-[36px] md:text-[54px] leading-[1.04] font-semibold text-[var(--ink)] text-balance">
-        {title}
-      </h2>
-    </div>
   )
 }

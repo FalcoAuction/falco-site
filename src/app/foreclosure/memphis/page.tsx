@@ -66,7 +66,7 @@ export default function MemphisForeclosurePage() {
 
         <nav aria-label="Breadcrumb" className="mx-auto max-w-3xl px-6 pt-8 md:px-10 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.04em] text-[var(--ink-faint)]">
           <Link href="/" className="hover:text-[var(--mocha)]">Home</Link>
-          <span className="mx-2 text-[var(--rule-strong)]">/</span>
+          <span className="mx-2 text-[var(--ink-faint)]">/</span>
           <Link href="/foreclosure" className="hover:text-[var(--mocha)]">Foreclosure by county</Link>
         </nav>
 
@@ -89,7 +89,7 @@ export default function MemphisForeclosurePage() {
           <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[var(--rule)] pt-5 text-[13px] text-[var(--ink-faint)]">
             <span className="font-semibold text-[var(--ink-soft)]">Patrick Yuri Armour</span>
             <span>Licensed Tennessee Auctioneer</span>
-            <span className="text-[var(--rule-strong)]">·</span>
+            <span className="text-[var(--ink-faint)]">·</span>
             <span>Updated July 2026</span>
           </div>
         </section>

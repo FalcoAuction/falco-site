@@ -1,29 +1,16 @@
 import type { Metadata } from "next";
-import { DM_Sans, Cormorant_Garamond, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import LoadingScreen from "./loading-screen";
 import "./globals.css";
 
-// Body / UI: DM Sans — clean, warm geometric sans. The workhorse voice,
-// paired with the display serif the way a serious property brand pairs
-// them (per the La Masion editorial direction).
-const dmSans = DM_Sans({
+// The ported design system is single-typeface: Inter, self-hosted by
+// next/font so there is no render-blocking Google Fonts request (the
+// static site linked fonts.googleapis.com in <head>).
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-// Display / headlines: Cormorant Garamond — an elegant, high-contrast
-// old-style serif. Reserved for large display sizes where its delicacy
-// reads as luxury and authority, not weakness. This is the face that
-// carries the "established firm" credibility on the warm ivory ground.
-const cormorant = Cormorant_Garamond({
-  variable: "--font-display",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
 });
 
 const geistMono = Geist_Mono({
@@ -111,7 +98,7 @@ export default function RootLayout({
           media="(min-width: 768px)"
         />
       </head>
-      <body className={`${dmSans.variable} ${cormorant.variable} ${geistMono.variable}`}>
+      <body className={`${inter.variable} ${geistMono.variable}`}>
         <LoadingScreen />
         {children}
         {/* Google Analytics 4. Loaded afterInteractive so it never blocks
