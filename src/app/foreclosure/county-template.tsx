@@ -40,8 +40,12 @@ export type CountyData = {
 
 export function countyMetadata(d: CountyData) {
   return {
-    title: `Foreclosure in ${d.county} County, TN: Trustee Sales & Your Options | FALCO`,
-    description: `How foreclosure and trustee sales work in ${d.county} County (${d.seat}), Tennessee: where the sale is held, where notices are published, who to contact about surplus funds, and how to sell before the sale to keep your equity.`,
+    // Kept under ~60 chars so Google does not truncate it, with the
+    // county first because that is what people actually search.
+    // The old title ran 76 characters and was being cut mid-phrase.
+    title: `${d.county} County, TN Foreclosure Help | FALCO`,
+    // ~155 chars: the previous one ran past 220 and was clipped.
+    description: `How trustee sales work in ${d.county} County (${d.seat}), TN: where the sale is held, where notices run, and how to sell first and keep your equity.`,
     alternates: { canonical: `/foreclosure/${d.slug}` },
   }
 }
