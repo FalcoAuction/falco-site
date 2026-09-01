@@ -470,5 +470,8 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
    The dialer and admin are dense working tools: they keep their
    own link colors and skip the grain layer.
    ============================================================ */
-.falco-app a { color: revert; }
+/* `color: revert` gave links the browser default blue inside the dialer,
+   which is worse than the inherit it was protecting against. The dialer
+   sets its own link colours with utility classes, so inheriting is right. */
+.falco-app a { color: inherit; }
 .falco-app { position: relative; z-index: 9001; }
