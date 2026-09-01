@@ -1,3 +1,7 @@
+// Hard boundary: importing this from a client component is a build
+// error, so the service-role client can never reach the browser.
+import "server-only"
+
 import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()

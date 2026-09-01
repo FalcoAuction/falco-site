@@ -7,70 +7,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin"
 // so they can act on them. But we do shape them into a consistent envelope.
 // ============================================================================
 
-export type LeadKind = "homeowner" | "pipeline" | "buyer" | "partner" | "inquiry"
-
-export type LeadStatus =
-  | "new"
-  | "contacted"
-  | "qualified"
-  | "listed"
-  | "closed"
-  | "lost"
-
-export const LEAD_STATUSES: LeadStatus[] = [
-  "new",
-  "contacted",
-  "qualified",
-  "listed",
-  "closed",
-  "lost",
-]
-
-export type Lead = {
-  id: string
-  kind: LeadKind
-  submittedAt: string // ISO
-  email: string
-  name: string
-  /** Compact one-line subtitle for the table row. */
-  summary: string
-  /** Full details map for the expanded view. */
-  details: Array<{ label: string; value: string }>
-  // Workflow fields (added by the admin_lead_workflow migration)
-  status: LeadStatus
-  notes: string
-  nextActionAt: string | null
-  lastContactedAt: string | null
-}
-
-export type LeadsBundle = {
-  /** Form-submitted homeowner requests (source = 'form'). Hot — they came to us. */
-  homeowners: Lead[]
-  /** Bot-pulled distress leads (source = 'bot'). The FALCO pipeline queue. */
-  pipeline: Lead[]
-  buyers: Lead[]
-  partners: Lead[]
-  inquiries: Lead[]
-  totals: {
-    homeowners: number
-    pipeline: number
-    buyers: number
-    partners: number
-    inquiries: number
-    total: number
-  }
-  /** Counts of submissions in the last 24h, for the dashboard banner. */
-  last24h: {
-    homeowners: number
-    pipeline: number
-    buyers: number
-    partners: number
-    inquiries: number
-    total: number
-  }
-  /** True if Supabase isn't configured (admin should still render an empty state). */
-  unavailable?: boolean
-}
+export * from "./admin-lead-types"
+import { LEAD_STATUSES, type LeadKind, type LeadStatus, type Lead, type LeadsBundle } from "./admin-lead-types"
 
 function fmtCurrency(n: number | null | undefined): string {
   if (n === null || n === undefined) return ""

@@ -9,7 +9,7 @@ import {
   type LeadKind,
   type LeadsBundle,
   type LeadStatus,
-} from "@/lib/admin-leads"
+} from "@/lib/admin-lead-types"
 import type { BotFreshness } from "@/lib/bot-freshness"
 
 const TABS: Array<{ key: LeadKind; label: string; emoji: string }> = [
