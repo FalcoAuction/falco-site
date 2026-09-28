@@ -411,6 +411,13 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 @media(max-height:620px) and (orientation:landscape){
   .full{min-height:auto;padding-block:clamp(40px,6vh,64px)}
 }
+/* Portrait phone: the ledger, the three-ways, and the steps run 1.5-2x
+   the viewport at 375px, so a pinned panel is covered by the next one
+   before it has been read, and the pin leaves dead space under the
+   hero. Plain stacking instead; the desktop keeps the effect. */
+@media(max-width:900px){
+  .full,.hero.full{position:static;min-height:auto;justify-content:flex-start}
+}
 /* the hero holds its card plus the stat row in one screen */
 /* The hero starts BELOW the sticky nav, so a full 100svh overflows the
    fold by exactly the nav's height and buries the stat row. --navh is
