@@ -411,12 +411,22 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 @media(max-height:620px) and (orientation:landscape){
   .full{min-height:auto;padding-block:clamp(40px,6vh,64px)}
 }
-/* Portrait phone: the ledger, the three-ways, and the steps run 1.5-2x
-   the viewport at 375px, so a pinned panel is covered by the next one
-   before it has been read, and the pin leaves dead space under the
-   hero. Plain stacking instead; the desktop keeps the effect. */
+/* Phones keep the stack, but at 375px the ledger, three-ways, and steps
+   run 1.5-2x the viewport, and top:0 puts every panel's first line under
+   the sticky nav. usePanelPins() in v2-content.tsx sets each panel's
+   `top` at runtime: the nav height for panels that fit, and a negative
+   offset for taller ones so they pin by their bottom edge (you scroll
+   through all of it, then the next panel slides over). */
 @media(max-width:900px){
-  .full,.hero.full{position:static;min-height:auto;justify-content:flex-start}
+  .full{justify-content:flex-start;min-height:calc(100svh - var(--navh,69px))}
+  /* Hero on a phone: shorter video so the headline and the first button
+     land inside the first screen, stats pulled up under the card. */
+  .hmedia{height:clamp(170px,28svh,250px)}
+  .hcopy{padding:22px 20px 26px}
+  .hcopy h1{margin-bottom:14px}
+  .hcopy .lede{margin-bottom:22px}
+  .hero-stats .stats{gap:14px 18px}
+  .stat b{font-size:clamp(1.8rem,7vw,2.4rem)}
 }
 /* the hero holds its card plus the stat row in one screen */
 /* The hero starts BELOW the sticky nav, so a full 100svh overflows the

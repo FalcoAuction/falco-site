@@ -150,8 +150,47 @@ function LiteVideo({
   )
 }
 
+// Phones keep the sticky panel stack, but top:0 puts every panel's first
+// line under the sticky nav, and a panel taller than the screen (the
+// ledger is 1,444px at 375px) pins by its top so its bottom is never
+// reachable before the next panel slides over it. Set each panel's `top`
+// from measurements instead: the nav height when the panel fits, and
+// viewport minus panel height (negative) when it doesn't, so it scrolls
+// through fully and pins by its bottom edge. Desktop is left alone.
+function usePanelPins() {
+  useEffect(() => {
+    const panels = Array.from(document.querySelectorAll<HTMLElement>(".full"))
+    const nav = document.querySelector<HTMLElement>("header.nav")
+    if (!panels.length) return
+    const apply = () => {
+      const navH = nav?.offsetHeight ?? 0
+      document.documentElement.style.setProperty("--navh", `${navH}px`)
+      const mobile = window.innerWidth <= 900
+      const vh = window.innerHeight
+      for (const p of panels) {
+        if (!mobile) {
+          p.style.top = ""
+          continue
+        }
+        const h = p.offsetHeight
+        p.style.top = `${h <= vh - navH ? navH : vh - h}px`
+      }
+    }
+    apply()
+    const ro = new ResizeObserver(apply)
+    panels.forEach((p) => ro.observe(p))
+    if (nav) ro.observe(nav)
+    window.addEventListener("resize", apply)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("resize", apply)
+    }
+  }, [])
+}
+
 export default function V2Content() {
   useReveals()
+  usePanelPins()
   return (
     <>
       <Nav />
