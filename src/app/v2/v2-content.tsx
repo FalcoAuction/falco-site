@@ -778,7 +778,10 @@ function ClosingCta() {
     <section className="sec full">
       <div className="wrap">
         <div className="fcard plate r" style={{ textAlign: "center" }}>
-          <h2 className="d2" style={{ margin: "0 auto", maxWidth: "18ch" }}>
+          <h2
+            className="d2"
+            style={{ margin: "0 auto", maxWidth: "22ch", textWrap: "balance" }}
+          >
             Get the math before
             <br />
             you sign anything.
@@ -839,7 +842,10 @@ function Foot() {
   ]
   return (
     <footer className="foot">
-      <div className="wrap">
+      {/* .fcard is the dark plate the footer palette (white links,
+          on-dark-mute headings) was written for; on .wrap they were
+          white on ivory. */}
+      <div className="fcard">
         <div className="fgrid">
           <div>
             <Link className="brand" href="/">

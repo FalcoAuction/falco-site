@@ -442,7 +442,9 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
    offset for taller ones so they pin by their bottom edge (you scroll
    through all of it, then the next panel slides over). */
 @media(max-width:900px){
-  .full{justify-content:flex-start;min-height:calc(100svh - var(--navh,69px))}
+  /* Centered: short panels (why-we-exist, steps, closing) sit mid-screen
+     instead of leaving a third of it empty; tall ones just grow. */
+  .full{justify-content:center;min-height:calc(100svh - var(--navh,69px))}
   /* The card hugs its content instead of stretching to the screen (the
      copy centered in the slack, leaving a black gap under the video);
      the stat row takes the slack and sits in a clean 2x2. */
