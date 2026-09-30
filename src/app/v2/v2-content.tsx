@@ -188,9 +188,49 @@ function usePanelPins() {
   }, [])
 }
 
+// Deck effect: as the next panel slides over a pinned one, scale and dim
+// the one underneath (depth 0 when the next panel's top is at the bottom
+// of the screen, 1 when it has covered the panel).
+function useStackDepth() {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const panels = Array.from(document.querySelectorAll<HTMLElement>(".full"))
+    if (panels.length < 2) return
+    let raf = 0
+    const tick = () => {
+      raf = 0
+      const vh = window.innerHeight
+      for (let i = 0; i < panels.length - 1; i++) {
+        const nextTop = panels[i + 1].getBoundingClientRect().top
+        const depth = Math.min(1, Math.max(0, 1 - nextTop / vh))
+        const st = panels[i].style
+        if (depth === 0) {
+          st.transform = ""
+          st.filter = ""
+        } else {
+          st.transform = `scale(${(1 - 0.07 * depth).toFixed(4)})`
+          st.filter = `brightness(${(1 - 0.45 * depth).toFixed(3)})`
+        }
+      }
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(tick)
+    }
+    tick()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+}
+
 export default function V2Content() {
   useReveals()
   usePanelPins()
+  useStackDepth()
   return (
     <>
       <Nav />
