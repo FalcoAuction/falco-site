@@ -174,6 +174,9 @@ function usePanelPins() {
         }
         const h = p.offsetHeight
         p.style.top = `${h <= vh - navH ? navH : vh - h}px`
+        // WebKit can keep the old sticky constraint until the next
+        // layout; reading a layout property forces it now.
+        void p.offsetTop
       }
     }
     apply()

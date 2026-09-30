@@ -427,7 +427,10 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
    panel as the next one slides over it; the incoming one arrives as a
    rounded card with a shadow. Without this the stack read as plain
    scrolling. */
-.full{transform-origin:50% 0}
+/* No transitions on panels: `top` is set from JS at load and resize
+   and must snap, and the deck transform is written every scroll frame.
+   The reduced-motion `*` rule would otherwise give them transition:all. */
+.full{transform-origin:50% 0;transition:none!important}
 .full + .full{border-radius:var(--r) var(--r) 0 0;
   box-shadow:0 -24px 70px rgba(12,12,11,.22)}
 .foot{position:relative;z-index:1}
