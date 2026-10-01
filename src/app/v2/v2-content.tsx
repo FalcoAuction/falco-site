@@ -413,7 +413,7 @@ function ThreeWaysIn() {
     },
     {
       href: "/buyers",
-      img: "/media/house-single.jpg",
+      img: "/media/house-white.jpg",
       h: "Buyers",
       p: "Equity-positive Tennessee homes with clean title. Before the MLS, before Auction.com.",
       cta: "Register for access",

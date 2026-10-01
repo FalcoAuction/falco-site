@@ -38,9 +38,22 @@ body{
   letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
   overflow-x:clip;
 }
-img,video{display:block;max-width:100%}
-a{color:inherit;text-decoration:none}
-button,input,select,textarea{font:inherit;color:inherit}
+/* Element resets live in the base layer. Unlayered, they outranked
+   every Tailwind utility (utilities sit in @layer utilities), so on the
+   Tailwind pages `text-white` on a button lost to color:inherit and
+   every submit button rendered ink on ink, and heading/paragraph margin
+   and leading utilities were ignored. In base they still beat preflight
+   (later in the same layer) and still lose to utilities and to the
+   unlayered class rules below. */
+@layer base{
+  img,video{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  button,input,select,textarea{font:inherit;color:inherit}
+  h1,h2,h3,h4{margin:0;font-weight:500;letter-spacing:-.032em;line-height:1.01}
+  h4{font-size:1.12rem;letter-spacing:-.022em;line-height:1.2;font-weight:500}
+  p{margin:0 0 1em}
+  p:last-child{margin-bottom:0}
+}
 ::selection{background:var(--ink);color:var(--page)}
 
 /* very light grain, like the reference's noise layer */
@@ -50,13 +63,9 @@ body::after{
 }
 
 /* ---------- type ------------------------------------------ */
-h1,h2,h3,h4{margin:0;font-weight:500;letter-spacing:-.032em;line-height:1.01}
 .d1{font-size:clamp(2.5rem,5.6vw,4.7rem)}
 .d2{font-size:clamp(2.1rem,4vw,3.4rem)}
 .d3{font-size:clamp(1.5rem,2.3vw,2rem);letter-spacing:-.026em;line-height:1.06}
-h4{font-size:1.12rem;letter-spacing:-.022em;line-height:1.2;font-weight:500}
-p{margin:0 0 1em}
-p:last-child{margin-bottom:0}
 
 .lede{font-size:clamp(1rem,1.15vw,1.12rem);line-height:1.5;color:var(--muted);max-width:46ch}
 .sm{font-size:.95rem;line-height:1.55;color:var(--muted)}
@@ -200,8 +209,7 @@ p:last-child{margin-bottom:0}
    image spilled down over the heading while min-height:440px left a
    block of dead space under the button. Give the media real height and
    let the copy set the tile's height. */
-.tile>.media{display:block;position:relative;aspect-ratio:3/2;overflow:hidden;background:#ddd;
-  margin-bottom:20px}
+.tile>.media{display:block;position:relative;aspect-ratio:3/2;overflow:hidden;background:#ddd}
 .tile>.media>img,.tile>.media>video{display:block;width:100%;height:100%;object-fit:cover}
 .tile>h3{margin:20px 22px 6px}
 .tile>p{margin:0 22px;color:var(--muted);font-size:.95rem}

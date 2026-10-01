@@ -682,8 +682,8 @@ function ExampleGrid() {
     },
   ]
   return (
-    <div className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] overflow-hidden -mt-10 md:-mt-16">
-      <table className="w-full text-[13px] md:text-[14px]">
+    <div className="rounded-xl border border-[var(--rule)] bg-[var(--paper-raised)] overflow-x-auto -mt-10 md:-mt-16">
+      <table className="w-full min-w-[440px] text-[13px] md:text-[14px]">
         <thead>
           <tr className="border-b border-[var(--rule)] bg-[var(--paper-raised)]">
             <th className="py-3 px-4 text-left text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)] font-semibold">
