@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import LoadingScreen from "./loading-screen";
 import "./globals.css";
 
 // The ported design system is single-typeface: Inter, self-hosted by
@@ -84,9 +83,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Always preload the lightweight hero poster — it's what the loading
-            screen waits on and the painted background on mobile. */}
-        <link rel="preload" as="image" href="/video/hero-poster.jpg" type="image/jpeg" />
         {/* Only pre-fetch the heavy hero video on desktop. Mobile renders the
             poster only (see HeroVideoBg) so pre-fetching ~4.7MB on cell would
             waste data and slow first paint. */}
@@ -99,7 +95,6 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${geistMono.variable}`}>
-        <LoadingScreen />
         {children}
         {/* Google Analytics 4. Loaded afterInteractive so it never blocks
             first paint, and only in production so local dev traffic does not

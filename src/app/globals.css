@@ -183,18 +183,6 @@ html {
   100% { opacity: 0; transform: scale(1.05); }
 }
 
-@keyframes falcoLogoGlow {
-  0%, 100% { box-shadow: 0 0 0px transparent; }
-  50% { box-shadow: 0 0 60px rgb(var(--falco-accent-rgb) / 0.3), 0 0 120px rgb(var(--falco-accent-rgb) / 0.1); }
-}
-
-/* Legacy static preloader styles (kept as no-op for any old references).
-   The active loading screen is now src/app/loading-screen.tsx and renders
-   from layout.tsx — it tracks real load progress instead of a fixed timer. */
-.falco-preloader {
-  display: none;
-}
-
 /* ================================================================
    SELECTION
    ================================================================ */
