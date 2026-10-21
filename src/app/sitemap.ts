@@ -11,9 +11,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Memphis city page — distinct from the Shelby County logistics page,
     // targets the high-intent "foreclosure Memphis" search.
     { url: `${base}/foreclosure/memphis`, changeFrequency: "monthly", priority: 0.8 },
+    // County pages carry live sale counts that refresh daily, so a daily
+    // lastModified is true, not decorative.
     ...COUNTIES.map((c) => ({
       url: `${base}/foreclosure/${c.slug}`,
-      changeFrequency: "monthly" as const,
+      lastModified: new Date().toISOString().slice(0, 10),
+      changeFrequency: "daily" as const,
       priority: 0.7,
     })),
   ]

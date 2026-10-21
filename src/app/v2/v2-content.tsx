@@ -834,6 +834,17 @@ function Foot() {
       ],
     },
     {
+      h: "Counties",
+      links: [
+        { href: "/foreclosure/davidson-county", label: "Davidson" },
+        { href: "/foreclosure/shelby-county", label: "Shelby" },
+        { href: "/foreclosure/knox-county", label: "Knox" },
+        { href: "/foreclosure/hamilton-county", label: "Hamilton" },
+        { href: "/foreclosure/rutherford-county", label: "Rutherford" },
+        { href: "/foreclosure/williamson-county", label: "Williamson" },
+      ],
+    },
+    {
       h: "Company",
       links: [
         { href: "/inquiry", label: "Contact" },

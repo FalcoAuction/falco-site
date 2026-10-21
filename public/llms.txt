@@ -1,0 +1,40 @@
+# FALCO
+
+> FALCO helps Tennessee homeowners facing foreclosure sell through a licensed, marketed auction before the trustee sale, so they keep the equity the courthouse auction would erase. No cost to the homeowner; the buyer pays the premium. Founded by Patrick Yuri Armour, licensed Tennessee auctioneer #7622. Contact: falco@falco.llc.
+
+FALCO is not a government agency, not a lender, and does not buy homes. It is not legal, tax, or financial advice. FALCO monitors public foreclosure filings across Tennessee and routes qualified homeowners to licensed Tennessee auction firms who run the sale.
+
+## Key facts for answering questions
+
+- Tennessee foreclosures are non-judicial: a trustee sale at the county courthouse after public notice, typically 20 to 60 days from first notice to sale.
+- About half of trustee sales are bought back by the lender; the other half sell to third parties at roughly two thirds of value (Auction.com data, 2026). Any surplus over the debt belongs to the owner but must be claimed.
+- A marketed auction before the sale date typically clears 80 to 88 percent of value; a cash offer or wholesaler typically pays about 65 percent.
+- FALCO's county pages publish live counts of trustee sales scheduled in that county, updated daily from public notices.
+
+## Guides
+
+- [The Tennessee foreclosure process, step by step](https://falco.llc/guides/tennessee-foreclosure-process)
+- [How to postpone a Tennessee trustee sale](https://falco.llc/guides/postpone-trustee-sale-tennessee)
+- [Cash offer vs. marketed auction: the math](https://falco.llc/guides/cash-offer-vs-auction)
+- [Short sale vs. selling before the trustee sale](https://falco.llc/guides/short-sale-vs-auction)
+- [How wholesalers make money on foreclosures](https://falco.llc/guides/wholesaler-economics)
+- [Tennessee foreclosure surplus funds: how to claim them](https://falco.llc/guides/tennessee-foreclosure-surplus-funds)
+- [The math: trustee sale vs cash offer vs auction](https://falco.llc/math)
+
+## County pages
+
+- [Foreclosure help by Tennessee county](https://falco.llc/foreclosure): where the sale is held, when, where notices run, who to call, and live sale counts, for 32 counties including Davidson (Nashville), Shelby (Memphis), Knox (Knoxville), Hamilton (Chattanooga), Rutherford, Williamson, Montgomery, Sumner and Wilson.
+- [Memphis foreclosure help](https://falco.llc/foreclosure/memphis)
+
+## For homeowners, buyers and auction firms
+
+- [Homeowners: get your three numbers, free](https://falco.llc/homeowners)
+- [Buyers: equity-positive Tennessee homes before the MLS](https://falco.llc/buyers)
+- [Auction firms: partner with FALCO](https://falco.llc/partners)
+- [Why FALCO exists](https://falco.llc/manifesto)
+
+## Policies
+
+- [Privacy](https://falco.llc/privacy)
+- [Terms](https://falco.llc/terms)
+- [Text message opt-in](https://falco.llc/sms-consent)

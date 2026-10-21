@@ -78,6 +78,7 @@ export function GuideShell({
         {children}
       </article>
 
+      <GuideHubLinks />
       <GuideCta />
       <GuideDisclaimer />
       <GuideFooter />
@@ -172,6 +173,57 @@ export function GuideRelated({
             {l.label} →
           </Link>
         ))}
+      </div>
+    </section>
+  )
+}
+
+// Cross-links every guide to the rest of the hub and to the six county
+// pages with the most search demand. Five of six guides were sitting in
+// "crawled, currently not indexed" with almost no internal links in.
+const RELATED_GUIDES = [
+  { href: "/guides/tennessee-foreclosure-process", label: "The Tennessee foreclosure process" },
+  { href: "/guides/postpone-trustee-sale-tennessee", label: "Postponing a trustee sale" },
+  { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction" },
+  { href: "/guides/short-sale-vs-auction", label: "Short sale vs. auction" },
+  { href: "/guides/wholesaler-economics", label: "How wholesalers make money" },
+  { href: "/guides/tennessee-foreclosure-surplus-funds", label: "Claiming surplus funds" },
+]
+const RELATED_COUNTIES = [
+  { href: "/foreclosure/davidson-county", label: "Davidson (Nashville)" },
+  { href: "/foreclosure/shelby-county", label: "Shelby (Memphis)" },
+  { href: "/foreclosure/knox-county", label: "Knox (Knoxville)" },
+  { href: "/foreclosure/hamilton-county", label: "Hamilton (Chattanooga)" },
+  { href: "/foreclosure/rutherford-county", label: "Rutherford (Murfreesboro)" },
+  { href: "/foreclosure/williamson-county", label: "Williamson (Franklin)" },
+]
+function GuideHubLinks() {
+  return (
+    <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
+      <div className="grid sm:grid-cols-2 gap-8">
+        <div>
+          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">More guides</div>
+          <ul className="space-y-2">
+            {RELATED_GUIDES.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="text-[15px] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">{l.label} →</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">Foreclosure by county</div>
+          <ul className="space-y-2">
+            {RELATED_COUNTIES.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="text-[15px] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">{l.label} →</Link>
+              </li>
+            ))}
+            <li>
+              <Link href="/foreclosure" className="text-[15px] text-[var(--ink-soft)] hover:text-[var(--mocha)] transition-colors">All 32 counties →</Link>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
   )

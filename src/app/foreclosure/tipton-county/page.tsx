@@ -22,6 +22,10 @@ const DATA: CountyData = {
   monitored: false,
 }
 
+// Re-render daily: the page carries live trustee-sale counts from the
+// pipeline (see src/lib/county-stats.ts).
+export const revalidate = 86400
+
 export const metadata = countyMetadata(DATA)
 
 export default function Page() {

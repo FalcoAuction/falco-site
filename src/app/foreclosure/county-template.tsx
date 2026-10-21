@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { getCountyStats, fmtDate, type CountyStats } from "@/lib/county-stats"
 import {
   GuideSection,
   GuideKey,
@@ -43,7 +44,7 @@ export function countyMetadata(d: CountyData) {
     // Kept under ~60 chars so Google does not truncate it, with the
     // county first because that is what people actually search.
     // The old title ran 76 characters and was being cut mid-phrase.
-    title: `${d.county} County, TN Foreclosure Help | FALCO`,
+    title: `${d.county} County TN Foreclosure and Trustee Sales | FALCO`,
     // ~155 chars: the previous one ran past 220 and was clipped.
     description: `How trustee sales work in ${d.county} County (${d.seat}), TN: where the sale is held, where notices run, and how to sell first and keep your equity.`,
     alternates: { canonical: `/foreclosure/${d.slug}` },
@@ -93,7 +94,62 @@ export function CountyJsonLd({ d }: { d: CountyData }) {
   )
 }
 
-export function CountyPage({ d }: { d: CountyData }) {
+// Visible Q&A built from the verified county fields plus the live
+// counts. The same items feed the FAQPage JSON-LD below, so schema and
+// page never drift apart (Google requires them to match).
+function countyFaq(d: CountyData, stats: CountyStats | null): Array<{ q: string; a: string }> {
+  const pubs = d.noticePublications.join(" and ")
+  const items: Array<{ q: string; a: string }> = [
+    {
+      q: `Where is the trustee sale held in ${d.county} County?`,
+      // saleLocation usually already names the courthouse and street, so
+      // only append the address when it adds something.
+      a: `At ${d.saleLocation.replace(/[.\s]+$/, "")}.${
+        d.saleLocation.includes(d.courthouseAddress.split(",")[0]) ? "" : ` The courthouse address is ${d.courthouseAddress}.`
+      }${d.saleTime ? ` Sales are ${d.saleTime.replace(/[.\s]+$/, "")}.` : ""} The exact date, time and place are printed in the published notice for your property.`,
+    },
+    {
+      q: `Where are ${d.county} County foreclosure notices published?`,
+      a: `Trustee sale notices for ${d.county} County run in ${pubs}. The notice names the substitute trustee, the sale date and the property, and that first publication is usually the earliest public sign a sale is coming.`,
+    },
+  ]
+  if (stats && stats.tracked >= 5) {
+    items.push({
+      q: `How many trustee sales are scheduled in ${d.county} County right now?`,
+      a: `As of ${fmtDate(stats.asOf)}, FALCO is tracking ${stats.upcoming30} trustee sale${
+        stats.upcoming30 === 1 ? "" : "s"
+      } scheduled in ${d.county} County in the next 30 days and ${stats.upcoming60} in the next 60, counted from the public notices. ${
+        stats.past90
+      } were scheduled in the last 90 days.${
+        stats.nextSaleDate ? ` The next scheduled sale is ${fmtDate(stats.nextSaleDate)}.` : ""
+      }`,
+    })
+  }
+  items.push(
+    {
+      q: `Can I still sell my ${d.county} County home before the trustee sale?`,
+      a: `Yes. Until the sale actually happens the home is still yours to sell. FALCO routes ${d.county} County homeowners to a licensed Tennessee auction firm that markets the property and closes ahead of the sale date, at no cost to you; the buyer pays the premium. A marketed sale typically runs 45 to 75 days from decision to closing, so with fewer than 30 days left the first step is usually asking the trustee for a postponement.`,
+    },
+    {
+      q: `Who handles surplus funds and property records in ${d.county} County?`,
+      a: `Surplus from a trustee sale goes through the ${d.clerkAndMaster}. Deeds, the deed of trust and the substitution of trustee are recorded with the ${d.registerOfDeeds}.`,
+    },
+  )
+  return items
+}
+
+export async function CountyPage({ d }: { d: CountyData }) {
+  const stats = await getCountyStats(d.county)
+  const faq = countyFaq(d, stats)
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  }
   // Defensive clean so no county's sale-time value double-prints "typically"
   // or a trailing period when shown in the fact box.
   const saleTime = d.saleTime
@@ -296,6 +352,60 @@ export function CountyPage({ d }: { d: CountyData }) {
           not promise to stop, delay, or cure any foreclosure.
         </p>
       </section>
+
+      {/* Live activity: the one block per county nobody else can write.
+          Counted from the pipeline's public-notice tables, refreshed daily. */}
+      {stats && stats.tracked >= 5 && (
+        <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
+          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">
+            Foreclosure activity in {d.county} County
+          </div>
+          <div className="rounded-2xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 md:p-8">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                [stats.upcoming30, "trustee sales scheduled in the next 30 days"],
+                [stats.past90, "scheduled in the last 90 days"],
+                [stats.tracked, "notices tracked in " + d.county + " County"],
+              ].map(([n, label]) => (
+                <div key={String(label)}>
+                  <div className="text-[34px] md:text-[44px] leading-none font-semibold tracking-[-0.04em] text-[var(--ink)] tabular-nums">
+                    {n}
+                  </div>
+                  <div className="mt-2 text-[12.5px] leading-[1.4] text-[var(--ink-soft)]">{label}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 text-[14px] leading-[1.6] text-[var(--ink-soft)]">
+              {stats.nextSaleDate && (
+                <>Next scheduled sale: <span className="text-[var(--ink)] font-medium">{fmtDate(stats.nextSaleDate)}</span>. </>
+              )}
+              {stats.trustees.length > 0 && (
+                <>Substitute trustees filing most often here: {stats.trustees.join("; ")}. </>
+              )}
+              Counted from public trustee sale notices. Updated {fmtDate(stats.asOf)}.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* FAQ: visible, and mirrored in FAQPage JSON-LD */}
+      <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
+        <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">
+          {d.county} County questions
+        </div>
+        <div className="divide-y divide-[var(--rule)] border-y border-[var(--rule)]">
+          {faq.map((f) => (
+            <details key={f.q} className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[16px] md:text-[17px] font-medium text-[var(--ink)]">
+                {f.q}
+                <span className="shrink-0 text-[var(--ink-faint)] transition-transform group-open:rotate-45" aria-hidden>+</span>
+              </summary>
+              <p className="mt-3 text-[15px] leading-[1.65] text-[var(--ink-soft)]">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* Related */}
       <section className="mx-auto max-w-3xl px-6 md:px-10 mt-8">
