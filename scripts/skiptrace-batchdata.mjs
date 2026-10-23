@@ -206,10 +206,21 @@ async function main() {
   console.log(`estimated cost per lead: $${ESTIMATED_COST_PER_LEAD_USD}`)
   console.log("---")
 
-  const { data: leads, error } = await supabase
+  // Foreclosure-family gate ON by default (Patrick 2026-05-14). Pass
+  // --all-distress to lift the filter.
+  const ALL_DISTRESS = args.includes("--all-distress")
+  const FORECLOSURE_DISTRESS = [
+    "PRE_FORECLOSURE", "PREFORECLOSURE", "TRUSTEE_NOTICE",
+    "LIS_PENDENS", "SOT", "SUBSTITUTION_OF_TRUSTEE",
+    "NOD", "NOTICE_OF_DEFAULT", "FORECLOSURE",
+  ]
+
+  let q = supabase
     .from("homeowner_requests")
-    .select("id, full_name, owner_name_records, property_address, county, phone, email")
+    .select("id, full_name, owner_name_records, property_address, county, phone, email, distress_type")
     .eq("source", "bot")
+  if (!ALL_DISTRESS) q = q.in("distress_type", FORECLOSURE_DISTRESS)
+  const { data: leads, error } = await q
     .order("submitted_at", { ascending: true })
     .limit(LIMIT)
 
