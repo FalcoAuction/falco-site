@@ -20,6 +20,12 @@ export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus 
 
 // Saved views, Close-style: each is a filter you work top to bottom.
 export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "working"
+export type BucketKey = "commercial" | "land" | "assets"
+export const BUCKETS: { key: BucketKey; label: string }[] = [
+  { key: "commercial", label: "Commercial" },
+  { key: "land", label: "Land" },
+  { key: "assets", label: "High-value assets" },
+]
 export const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "all", label: "All ranked" },
   { key: "soon", label: "Sale in 14 days" },
@@ -219,4 +225,125 @@ export async function getToday(): Promise<TodayData> {
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
     counts: { leads: oppCount.count ?? 0, landlords: llCount.count ?? 0, working: working.count ?? 0 },
   }
+}
+
+// ---- Commercial, land and high-value asset buckets ----------------------
+// Tagged on staging rows by other bots: raw_payload.property_lane (the
+// property_lane bot: lane from assessor land use, grade A/B/C when it
+// clears the contact and distress gates) and raw_payload.aircraft (the
+// faa_aircraft bot: owner matches a TN-registered aircraft worth ~$100K+).
+// Both reads go through partial indexes
+// (20261106_staging_property_lane_index.sql, 20261113_staging_aircraft_index.sql)
+// and select only the tag, never the full payload.
+
+export type LaneTag = {
+  lane: string; subtype: string | null; basis: string | null; acres: number | null; value: number | null
+  owner_type: string | null; grade: "A" | "B" | "C" | null; exclude_reason: string | null; stacked_distress?: string[]
+  contact_tier: string | null; out_of_state_owner: boolean; mailing?: string | null; mailing_state?: string | null
+  phones?: string[]; email?: string | null; land_flip?: { score: number; signals: string[] }
+}
+export type AircraftTag = {
+  n_number: string; aircraft: string; value_band_label: string; registrant: string; registrant_address: string
+  registration_status: string | null; match_type?: string; confidence?: string
+}
+export type BucketRow = {
+  staging_id: string; property_address: string | null; county: string | null; owner_name: string | null
+  distress_type: string | null; bot_source: string; sale_date: string | null; property_value: number | null
+  lane: LaneTag | null; aircraft: AircraftTag[] | null
+  slug: string | null; status: DialerStatus | null; last_contact_at: string | null
+}
+export type GradeFilter = "qualified" | "A" | "B" | "C" | "all"
+
+type StagedBucket = {
+  id: string; property_address: string | null; county: string | null; owner_name_records: string | null; full_name: string | null
+  distress_type: string | null; bot_source: string; trustee_sale_date: string | null; property_value: number | null
+  pipeline_lead_key: string | null; lane?: LaneTag | null; aircraft?: AircraftTag[] | null
+}
+const BUCKET_COLS = "id,property_address,county,owner_name_records,full_name,distress_type,bot_source,trustee_sale_date,property_value,pipeline_lead_key"
+
+async function bucketWorkflow(rows: StagedBucket[]): Promise<BucketRow[]> {
+  const slugs = [...new Set(rows.map((r) => r.pipeline_lead_key).filter(Boolean))] as string[]
+  const wfOf = new Map<string, { status: DialerStatus; last_contact_at: string | null }>()
+  for (let i = 0; supabaseAdmin && i < slugs.length; i += 300) {
+    const wf = await supabaseAdmin.from("dialer_lead_workflow").select("listing_slug,status,last_contact_at").in("listing_slug", slugs.slice(i, i + 300))
+    for (const w of (wf.data ?? []) as { listing_slug: string; status: DialerStatus; last_contact_at: string | null }[]) wfOf.set(w.listing_slug, w)
+  }
+  return rows.map((r) => {
+    const w = r.pipeline_lead_key ? wfOf.get(r.pipeline_lead_key) : undefined
+    return {
+      staging_id: r.id, property_address: r.property_address, county: r.county, owner_name: r.owner_name_records ?? r.full_name,
+      distress_type: r.distress_type, bot_source: r.bot_source, sale_date: r.trustee_sale_date,
+      property_value: r.property_value ?? r.lane?.value ?? null, lane: r.lane ?? null, aircraft: r.aircraft ?? null,
+      slug: r.pipeline_lead_key, status: w?.status ?? null, last_contact_at: w?.last_contact_at ?? null,
+    }
+  })
+}
+
+const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
+
+export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter; county?: string; q?: string } = {}):
+  Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
+  const grades: Record<GradeFilter, number> = { qualified: 0, A: 0, B: 0, C: 0, all: 0 }
+  if (!supabaseAdmin) return { rows: [], grades, error: "Database not configured." }
+  const all: StagedBucket[] = []
+  if (bucket === "assets") {
+    // Two steps on purpose: the partial index answers "which ids" as an
+    // index-only scan, but asking for the tag in the same query makes the
+    // planner (no stats on the expression) seq-scan all of staging (~6 s).
+    const ids = await supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500)
+    if (ids.error) return { rows: [], grades, error: ids.error.message }
+    const idList = ((ids.data ?? []) as { id: string }[]).map((r) => r.id)
+    if (idList.length) {
+      const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},aircraft:raw_payload->aircraft`).in("id", idList)
+      if (r.error) return { rows: [], grades, error: r.error.message }
+      all.push(...((r.data ?? []) as unknown as StagedBucket[]))
+    }
+  } else {
+    for (let page = 0; page < 5; page++) {
+      const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},lane:raw_payload->property_lane`)
+        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", bucket)
+        .order("id").range(page * 1000, page * 1000 + 999)
+      if (r.error) return { rows: [], grades, error: r.error.message }
+      const batch = (r.data ?? []) as unknown as StagedBucket[]
+      all.push(...batch)
+      if (batch.length < 1000) break
+    }
+  }
+  // The same property can be staged by several bots; keep one row per address.
+  const byAddr = new Map<string, StagedBucket>()
+  for (const r of all) {
+    const k = (r.property_address ?? r.id).toUpperCase().replace(/[^A-Z0-9]/g, "")
+    const prev = byAddr.get(k)
+    if (!prev || (GRADE_ORDER[r.lane?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? ""] ?? 9)) byAddr.set(k, r)
+  }
+  let rows = [...byAddr.values()]
+  if (opts.county) rows = rows.filter((r) => (r.county ?? "").toLowerCase().replace(/\s+county$/, "") === opts.county)
+  if (opts.q) {
+    const q = opts.q.toLowerCase()
+    rows = rows.filter((r) => `${r.property_address} ${r.owner_name_records} ${r.full_name}`.toLowerCase().includes(q))
+  }
+  for (const r of rows) {
+    grades.all++
+    const g = r.lane?.grade
+    if (g) { grades.qualified++; grades[g]++ }
+  }
+  const grade = opts.grade ?? (bucket === "assets" ? "all" : "qualified")
+  if (bucket !== "assets" && grade !== "all") rows = rows.filter((r) => (grade === "qualified" ? !!r.lane?.grade : r.lane?.grade === grade))
+  rows.sort((a, b) => (GRADE_ORDER[a.lane?.grade ?? ""] ?? 9) - (GRADE_ORDER[b.lane?.grade ?? ""] ?? 9)
+    || (b.lane?.land_flip?.score ?? 0) - (a.lane?.land_flip?.score ?? 0)
+    || Number(b.property_value ?? b.lane?.value ?? 0) - Number(a.property_value ?? a.lane?.value ?? 0))
+  return { rows: await bucketWorkflow(rows.slice(0, 300)), grades }
+}
+
+export async function bucketCounts(): Promise<Record<BucketKey, number>> {
+  const out: Record<BucketKey, number> = { commercial: 0, land: 0, assets: 0 }
+  if (!supabaseAdmin) return out
+  const [c, l, a] = await Promise.all([
+    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true })
+      .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", "commercial").not("raw_payload->property_lane->>grade", "is", null),
+    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true })
+      .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", "land").not("raw_payload->property_lane->>grade", "is", null),
+    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true }).not("raw_payload->aircraft", "is", null),
+  ])
+  return { commercial: c.count ?? 0, land: l.count ?? 0, assets: a.count ?? 0 }
 }

@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getLead } from "@/lib/crm-data"
+import { getLead, type AircraftTag, type LaneTag } from "@/lib/crm-data"
 import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import { Icon } from "../../icons"
 import { Head, SalePill, StatusPill, money, relTime, shortDate, titleCase } from "../../ui"
@@ -31,7 +31,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
   const owner = lead.owner_name_records || lead.full_name
-  const phones = phonesOf(lead.phone, lead.alternate_phones)
+  const laneTag = (lead.raw_payload?.property_lane ?? null) as LaneTag | null
+  const aircraft = (Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
+  const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
   const sale = lead.trustee_sale_date || opp?.sale_date || null
   const situation = opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
@@ -97,6 +99,38 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <dt>Found</dt><dd>{shortDate(lead.staged_at)}</dd>
             </dl>
           </div>
+
+          {laneTag && (laneTag.lane === "commercial" || laneTag.lane === "land") ? (
+            <div>
+              <div className="crm-section-label">{laneTag.lane === "land" ? "Land deal" : "Commercial"}</div>
+              <dl className="crm-props">
+                <dt>Grade</dt><dd>{laneTag.grade ? <span className={`pill ${laneTag.grade === "A" ? "green" : laneTag.grade === "B" ? "blue" : ""}`}>{laneTag.grade}</span> : <span className="crm-faint">{laneTag.exclude_reason ? `Excluded: ${laneTag.exclude_reason.replace(/_/g, " ")}` : "Ungraded"}</span>}</dd>
+                {laneTag.subtype ? <><dt>Type</dt><dd>{titleCase(laneTag.subtype.replace(/_/g, " "))}</dd></> : null}
+                {laneTag.acres ? <><dt>Acres</dt><dd>{Number(laneTag.acres).toFixed(2)}</dd></> : null}
+                {laneTag.value ? <><dt>Assessed</dt><dd>{money(laneTag.value)}</dd></> : null}
+                {laneTag.owner_type ? <><dt>Owner type</dt><dd>{titleCase(laneTag.owner_type.replace(/_/g, " "))}</dd></> : null}
+                {laneTag.mailing ? <><dt>Owner mails</dt><dd>{laneTag.mailing}{laneTag.out_of_state_owner ? <span className="pill amber" style={{ marginLeft: 6 }}>Out of state</span> : null}</dd></> : null}
+                {laneTag.stacked_distress?.length ? <><dt>Stacked</dt><dd>{laneTag.stacked_distress.map((s) => s.replace(/_/g, " ")).join(", ")}</dd></> : null}
+                {laneTag.land_flip ? <><dt>Flip score</dt><dd>{laneTag.land_flip.score}{laneTag.land_flip.signals?.length ? <div className="crm-faint">{laneTag.land_flip.signals.map((s) => s.replace(/_/g, " ")).join(", ")}</div> : null}</dd></> : null}
+                {laneTag.basis ? <><dt>Based on</dt><dd className="crm-muted">{laneTag.basis}</dd></> : null}
+              </dl>
+            </div>
+          ) : null}
+
+          {aircraft.length ? (
+            <div>
+              <div className="crm-section-label">High-value assets</div>
+              {aircraft.map((a) => (
+                <dl key={a.n_number} className="crm-props" style={{ marginBottom: 10 }}>
+                  <dt>Aircraft</dt><dd>{a.aircraft} <span className="crm-faint">{a.n_number}</span></dd>
+                  <dt>Value</dt><dd>{a.value_band_label}</dd>
+                  <dt>Registrant</dt><dd>{titleCase(a.registrant)}<div className="crm-faint">{a.registrant_address}</div></dd>
+                  {a.match_type ? <><dt>Matched by</dt><dd>{a.match_type.replace(/_/g, " ")}{a.confidence ? ` (${a.confidence})` : ""}</dd></> : null}
+                  {a.registration_status ? <><dt>Registration</dt><dd>{a.registration_status}</dd></> : null}
+                </dl>
+              ))}
+            </div>
+          ) : null}
         </aside>
 
         <div className="crm-record-main">
