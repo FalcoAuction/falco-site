@@ -21,9 +21,9 @@ const geistMono = Geist_Mono({
 const GA_ID = "G-PYSVEK735L";
 
 export const metadata: Metadata = {
-  title: "FALCO — Save the equity. Skip the wholesaler.",
+  title: "FALCO | Everything has a buyer.",
   description:
-    "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
+    "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
   // Square (512x512) white falcon on the dark brand background. The old
   // /falco-logo.png favicon was non-square (341x512) AND white-on-
   // transparent, so Google rejected it on shape and it was invisible on
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
-    title: "FALCO — Save the equity. Skip the wholesaler.",
+    title: "FALCO | Everything has a buyer.",
     description:
-      "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
+      "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "FALCO routes distressed Tennessee homes to auction",
+        alt: "FALCO routes distressed Tennessee assets to auction",
       },
     ],
     // Some platforms (Discord, Facebook) play a linked og:video alongside
@@ -68,9 +68,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FALCO — Save the equity. Skip the wholesaler.",
+    title: "FALCO | Everything has a buyer.",
     description:
-      "We help distressed Tennessee homeowners save their equity by routing their homes through marketed auctions before the trustee sale takes it.",
+      "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
     images: ["/opengraph-image"],
   },
 };

@@ -179,7 +179,7 @@ body::after{
 /* interior page head — same card, shorter, copy only */
 .phead .hcard{min-height:min(440px,56svh);grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)}
 .phead .hcopy h1{max-width:16ch}
-@media(max-width:900px){.phead .hmedia{height:clamp(200px,32svh,300px)}}
+@media(max-width:900px){.phead .hcard{grid-template-columns:1fr}.phead .hmedia{height:clamp(200px,32svh,300px)}}
 
 /* ---------- stat row -------------------------------------- */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -546,3 +546,77 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
    sets its own link colours with utility classes, so inheriting is right. */
 .falco-app a { color: inherit; }
 .falco-app { position: relative; z-index: 9001; }
+
+/* ============================================================
+   Any-asset site: situation picker, routing demo, lane pages
+   ============================================================ */
+.sitgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:980px){.sitgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sitgrid{grid-template-columns:1fr}.sit{min-height:0;gap:6px}}
+.sit{display:flex;flex-direction:column;gap:10px;min-height:210px;
+  border-radius:var(--r-2);background:var(--surface);padding:clamp(20px,2.4vw,28px);
+  border:1px solid transparent;transition:transform .5s var(--e),border-color .3s,background .3s}
+.sit:hover{transform:translateY(-3px);border-color:var(--line);background:var(--surface-2)}
+.sit .n{font-size:.82rem;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.sit h3{font-size:clamp(1.3rem,1.8vw,1.6rem);letter-spacing:-.026em;line-height:1.08}
+.sit p{margin:0;font-size:.93rem;color:var(--muted)}
+.sit .go{margin-top:auto;padding-top:8px;font-size:.9rem;font-weight:500;display:inline-flex;gap:.5em}
+.sit .go sub{font-size:1em;top:0;position:relative;transition:transform .4s var(--e)}
+.sit:hover .go sub{transform:translateX(4px)}
+.sit.dark{background:var(--plate);color:var(--on-dark)}
+.sit.dark p,.sit.dark .n{color:var(--on-dark-mute)}
+.sit.dark:hover{background:var(--plate-2)}
+
+/* routing demo: one situation, many assets, each to its specialist */
+.rt-rows{display:grid}
+.rt-row{display:grid;grid-template-columns:minmax(0,1.1fr) 28px minmax(0,1fr) auto;
+  gap:6px 16px;align-items:center;padding:16px clamp(22px,2.6vw,30px);
+  border-bottom:1px solid var(--line-2)}
+.rt-row:last-child{border-bottom:0}
+.rt-row .a{font-weight:500;letter-spacing:-.02em}
+.rt-row .a small{display:block;font-weight:400;font-size:.82rem;color:var(--muted);margin-top:2px}
+.rt-row .arr{color:var(--muted-2);text-align:center}
+.rt-row .to{font-size:.95rem}
+.rt-row .to small{display:block;font-size:.8rem;color:var(--muted)}
+.rt-row .tag{font-size:.76rem;padding:5px 10px;border-radius:100px;border:1px solid var(--line);
+  color:var(--muted);white-space:nowrap}
+.rt-row.pass .a,.rt-row.pass .to{color:var(--muted)}
+.rt-row.pass .tag{border-style:dashed}
+@media(max-width:700px){
+  .rt-row{grid-template-columns:minmax(0,1fr) auto}
+  .rt-row .arr{display:none}
+  .rt-row .to{grid-column:1/2}
+  .rt-row .tag{grid-row:1;grid-column:2}
+}
+
+/* asset class grid + the honest "not us" list */
+.agrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:900px){.agrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.agrid{grid-template-columns:1fr}}
+.agrid .box h4{margin:0 0 6px}
+.nope{margin-top:16px;border-radius:var(--r-2);border:1px dashed var(--line);
+  padding:clamp(18px,2.2vw,24px);display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline}
+.nope b{font-weight:500}
+.nope span{font-size:.92rem;color:var(--muted)}
+
+/* lane pages */
+.lists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:900px){.lists{grid-template-columns:1fr}}
+.lists .box ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px}
+.lists .box li{font-size:.95rem;padding-left:18px;position:relative}
+.lists .box li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:1.5px;background:currentColor;opacity:.5}
+.others{display:flex;flex-wrap:wrap;gap:8px}
+.crumbs{font-size:.85rem;color:var(--muted);margin:0 0 18px}
+.crumbs a:hover{color:var(--ink)}
+.hcard .crumbs{color:var(--on-dark-mute)}
+.hcard .crumbs a:hover{color:#fff}
+
+/* intake */
+.chips.big .chip{padding:11px 18px;font-size:.92rem}
+.qnum{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+.qnum b{font-size:.82rem;font-weight:500;color:var(--muted-2)}
+.qnum span{font-size:1.15rem;font-weight:500;letter-spacing:-.02em}
+.qblock{padding-bottom:26px;margin-bottom:26px;border-bottom:1px solid var(--line-2)}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1100px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.grid4{grid-template-columns:1fr}}

@@ -1,5 +1,5 @@
-import V2Content from "./v2/v2-content"
-import { FAQ_ITEMS } from "./v2/faq-items"
+import HubContent from "./v2/hub-content"
+import { HUB_FAQ } from "./v2/situations"
 
 // Fully static: no server-side data on this page. force-dynamic was
 // costing every crawler hit a cold render (1.1s+ TTFB, cache MISS).
@@ -8,9 +8,9 @@ import { FAQ_ITEMS } from "./v2/faq-items"
 // into Google ("facing foreclosure Tennessee", "keep equity", "sell
 // before auction") — nobody searches the brand name. Brand goes last.
 export const metadata = {
-  title: "Facing Foreclosure in Tennessee? Keep Your Equity | FALCO",
+  title: "Sell Distressed Property and Estate Assets at Auction in Tennessee | FALCO",
   description:
-    "Sell your Tennessee home through a licensed marketed auction before the trustee sale takes it. No cost to you, the buyer pays the fee. You keep the equity.",
+    "Estate, business closing, foreclosure, bankruptcy or lien sale? FALCO routes every asset to the licensed Tennessee auctioneer who sells it best. No FALCO fee to sellers.",
   alternates: { canonical: "/" },
 }
 
@@ -26,7 +26,7 @@ const JSON_LD = {
   logo: "https://falco.llc/falco-logo.png",
   image: "https://falco.llc/opengraph-image",
   description:
-    "FALCO helps Tennessee homeowners facing foreclosure sell through licensed marketed auctions before the trustee sale, keeping the equity that would otherwise be lost. No cost to the homeowner.",
+    "FALCO finds Tennessee property and assets that have to be sold after a death, a debt, a closing or a court case, and routes each one to the licensed auctioneer who sells it best. No FALCO fee to sellers.",
   areaServed: {
     "@type": "State",
     name: "Tennessee",
@@ -37,7 +37,7 @@ const JSON_LD = {
     name: "Patrick Yuri Armour",
     jobTitle: "Licensed Tennessee Auctioneer",
   },
-  priceRange: "Free to homeowners (buyer pays premium)",
+  priceRange: "No FALCO fee to sellers",
 }
 
 // FAQPage schema mirrors the on-page FAQ accordion verbatim — Google
@@ -45,7 +45,7 @@ const JSON_LD = {
 const FAQ_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: FAQ_ITEMS.map((item) => ({
+  mainEntity: HUB_FAQ.map((item) => ({
     "@type": "Question",
     name: item.q,
     acceptedAnswer: { "@type": "Answer", text: item.a },
@@ -63,7 +63,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
       />
-      <V2Content />
+      <HubContent />
     </>
   )
 }
