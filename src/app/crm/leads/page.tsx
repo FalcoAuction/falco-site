@@ -45,20 +45,27 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <Head title="Leads" sub={bucket ? BUCKETS.find((b) => b.key === bucket)?.label : day ? `Ranked ${shortDate(day)}` : "No ranking yet"} />
-      <nav className="crm-views" aria-label="Saved views">
-        {VIEWS.map((v) => (
-          <Link key={v.key} href={keep({ view: v.key })} aria-current={v.key === current ? "page" : undefined}>
-            {v.label}{counts[v.key] != null ? <span className="n">{counts[v.key]}</span> : null}
+      <Head title="Leads" sub={bucket ? undefined : day ? `Ranked ${shortDate(day)}` : "No ranking yet"}>
+        <div className="crm-seg" role="group" aria-label="Lead type">
+          <Link href={keep({ view: "all" })} aria-current={!bucket ? "page" : undefined}>
+            Residential <span className="crm-faint" style={{ marginLeft: 5 }}>{counts.all ?? 0}</span>
           </Link>
-        ))}
-        <span aria-hidden="true" style={{ borderLeft: "1px solid var(--line)", margin: "8px 6px" }} />
-        {BUCKETS.map((b) => (
-          <Link key={b.key} href={keep({ view: b.key })} aria-current={b.key === current ? "page" : undefined}>
-            {b.label}<span className="n">{bCounts[b.key]}</span>
-          </Link>
-        ))}
-      </nav>
+          {BUCKETS.map((b) => (
+            <Link key={b.key} href={keep({ view: b.key })} aria-current={b.key === bucket ? "page" : undefined}>
+              {b.label} <span className="crm-faint" style={{ marginLeft: 5 }}>{bCounts[b.key]}</span>
+            </Link>
+          ))}
+        </div>
+      </Head>
+      {!bucket ? (
+        <nav className="crm-views" aria-label="Saved views">
+          {VIEWS.map((v) => (
+            <Link key={v.key} href={keep({ view: v.key })} aria-current={v.key === current ? "page" : undefined}>
+              {v.label}{counts[v.key] != null ? <span className="n">{counts[v.key]}</span> : null}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
       <form className="crm-toolbar" action="/crm/leads">
         <input type="hidden" name="view" value={current} />
         {grade ? <input type="hidden" name="grade" value={grade} /> : null}
@@ -146,7 +153,7 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
               </td>
               <td>{t?.grade ? <span className={`pill ${GRADE_TONE[t.grade]}`}>{t.grade}</span> : <span className="crm-faint" title={t?.exclude_reason ?? ""}>{t?.exclude_reason ? "Excluded" : "Ungraded"}</span>}</td>
               <td className="hide-sm crm-muted">
-                {titleCase(t?.subtype ?? "") || (lane === "land" ? "Vacant land" : "Commercial")}
+                {titleCase((t?.subtype ?? "").replace(/_/g, " ")) || (lane === "land" ? "Vacant land" : "Commercial")}
                 {t?.acres ? ` · ${Number(t.acres).toFixed(t.acres < 10 ? 2 : 0)} ac` : ""}
                 {lane === "land" && t?.land_flip?.score ? <span className="pill accent" style={{ marginLeft: 6 }}>Flip {t.land_flip.score}</span> : null}
               </td>

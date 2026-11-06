@@ -22,7 +22,7 @@ export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus 
 export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "working"
 export type BucketKey = "commercial" | "land" | "assets"
 export const BUCKETS: { key: BucketKey; label: string }[] = [
-  { key: "commercial", label: "Commercial" },
+  { key: "commercial", label: "CRE" },
   { key: "land", label: "Land" },
   { key: "assets", label: "High-value assets" },
 ]
