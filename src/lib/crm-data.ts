@@ -320,7 +320,7 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
   // The same property can be staged by several bots; keep one row per address.
   const byAddr = new Map<string, StagedBucket>()
   for (const r of all) {
-    const k = (r.property_address ?? r.id).toUpperCase().replace(/[^A-Z0-9]/g, "")
+    const k = propertyKey(r)
     const prev = byAddr.get(k)
     if (!prev || (GRADE_ORDER[r.lane?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? ""] ?? 9)) byAddr.set(k, r)
   }
@@ -340,18 +340,42 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
   rows.sort((a, b) => (GRADE_ORDER[a.lane?.grade ?? ""] ?? 9) - (GRADE_ORDER[b.lane?.grade ?? ""] ?? 9)
     || (b.lane?.land_flip?.score ?? 0) - (a.lane?.land_flip?.score ?? 0)
     || Number(b.property_value ?? b.lane?.value ?? 0) - Number(a.property_value ?? a.lane?.value ?? 0))
-  return { rows: await bucketWorkflow(rows.slice(0, 300)), grades }
+  // Every row in the view (a few hundred); the tab count must match.
+  return { rows: await bucketWorkflow(rows.slice(0, 2000)), grades }
 }
+
+/** Same per-property key listBucket dedupes on, so a tab's count always
+ *  equals the rows its list shows (several bots can stage one property). */
+const propertyKey = (r: { id: string; property_address: string | null }) =>
+  (r.property_address ?? r.id).toUpperCase().replace(/[^A-Z0-9]/g, "")
 
 export async function bucketCounts(): Promise<Record<BucketKey, number>> {
   const out: Record<BucketKey, number> = { commercial: 0, land: 0, assets: 0 }
   if (!supabaseAdmin) return out
-  const [c, l, a] = await Promise.all([
-    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true })
-      .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", "commercial").not("raw_payload->property_lane->>grade", "is", null),
-    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true })
-      .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", "land").not("raw_payload->property_lane->>grade", "is", null),
-    supabaseAdmin.from("homeowner_requests_staging").select("id", { count: "exact", head: true }).not("raw_payload->aircraft", "is", null),
-  ])
-  return { commercial: c.count ?? 0, land: l.count ?? 0, assets: a.count ?? 0 }
+  const db = supabaseAdmin
+  type R = { id: string; property_address: string | null }
+  const unique = (rows: R[]) => new Set(rows.map(propertyKey)).size
+  // Graded lane rows only, matching the list's default "Qualified" filter.
+  const lane = async (name: string) => {
+    const rows: R[] = []
+    for (let page = 0; page < 5; page++) {
+      const r = await db.from("homeowner_requests_staging").select("id,property_address")
+        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", name)
+        .not("raw_payload->property_lane->>grade", "is", null).order("id").range(page * 1000, page * 1000 + 999)
+      const batch = (r.data ?? []) as R[]
+      rows.push(...batch)
+      if (batch.length < 1000) break
+    }
+    return unique(rows)
+  }
+  // Ids first through the partial index (see listBucket), then addresses.
+  const assets = async () => {
+    const ids = await db.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500)
+    const idList = ((ids.data ?? []) as { id: string }[]).map((r) => r.id)
+    if (!idList.length) return 0
+    const r = await db.from("homeowner_requests_staging").select("id,property_address").in("id", idList)
+    return unique((r.data ?? []) as R[])
+  }
+  const [c, l, a] = await Promise.all([lane("commercial"), lane("land"), assets()])
+  return { commercial: c, land: l, assets: a }
 }
