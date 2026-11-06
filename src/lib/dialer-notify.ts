@@ -205,7 +205,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
   ` : ""}
 
   <div style="padding:24px 0 16px;text-align:center">
-    <a href="https://falco.llc/dialer/${esc(ctx.listingSlug)}" style="display:inline-block;padding:12px 24px;background:#10b981;color:#000;text-decoration:none;border-radius:6px;font-weight:700;font-size:13px">Open Lead in Dialer →</a>
+    <a href="https://falco.llc/crm/l/${esc(ctx.listingSlug)}" style="display:inline-block;padding:12px 24px;background:#10b981;color:#000;text-decoration:none;border-radius:6px;font-weight:700;font-size:13px">Open Lead in Dialer →</a>
   </div>
 
   <div style="color:#555;font-size:10px;text-align:center;margin-top:16px">
@@ -236,7 +236,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
       ``,
       ctx.notes ? `NOTES\n${ctx.notes}` : "",
       ``,
-      `Open: https://falco.llc/dialer/${ctx.listingSlug}`,
+      `Open: https://falco.llc/crm/l/${ctx.listingSlug}`,
     ]
       .filter(Boolean)
       .join("\n")
@@ -457,8 +457,8 @@ export async function notifyQualifiedLeadDelivered(
 
     const subject = `[Qualified Lead] ${lead.address} — appointment ${apptStr}`
 
-    const mathSheetUrl = `https://falco.llc/dialer/${ctx.listingSlug}/math-sheet`
-    const dialerUrl = `https://falco.llc/dialer/${ctx.listingSlug}`
+    const mathSheetUrl = `https://falco.llc/crm/l/${ctx.listingSlug}`
+    const dialerUrl = `https://falco.llc/crm/l/${ctx.listingSlug}`
 
     // ────────────────────────────────────────────────────────────────────
     // HTML

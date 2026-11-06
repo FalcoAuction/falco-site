@@ -1,6 +1,6 @@
 # falco-site Project Context
 
-Next.js 16 App Router site. Public-facing marketing + admin dashboard + dialer interface + lead intake APIs.
+Next.js 16 App Router site. Public-facing marketing + the CRM (/crm) + lead intake APIs.
 
 ## Tech stack
 
@@ -18,12 +18,10 @@ Next.js 16 App Router site. Public-facing marketing + admin dashboard + dialer i
 src/
   app/
     (forms)/        — public-facing forms route group
-    admin/          — admin dashboard (auth-gated)
+    crm/            — the CRM: leads, inbox, outreach, landlords, data health, math sheet (password-gated, /crm/login)
     api/            — API routes (REST endpoints)
-    dialer/         — Chris's dialer interface (per-lead UX)
     v2/             — current homepage (v2 redesign)
     pilot/          — pilot partner pages (e.g., pilot/parks/term-sheet)
-    team/           — internal docs (e.g., team/dialer for Chris onboarding)
     homeowners/     — homeowner request flow
     buyers/         — buyer registration flow
     partners/       — auction partner pages
@@ -80,7 +78,7 @@ vercel inspect --logs <deployment-url>
 
 - **Server components by default.** Only use `"use client"` when interactivity requires it.
 - **`force-dynamic`** for routes that hit Supabase (prevents build-time prerender failures).
-- **Admin routes** check `getAdminSession(req)` first. Return 401 if missing.
+- **CRM routes** check `getAdminSession(req)` first (API) or live under `src/app/crm/(app)` (pages). Return 401 if missing. /admin and /dialer were removed 2026-11-06 and redirect to /crm.
 - **Print styles:** Use `print:hidden` to hide chrome on print pages (math sheet, dialer).
 - **No emoji in files** unless explicitly requested.
 - **No new docs** unless explicitly requested.
