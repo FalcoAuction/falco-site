@@ -146,6 +146,14 @@ export type StagedLead = {
   source_url: string | null; year_built: number | null; alternate_phones: unknown; raw_payload: Record<string, unknown> | null
 }
 
+/** The promoted homeowner_requests row for a pipeline key, which is what
+ *  the math sheet (/crm/math-sheet/[id]) is keyed by. */
+export async function mathSheetIdFor(slug: string | null): Promise<string | null> {
+  if (!supabaseAdmin || !slug) return null
+  const r = await supabaseAdmin.from("homeowner_requests").select("id").eq("pipeline_lead_key", slug).limit(1)
+  return (r.data?.[0] as { id: string } | undefined)?.id ?? null
+}
+
 export async function getLead(id: string): Promise<{ lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")

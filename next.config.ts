@@ -3,6 +3,23 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
+  // The admin dashboard and the dialer were replaced by the CRM (/crm).
+  // Old bookmarks and links in emails already sent keep working: a dialer
+  // lead link resolves its pipeline key at /crm/l/[slug].
+  async redirects() {
+    return [
+      { source: "/admin", destination: "/crm", permanent: false },
+      { source: "/admin/login", destination: "/crm/login", permanent: false },
+      { source: "/admin/math-sheet/:id", destination: "/crm/math-sheet/:id", permanent: false },
+      { source: "/admin/:path*", destination: "/crm", permanent: false },
+      { source: "/dialer", destination: "/crm", permanent: false },
+      { source: "/dialer/:slug(login|inbox|drafts|surplus|agreement)", destination: "/crm", permanent: false },
+      { source: "/dialer/:slug/:rest*", destination: "/crm/l/:slug", permanent: false },
+      { source: "/operator/dialer", destination: "/crm", permanent: false },
+      { source: "/team/dialer", destination: "/crm", permanent: false },
+    ];
+  },
+
   // Only HSTS was being sent. These are the low-risk headers that matter
   // for a site with an authenticated dialer and admin behind it.
   // A full Content-Security-Policy is deliberately not set here: it needs

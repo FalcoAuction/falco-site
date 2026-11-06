@@ -137,7 +137,7 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
   <div style="padding:24px 28px 18px;border-bottom:1px solid rgba(255,255,255,0.06)">
     <div style="font-size:11px;letter-spacing:0.32em;color:#10b981;font-weight:700;text-transform:uppercase">FALCO · Daily Digest</div>
     <div style="font-size:24px;font-weight:600;color:#fff;margin-top:10px">${totals.total} new lead${totals.total === 1 ? "" : "s"} in the last 24 hours</div>
-    <div style="font-size:13px;color:#9ca3af;margin-top:4px">${esc(today)} · falco.llc/admin</div>
+    <div style="font-size:13px;color:#9ca3af;margin-top:4px">${esc(today)} · falco.llc/crm</div>
   </div>
   <div style="padding:6px 28px 24px">
     ${sectionHtml("Pipeline (FALCO-pulled)", "🛰", last.pipeline)}
@@ -147,7 +147,7 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     ${sectionHtml("General inquiries", "📨", last.inquiries)}
   </div>
   <div style="padding:14px 28px;border-top:1px solid rgba(255,255,255,0.06);color:#4b5563;font-size:11px;text-align:center;letter-spacing:0.16em;text-transform:uppercase">
-    <a href="https://falco.llc/admin" style="color:#10b981;text-decoration:none">Open Admin Inbox →</a>
+    <a href="https://falco.llc/crm/inbox" style="color:#10b981;text-decoration:none">Open the CRM inbox →</a>
   </div>
 </div>
 </body></html>`
@@ -166,7 +166,7 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     "",
     ...leadTextLines(last.inquiries, "📨 General inquiries"),
     "",
-    "Open the inbox: https://falco.llc/admin",
+    "Open the inbox: https://falco.llc/crm/inbox",
   ].join("\n")
 
   try {

@@ -227,9 +227,9 @@ export async function GET(req: NextRequest) {
       const slug = l.pipeline_lead_key || ""
       const links = slug
         ? `<div style="margin-top:6px; font-size:12px;">
-            <a href="https://falco.llc/dialer/${slug}" style="color:#2563eb;">dialer card</a>
+            <a href="https://falco.llc/crm/l/${slug}" style="color:#2563eb;">dialer card</a>
             &nbsp;·&nbsp;
-            <a href="https://falco.llc/dialer/${slug}/math-sheet" style="color:#2563eb;">math sheet</a>
+            <a href="https://falco.llc/crm/l/${slug}" style="color:#2563eb;">math sheet</a>
           </div>`
         : ""
       return `

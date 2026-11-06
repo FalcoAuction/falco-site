@@ -98,7 +98,7 @@ async function notifyPatrick(args: {
     args.botAction === "auto_sent"
       ? "Bot auto-replied."
       : args.botAction === "queued"
-      ? `Bot draft queued (${args.escalationReason || "review"}). Approve at falco.llc/dialer/inbox`
+      ? `Bot draft queued (${args.escalationReason || "review"}). Review at falco.llc/crm`
       : args.botAction === "opted_out_lead"
       ? "Lead is on opt-out list. No bot reply."
       : "No bot draft. Open inbox to compose."

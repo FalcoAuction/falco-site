@@ -84,10 +84,7 @@
 }
 
 .crm {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -98,6 +95,9 @@
 .crm * { box-sizing: border-box; }
 .crm h1, .crm h2, .crm h3 { font-family: inherit; margin: 0; letter-spacing: -0.01em; }
 .crm a { color: inherit; text-decoration: none; }
+
+/* App frame: sidebar + main */
+.crm-shell { position: fixed; inset: 0; display: grid; grid-template-columns: 220px 1fr; }
 
 /* Sidebar */
 .crm-side { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
@@ -227,7 +227,7 @@
 
 /* Phone width: sidebar becomes a top bar, record page stacks. */
 @media (max-width: 860px) {
-  .crm { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .crm-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .crm-side { flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
   .crm-nav { flex-direction: row; }
   .crm-nav-label, .crm-nav .count { display: none; }
@@ -239,3 +239,11 @@
   .crm-table td:first-child, .crm-table th:first-child { padding-left: 16px; }
   .crm-table .hide-sm { display: none; }
 }
+
+/* Sign-in */
+.crm-auth { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.crm-auth-card { width: 100%; max-width: 360px; padding: 28px; }
+.crm-auth-card h1 { font-size: 18px; font-weight: 600; margin: 14px 0 4px; }
+.crm-auth-card .crm-input { width: 100%; height: 36px; }
+.crm-auth-card .crm-btn { width: 100%; height: 36px; justify-content: center; margin-top: 10px; }
+.crm-brand-row { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }

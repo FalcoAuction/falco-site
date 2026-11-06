@@ -327,7 +327,7 @@ export async function GET(req: NextRequest) {
   }
 
   <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-    <a href="https://falco.llc/dialer/inbox" style="color: #15803d;">→ Open AI Inbox</a>
+    <a href="https://falco.llc/crm" style="color: #15803d;">→ Open AI Inbox</a>
     &nbsp; · &nbsp;
     Auto-respond config: threshold ${process.env.FALCO_SMS_AUTO_SEND_THRESHOLD || "0.7"}, ${process.env.FALCO_SMS_AUTO_SEND === "0" ? "DISABLED" : "enabled"}
   </div>
