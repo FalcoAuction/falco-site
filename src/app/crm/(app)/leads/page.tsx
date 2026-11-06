@@ -1,11 +1,11 @@
 // Leads: the nightly ranked list (lead_opportunities) as saved views,
 // plus the commercial, land and high-value asset buckets other bots tag
-// on staging rows (property_lane, aircraft). Status comes from the dialer
+// on staging rows (property_lane, aircraft, personal_property). Status comes from the dialer
 // workflow, so a lead worked in the dialer shows here too.
 
 import Link from "next/link"
 import {
-  BUCKETS, VIEWS, bucketCounts, latestOpportunityDay, listBucket, listLeads, viewCounts,
+  BUCKETS, PP_LANE_LABEL, VIEWS, bucketCounts, latestOpportunityDay, listBucket, listLeads, viewCounts,
   type BucketKey, type BucketRow, type GradeFilter, type LeadRow, type ViewKey,
 } from "@/lib/crm-data"
 import { Icon } from "@/app/crm/icons"
@@ -175,19 +175,31 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
 function AssetTable({ rows }: { rows: BucketRow[] }) {
   return (
     <table className="crm-table">
-      <thead><tr><th>Owner</th><th>Asset</th><th className="hide-sm">Value band</th><th className="hide-sm">Why they are here</th><th>Status</th></tr></thead>
+      <thead><tr><th>Owner</th><th>Asset</th><th className="hide-sm">Grade</th><th className="hide-sm">Why they are here</th><th>Status</th></tr></thead>
       <tbody>
         {rows.map((r) => {
           const a = r.aircraft?.[0]
+          const p = r.pp
+          const kinds = (p?.categories ?? []).map((c) => c.replace(/_/g, " ")).join(", ")
           return (
             <RowLink key={r.staging_id} href={`/crm/leads/${r.staging_id}`}>
               <td>
                 <div className="primary-cell">{titleCase(a?.registrant ?? r.owner_name) || "Owner unknown"}</div>
                 <div className="secondary">{r.property_address ?? a?.registrant_address} · {titleCase(r.county)}</div>
               </td>
-              <td>{a ? <><span>{a.aircraft}</span><div className="secondary">{a.n_number}{(r.aircraft?.length ?? 0) > 1 ? ` + ${(r.aircraft?.length ?? 1) - 1} more` : ""}</div></> : null}</td>
-              <td className="hide-sm crm-muted">{a?.value_band_label}</td>
-              <td className="hide-sm"><span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>{a?.match_type ? <div className="secondary">Matched by {a.match_type.replace(/_/g, " ")}</div> : null}</td>
+              <td>
+                {a ? <><span>{a.aircraft}</span><div className="secondary">{a.n_number}{(r.aircraft?.length ?? 0) > 1 ? ` + ${(r.aircraft?.length ?? 1) - 1} more` : ""}</div></>
+                  : p ? <><span>{PP_LANE_LABEL[p.lane] ?? p.lane}</span><div className="secondary">{kinds}</div></> : null}
+              </td>
+              <td className="hide-sm">
+                {p ? <span className={`pill ${GRADE_TONE[p.grade]}`}>{p.grade}</span> : null}
+                {a?.value_band_label ? <div className="secondary">{a.value_band_label}</div> : p?.est_value_min ? <div className="secondary">~{compactMoney(p.est_value_min)}+</div> : null}
+              </td>
+              <td className="hide-sm">
+                <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
+                {p?.signals?.[0] ? <div className="secondary">{p.signals[0].length > 90 ? `${p.signals[0].slice(0, 90)}...` : p.signals[0]}</div>
+                  : a?.match_type ? <div className="secondary">Matched by {a.match_type.replace(/_/g, " ")}</div> : null}
+              </td>
               <td><StatusPill status={r.status} /></td>
             </RowLink>
           )

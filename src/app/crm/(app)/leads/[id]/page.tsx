@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { getLead, mathSheetIdFor, type AircraftTag, type LaneTag } from "@/lib/crm-data"
+import { PP_LANE_LABEL, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents, type PersonalPropertyTag } from "@/lib/crm-data"
 import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import { Icon } from "@/app/crm/icons"
 import { Head, SalePill, StatusPill, money, relTime, shortDate, titleCase } from "@/app/crm/ui"
@@ -12,6 +12,7 @@ import { LogForm } from "./log-form"
 import { SheetThumb } from "./sheet-thumb"
 import MathSheetContent from "@/app/crm/math-sheet/[id]/math-sheet-content"
 import { loadHomeownerSnapshot } from "@/app/crm/math-sheet/[id]/load-snapshot"
+import { ContentsForm } from "./contents-form"
 
 export const dynamic = "force-dynamic"
 
@@ -38,6 +39,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const owner = lead.owner_name_records || lead.full_name
   const laneTag = (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const aircraft = (Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
+  const pp = (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
+  const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
   const sale = lead.trustee_sale_date || opp?.sale_date || null
@@ -145,6 +148,23 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               ))}
             </div>
           ) : null}
+
+          {pp ? (
+            <div>
+              <div className="crm-section-label">{PP_LANE_LABEL[pp.lane] ?? "Personal property"}</div>
+              <dl className="crm-props">
+                <dt>Grade</dt><dd><span className={`pill ${pp.grade === "A" ? "green" : "blue"}`}>{pp.grade}</span></dd>
+                {pp.categories?.length ? <><dt>Likely</dt><dd>{pp.categories.map((c) => c.replace(/_/g, " ")).join(", ")}</dd></> : null}
+                {pp.est_value_min ? <><dt>Est. value</dt><dd>{money(pp.est_value_min)}+ <span className="crm-faint">rough</span></dd></> : null}
+                <dt>Why</dt><dd>{pp.signals.map((s, i) => <div key={i} className="crm-muted">{s}</div>)}</dd>
+                {pp.caveats?.length ? <><dt>Check</dt><dd>{pp.caveats.map((c, i) => <div key={i} className="crm-faint">{c}</div>)}</dd></> : null}
+                {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{pp.contacts.attorney.address.join(", ")}</div> : null}</dd></> : null}
+                {pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{r.address.join(", ")}</div> : null}</div>)}</dd></> : null}
+                {pp.contacts?.probate_docket ? <><dt>Docket</dt><dd>{pp.contacts.probate_docket}</dd></> : null}
+                {pp.contacts?.bankruptcy_docket ? <><dt>Case</dt><dd><a href={pp.contacts.bankruptcy_docket} target="_blank" rel="noreferrer">{pp.contacts.case_number ?? "Docket"}</a></dd></> : null}
+              </dl>
+            </div>
+          ) : null}
         </aside>
 
         <div className="crm-record-main">
@@ -153,6 +173,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           ) : (
             <div className="crm-note">This lead has no pipeline key, so calls cannot be logged against it.</div>
           )}
+
+          <ContentsForm id={lead.id} initial={contents} />
 
           {workflow?.nextActionAt ? (
             <div className="crm-note">
