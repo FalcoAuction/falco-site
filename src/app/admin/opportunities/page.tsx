@@ -110,6 +110,7 @@ export default async function OpportunitiesPage({ searchParams }: {
             <Link href="/admin/opportunities?view=landlords" className={tab(showLandlords)}>Landlords</Link>
             <Link href="/admin/opportunities?view=attorneys" className={tab(showAttorneys)}>Estate attorneys</Link>
             <Link href="/admin/lead-quality" className={tab(false)}>Lead quality</Link>
+            <Link href="/admin/outreach" className={tab(false)}>Outreach</Link>
           </div>
         </header>
 
