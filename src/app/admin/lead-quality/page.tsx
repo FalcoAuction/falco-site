@@ -24,6 +24,8 @@ const REASONS: Record<string, string> = {
   sale_passed: "Sale date already passed",
   estate_over_6mo: "Estate notice over 6 months old",
   duplicate: "Same address as an earlier lead",
+  above_scope: "Value over $5M (institutional, not a FALCO deal)",
+  weak_signal: "Not a reason to sell (demolition permit or nuisance ticket)",
 }
 
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "")
@@ -69,7 +71,10 @@ export default async function LeadQualityPage() {
               has a property, a value of $50k or more, a person or estate as owner, a way to reach the decision-maker, is current, and is not a duplicate.
             </p>
           </div>
-          <Link href="/admin/today" className="text-xs text-white/55 hover:text-white">Back to today</Link>
+          <div className="flex gap-3 text-xs text-white/55">
+            <Link href="/admin/opportunities" className="hover:text-white">Top opportunities</Link>
+            <Link href="/admin/today" className="hover:text-white">Back to today</Link>
+          </div>
         </header>
 
         {!data ? (
