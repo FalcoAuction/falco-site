@@ -190,6 +190,13 @@ export default function AdminContent({
           </div>
           <div className="flex items-center gap-4 text-[12px]">
             <a
+              href="/crm"
+              className="rounded-md bg-white px-2.5 py-1 font-semibold text-neutral-950 hover:bg-white/90 transition-colors"
+              title="Leads, calls, outreach and data health in one place"
+            >
+              Open CRM
+            </a>
+            <a
               href="/admin/today"
               className="text-emerald-300 hover:text-emerald-200 transition-colors font-semibold"
               title="Daily focus page — what to do right now"
