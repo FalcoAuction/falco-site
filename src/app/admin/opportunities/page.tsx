@@ -19,23 +19,42 @@ type Landlord = {
   owner_name: string; residential_count: number; residential_value: number; open_cases: number; owned_since: string | null
   owner_mailing: string | null; out_of_area: boolean; is_company: boolean; tired_score: number; expected_fee: number
   parcels: { address: string | null; value: number | null; land_use: string | null }[]
+  county: string; signals: Record<string, number>; passive: boolean
 }
+
+const SIGNAL_LABELS: Record<string, string> = {
+  probate: "owner died", foreclosure: "foreclosure", court_sale: "court sale", tax: "tax", bankruptcy: "bankruptcy",
+  code_housing: "housing code",
+}
+const PORTFOLIO_COUNTIES = ["davidson", "rutherford", "williamson", "montgomery", "wilson", "maury", "robertson", "cheatham"]
 
 const money = (n: number) => "$" + Math.round(Number(n)).toLocaleString("en-US")
 const titleCounty = (c: string | null) => (c ? c.replace(/\b[a-z]/g, (m) => m.toUpperCase()) : "")
 
-export default async function OpportunitiesPage({ searchParams }: { searchParams: Promise<{ lane?: string; view?: string }> }) {
+export default async function OpportunitiesPage({ searchParams }: {
+  searchParams: Promise<{ lane?: string; view?: string; county?: string; kind?: string }>
+}) {
   if (!(await readAdminSessionFromCookies())) redirect("/admin/login")
-  const { lane, view } = await searchParams
+  const { lane, view, county, kind } = await searchParams
   const showAttorneys = view === "attorneys"
   const showLandlords = view === "landlords"
+  const countyFilter = county && PORTFOLIO_COUNTIES.includes(county) ? county : null
   let landlords: Landlord[] = []
+  const countyCounts = new Map<string, number>()
   if (showLandlords && supabaseAdmin) {
-    const res = await supabaseAdmin.from("landlord_portfolios")
-      .select("owner_name,residential_count,residential_value,open_cases,owned_since,owner_mailing,out_of_area,is_company,tired_score,expected_fee,parcels")
-      .order("tired_score", { ascending: false }).order("residential_value", { ascending: false }).limit(150)
+    let q = supabaseAdmin.from("landlord_portfolios")
+      .select("owner_name,county,residential_count,residential_value,open_cases,owned_since,owner_mailing,out_of_area,is_company,tired_score,expected_fee,parcels,signals,passive")
+      .order("tired_score", { ascending: false }).order("residential_value", { ascending: false }).limit(200)
+    if (countyFilter) q = q.eq("county", countyFilter)
+    if (kind === "signals") q = q.eq("passive", false)
+    if (kind === "passive") q = q.eq("passive", true)
+    const res = await q
     landlords = (res.data ?? []) as Landlord[]
+    const all = await supabaseAdmin.from("landlord_portfolios").select("county").limit(20000)
+    for (const r of (all.data ?? []) as { county: string }[]) countyCounts.set(r.county, (countyCounts.get(r.county) ?? 0) + 1)
   }
+  const landlordHref = (c: string | null, k?: string) =>
+    `/admin/opportunities?view=landlords${c ? `&county=${c}` : ""}${k ? `&kind=${k}` : ""}`
 
   let day: string | null = null
   let opps: Opp[] = []
@@ -101,29 +120,45 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         ) : showLandlords ? (
           <section>
             <p className="mb-3 max-w-3xl text-sm text-white/50">
-              Davidson owners with two or more residential parcels and open Codes housing cases. A tired landlord can sell the whole
-              portfolio in one auction. Ranked by open cases, portfolio size, years owned and out-of-state mailing. Values are county appraisals.
+              Owners of 2 to 40 rentals with a distress signal at one of their properties (owner died, foreclosure, tax, court sale,
+              bankruptcy, Davidson housing code cases), plus passive landlords: 5+ rentals, out-of-state owner, held 15+ years.
+              One auction can sell the whole portfolio. Values are county appraisals. Sumner and Dickson have no usable parcel data yet.
             </p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <Link href={landlordHref(null, kind)} className={tab(!countyFilter)}>All counties</Link>
+              {PORTFOLIO_COUNTIES.map((c) => (
+                <Link key={c} href={landlordHref(c, kind)} className={tab(countyFilter === c)}>
+                  {titleCounty(c)} · {countyCounts.get(c) ?? 0}
+                </Link>
+              ))}
+              <span className="mx-1 text-white/20">|</span>
+              <Link href={landlordHref(countyFilter)} className={tab(!kind)}>All</Link>
+              <Link href={landlordHref(countyFilter, "signals")} className={tab(kind === "signals")}>With distress</Link>
+              <Link href={landlordHref(countyFilter, "passive")} className={tab(kind === "passive")}>Passive</Link>
+            </div>
             <div className="overflow-x-auto rounded-lg border border-white/10">
               <table className="w-full text-sm">
                 <thead className="bg-white/[0.04] text-left text-[11px] uppercase tracking-wider text-white/45">
                   <tr><th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Rentals</th><th className="px-3 py-2 text-right">Value</th>
-                    <th className="px-3 py-2 text-right">Open cases</th><th className="px-3 py-2">Owned since</th><th className="px-3 py-2 text-right">Expected fee</th>
+                    <th className="px-3 py-2">Signals</th><th className="px-3 py-2">Owned since</th><th className="px-3 py-2 text-right">Expected fee</th>
                     <th className="px-3 py-2">Mailing</th></tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {landlords.map((l) => (
-                    <tr key={l.owner_name}>
+                    <tr key={`${l.county}|${l.owner_name}`}>
                       <td className="px-3 py-2">
                         <div className="font-medium">{l.owner_name}</div>
                         <div className="text-xs text-white/40">
-                          {[l.is_company ? "Company" : "Individual", l.out_of_area ? "Out of state" : null].filter(Boolean).join(" · ")}
+                          {[titleCounty(l.county), l.is_company ? "Company" : "Individual", l.out_of_area ? "Out of state" : null].filter(Boolean).join(" · ")}
                           {l.parcels?.[0]?.address ? ` · e.g. ${l.parcels[0].address}` : ""}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">{l.residential_count}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{money(l.residential_value)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-semibold">{l.open_cases}</td>
+                      <td className="px-3 py-2 text-xs">
+                        {l.passive ? <span className="text-white/45">Passive landlord</span>
+                          : Object.entries(l.signals ?? {}).map(([k, n]) => `${SIGNAL_LABELS[k] ?? k}${n > 1 ? ` x${n}` : ""}`).join(", ")}
+                      </td>
                       <td className="px-3 py-2 text-xs text-white/60">{l.owned_since ?? ""}</td>
                       <td className="px-3 py-2 text-right tabular-nums font-semibold">{money(l.expected_fee)}</td>
                       <td className="px-3 py-2 text-xs text-white/60">{l.owner_mailing}</td>
