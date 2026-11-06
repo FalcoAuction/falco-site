@@ -15,6 +15,11 @@ type Opp = {
   property_value: number; expected_fee: number; score: number; sale_date: string | null; contact: string | null; bot_source: string
 }
 type Attorney = { attorney_name: string; county: string; estates: number; valued_estates: number; office_address: string | null; latest_docket: string | null }
+type Landlord = {
+  owner_name: string; residential_count: number; residential_value: number; open_cases: number; owned_since: string | null
+  owner_mailing: string | null; out_of_area: boolean; is_company: boolean; tired_score: number; expected_fee: number
+  parcels: { address: string | null; value: number | null; land_use: string | null }[]
+}
 
 const money = (n: number) => "$" + Math.round(Number(n)).toLocaleString("en-US")
 const titleCounty = (c: string | null) => (c ? c.replace(/\b[a-z]/g, (m) => m.toUpperCase()) : "")
@@ -23,6 +28,14 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
   if (!(await readAdminSessionFromCookies())) redirect("/admin/login")
   const { lane, view } = await searchParams
   const showAttorneys = view === "attorneys"
+  const showLandlords = view === "landlords"
+  let landlords: Landlord[] = []
+  if (showLandlords && supabaseAdmin) {
+    const res = await supabaseAdmin.from("landlord_portfolios")
+      .select("owner_name,residential_count,residential_value,open_cases,owned_since,owner_mailing,out_of_area,is_company,tired_score,expected_fee,parcels")
+      .order("tired_score", { ascending: false }).order("residential_value", { ascending: false }).limit(150)
+    landlords = (res.data ?? []) as Landlord[]
+  }
 
   let day: string | null = null
   let opps: Opp[] = []
@@ -74,7 +87,8 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
             </p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/opportunities" className={tab(!showAttorneys)}>Opportunities</Link>
+            <Link href="/admin/opportunities" className={tab(!showAttorneys && !showLandlords)}>Opportunities</Link>
+            <Link href="/admin/opportunities?view=landlords" className={tab(showLandlords)}>Landlords</Link>
             <Link href="/admin/opportunities?view=attorneys" className={tab(showAttorneys)}>Estate attorneys</Link>
             <Link href="/admin/lead-quality" className={tab(false)}>Lead quality</Link>
           </div>
@@ -84,6 +98,41 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
           <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
             Opportunities could not be loaded. Check the database connection and that the opportunities migration is applied.
           </p>
+        ) : showLandlords ? (
+          <section>
+            <p className="mb-3 max-w-3xl text-sm text-white/50">
+              Davidson owners with two or more residential parcels and open Codes housing cases. A tired landlord can sell the whole
+              portfolio in one auction. Ranked by open cases, portfolio size, years owned and out-of-state mailing. Values are county appraisals.
+            </p>
+            <div className="overflow-x-auto rounded-lg border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/[0.04] text-left text-[11px] uppercase tracking-wider text-white/45">
+                  <tr><th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Rentals</th><th className="px-3 py-2 text-right">Value</th>
+                    <th className="px-3 py-2 text-right">Open cases</th><th className="px-3 py-2">Owned since</th><th className="px-3 py-2 text-right">Expected fee</th>
+                    <th className="px-3 py-2">Mailing</th></tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {landlords.map((l) => (
+                    <tr key={l.owner_name}>
+                      <td className="px-3 py-2">
+                        <div className="font-medium">{l.owner_name}</div>
+                        <div className="text-xs text-white/40">
+                          {[l.is_company ? "Company" : "Individual", l.out_of_area ? "Out of state" : null].filter(Boolean).join(" · ")}
+                          {l.parcels?.[0]?.address ? ` · e.g. ${l.parcels[0].address}` : ""}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">{l.residential_count}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{money(l.residential_value)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-semibold">{l.open_cases}</td>
+                      <td className="px-3 py-2 text-xs text-white/60">{l.owned_since ?? ""}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-semibold">{money(l.expected_fee)}</td>
+                      <td className="px-3 py-2 text-xs text-white/60">{l.owner_mailing}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         ) : showAttorneys ? (
           <section>
             <p className="mb-3 text-sm text-white/50">Attorneys named on probate notices in the 10 focus counties. One attorney who sends estates is worth more than a stack of letters.</p>
