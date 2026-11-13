@@ -66,7 +66,7 @@ export default function BuyersLandingPage() {
         </div>
       </PageSec>
 
-      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. We only email when something matches.">
+      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. We only email when something matches. Questions: sales@falco.llc.">
         <div className="pg-form pg-legacy r">
           <BuyerSignupForm />
         </div>

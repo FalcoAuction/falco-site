@@ -1,135 +1,70 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import {
-  FormShell,
-  Field,
-  FormError,
-  FormSuccess,
-  SubmitButton,
-  inputCls,
-} from "../(forms)/form-shell"
+import StepForm, { postJson, type StepValues } from "../v2/step-form"
+import { SitePage } from "../v2/site-page"
 
+const FAIL = "Something went wrong. Try again or email help@falco.llc."
+const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
+
+/** General contact, one question per screen. Same payload as before. */
 export default function InquiryForm() {
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [company, setCompany] = useState("")
-  const [topic, setTopic] = useState("")
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [pending, start] = useTransition()
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-    start(async () => {
-      const res = await fetch("/api/inquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName,
-          email,
-          phone,
-          company,
-          topic,
-          message,
-        }),
-      })
-      const body = await res.json().catch(() => null)
-      if (!res.ok) {
-        setError(body?.error ?? "Something went wrong. Try again or email falco@falco.llc.")
-        return
-      }
-      setSuccess(body?.message ?? "Got it.")
-    })
-  }
-
   return (
-    <FormShell
-      eyebrow="Contact"
-      title="Don't fit the other forms? Tell us what you're up to."
-      intro="Press, partnerships, vendors, or anything else. Drop a note and we'll reply within one business day."
-    >
-      {success ? (
-        <FormSuccess msg={success} />
-      ) : (
-        <form onSubmit={submit} className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Your name" required>
-              <input
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                className={inputCls}
-                placeholder="Your name"
-              />
-            </Field>
-            <Field label="Email" required>
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className={inputCls}
-                placeholder="you@example.com"
-              />
-            </Field>
-            <Field label="Phone">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
-                className={inputCls}
-                placeholder="(___) ___-____"
-              />
-            </Field>
-            <Field label="Company / org">
-              <input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className={inputCls}
-                placeholder="Optional"
-              />
-            </Field>
-          </div>
-
-          <Field label="What's this about?">
-            <input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className={inputCls}
-              placeholder="Press, partnership, investment, question..."
-            />
-          </Field>
-
-          <Field label="Your message" required>
-            <textarea
-              required
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={6}
-              className={`${inputCls} resize-y`}
-              placeholder="Tell us a little about who you are and what you'd like to talk about..."
-            />
-          </Field>
-
-          <FormError msg={error} />
-
-          <div className="pt-2 flex flex-wrap items-center gap-4">
-            <SubmitButton pending={pending}>Send</SubmitButton>
-            <div className="text-[11px] text-white/40">
-              We respond within one business day from{" "}
-              <span className="text-white/65">falco@falco.llc</span>.
-            </div>
-          </div>
-        </form>
-      )}
-    </FormShell>
+    <SitePage>
+      <div className="st-wrap">
+        <StepForm
+          label="Contact"
+          steps={[
+            {
+              kind: "choice",
+              q: "What's this about?",
+              name: "topic",
+              options: ["Press", "A partnership", "Investment", "A vendor or service", "Something else"],
+            },
+            {
+              kind: "fields",
+              q: "What would you like to say?",
+              fields: [
+                {
+                  name: "message",
+                  label: "Your message",
+                  type: "textarea",
+                  required: true,
+                  placeholder: "A little about who you are and what you'd like to talk about.",
+                },
+              ],
+            },
+            {
+              kind: "fields",
+              q: "How do we reach you?",
+              sub: "We reply within one business day.",
+              fields: [
+                { name: "fullName", label: "Your name", required: true, autoComplete: "name" },
+                { name: "email", label: "Email", type: "email", required: true, autoComplete: "email" },
+                { name: "phone", label: "Phone", type: "tel", autoComplete: "tel" },
+                { name: "company", label: "Company or organization", autoComplete: "organization" },
+              ],
+            },
+          ]}
+          onSubmit={(v) =>
+            postJson(
+              "/api/inquiry",
+              {
+                fullName: s(v, "fullName"),
+                email: s(v, "email"),
+                phone: s(v, "phone"),
+                company: s(v, "company"),
+                topic: s(v, "topic"),
+                message: s(v, "message"),
+              },
+              FAIL
+            )
+          }
+          done={{
+            title: "Thank you. We've got it.",
+            text: "We'll reply within one business day.",
+          }}
+        />
+      </div>
+    </SitePage>
   )
 }

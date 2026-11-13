@@ -1,178 +1,83 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import {
-  FormShell,
-  Field,
-  FormError,
-  FormSuccess,
-  SubmitButton,
-  inputCls,
-} from "../(forms)/form-shell"
+import StepForm, { postJson, type StepValues } from "../v2/step-form"
+import { SitePage } from "../v2/site-page"
 
+const FAIL = "Something went wrong. Try again or email sales@falco.llc."
+const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
+
+/** Auction firm partnership inquiry, one question per screen. Same payload as before. */
 export default function PartnerForm() {
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [company, setCompany] = useState("")
-  const [phone, setPhone] = useState("")
-  const [countyCoverage, setCountyCoverage] = useState("")
-  const [dealsPerYear, setDealsPerYear] = useState("")
-  const [yearsInBusiness, setYearsInBusiness] = useState("")
-  const [feeStructure, setFeeStructure] = useState("")
-  const [notes, setNotes] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [pending, start] = useTransition()
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-    start(async () => {
-      const res = await fetch("/api/partners/inquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName,
-          email,
-          company,
-          phone,
-          countyCoverage,
-          dealsPerYear: dealsPerYear || null,
-          yearsInBusiness: yearsInBusiness || null,
-          feeStructure,
-          notes,
-        }),
-      })
-      const body = await res.json().catch(() => null)
-      if (!res.ok) {
-        setError(body?.error ?? "Something went wrong. Try again or email falco@falco.llc.")
-        return
-      }
-      setSuccess(body?.message ?? "Got it.")
-    })
-  }
-
   return (
-    <FormShell
-      eyebrow="For auction firms"
-      title="Open a partnership conversation."
-      intro="Run a Tennessee auction company? We send you sellers with real value and real deadlines, matched to what you sell best. Tell us about your firm and we'll set up a call within one business day."
-    >
-      {success ? (
-        <FormSuccess msg={success} />
-      ) : (
-        <form onSubmit={submit} className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Your name" required>
-              <input
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                className={inputCls}
-                placeholder="Your name"
-              />
-            </Field>
-            <Field label="Email" required>
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className={inputCls}
-                placeholder="you@yourcompany.com"
-              />
-            </Field>
-            <Field label="Company">
-              <input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className={inputCls}
-                placeholder="Your auction company name"
-              />
-            </Field>
-            <Field label="Phone">
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
-                className={inputCls}
-                placeholder="(___) ___-____"
-              />
-            </Field>
-          </div>
-
-          <div className="h-px bg-white/[0.06]" />
-
-          <Field
-            label="County coverage"
-            hint="Where do you currently operate? Comma-separated is fine."
-          >
-            <input
-              value={countyCoverage}
-              onChange={(e) => setCountyCoverage(e.target.value)}
-              className={inputCls}
-              placeholder="Davidson, Rutherford, Williamson, Shelby..."
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Deals per year (rough)">
-              <input
-                inputMode="numeric"
-                value={dealsPerYear}
-                onChange={(e) => setDealsPerYear(e.target.value)}
-                className={inputCls}
-                placeholder="e.g. 40"
-              />
-            </Field>
-            <Field label="Years in business">
-              <input
-                inputMode="numeric"
-                value={yearsInBusiness}
-                onChange={(e) => setYearsInBusiness(e.target.value)}
-                className={inputCls}
-                placeholder="e.g. 12"
-              />
-            </Field>
-          </div>
-
-          <Field
-            label="Fee structure"
-            hint="Buyer's premium only, seller commission, hybrid, whatever you typically run."
-          >
-            <input
-              value={feeStructure}
-              onChange={(e) => setFeeStructure(e.target.value)}
-              className={inputCls}
-              placeholder="e.g. 10% buyer's premium, no seller commission"
-            />
-          </Field>
-
-          <Field label="Anything else? (Optional)">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              className={`${inputCls} resize-y`}
-              placeholder="Specialties, current pipeline gaps, what you'd want to see in a partnership..."
-            />
-          </Field>
-
-          <FormError msg={error} />
-
-          <div className="pt-2 flex flex-wrap items-center gap-4">
-            <SubmitButton pending={pending}>Open the conversation</SubmitButton>
-            <div className="text-[11px] text-[var(--ink-faint)]">
-              We respond within one business day from{" "}
-              <span className="text-[var(--ink-soft)]">falco@falco.llc</span>.
-            </div>
-          </div>
-        </form>
-      )}
-    </FormShell>
+    <SitePage>
+      <div className="st-wrap">
+        <StepForm
+          label="For auction firms"
+          steps={[
+            {
+              kind: "fields",
+              q: "Tell us about your firm.",
+              fields: [
+                { name: "company", label: "Company", placeholder: "Your auction company name", autoComplete: "organization" },
+                { name: "yearsInBusiness", label: "Years in business", inputMode: "numeric", placeholder: "e.g. 12" },
+              ],
+            },
+            {
+              kind: "fields",
+              q: "Where do you sell?",
+              sub: "The Tennessee counties you cover.",
+              fields: [
+                { name: "countyCoverage", label: "County coverage", placeholder: "Davidson, Rutherford, Williamson, Shelby..." },
+              ],
+            },
+            {
+              kind: "fields",
+              q: "How do you work?",
+              fields: [
+                { name: "dealsPerYear", label: "Sales per year, roughly", inputMode: "numeric", placeholder: "e.g. 40" },
+                { name: "feeStructure", label: "Fee structure", placeholder: "e.g. 10% buyer's premium, no seller commission" },
+              ],
+            },
+            {
+              kind: "fields",
+              q: "Anything else?",
+              sub: "Specialties, gaps in your pipeline, what you'd want from a partnership. Optional.",
+              fields: [{ name: "notes", label: "Anything else", type: "textarea" }],
+            },
+            {
+              kind: "fields",
+              q: "How do we reach you?",
+              sub: "We'll set up a call within one business day.",
+              fields: [
+                { name: "fullName", label: "Your name", required: true, autoComplete: "name" },
+                { name: "email", label: "Email", type: "email", required: true, autoComplete: "email" },
+                { name: "phone", label: "Phone", type: "tel", autoComplete: "tel", placeholder: "(___) ___-____" },
+              ],
+            },
+          ]}
+          onSubmit={(v) =>
+            postJson(
+              "/api/partners/inquiry",
+              {
+                fullName: s(v, "fullName"),
+                email: s(v, "email"),
+                company: s(v, "company"),
+                phone: s(v, "phone"),
+                countyCoverage: s(v, "countyCoverage"),
+                dealsPerYear: s(v, "dealsPerYear") || null,
+                yearsInBusiness: s(v, "yearsInBusiness") || null,
+                feeStructure: s(v, "feeStructure"),
+                notes: s(v, "notes"),
+              },
+              FAIL
+            )
+          }
+          done={{
+            title: "Thank you. We've got it.",
+            text: "We'll reach out within one business day to set up a call. Questions before then: sales@falco.llc.",
+          }}
+        />
+      </div>
+    </SitePage>
   )
 }

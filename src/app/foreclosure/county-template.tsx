@@ -322,8 +322,8 @@ export async function CountyPage({ d }: { d: CountyData }) {
             </Link>
             <span className="text-[13px] text-[color-mix(in_oklab,var(--paper)_64%,transparent)]">
               Or email{" "}
-              <a href="mailto:falco@falco.llc" className="text-[var(--paper)] underline underline-offset-4 decoration-[color-mix(in_oklab,var(--paper)_35%,transparent)]">
-                falco@falco.llc
+              <a href="mailto:help@falco.llc" className="text-[var(--paper)] underline underline-offset-4 decoration-[color-mix(in_oklab,var(--paper)_35%,transparent)]">
+                help@falco.llc
               </a>
             </span>
           </div>

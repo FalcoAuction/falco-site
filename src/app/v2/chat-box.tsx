@@ -61,13 +61,13 @@ export default function ChatBox({
       })
       const body = await res.json().catch(() => null)
       if (!res.ok || !body?.reply) {
-        setError(body?.error ?? "That didn't go through. Try again or email falco@falco.llc.")
+        setError(body?.error ?? "That didn't go through. Try again or email help@falco.llc.")
         return
       }
       setTurns((cur) => [...cur, { role: "assistant", content: body.reply }])
       if (body.leadSaved) setLeadSaved(true)
     } catch {
-      setError("That didn't go through. Try again or email falco@falco.llc.")
+      setError("That didn't go through. Try again or email help@falco.llc.")
     } finally {
       setPending(false)
     }

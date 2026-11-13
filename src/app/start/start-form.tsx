@@ -75,7 +75,7 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
       })
       const body = await res.json().catch(() => null)
       if (!res.ok) {
-        setError(body?.error ?? "Something went wrong. Try again or email falco@falco.llc.")
+        setError(body?.error ?? "Something went wrong. Try again or email help@falco.llc.")
         return
       }
       setDone(true)

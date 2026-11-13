@@ -328,8 +328,8 @@ export function Nav() {
           <Link className="pill light" href="/start" onClick={close} tabIndex={open ? 0 : -1}>
             Start here <sub>→</sub>
           </Link>
-          <a href="mailto:falco@falco.llc" tabIndex={open ? 0 : -1}>
-            falco@falco.llc
+          <a href="mailto:help@falco.llc" tabIndex={open ? 0 : -1}>
+            help@falco.llc
           </a>
           <span>Patrick Armour, TN Auctioneer #7622</span>
         </div>
@@ -839,8 +839,8 @@ function ClosingCta() {
             <Link className="pill light" href="/homeowners">
               Get your numbers <sub>→</sub>
             </Link>
-            <a className="pill line" href="mailto:falco@falco.llc">
-              falco@falco.llc
+            <a className="pill line" href="mailto:help@falco.llc">
+              help@falco.llc
             </a>
           </div>
         </div>
@@ -906,7 +906,7 @@ export function Foot() {
               Patrick Armour, TN Auctioneer #7622.
             </p>
             <p className="sm" style={{ marginTop: 10 }}>
-              <a href="mailto:falco@falco.llc">falco@falco.llc</a>
+              <a href="mailto:help@falco.llc">help@falco.llc</a>
             </p>
           </div>
           {cols.map((c) => (

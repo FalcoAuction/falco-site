@@ -38,7 +38,7 @@ export default function TermsPage() {
               FALCO is a Tennessee distressed-real-estate intelligence and
               auction-routing operation run by Patrick Yuri Armour, a
               Tennessee-licensed auctioneer. Contact:{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>,{" "}
+              <span className="text-[var(--mocha)]">help@falco.llc</span>,{" "}
               falco.llc. By using this site or communicating
               with us, you agree to these terms.
             </p>
@@ -102,7 +102,7 @@ export default function TermsPage() {
               <strong className="text-[var(--ink)]">Help:</strong> Reply{" "}
               <span className="text-[var(--mocha)]">HELP</span> for sender
               identification and contact information, or email{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>.
+              <span className="text-[var(--mocha)]">help@falco.llc</span>.
             </p>
             <p>
               <strong className="text-[var(--ink)]">Supported carriers:</strong>{" "}
@@ -214,7 +214,7 @@ export default function TermsPage() {
           <Block title="Contact">
             <p>
               Questions about these terms:{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>, or
+              <span className="text-[var(--mocha)]">help@falco.llc</span>, or
               use the{" "}
               <Link
                 href="/inquiry"

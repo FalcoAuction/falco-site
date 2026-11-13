@@ -828,3 +828,14 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 .pg-legacy h1{font-weight:500;letter-spacing:-.04em}
 .pg-legacy section + section{margin-top:clamp(28px,3vw,44px)}
 .pg-legacy h2.uppercase,.pg-legacy h3.uppercase{font-size:1.2rem!important;color:var(--ink)!important;font-weight:500}
+
+/* ---------- shared step form (v2/step-form.tsx) ---------- */
+.stf{max-width:620px;margin:0 auto}
+.st-label{font-size:.85rem;color:var(--muted);margin:0 0 14px}
+.st-field{margin-bottom:12px}
+.st-field .pg-label{margin-bottom:6px}
+.st-field .st-in{margin-bottom:0}
+.st-check{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:16px;
+  border:1px solid var(--line-2);background:var(--surface-2);cursor:pointer;font-size:.95rem;line-height:1.55;color:var(--muted)}
+.st-check input{margin-top:4px;width:18px;height:18px;accent-color:var(--ink);flex:none}
+.pg-form .stf .st-wrap,.pg-form .stf{padding:0}

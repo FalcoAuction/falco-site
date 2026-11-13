@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   const turns = parseTurns(body.messages)
   if (!turns) {
     return NextResponse.json(
-      { ok: false, error: "This chat has run long. Please email falco@falco.llc." },
+      { ok: false, error: "This chat has run long. Please email help@falco.llc." },
       { status: 400 }
     )
   }
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   if (!apiKey) {
     console.error("OPENAI_API_KEY not set; chat unavailable")
     return NextResponse.json(
-      { ok: false, error: "Chat isn't connected yet. Please email falco@falco.llc." },
+      { ok: false, error: "Chat isn't connected yet. Please email help@falco.llc." },
       { status: 503 }
     )
   }
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
   }
   if (!reply) {
     return NextResponse.json(
-      { ok: false, error: "That didn't go through. Try again or email falco@falco.llc." },
+      { ok: false, error: "That didn't go through. Try again or email help@falco.llc." },
       { status: 502 }
     )
   }
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Never let the visitor believe we have details we failed to store.
       console.error("chat lead not saved:", result.error)
-      reply = "I couldn't save your details just now. Please email falco@falco.llc so nothing gets lost."
+      reply = "I couldn't save your details just now. Please email help@falco.llc so nothing gets lost."
     }
   }
 

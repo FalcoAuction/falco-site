@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               When you email us at{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>, we
+              <span className="text-[var(--mocha)]">help@falco.llc</span>, we
               receive whatever you send.
             </p>
             <p>
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
               <span className="text-[var(--mocha)]">END</span>, and{" "}
               <span className="text-[var(--mocha)]">QUIT</span>. You can also
               email{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span> with
+              <span className="text-[var(--mocha)]">help@falco.llc</span> with
               the subject line "Stop SMS." Opt-out records are kept
               indefinitely so we do not contact you again.
             </p>
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
               Form submissions and email correspondence are retained for our
               records and to maintain continuity if you reach out again. You
               can ask us to delete your information at any time by emailing{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span> with
+              <span className="text-[var(--mocha)]">help@falco.llc</span> with
               the subject line "Delete my information."
             </p>
           </Block>
@@ -185,7 +185,7 @@ export default function PrivacyPage() {
           <Block title="Contact">
             <p>
               Questions about privacy go to{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>, or use
+              <span className="text-[var(--mocha)]">help@falco.llc</span>, or use
               the{" "}
               <Link
                 href="/inquiry"
