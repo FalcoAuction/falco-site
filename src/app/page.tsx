@@ -1,5 +1,6 @@
 import HubContent from "./v2/hub-content"
 import { HUB_FAQ } from "./v2/situations"
+import { ogMeta } from "@/lib/og"
 
 // Fully static: no server-side data on this page. force-dynamic was
 // costing every crawler hit a cold render (1.1s+ TTFB, cache MISS).
@@ -12,6 +13,12 @@ export const metadata = {
   description:
     "A house, an estate, a business or anything else that has to sell. FALCO routes it to a licensed Tennessee auction firm so buyers compete. No cost to you, the buyer pays the premium.",
   alternates: { canonical: "/" },
+  ...ogMeta({
+    key: "home",
+    title: "Sell Distressed Assets at Auction in Tennessee | FALCO",
+    description: "A house, an estate, a business or anything else that has to sell. FALCO routes it to a licensed Tennessee auction firm so buyers compete. No cost to you, the buyer pays the premium.",
+    path: "/",
+  }),
 }
 
 // ProfessionalService structured data — the only entity markup on the

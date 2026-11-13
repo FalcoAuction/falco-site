@@ -7,6 +7,7 @@ import {
   Cite,
 } from "../guides/guide-chrome"
 import { SitePage } from "@/app/v2/site-page"
+import { ogMeta } from "@/lib/og"
 
 // Data shape for a Tennessee county foreclosure page. Every field that
 // carries a claim (sale location, newspaper, offices) must come from a
@@ -49,6 +50,12 @@ export function countyMetadata(d: CountyData) {
     // ~155 chars: the previous one ran past 220 and was clipped.
     description: `How trustee sales work in ${d.county} County (${d.seat}), TN: where the sale is held, where notices run, and how to sell first and keep your equity.`,
     alternates: { canonical: `/foreclosure/${d.slug}` },
+    ...ogMeta({
+      key: `county-${d.slug}`,
+      title: `${d.county} County TN Foreclosure and Trustee Sales | FALCO`,
+      description: `How trustee sales work in ${d.county} County (${d.seat}), TN: where the sale is held, where notices run, and how to sell first and keep your equity.`,
+      path: `/foreclosure/${d.slug}`,
+    }),
   }
 }
 
