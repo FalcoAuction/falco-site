@@ -294,17 +294,27 @@ export default function SimpleSheet({
             <div className="text-[15px] text-[#666]">Nashville, Tennessee</div>
           </div>
         </div>
-        <div className="mt-6 space-y-3 text-[17px]">
-          <ContactRow label="Call or text" value="601-213-8868" href="tel:16012138868" />
-          <ContactRow label="Email" value="falco@falco.llc" href="mailto:falco@falco.llc" />
-          <ContactRow label="Website" value="falco.llc" href="https://falco.llc" />
+        <div className="mt-6 border-t border-[#eee] pt-5">
+          {/* Tap targets: on a phone these open the dialer, messages and mail. */}
+          <div className="no-print grid grid-cols-3 gap-3">
+            <ActionTile href="tel:+16012138868" label="Call" icon="phone" />
+            <ActionTile href="sms:+16012138868" label="Text" icon="text" />
+            <ActionTile href="mailto:falco@falco.llc" label="Email" icon="mail" />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[15px] text-[#444] contact-line">
+            <a href="tel:+16012138868" className="font-semibold text-[#111] tabular-nums">
+              601-213-8868
+            </a>
+            <span className="text-[#ccc]">|</span>
+            <a href="mailto:falco@falco.llc" className="text-[#111]">
+              falco@falco.llc
+            </a>
+            <span className="text-[#ccc]">|</span>
+            <a href="https://falco.llc" className="text-[#111]">
+              falco.llc
+            </a>
+          </div>
         </div>
-        <a
-          href="tel:16012138868"
-          className="no-print mt-6 block rounded-xl bg-[#12804a] py-4 text-center text-[18px] font-bold text-white"
-        >
-          <span className="text-white">Call</span>
-        </a>
       </section>
 
       {/* HOW WE GOT THESE NUMBERS */}
@@ -425,14 +435,51 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   )
 }
 
-function ContactRow({ label, value, href }: { label: string; value: string; href: string }) {
+const ICONS: Record<"phone" | "text" | "mail", React.ReactNode> = {
+  phone: (
+    <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
+  ),
+  text: (
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  ),
+  mail: (
+    <>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-10 6L2 7" />
+    </>
+  ),
+}
+
+function ActionTile({
+  href,
+  label,
+  icon,
+}: {
+  href: string
+  label: string
+  icon: "phone" | "text" | "mail"
+}) {
   return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className="text-[14px] text-[#777]">{label}</span>
-      <a href={href} className="font-semibold text-[#111] tabular-nums">
-        {value}
-      </a>
-    </div>
+    <a
+      href={href}
+      className="flex flex-col items-center gap-2 rounded-xl border border-[#e3efe8] bg-[#f3faf6] py-4 transition-colors hover:bg-[#e6f4ec]"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#12804a]">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[22px] w-[22px]"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          {ICONS[icon]}
+        </svg>
+      </span>
+      <span className="text-[15px] font-semibold text-[#12804a]">{label}</span>
+    </a>
   )
 }
 
