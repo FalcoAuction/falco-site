@@ -66,7 +66,7 @@ function WhyWeExist() {
     },
   ]
   return (
-    <section className="calm">
+    <section className="calm why">
       <div className="wrap">
         <div className="split">
           <div data-stagger="80">
@@ -82,18 +82,22 @@ function WhyWeExist() {
                 </li>
               ))}
             </ol>
-            <p className="r">
+            <p className="r why-cta">
               <Link className="pill line" href="/manifesto">
                 How it works, start to finish <sub>→</sub>
               </Link>
             </p>
           </div>
-          <div className="media r">
+          <div className="media r why-media">
             <LiteVideo
               src="/media/hero.mp4"
               srcMob="/media/hero-mob.mp4"
               poster="/media/hero.jpg"
             />
+            {/* On phones the button sits on the video instead of under the list. */}
+            <Link className="pill light why-media-cta" href="/manifesto">
+              How it works <sub>→</sub>
+            </Link>
           </div>
         </div>
       </div>
