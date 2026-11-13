@@ -24,6 +24,7 @@ import {
   foreclosureHeroLine,
   foreclosureSpreadComparator,
 } from "@/lib/foreclosure-language"
+import SimpleSheet from "./simple-sheet"
 
 export type HomeownerSnapshot = {
   id: string
@@ -84,6 +85,7 @@ export default function MathSheetContent({
   backLabel = "← CRM",
   scenarioOverride,
   embed = false,
+  layout = "simple",
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /crm so the
@@ -98,6 +100,9 @@ export default function MathSheetContent({
    *  renders only the printable sheet. Used by the off-screen iframe in
    *  the lead-page share flow so html-to-image captures a clean PNG. */
   embed?: boolean
+  /** "simple" (default): one-page plain-language sheet. "classic": the
+   *  full walkthrough with every table (?layout=classic). */
+  layout?: "simple" | "classic"
 }) {
   // Toggle URL is built client-side from the current pathname — passing
   // a function from the server page would crash the RSC boundary
@@ -276,10 +281,22 @@ export default function MathSheetContent({
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
   const arvNeedsVerification = !hasPipelineArv && !arvManuallyEdited
+  // Simple sheet: a wrong home value sinks the whole page, so every send
+  // needs an explicit check (or a hand-typed value) first.
+  const [valueChecked, setValueChecked] = useState<boolean>(false)
+  const [realCashOffer, setRealCashOffer] = useState<number>(0)
+  const valueConfirmed = valueChecked || arvManuallyEdited
+  const blockSend = arvNeedsVerification || (layout === "simple" && !valueConfirmed)
   const handlePrint = () => {
     if (arvNeedsVerification) {
       window.alert(
         "Verify ARV before sending: this sheet is using a fallback value, not a pipeline AVM or comp."
+      )
+      return
+    }
+    if (layout === "simple" && !valueConfirmed) {
+      window.alert(
+        "Check the home value against a real comp, then tick Value checked (or type the right value under Edit numbers)."
       )
       return
     }
@@ -367,6 +384,14 @@ export default function MathSheetContent({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px]">
+            {pathname && (
+              <Link
+                href={layout === "classic" ? pathname : `${pathname}?layout=classic`}
+                className="text-white/65 hover:text-white transition-colors"
+              >
+                {layout === "classic" ? "Simple view" : "Full math"}
+              </Link>
+            )}
             {scenarioCfg.viewToggle && pathname && (
               <Link
                 href={`${pathname}?view=${scenarioCfg.viewToggle.scenario}`}
@@ -383,24 +408,45 @@ export default function MathSheetContent({
             >
               Email →
             </a>
+            {layout === "simple" && (
+              <label className="flex items-center gap-1.5 text-white/75 cursor-pointer select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={valueConfirmed}
+                  disabled={arvManuallyEdited}
+                  onChange={(e) => setValueChecked(e.target.checked)}
+                  className="accent-emerald-400"
+                />
+                Value checked
+              </label>
+            )}
             <button
               onClick={handlePrint}
               className={`rounded-md font-semibold px-3.5 py-1.5 transition-colors ${
-                arvNeedsVerification
+                blockSend
                   ? "bg-amber-300 hover:bg-amber-200 text-black"
                   : "bg-emerald-400 hover:bg-emerald-300 text-black"
               }`}
             >
-              {arvNeedsVerification ? "Verify ARV before PDF" : "Print / Save PDF"}
+              {arvNeedsVerification
+                ? "Verify ARV before PDF"
+                : blockSend
+                ? "Check value first"
+                : "Print / Save PDF"}
             </button>
           </div>
         </div>
 
-        {/* INPUTS PANEL — hidden on print */}
-        <div className="mx-auto max-w-5xl px-5 md:px-8 py-4 border-t border-white/[0.06]">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 mb-3">
-            Inputs (override before printing)
-          </div>
+        {/* INPUTS PANEL — hidden on print. Collapsed on the simple layout
+            so the page reads like the homeowner sees it. */}
+        <details
+          open={layout === "classic"}
+          className="mx-auto max-w-5xl px-5 md:px-8 py-3 border-t border-white/[0.06]"
+        >
+          <summary className="cursor-pointer select-none text-[11px] uppercase tracking-[0.22em] text-white/55 hover:text-white">
+            Edit numbers
+          </summary>
+          <div className="h-3" />
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
             <NumInput
               label="ARV ($)"
@@ -418,6 +464,11 @@ export default function MathSheetContent({
             <NumInput label="Auction low %" value={auctionMinPct * 100} step={1} onChange={(v) => setAuctionMinPct(v / 100)} />
             <NumInput label="Auction high %" value={auctionMaxPct * 100} step={1} onChange={(v) => setAuctionMaxPct(v / 100)} />
           </div>
+          {layout === "simple" && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
+              <NumInput label="Real cash offer ($)" value={realCashOffer} step={1000} onChange={setRealCashOffer} />
+            </div>
+          )}
           {isCodeViolation && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
               <NumInput label="Monthly fines ($)" value={monthlyFineAccrual} step={100} onChange={setMonthlyFineAccrual} />
@@ -436,11 +487,23 @@ export default function MathSheetContent({
             <br />
             Closing costs default {fmt(closingCosts)}, buyer&apos;s premium {fmtPct(seed.buyerPremiumPct)} (paid by buyer), wholesale model {baseWholesalePct} base / {stretchWholesalePct} stretch.
           </div>
-        </div>
+        </details>
       </div>
       )}
 
       {/* PRINTABLE SHEET */}
+      {layout === "simple" ? (
+        <SimpleSheet
+          homeowner={homeowner}
+          out={out}
+          scenarioCfg={scenarioCfg}
+          daysToSale={daysToSale}
+          loanBalance={loanBalance}
+          needsVerification={arvNeedsVerification}
+          valueChecked={embed || valueConfirmed}
+          realCashOffer={realCashOffer}
+        />
+      ) : (
       <article
         className={`print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14 ${
           embed ? "embed-narrow" : ""
@@ -1083,6 +1146,7 @@ export default function MathSheetContent({
           </div>
         </footer>
       </article>
+      )}
     </main>
   )
 }

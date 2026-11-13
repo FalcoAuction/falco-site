@@ -206,11 +206,11 @@ export function probateSmsBody(streetOnly: string): string {
 /**
  * Bankruptcy SMS body. Assumes pre-petition (debtor still controls the
  * property). The pitch is sell BEFORE filing to capture proceeds above
- * the TN $7,500 homestead exemption. Post-petition (§ 363) gets
+ * the TN homestead exemption ($35,000 individual, $52,500 joint). Post-petition (§ 363) gets
  * adapted in conversation.
  */
 export function bankruptcySmsBody(streetOnly: string): string {
-  return `Saw ${streetOnly} flagged before a bankruptcy filing. Once you file, the trustee takes any money above the $7,500 TN exemption. I help homeowners sell first so they keep what is theirs. No cost to you. Text me if I can help. Patrick at FALCO.`
+  return `Saw ${streetOnly} flagged before a bankruptcy filing. Once you file, the trustee takes any money above the TN homestead exemption. I help homeowners sell first so they keep what is theirs. No cost to you. Text me if I can help. Patrick at FALCO.`
 }
 
 /**

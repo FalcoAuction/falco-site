@@ -11,7 +11,7 @@ import { ContactRow, type ContactView } from "./contact-row"
 export const dynamic = "force-dynamic"
 
 type Campaign = { id: string; slug: string; name: string; audience_kind: string; channel: string; status: string; requires_license: boolean; daily_cap: number; subject: string | null }
-const KINDS = ["bank", "attorney", "auction_firm", "broker", "investor", "landlord"]
+const KINDS = ["bank", "attorney", "trustee", "airport", "marina", "auction_firm", "broker", "investor", "landlord"]
 const kindLabel = (k: string) => titleCase(k.replace("_", " ")) + "s"
 
 export default async function OutreachPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
