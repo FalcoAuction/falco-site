@@ -21,9 +21,9 @@ export default function HubContent() {
         <WaysIn />
         <Steps />
         <Incentive />
+        <Founder />
         <Faq />
         <Closing />
-        <Founder />
       </main>
       <Foot />
     </>
