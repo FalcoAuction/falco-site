@@ -284,34 +284,67 @@ export function Nav() {
   const close = () => setOpen(false)
 
   return (
-    <header className={`nav${stuck ? " stuck" : ""}`}>
+    <header className={`nav${stuck ? " stuck" : ""}${open ? " menu-open" : ""}`}>
       <Link className="brand" href="/" onClick={close}>
         FALCO
       </Link>
-      <nav id="menu" className={open ? "open" : undefined}>
-        <Link href="/#situations" onClick={close}>Situations</Link>
-        <Link href="/professionals" onClick={close}>Professionals</Link>
-        <Link href="/partners" onClick={close}>Auction firms</Link>
-        <Link href="/buyers" onClick={close}>Buyers</Link>
-        <Link href="/guides" onClick={close}>Guides</Link>
-        <Link className="pill dark" href="/start" onClick={close}>
+      <nav className="dnav" aria-label="Main">
+        {NAV_LINKS.map((l) => (
+          <Link key={l.href} href={l.href}>
+            {l.label}
+          </Link>
+        ))}
+        <Link className="pill dark" href="/start">
           Start here <sub>→</sub>
         </Link>
       </nav>
-      {/* Without this the mobile breakpoint hides the nav entirely and
-          there is no way to reach any page from a phone. */}
+      {/* Phones get a full-screen dark panel instead of the inline links. */}
       <button
         className="navtog"
         type="button"
         aria-expanded={open}
         aria-controls="menu"
+        aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? "Close" : "Menu"}
+        <span className="burger" aria-hidden="true">
+          <i />
+          <i />
+        </span>
       </button>
+      <div id="menu" className={`mnav${open ? " open" : ""}`} aria-hidden={!open}>
+        <ol>
+          {NAV_LINKS.map((l, i) => (
+            <li key={l.href} style={{ "--i": i } as React.CSSProperties}>
+              <Link href={l.href} onClick={close} tabIndex={open ? 0 : -1}>
+                <span className="n">{String(i + 1).padStart(2, "0")}</span>
+                {l.label}
+                <sub>→</sub>
+              </Link>
+            </li>
+          ))}
+        </ol>
+        <div className="mnav-foot">
+          <Link className="pill light" href="/start" onClick={close} tabIndex={open ? 0 : -1}>
+            Start here <sub>→</sub>
+          </Link>
+          <a href="mailto:falco@falco.llc" tabIndex={open ? 0 : -1}>
+            falco@falco.llc
+          </a>
+          <span>Patrick Armour, TN Auctioneer #7622</span>
+        </div>
+      </div>
     </header>
   )
 }
+
+const NAV_LINKS = [
+  { href: "/manifesto", label: "How it works" },
+  { href: "/professionals", label: "Professionals" },
+  { href: "/partners", label: "Auction firms" },
+  { href: "/buyers", label: "Buyers" },
+  { href: "/guides", label: "Guides" },
+]
 
 function Hero() {
   return (

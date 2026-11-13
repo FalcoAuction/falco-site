@@ -55,9 +55,9 @@ export default function PartnerForm() {
 
   return (
     <FormShell
-      eyebrow="For auction partners · Tennessee"
+      eyebrow="For auction firms"
       title="Open a partnership conversation."
-      intro="If you run a Tennessee auction company and you'd rather not spend your week sourcing inventory, that's exactly what we do. Tell us a little about your operation and we'll come back within one business day to set up a call."
+      intro="Run a Tennessee auction company? We send you sellers with real value and real deadlines, matched to what you sell best. Tell us about your firm and we'll set up a call within one business day."
     >
       {success ? (
         <FormSuccess msg={success} />
@@ -142,7 +142,7 @@ export default function PartnerForm() {
 
           <Field
             label="Fee structure"
-            hint="Buyer's premium only, seller commission, hybrid — whatever you typically run."
+            hint="Buyer's premium only, seller commission, hybrid, whatever you typically run."
           >
             <input
               value={feeStructure}

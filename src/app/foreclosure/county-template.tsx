@@ -6,6 +6,7 @@ import {
   GuideNote,
   Cite,
 } from "../guides/guide-chrome"
+import { SitePage } from "@/app/v2/site-page"
 
 // Data shape for a Tennessee county foreclosure page. Every field that
 // carries a claim (sale location, newspaper, offices) must come from a
@@ -156,17 +157,8 @@ export async function CountyPage({ d }: { d: CountyData }) {
     ? d.saleTime.replace(/^typically\s+/i, "")
     : undefined
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
-      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_86%,transparent)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4 md:px-10">
-          <Link href="/" className="text-[14px] font-semibold tracking-[0.3em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">
-            FALCO
-          </Link>
-          <Link href="/foreclosure" className="text-[13px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--mocha)] transition-colors">
-            All counties →
-          </Link>
-        </div>
-      </header>
+    <SitePage>
+    <div className="pg-legacy pg-old">
 
       <nav aria-label="Breadcrumb" className="mx-auto max-w-3xl px-6 pt-8 md:px-10 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.04em] text-[var(--ink-faint)]">
         <Link href="/" className="hover:text-[var(--mocha)]">Home</Link>
@@ -426,18 +418,8 @@ export async function CountyPage({ d }: { d: CountyData }) {
         </div>
       </section>
 
-      <footer className="mx-auto max-w-3xl px-6 py-10 md:px-10 mt-10 border-t border-[var(--rule)]">
-        <div className="flex items-center justify-between flex-wrap gap-4 font-[family-name:var(--font-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)]">
-          <div>FALCO · Tennessee</div>
-          <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-[var(--mocha)] transition-colors">Home</Link>
-            <Link href="/foreclosure" className="hover:text-[var(--mocha)] transition-colors">Counties</Link>
-            <Link href="/guides" className="hover:text-[var(--mocha)] transition-colors">Guides</Link>
-            <Link href="/homeowners" className="hover:text-[var(--mocha)] transition-colors">Homeowners</Link>
-          </div>
-        </div>
-      </footer>
-    </main>
+    </div>
+    </SitePage>
   )
 }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Foot, Nav, useReveals } from "../v2/v2-content"
+import { PageHead } from "../v2/site-page"
 
 const ROLES = [
   { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections, handled through one contact." },
@@ -24,39 +25,21 @@ export default function ProfessionalsContent() {
   return (
     <>
       <Nav />
-      <main id="main">
-        <section className="hero phead">
-          <div className="hcard">
-            <div className="hcopy" data-stagger="90">
-              <p className="crumbs r">
-                <Link href="/">Home</Link> / Professionals
-              </p>
-              <h1 className="d1 r">One contact for every asset in the file.</h1>
-              <p className="lede r">
-                Estates, bankruptcies, receiverships and closings rarely hold
-                just one kind of property. We inventory it, match each asset to
-                the licensed Tennessee auctioneer who sells it best, and report
-                back in a form you can file.
-              </p>
-              <div className="pills r">
-                <Link className="pill light" href="/start?r=professional">
-                  Send us a file <sub>→</sub>
-                </Link>
-                <a className="pill line" href="mailto:falco@falco.llc">
-                  falco@falco.llc
-                </a>
-              </div>
-            </div>
-            <div className="hmedia">
-              <div className="frame">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/media/record.jpg" alt="" />
-              </div>
-            </div>
-          </div>
-        </section>
+      <main id="main" className="pg">
+        <PageHead
+          label="For professionals"
+          title="One contact for every asset in the file."
+          lede="Estates, bankruptcies, receiverships and closings rarely hold just one kind of property. We inventory it, match each asset to the licensed Tennessee auctioneer who sells it best, and report back in a form you can file."
+        >
+          <Link className="pill dark" href="/start?r=professional">
+            Send us a file <sub>→</sub>
+          </Link>
+          <a className="pill line" href="mailto:falco@falco.llc">
+            falco@falco.llc
+          </a>
+        </PageHead>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
             <div className="head">
               <div data-stagger="80">
@@ -79,7 +62,7 @@ export default function ProfessionalsContent() {
           </div>
         </section>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
             <div className="head">
               <div data-stagger="80">
@@ -87,29 +70,24 @@ export default function ProfessionalsContent() {
                 <h2 className="d2 r">Four things, every file.</h2>
               </div>
             </div>
-            <div className="fcard plate r">
-              <div className="steps" data-stagger="90">
-                {DELIVERS.map((d) => (
-                  <div className="step r" key={d.n}>
-                    <p className="lbl">{d.n}</p>
-                    <h3 className="d3">{d.h}</h3>
-                    <p>{d.p}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="r plate-foot">
-                <p className="sm" style={{ margin: 0 }}>
-                  Founded by Patrick Armour, licensed Tennessee auctioneer #7622.
-                </p>
-                <Link className="pill light" href="/start?r=professional">
-                  Send us a file <sub>→</sub>
-                </Link>
-              </div>
+            <div className="quiet-steps" data-stagger="90">
+              {DELIVERS.map((d) => (
+                <div className="r" key={d.n}>
+                  <span className="n">{d.n}</span>
+                  <h3 className="d3">{d.h}</h3>
+                  <p>{d.p}</p>
+                </div>
+              ))}
             </div>
+            <p className="r" style={{ marginTop: 40 }}>
+              <Link className="pill dark" href="/start?r=professional">
+                Send us a file <sub>→</sub>
+              </Link>
+            </p>
           </div>
         </section>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
             <div className="split">
               <div data-stagger="80">

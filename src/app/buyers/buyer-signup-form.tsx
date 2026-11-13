@@ -223,7 +223,7 @@ export default function BuyerSignupForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-3 transition-colors"
+        className="pill dark"
       >
         {pending ? "Registering..." : "Get Early Access to TN Inventory"}
       </button>
@@ -235,8 +235,7 @@ export default function BuyerSignupForm() {
   )
 }
 
-const inputCls =
-  "w-full rounded-md bg-[var(--paper)] border border-[var(--rule-strong)] px-3.5 py-2.5 text-[15px] text-[var(--ink)] placeholder-[var(--ink-faint)] outline-none focus:border-[var(--mocha)] focus:ring-2 focus:ring-[var(--mocha-wash)]"
+const inputCls = "pg-in"
 
 function Field({
   label,
@@ -249,7 +248,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] mb-1.5">
+      <label className="pg-label">
         {label}
         {required && <span className="text-[var(--mocha)] ml-1">*</span>}
       </label>

@@ -2,6 +2,7 @@
 // (link scanners prefetch URLs); the button POSTs to /api/outreach/unsubscribe.
 
 import { verifyUnsubscribeToken } from "@/lib/outreach"
+import { SitePage } from "@/app/v2/site-page"
 
 export const dynamic = "force-dynamic"
 export const metadata = { title: "Unsubscribe · FALCO", robots: "noindex, nofollow" }
@@ -15,34 +16,34 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
     email = null
   }
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto max-w-md px-4 py-16">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-emerald-400 font-semibold">FALCO</div>
+    <SitePage>
+      <div className="wrap pg-head" style={{ maxWidth: 640 }}>
+        <p className="lbl">Email preferences</p>
         {done ? (
           <>
-            <h1 className="mt-2 text-2xl font-bold">You are unsubscribed</h1>
-            <p className="mt-2 text-sm text-white/60">You will not receive further outreach email from FALCO.</p>
+            <h1 className="d2">You are unsubscribed.</h1>
+            <p className="lede" style={{ marginTop: 16 }}>You will not receive further outreach email from FALCO.</p>
           </>
         ) : email ? (
           <>
-            <h1 className="mt-2 text-2xl font-bold">Unsubscribe</h1>
-            <p className="mt-2 text-sm text-white/60">Stop all outreach email from FALCO to {email}.</p>
-            <form method="post" action="/api/outreach/unsubscribe" className="mt-6">
+            <h1 className="d2">Unsubscribe</h1>
+            <p className="lede" style={{ marginTop: 16 }}>Stop all outreach email from FALCO to {email}.</p>
+            <form method="post" action="/api/outreach/unsubscribe" style={{ marginTop: 28 }}>
               <input type="hidden" name="t" value={t} />
-              <button type="submit" className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-emerald-400">
+              <button type="submit" className="pill dark">
                 Unsubscribe
               </button>
             </form>
           </>
         ) : (
           <>
-            <h1 className="mt-2 text-2xl font-bold">Link not valid</h1>
-            <p className="mt-2 text-sm text-white/60">
+            <h1 className="d2">Link not valid</h1>
+            <p className="lede" style={{ marginTop: 16 }}>
               This unsubscribe link is incomplete. Reply to any FALCO email with &quot;unsubscribe&quot; and we will remove you.
             </p>
           </>
         )}
       </div>
-    </main>
+    </SitePage>
   )
 }
