@@ -149,16 +149,16 @@ export default function PostponeTrusteeSaleGuide() {
             situation.
           </p>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/tennessee-foreclosure-process", label: "The full Tennessee foreclosure timeline" },
-          { href: "/guides/cash-offer-vs-auction", label: "What selling before the sale actually nets you" },
-          { href: "/foreclosure", label: "Trustee sale details for your county" },
-          { href: "/homeowners", label: "Talk it through: free 15-minute call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/tennessee-foreclosure-process", label: "The full Tennessee foreclosure timeline" },
+            { href: "/guides/cash-offer-vs-auction", label: "What selling before the sale actually nets you" },
+            { href: "/foreclosure", label: "Trustee sale details for your county" },
+            { href: "/homeowners", label: "Talk it through: free 15-minute call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }
