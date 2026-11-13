@@ -149,8 +149,8 @@ export default function SimpleSheet({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/favicon-512.png" alt="" className="h-8 w-8 rounded-lg" />
-          <span className="text-[16px] font-bold tracking-[0.16em]">FALCO</span>
+          <img src="/media/falco-bird-black.png" alt="FALCO" className="h-9 w-auto" />
+          <span className="text-[17px] font-bold tracking-[0.18em]">FALCO</span>
         </div>
         <div className="text-[14px] text-[#666]">
           {estate ? "For the estate of " : "For "}
@@ -180,28 +180,109 @@ export default function SimpleSheet({
         The buyer pays the auction fee. Not you.
       </p>
 
-      <a
-        href="tel:16012138868"
-        className="mt-8 block rounded-2xl bg-[#12804a] px-6 py-5 text-center text-white no-underline"
-      >
-        <span className="block text-[17px] font-medium text-white/90">Call or text Patrick</span>
-        <span className="block text-[32px] font-bold tracking-[-0.01em] tabular-nums text-white">601-213-8868</span>
-      </a>
+      {/* WHAT HAPPENS NEXT */}
+      <section className="mt-14">
+        <h2 className="text-[22px] font-bold tracking-[-0.01em]">What happens next</h2>
+        <ol className="mt-5 space-y-5">
+          <Step n={1} title="We talk for 15 minutes">
+            We go over these numbers with you and check what you owe.
+          </Step>
+          <Step n={2} title="You meet the auction company">
+            They look at the house and make a plan. You only sign if it makes sense.
+          </Step>
+          <Step n={3} title="Auction day, then closing">
+            Buyers bid. At closing the loan gets paid off and the rest goes to {estate ? "the estate" : "you"}.
+            About {TIMELINE_TEXT} start to finish.
+          </Step>
+        </ol>
+      </section>
 
-      <p className="mt-10 text-[12px] leading-[1.6] text-[#888]">
-        These are estimates, not a promise. Home value: {k(out.inputs.arv)}. Loan owed: about{" "}
-        {k(loanBalance)} (your real payoff may be higher with late fees).
-        {out.auction.low.taxLien > 0 ? ` Back taxes: ${k(out.auction.low.taxLien)}.` : ""} Auction price:{" "}
-        {pct(out.auction.low.retailPct)} to {pct(out.auction.high.retailPct)} of value, a careful guess
-        from {LOCAL_AUCTIONS_N} local auctions. Closing costs: about {k(out.auction.low.closingCosts)}.
-        {s === "bankruptcy_363_sale" ? " Bankruptcy trustee fee taken out at its legal maximum." : ""}
-        {cashWalks ? "" : ` Cash offer: about ${cashPct(out)}% of value.`} Signing to closing takes about{" "}
-        {TIMELINE_TEXT}.
-        {s === "bankruptcy_pre_petition" || s === "bankruptcy_363_sale"
-          ? " Not legal advice. Talk to a bankruptcy lawyer."
-          : ""}{" "}
-        FALCO, Nashville TN. Auctions run by licensed Tennessee auction companies.
-      </p>
+      {/* CONTACT CARD */}
+      <section className="mt-14 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/media/falco-bird-black.png" alt="" className="h-14 w-auto" />
+          <div>
+            <div className="text-[22px] font-bold leading-tight">Patrick Yuri Armour</div>
+            <div className="text-[15px] text-[#666]">FALCO · Nashville, Tennessee</div>
+          </div>
+        </div>
+        <div className="mt-6 space-y-3 text-[17px]">
+          <ContactRow label="Call or text" value="601-213-8868" href="tel:16012138868" />
+          <ContactRow label="Email" value="falco@falco.llc" href="mailto:falco@falco.llc" />
+          <ContactRow label="Website" value="falco.llc" href="https://falco.llc" />
+        </div>
+        <a
+          href="tel:16012138868"
+          className="no-print mt-6 block rounded-xl bg-[#12804a] py-4 text-center text-[18px] font-bold text-white"
+        >
+          <span className="text-white">Call Patrick</span>
+        </a>
+      </section>
+
+      {/* HOW WE GOT THESE NUMBERS */}
+      <section className="mt-14">
+        <h2 className="text-[22px] font-bold tracking-[-0.01em]">How we got these numbers</h2>
+        <dl className="mt-5 divide-y divide-[#eee] border-y border-[#eee] text-[16px]">
+          <MathRow label="What the house is worth" value={k(out.inputs.arv)} />
+          <MathRow
+            label={`Auction price (${pct(out.auction.low.retailPct)} to ${pct(out.auction.high.retailPct)} of that)`}
+            value={`${k(out.auction.low.winningBid)} to ${k(out.auction.high.winningBid)}`}
+          />
+          <MathRow label="Minus what is owed on the loan" value={`- ${k(loanBalance)}`} />
+          {out.auction.low.taxLien > 0 && (
+            <MathRow label="Minus back taxes" value={`- ${k(out.auction.low.taxLien)}`} />
+          )}
+          <MathRow label="Minus closing costs" value={`- ${k(out.auction.low.closingCosts)}`} />
+          {s === "bankruptcy_363_sale" && (
+            <MathRow
+              label="Minus the bankruptcy trustee's fee"
+              value={`- ${k(out.auction.low.trusteeFee)} to ${k(out.auction.high.trusteeFee)}`}
+            />
+          )}
+          <MathRow
+            label={estate ? "What the estate keeps" : "What you keep"}
+            value={`${k(low)} to ${k(high)}`}
+            bold
+          />
+        </dl>
+
+        <ul className="mt-6 space-y-3 text-[14px] leading-[1.55] text-[#555]">
+          <li>
+            <strong className="text-[#222]">Why {pct(out.auction.low.retailPct)} to {pct(out.auction.high.retailPct)}?</strong>{" "}
+            We looked up {LOCAL_AUCTIONS_N} recent home auctions in Middle Tennessee. Half sold for 92% or
+            more of the county&apos;s value. We picked a lower range to be safe.
+          </li>
+          <li>
+            <strong className="text-[#222]">The loan amount is an estimate.</strong> If payments were missed,
+            late fees and legal fees can make the real payoff higher. We will confirm it with your lender.
+          </li>
+          {!cashWalks && (
+            <li>
+              <strong className="text-[#222]">The cash offer</strong> assumes a buyer pays about{" "}
+              {cashPct(out)}% of what the house is worth. Have a real offer? We will compare it for you.
+            </li>
+          )}
+          <li>
+            <strong className="text-[#222]">Who pays the auction fee?</strong> The winning buyer pays a 10% fee
+            on top of their bid. It does not come out of your money.
+          </li>
+          <li>
+            <strong className="text-[#222]">These are estimates, not a promise.</strong> The final price depends
+            on the market, how many buyers show up and the shape of the house.
+          </li>
+          {(s === "bankruptcy_pre_petition" || s === "bankruptcy_363_sale") && (
+            <li>
+              <strong className="text-[#222]">Not legal advice.</strong> Talk to a bankruptcy lawyer before you
+              decide.
+            </li>
+          )}
+        </ul>
+
+        <p className="mt-8 text-[12px] text-[#999]">
+          FALCO · Nashville, Tennessee · Auctions are run by licensed Tennessee auction companies.
+        </p>
+      </section>
     </article>
   )
 }
@@ -226,6 +307,40 @@ function BoxCard({ box }: { box: Box }) {
         {box.amount}
       </div>
       <div className={`mt-1 text-[16px] ${big ? "text-white/90" : "text-[#555]"}`}>{box.note}</div>
+    </div>
+  )
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#12804a] text-[16px] font-bold text-white">
+        {n}
+      </div>
+      <div>
+        <div className="text-[17px] font-semibold">{title}</div>
+        <div className="mt-0.5 text-[15px] leading-[1.5] text-[#555]">{children}</div>
+      </div>
+    </li>
+  )
+}
+
+function ContactRow({ label, value, href }: { label: string; value: string; href: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="text-[14px] text-[#777]">{label}</span>
+      <a href={href} className="font-semibold text-[#111] tabular-nums">
+        {value}
+      </a>
+    </div>
+  )
+}
+
+function MathRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-4 py-3 ${bold ? "font-bold text-[#12804a]" : ""}`}>
+      <dt className={bold ? "" : "text-[#444]"}>{label}</dt>
+      <dd className="whitespace-nowrap tabular-nums">{value}</dd>
     </div>
   )
 }
