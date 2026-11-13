@@ -149,6 +149,8 @@ export default function SimpleSheet({
       ? `${k(realCashOffer)} offer, minus what is owed.`
       : cashWalks
       ? "Too much is owed for them to profit."
+      : s === "probate"
+      ? "Investors watch probate filings and mail low offers."
       : "They pay low so they can profit.",
     tone: "amber",
   })
@@ -167,7 +169,7 @@ export default function SimpleSheet({
       ? `If ${estate ? "the estate sells" : "you sell"} at auction through ${AUCTION_PARTNER.name}`
       : `If ${estate ? "the estate sells" : "you sell"} at auction through our licensed partner`,
     amount: `${k(low)} to ${k(high)}`,
-    note: "Buyers bid against each other.",
+    note: `A set sale date. Sold as-is. Closes in about ${TIMELINE_TEXT}.`,
     tone: "green",
   })
 
@@ -283,7 +285,7 @@ export default function SimpleSheet({
             They look at the house and make a plan. You only sign if it makes sense.
           </Step>
           <Step n={3} title="Auction day, then closing">
-            Buyers bid. At closing the loan gets paid off and the rest goes to {estate ? "the estate" : "you"}.
+            At closing the loan gets paid off and the rest goes to {estate ? "the estate" : "you"}.
             About {TIMELINE_TEXT} start to finish.
           </Step>
         </ol>
