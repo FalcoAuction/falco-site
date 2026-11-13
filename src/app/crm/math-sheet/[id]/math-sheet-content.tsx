@@ -292,7 +292,7 @@ export default function MathSheetContent({
   }
 
   return (
-    <main className={`min-h-screen ${layout === "simple" ? "bg-[#f3f2f0]" : "bg-white"} text-neutral-900 print:bg-white`}>
+    <main className="min-h-screen bg-white text-neutral-900 print:bg-white">
       {/* Print-only styles */}
       <style>{`
         @media print {
@@ -409,11 +409,16 @@ export default function MathSheetContent({
           </div>
         </div>
 
-        {/* INPUTS PANEL — hidden on print */}
-        <div className="mx-auto max-w-5xl px-5 md:px-8 py-4 border-t border-white/[0.06]">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 mb-3">
-            Inputs (override before printing)
-          </div>
+        {/* INPUTS PANEL — hidden on print. Collapsed on the simple layout
+            so the page reads like the homeowner sees it. */}
+        <details
+          open={layout === "classic"}
+          className="mx-auto max-w-5xl px-5 md:px-8 py-3 border-t border-white/[0.06]"
+        >
+          <summary className="cursor-pointer select-none text-[11px] uppercase tracking-[0.22em] text-white/55 hover:text-white">
+            Edit numbers
+          </summary>
+          <div className="h-3" />
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
             <NumInput
               label="ARV ($)"
@@ -449,7 +454,7 @@ export default function MathSheetContent({
             <br />
             Closing costs default {fmt(closingCosts)}, buyer&apos;s premium {fmtPct(seed.buyerPremiumPct)} (paid by buyer), wholesale model {baseWholesalePct} base / {stretchWholesalePct} stretch.
           </div>
-        </div>
+        </details>
       </div>
       )}
 
