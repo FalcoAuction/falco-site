@@ -303,7 +303,7 @@ export default function SimpleSheet({
           href="tel:16012138868"
           className="no-print mt-6 block rounded-xl bg-[#12804a] py-4 text-center text-[18px] font-bold text-white"
         >
-          <span className="text-white">Call Patrick</span>
+          <span className="text-white">Call</span>
         </a>
       </section>
 
