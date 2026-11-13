@@ -173,15 +173,19 @@ export default function SimpleSheet({
         ))}
       </div>
 
-      <p className="mt-8 text-center text-[24px] font-bold leading-tight">
-        It costs you $0 to use us.
-      </p>
-      <p className="mt-1 text-center text-[17px] text-[#555]">
-        The buyer pays the auction fee. Not you.
-      </p>
+      {/* COST */}
+      <section className="mt-16 rounded-2xl bg-[#f6f6f4] px-6 py-8 text-center">
+        <p className="text-[26px] font-bold leading-tight">
+          <span className="underline decoration-[#d92d20] decoration-[3px] underline-offset-[6px]">
+            It costs you $0 to use us.
+          </span>
+        </p>
+        <p className="mt-4 text-[17px] text-[#555]">The buyer pays the auction fee. Not you.</p>
+        <p className="mt-1 text-[17px] text-[#555]">No commission. Nothing up front.</p>
+      </section>
 
       {/* WHAT HAPPENS NEXT */}
-      <section className="mt-14">
+      <section className="mt-20">
         <h2 className="text-[22px] font-bold tracking-[-0.01em]">What happens next</h2>
         <ol className="mt-5 space-y-5">
           <Step n={1} title="We talk for 15 minutes">
@@ -198,13 +202,14 @@ export default function SimpleSheet({
       </section>
 
       {/* CONTACT CARD */}
-      <section className="mt-14 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <section className="mt-20 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/media/falco-bird-black.png" alt="" className="h-14 w-auto" />
           <div>
             <div className="text-[22px] font-bold leading-tight">Patrick Yuri Armour</div>
-            <div className="text-[15px] text-[#666]">FALCO · Nashville, Tennessee</div>
+            <div className="text-[15px] font-semibold text-[#12804a]">CEO / Founder, FALCO</div>
+            <div className="text-[15px] text-[#666]">Nashville, Tennessee</div>
           </div>
         </div>
         <div className="mt-6 space-y-3 text-[17px]">
@@ -221,7 +226,7 @@ export default function SimpleSheet({
       </section>
 
       {/* HOW WE GOT THESE NUMBERS */}
-      <section className="mt-14">
+      <section className="mt-20">
         <h2 className="text-[22px] font-bold tracking-[-0.01em]">How we got these numbers</h2>
         <dl className="mt-5 divide-y divide-[#eee] border-y border-[#eee] text-[16px]">
           <MathRow label="What the house is worth" value={k(out.inputs.arv)} />
