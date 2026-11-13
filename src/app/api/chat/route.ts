@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     // The prompt forbids em dashes, but the model still slips them in.
     reply =
       typeof parsed.reply === "string"
-        ? parsed.reply.replace(/\s*[20142013]\s*/g, ", ").trim()
+        ? parsed.reply.replace(/\s*[—–]\s*/g, ", ").trim()
         : ""
     lead = parsed.lead && typeof parsed.lead === "object" ? parsed.lead : null
   } catch (e) {
