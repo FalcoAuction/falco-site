@@ -1,42 +1,29 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
-import {
-  Count,
-  Foot,
-  LiteVideo,
-  Nav,
-  usePanelPins,
-  useReveals,
-  useStackDepth,
-} from "./v2-content"
-import { ASSET_CLASSES, HUB_FAQ, NOT_US, SITUATIONS } from "./situations"
+import ChatBox from "./chat-box"
+import { HUB_FAQ } from "./situations"
+import { Foot, LiteVideo, Nav, useReveals } from "./v2-content"
 
 /**
- * Homepage for the any-asset FALCO: the visitor picks the situation they
- * are in, sees how one situation splits into several assets that each go
- * to a different licensed specialist, then picks who they are. Same
- * design system and sticky deck as the foreclosure homepage it replaces;
- * that page now lives at /situations/foreclosure.
+ * Homepage, simplified: the hero is the chat, and every section after it
+ * gets a full screen of room. Copy covers any asset, not only houses.
  */
 export default function HubContent() {
   useReveals()
-  usePanelPins()
-  useStackDepth()
   return (
     <>
       <Nav />
       <main id="main">
         <Hero />
-        <Situations />
-        <Routing />
-        <HowItWorks />
-        <WhatWeRoute />
-        <WhoYouAre />
+        <WhyWeExist />
+        <BestRoute />
+        <WaysIn />
+        <Steps />
         <Incentive />
+        <Founder />
         <Faq />
-        <ClosingCta />
+        <Closing />
       </main>
       <Foot />
     </>
@@ -45,27 +32,63 @@ export default function HubContent() {
 
 function Hero() {
   return (
-    <section className="hero full">
-      <div className="hcard">
-        <div className="hcopy" data-stagger="90">
-          <h1 className="d1 r">Everything has a buyer.</h1>
-          <p className="lede r">
-            When a death, a debt or a closing forces a sale, FALCO finds every
-            asset worth auctioning and routes each one to the licensed
-            Tennessee auctioneer who sells it best. Then buyers compete. No
-            cost to you.
-          </p>
-          <div className="pills r">
-            <a className="pill light" href="#situations">
-              What happened? <sub>→</sub>
-            </a>
-            <a className="pill line" href="#how">
-              How it works
-            </a>
-          </div>
+    <section className="calm hero-chat" id="ask">
+      <div className="wrap narrow" data-stagger="90">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="hero-bird r" src="/media/falco-bird-ink.png" alt="FALCO" />
+        <h1 className="d1 r">Built to keep what&apos;s yours.</h1>
+        <p className="lede r">
+          When a house, an estate, a business or anything else has to sell, we
+          route it to a licensed Tennessee auction firm so buyers compete for
+          it. No cost to you.
+        </p>
+        <div className="r">
+          <ChatBox />
         </div>
-        <div className="hmedia">
-          <div className="frame">
+      </div>
+    </section>
+  )
+}
+
+function WhyWeExist() {
+  const ways = [
+    {
+      h: "A forced sale",
+      p: "The lender, court or lienholder sells it to cover what's owed, not to get you the best price.",
+    },
+    {
+      h: "A quick cash offer",
+      p: "Fast and certain, but the buyer's profit is your discount.",
+    },
+    {
+      h: "A marketed auction",
+      p: "Buyers compete in the open on a set date, so demand sets the price. This is the one we build.",
+    },
+  ]
+  return (
+    <section className="calm">
+      <div className="wrap">
+        <div className="split">
+          <div data-stagger="80">
+            <p className="lbl r">Why we exist</p>
+            <h2 className="d2 r">
+              Two of three ways out leave money on the table.
+            </h2>
+            <ol className="ways r">
+              {ways.map((w, i) => (
+                <li key={w.h} className={i === 2 ? "on" : undefined}>
+                  <b>{w.h}</b>
+                  <span>{w.p}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="r">
+              <Link className="pill line" href="/manifesto">
+                How it works, start to finish <sub>→</sub>
+              </Link>
+            </p>
+          </div>
+          <div className="media r">
             <LiteVideo
               src="/media/hero.mp4"
               srcMob="/media/hero-mob.mp4"
@@ -74,290 +97,106 @@ function Hero() {
           </div>
         </div>
       </div>
-      <div className="hero-stats">
-        <div className="stats" data-stagger="90">
-          <div className="stat r">
-            <b>${<Count to={0} />}</b>
-            <span>FALCO fee to the seller.</span>
-          </div>
-          <div className="stat r">
-            <b>
-              <Count to={9} />
-            </b>
-            <span>Kinds of assets we route.</span>
-          </div>
-          <div className="stat r">
-            <b>
-              <Count to={1} />
-            </b>
-            <span>Call for everything that has to sell.</span>
-          </div>
-          <div className="stat r">
-            <b>0</b>
-            <span>Things we buy. We only route.</span>
-          </div>
-        </div>
-      </div>
     </section>
   )
 }
 
-function Situations() {
+function BestRoute() {
+  const tracked = [
+    {
+      n: "Sales",
+      h: "What it cleared",
+      p: "What each firm's auctions actually bring in, by asset type and county, measured against what the asset was worth going in.",
+    },
+    {
+      n: "Completions",
+      h: "Whether it closed",
+      p: "How often a sale closes on schedule, and how often it stalls, falls through or goes back to the seller.",
+    },
+    {
+      n: "Best fits",
+      h: "Who it sells to",
+      p: "Which firms draw the most bidders for which kinds of assets, so the next sale starts in front of the right room.",
+    },
+  ]
   return (
-    <section className="sec full" id="situations">
+    <section className="calm">
       <div className="wrap">
         <div className="head">
           <div data-stagger="80">
-            <p className="lbl r">Start with what happened</p>
-            <h2 className="d2 r">What brings you here?</h2>
-          </div>
-          <p className="lede note r">
-            Pick the one closest to yours. Each page explains what we do, what
-            it costs and what happens next, in plain terms.
-          </p>
-        </div>
-        <div className="sitgrid" data-stagger="70">
-          {SITUATIONS.map((s, i) => (
-            <Link className="sit r" key={s.slug} href={`/situations/${s.slug}`}>
-              <span className="n">{String(i + 1).padStart(2, "0")}</span>
-              <h3>{s.label}</h3>
-              <p>{s.short}</p>
-              <span className="go">
-                See how it works <sub>→</sub>
-              </span>
-            </Link>
-          ))}
-        </div>
-        <p className="sm r" style={{ marginTop: 18 }}>
-          Something else? <Link href="/start" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Tell us what happened</Link> and we will tell you straight whether auction fits.
-        </p>
-      </div>
-    </section>
-  )
-}
-
-type Route = { a: string; note: string; to: string; who: string; tag: string; pass?: boolean }
-
-const SCENARIOS: Array<{ id: string; label: string; intro: string; rows: Route[] }> = [
-  {
-    id: "estate",
-    label: "An estate",
-    intro: "A father in Madison passes. The family inherits the house and everything in it.",
-    rows: [
-      { a: "Three-bedroom house", note: "Paid off, needs work", to: "Real estate auction", who: "Licensed TN auction and realty firm", tag: "Real estate" },
-      { a: "F-250 and a car trailer", note: "Titled to the estate", to: "Vehicle and equipment auction", who: "Online, statewide bidders", tag: "Vehicles" },
-      { a: "31 firearms and a safe", note: "Hunting and collector pieces", to: "Firearms auction", who: "Auctioneer with a federal firearms license", tag: "Firearms" },
-      { a: "18-foot bass boat", note: "On a trailer in the garage", to: "Marine and powersports auction", who: "Buyers who search for boats", tag: "Boats" },
-      { a: "Coin and silver collection", note: "Three binders and a box", to: "Collectibles specialist", who: "Graded and lotted for collectors", tag: "Collections" },
-      { a: "Furniture and kitchen", note: "Everyday contents", to: "Not us", who: "We point you to an estate-sale company", tag: "Pass", pass: true },
-    ],
-  },
-  {
-    id: "closing",
-    label: "A shop closing",
-    intro: "A machine shop in Smyrna shuts down after 30 years. The owner wants out clean.",
-    rows: [
-      { a: "12,000 sq ft shop building", note: "Owned by the business", to: "Commercial real estate auction", who: "Licensed TN real estate auction firm", tag: "Real estate" },
-      { a: "CNC mills and lathes", note: "Six machines, running", to: "Industrial equipment auction", who: "Buyers nationwide who bid on machine tools", tag: "Equipment" },
-      { a: "Forklifts and two box trucks", note: "One with a lien", to: "Vehicle and equipment auction", who: "Lender signs off, payoff at closing", tag: "Fleet" },
-      { a: "Bar stock and tooling", note: "Inventory on the racks", to: "Business liquidation lots", who: "Sold with the equipment sale", tag: "Inventory" },
-      { a: "Office furniture", note: "Desks, chairs, files", to: "Bundled or skipped", who: "Not worth a sale of its own", tag: "Pass", pass: true },
-    ],
-  },
-  {
-    id: "farm",
-    label: "A family farm",
-    intro: "Four siblings inherit 80 acres in Wilson County. Nobody wants to farm it.",
-    rows: [
-      { a: "80 acres with a barn", note: "Four owners, one deed", to: "Land auction", who: "Licensed TN real estate auction firm", tag: "Land" },
-      { a: "Two tractors and implements", note: "Bush hog, disc, hay equipment", to: "Farm equipment auction", who: "Regional farm buyers", tag: "Equipment" },
-      { a: "Side-by-side and ATVs", note: "Titled", to: "Powersports auction", who: "Online, statewide bidders", tag: "Vehicles" },
-      { a: "Gun safe and collection", note: "Inherited pieces", to: "Firearms auction", who: "Auctioneer with a federal firearms license", tag: "Firearms" },
-    ],
-  },
-]
-
-function Routing() {
-  const [id, setId] = useState(SCENARIOS[0].id)
-  const sc = SCENARIOS.find((s) => s.id === id) ?? SCENARIOS[0]
-  return (
-    <section className="sec full">
-      <div className="wrap">
-        <div className="head">
-          <div data-stagger="80">
-            <p className="lbl r">What we actually do</p>
+            <p className="lbl r">How we pick the route</p>
             <h2 className="d2 r">
-              One situation.
+              Every asset goes where
               <br />
-              Many buyers.
+              it nets the most.
             </h2>
           </div>
           <p className="lede note r">
-            A house, a truck and a gun collection don&apos;t sell to the same
-            people. We send each one to the specialist whose buyers want it,
-            so you make one call instead of six.
+            Hunting land, a suburban home, a plane and a yacht each have their
+            own buyers, and different firms reach them. Our system compares the
+            routes for what you&apos;re selling and sends it to the one most
+            likely to leave you the most.
           </p>
         </div>
-        <div className="ledger r">
-          <div className="lg-top">
-            <div>
-              <p className="lbl" style={{ marginBottom: 12 }}>
-                Pick an example
-              </p>
-              <div className="chips">
-                {SCENARIOS.map((s) => (
-                  <button
-                    key={s.id}
-                    className="chip"
-                    type="button"
-                    aria-pressed={s.id === id}
-                    onClick={() => setId(s.id)}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+        <div className="quiet-steps" data-stagger="90">
+          {tracked.map((t) => (
+            <div className="r" key={t.n}>
+              <span className="n">{t.n}</span>
+              <h3 className="d3">{t.h}</h3>
+              <p>{t.p}</p>
             </div>
-            <p className="sm" style={{ maxWidth: "40ch", margin: 0 }}>
-              {sc.intro}
-            </p>
-          </div>
-          <div className="rt-rows" aria-live="polite">
-            {sc.rows.map((r) => (
-              <div className={`rt-row${r.pass ? " pass" : ""}`} key={r.a}>
-                <span className="a">
-                  {r.a}
-                  <small>{r.note}</small>
-                </span>
-                <span className="arr" aria-hidden="true">→</span>
-                <span className="to">
-                  {r.to}
-                  <small>{r.who}</small>
-                </span>
-                <span className="tag">{r.tag}</span>
-              </div>
-            ))}
-          </div>
-          <div className="lg-foot">
-            <p className="sm" style={{ margin: 0, maxWidth: "52ch" }}>
-              Every route is a licensed Tennessee firm with signed terms.
-              You see the whole plan in writing before anything is listed.
-            </p>
-            <Link className="pill dark" href="/start">
-              Map out yours <sub>→</sub>
-            </Link>
-          </div>
+          ))}
         </div>
-        <p className="disc">
-          Examples are illustrative. Which firm handles what depends on the
-          asset, where it sits and who has authority to sell it.
+        <p className="sm r" style={{ marginTop: "clamp(40px,5vw,64px)" }}>
+          Every sale we route adds to the record, so the match gets sharper
+          with each one.
         </p>
       </div>
     </section>
   )
 }
 
-function HowItWorks() {
-  const steps = [
-    { n: "Step 01", h: "We spot it", p: "Probate filings, trustee notices, court-ordered sales and closure notices are public record. We read them every business day." },
-    { n: "Step 02", h: "We take inventory", p: "What is there, roughly what it is worth, and what is not worth auctioning. In writing, free." },
-    { n: "Step 03", h: "We route it", p: "Each asset goes to a licensed Tennessee auctioneer who specializes in that kind of property." },
-    { n: "Step 04", h: "Buyers compete", p: "A marketed sale with open bidding on a set date. Proceeds are paid at closing." },
-  ]
-  return (
-    <section className="sec full" id="how">
-      <div className="wrap">
-        <div className="head">
-          <div data-stagger="80">
-            <p className="lbl r">How it works</p>
-            <h2 className="d2 r">Four steps.</h2>
-          </div>
-          <p className="lede note r">
-            Stop after any one of them. Nothing is owed either way.
-          </p>
-        </div>
-        <div className="fcard plate r">
-          <div className="steps" data-stagger="90">
-            {steps.map((s) => (
-              <div className="step r" key={s.n}>
-                <p className="lbl">{s.n}</p>
-                <h3 className="d3">{s.h}</h3>
-                <p>{s.p}</p>
-              </div>
-            ))}
-          </div>
-          <div className="r plate-foot">
-            <p className="sm" style={{ margin: 0 }}>
-              Founded by Patrick Armour, licensed Tennessee auctioneer #7622.
-            </p>
-            <Link className="pill light" href="/start">
-              Start here <sub>→</sub>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function WhatWeRoute() {
-  return (
-    <section className="sec full">
-      <div className="wrap">
-        <div className="head">
-          <div data-stagger="80">
-            <p className="lbl r">What we route</p>
-            <h2 className="d2 r">If it&apos;s worth bidding on.</h2>
-          </div>
-          <p className="lede note r">
-            Real property and the things of real value that come with it. If
-            a specialist sale won&apos;t beat what you&apos;d get on your own,
-            we&apos;ll tell you.
-          </p>
-        </div>
-        <div className="agrid" data-stagger="50">
-          {ASSET_CLASSES.map((a) => (
-            <div className="box r" key={a.h}>
-              <h4>{a.h}</h4>
-              <p>{a.p}</p>
-            </div>
-          ))}
-        </div>
-        <div className="nope r">
-          <b>What we don&apos;t take</b>
-          {NOT_US.map((n) => (
-            <span key={n}>{n}</span>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function WhoYouAre() {
+function WaysIn() {
   const lanes = [
-    { href: "/start", img: "/media/homeowner.jpg", h: "Families and owners", p: "Something has to be sold and you want it done right. Tell us what happened.", cta: "Start here" },
-    { href: "/professionals", img: "/media/record.jpg", h: "Attorneys and trustees", p: "One contact for every asset in the file, and a sale record for the court.", cta: "Work with us" },
-    { href: "/partners", img: "/media/partner.jpg", h: "Auction firms", p: "Inventory in your specialty, with the seller expecting your call.", cta: "Partner with us" },
-    { href: "/buyers", img: "/media/house-white.jpg", h: "Buyers", p: "Tennessee property and assets headed to open bidding. Hear first.", cta: "Register" },
+    {
+      href: "/start",
+      img: "/media/homeowner.jpg",
+      h: "Sellers",
+      p: "Something has to sell. Get the numbers before you sign anything.",
+      cta: "Get my numbers",
+    },
+    {
+      href: "/buyers",
+      img: "/media/house-white.jpg",
+      h: "Buyers",
+      p: "Tennessee property and assets headed to open bidding. Hear about them first.",
+      cta: "Register for access",
+    },
+    {
+      href: "/partners",
+      img: "/media/partner.jpg",
+      h: "Auction firms",
+      p: "Sellers with real value and real deadlines, matched to your specialty. You run the sale.",
+      cta: "Partner with us",
+    },
   ]
   return (
-    <section className="sec full">
+    <section className="calm">
       <div className="wrap">
         <div className="head">
           <div data-stagger="80">
             <p className="lbl r">Who you are</p>
-            <h2 className="d2 r">Four ways in.</h2>
+            <h2 className="d2 r">Three ways in.</h2>
           </div>
           <p className="lede note r">
-            Sellers, the professionals who advise them, the firms who run the
-            sale and the people who bid. Each has its own door.
+            Whichever one is yours, the numbers are on the table from the first
+            conversation.
           </p>
         </div>
-        <div className="grid4" data-stagger="90">
+        <div className="grid3" data-stagger="90">
           {lanes.map((l) => (
             <Link className="tile r" key={l.href} href={l.href}>
-              <span className="media" style={{ aspectRatio: "4/3" }}>
+              <span className="media">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={l.img} alt="" loading="lazy" decoding="async" />
               </span>
@@ -374,9 +213,53 @@ function WhoYouAre() {
   )
 }
 
+function Steps() {
+  const steps = [
+    {
+      n: "Step 01",
+      h: "We read the filings",
+      p: "Probate, foreclosure, court sale and closure notices are public record. We read them every business day, so we reach you while there's still time.",
+    },
+    {
+      n: "Step 02",
+      h: "You get the numbers",
+      p: "A free call: what a forced sale, a cash offer and a marketed auction would each leave you. In writing.",
+    },
+    {
+      n: "Step 03",
+      h: "A licensed firm sells it",
+      p: "The Tennessee auction firm that knows what you're selling runs the sale, timed to beat your deadline.",
+    },
+  ]
+  return (
+    <section className="calm">
+      <div className="wrap">
+        <div className="head">
+          <div data-stagger="80">
+            <p className="lbl r">How it works</p>
+            <h2 className="d2 r">Three steps.</h2>
+          </div>
+          <p className="lede note r">
+            Stop after any one of them. Nothing is owed either way.
+          </p>
+        </div>
+        <div className="quiet-steps" data-stagger="90">
+          {steps.map((s) => (
+            <div className="r" key={s.n}>
+              <span className="n">{s.n}</span>
+              <h3 className="d3">{s.h}</h3>
+              <p>{s.p}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Incentive() {
   return (
-    <section className="sec full">
+    <section className="calm">
       <div className="wrap">
         <div className="split">
           <div data-stagger="80">
@@ -389,18 +272,13 @@ function Incentive() {
           </div>
           <div data-stagger="80">
             <p className="lede r">
-              The buyer who offers you cash makes money by paying you less.
-              That is the whole business.
+              If we did, every dollar we made on the spread would be a dollar
+              out of your pocket.
             </p>
             <p className="lede r">
-              We never take a position in what we route. The only way we do
-              well is when buyers compete and your sale clears high. So
-              that&apos;s what we push for.
-            </p>
-            <p className="r">
-              <Link className="pill line" href="/manifesto">
-                Read the manifesto <sub>→</sub>
-              </Link>
+              Instead we&apos;re paid from the buyer&apos;s premium, the way
+              auction houses have been paid for two hundred years. So we have no
+              reason to push your price down and every reason to push it up.
             </p>
           </div>
         </div>
@@ -411,7 +289,7 @@ function Incentive() {
 
 function Faq() {
   return (
-    <section className="sec full" id="faq">
+    <section className="calm" id="faq">
       <div className="wrap">
         <div className="head">
           <div data-stagger="80">
@@ -419,6 +297,21 @@ function Faq() {
             <h2 className="d2 r">Straight answers.</h2>
           </div>
         </div>
+        <div className="faq-ask r">
+          <ChatBox
+            mode="faq"
+            inputId="faqInput"
+            greeting="Ask a question in your own words."
+            placeholder="Ask anything about how this works"
+            starters={[
+              "What does it cost me?",
+              "How do you pick the auction firm?",
+              "Do you buy anything?",
+              "How did you find me?",
+            ]}
+          />
+        </div>
+        <p className="lbl r">Or browse the common ones</p>
         <div className="faq r">
           {HUB_FAQ.map((item) => (
             <details key={item.q}>
@@ -432,37 +325,75 @@ function Faq() {
   )
 }
 
-function ClosingCta() {
+function Closing() {
   return (
-    <section className="sec full">
+    <section className="calm close-line">
+      <div className="wrap" data-stagger="80">
+        <h2 className="d2 r">Get the numbers before anything sells.</h2>
+        <p className="lede r">
+          Tell us what has to sell. We&apos;ll tell you what it would likely
+          clear and who would sell it. Free, even if you go elsewhere.
+        </p>
+        <div className="pills r">
+          <a className="pill dark" href="#ask">
+            Ask FALCO <sub>→</sub>
+          </a>
+          <a className="pill line" href="mailto:falco@falco.llc">
+            falco@falco.llc
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Founder() {
+  const creds = [
+    { k: "Tennessee auctioneer", v: "Licensed, #7622" },
+    { k: "Tennessee real estate license", v: "In progress" },
+    { k: "Based in", v: "Nashville, Tennessee" },
+  ]
+  return (
+    <section className="calm founder">
       <div className="wrap">
-        <div className="fcard plate r" style={{ textAlign: "center" }}>
-          <h2
-            className="d2"
-            style={{ margin: "0 auto", maxWidth: "22ch", textWrap: "balance" }}
-          >
-            Know what it&apos;s worth
-            <br />
-            before anything sells.
-          </h2>
-          <p
-            className="lede"
-            style={{ margin: "18px auto 0", maxWidth: "52ch" }}
-          >
-            Tell us what happened. We&apos;ll tell you what is worth
-            auctioning, who would sell it, and what you&apos;d likely clear.
-            Free, even if you go elsewhere.
-          </p>
-          <div
-            className="pills"
-            style={{ justifyContent: "center", marginTop: 26 }}
-          >
-            <Link className="pill light" href="/start">
-              Start here <sub>→</sub>
-            </Link>
-            <a className="pill line" href="mailto:falco@falco.llc">
-              falco@falco.llc
-            </a>
+        <div className="founder-grid">
+          <div className="founder-photo r">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/media/patrick.jpg" alt="Patrick Armour, founder of FALCO" loading="lazy" />
+          </div>
+          <div data-stagger="80">
+            <p className="lbl r">Meet the founder</p>
+            <h2 className="d2 r">Patrick Armour</h2>
+            <p className="founder-role r">Founder and CEO</p>
+            <p className="lede r">
+              I&apos;m a licensed Tennessee auctioneer. I started FALCO after
+              watching the same thing happen again and again: a death, a debt
+              or a deadline, and people selling what they had for far less than
+              it was worth, just because they ran out of time.
+            </p>
+            <p className="lede r">
+              An open auction fixes that. Buyers compete, and the price comes
+              from the market instead of whoever showed up first. My job is to
+              get every asset to the firm that will sell it best, and to tell
+              you the truth about the numbers, even when the answer is not us.
+            </p>
+            <dl className="founder-creds r">
+              {creds.map((c) => (
+                <div key={c.k}>
+                  <dt>{c.k}</dt>
+                  <dd>{c.v}</dd>
+                </div>
+              ))}
+            </dl>
+            <blockquote className="founder-mission r">
+              Nothing should sell for less than it&apos;s worth just because
+              someone ran out of time.
+            </blockquote>
+            <p className="r">
+              <a className="pill line" href="mailto:falco@falco.llc">
+                Write to me: falco@falco.llc
+              </a>
+            </p>
           </div>
         </div>
       </div>

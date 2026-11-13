@@ -194,7 +194,7 @@ export function webhookOutcome(type: string): { status: "bounced" | "complained"
 
 // ---- contact import -------------------------------------------------------
 
-const KINDS = new Set(["bank", "attorney", "broker", "auction_firm", "landlord", "investor", "other"])
+const KINDS = new Set(["bank", "attorney", "broker", "auction_firm", "landlord", "investor", "trustee", "airport", "marina", "other"])
 const FIELDS = ["org_name", "person_name", "title", "email", "phone", "mail_line1", "mail_line2", "mail_city", "mail_state",
   "mail_zip", "county", "source", "source_ref"] as const
 

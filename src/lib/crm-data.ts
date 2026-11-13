@@ -38,6 +38,10 @@ export const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "working", label: "In progress" },
 ]
 
+// Auctions are modeled at 90% of assessed value until partner results are
+// modeled per asset (110 deed-matched auction sales, median 92.5%, homes
+// 89.7%). FALCO fee = value x 0.90 x 10% buyer's premium x 20% share.
+export const AUCTION_REALIZATION = 0.9
 const OPP_COLS = "rank,staging_id,bot_source,distress_type,county,property_address,owner_name,property_value,expected_fee,fit_label,score,sale_date,contact"
 const isoDay = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (n: number) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); return d }
@@ -104,7 +108,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
       const value = Number(s.property_value ?? 0)
       opps.push({ rank: 0, staging_id: s.id, bot_source: s.bot_source, distress_type: s.distress_type, county: s.county,
         property_address: s.property_address, owner_name: s.owner_name_records ?? s.full_name, property_value: value,
-        expected_fee: value * 0.1 * 0.2, fit_label: (s.distress_type ?? "Lead").replace(/_/g, " ").toLowerCase().replace(/^\w/, (m) => m.toUpperCase()),
+        expected_fee: value * AUCTION_REALIZATION * 0.1 * 0.2, fit_label: (s.distress_type ?? "Lead").replace(/_/g, " ").toLowerCase().replace(/^\w/, (m) => m.toUpperCase()),
         score: 0, sale_date: s.trustee_sale_date, contact: null })
     }
     const rows = await attachWorkflow(opps)

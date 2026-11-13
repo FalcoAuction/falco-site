@@ -8,9 +8,9 @@ import { HUB_FAQ } from "./v2/situations"
 // into Google ("facing foreclosure Tennessee", "keep equity", "sell
 // before auction") — nobody searches the brand name. Brand goes last.
 export const metadata = {
-  title: "Sell Distressed Property and Estate Assets at Auction in Tennessee | FALCO",
+  title: "Sell Distressed Assets at Auction in Tennessee | FALCO",
   description:
-    "Estate, business closing, foreclosure, bankruptcy or lien sale? FALCO routes every asset to the licensed Tennessee auctioneer who sells it best. No FALCO fee to sellers.",
+    "A house, an estate, a business or anything else that has to sell. FALCO routes it to a licensed Tennessee auction firm so buyers compete. No cost to you, the buyer pays the premium.",
   alternates: { canonical: "/" },
 }
 
@@ -26,7 +26,7 @@ const JSON_LD = {
   logo: "https://falco.llc/falco-logo.png",
   image: "https://falco.llc/opengraph-image",
   description:
-    "FALCO finds Tennessee property and assets that have to be sold after a death, a debt, a closing or a court case, and routes each one to the licensed auctioneer who sells it best. No FALCO fee to sellers.",
+    "FALCO finds Tennessee property and assets that have to be sold after a death, a debt, a closing or a court case, and routes each one to the licensed auctioneer who sells it best. No cost to sellers; the buyer pays the premium.",
   areaServed: {
     "@type": "State",
     name: "Tennessee",
@@ -37,11 +37,10 @@ const JSON_LD = {
     name: "Patrick Yuri Armour",
     jobTitle: "Licensed Tennessee Auctioneer",
   },
-  priceRange: "No FALCO fee to sellers",
+  priceRange: "Free to sellers (buyer pays premium)",
 }
 
-// FAQPage schema mirrors the on-page FAQ accordion verbatim — Google
-// requires schema content to match visible content.
+// FAQPage schema mirrors the on-page FAQ accordion verbatim.
 const FAQ_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "FAQPage",

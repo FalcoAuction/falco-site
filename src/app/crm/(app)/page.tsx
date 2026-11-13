@@ -100,7 +100,7 @@ export default async function TodayPage() {
             </ul>
           </section>
         </div>
-        <p className="crm-faint" style={{ margin: 0 }}>Expected fee is property value x 10% buyer premium x FALCO&apos;s 20% share.</p>
+        <p className="crm-faint" style={{ margin: 0 }}>Expected fee assumes the auction sells at 90% of assessed value, x 10% buyer&apos;s premium x FALCO&apos;s 20% share (1.8% of value).</p>
       </div>
     </>
   )
