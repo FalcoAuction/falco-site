@@ -40,6 +40,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/guides/short-sale-vs-auction`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/guides/wholesaler-economics`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/guides/tennessee-foreclosure-surplus-funds`, changeFrequency: "monthly", priority: 0.8 },
+    // Situation guides: one in-depth guide per non-foreclosure situation.
+    { url: `${base}/guides/selling-estate-property-tennessee`, changeFrequency: "monthly", priority: 0.85 },
+    { url: `${base}/guides/estate-firearms-collections-tennessee`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/business-liquidation-tennessee`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/guides/sell-vehicles-equipment-boats-aircraft-auction`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/bankruptcy-receivership-sales-tennessee`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/tennessee-lien-sales`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/tennessee-tax-sale-delinquent-property`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/guides/land-commercial-property-wont-sell`, changeFrequency: "monthly", priority: 0.75 },
     // The math walkthrough — conversion/education asset linked from the
     // homepage three-exits table.
     { url: `${base}/math`, changeFrequency: "monthly", priority: 0.7 },

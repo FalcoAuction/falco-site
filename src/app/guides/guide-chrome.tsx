@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { FORECLOSURE_GUIDES, SITUATION_GUIDES } from "./guide-index"
 
 // Shared chrome + prose primitives for /guides/* pages, also imported by
 // the county foreclosure pages. La Masion editorial direction: warm ivory
@@ -7,18 +8,26 @@ import Link from "next/link"
 // Sans body. Server-component only, no client JS. Palette lives in
 // globals.css tokens so the whole system moves from one place.
 
+// variant "situation" swaps the foreclosure CTA and disclaimer for the
+// any-asset versions; `situation` is the /start?s= slug to preselect.
 export function GuideShell({
   eyebrow,
   title,
   standfirst,
   updated,
   children,
+  variant = "foreclosure",
+  situation,
+  ctaNote,
 }: {
   eyebrow: string
   title: React.ReactNode
   standfirst: React.ReactNode
   updated: string
   children: React.ReactNode
+  variant?: "foreclosure" | "situation"
+  situation?: string
+  ctaNote?: React.ReactNode
 }) {
   return (
     <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
@@ -78,9 +87,13 @@ export function GuideShell({
         {children}
       </article>
 
-      <GuideHubLinks />
-      <GuideCta />
-      <GuideDisclaimer />
+      <GuideHubLinks variant={variant} />
+      {variant === "situation" ? (
+        <SituationCta situation={situation} note={ctaNote} />
+      ) : (
+        <GuideCta />
+      )}
+      {variant === "situation" ? <SituationDisclaimer /> : <GuideDisclaimer />}
       <GuideFooter />
     </main>
   )
@@ -181,14 +194,8 @@ export function GuideRelated({
 // Cross-links every guide to the rest of the hub and to the six county
 // pages with the most search demand. Five of six guides were sitting in
 // "crawled, currently not indexed" with almost no internal links in.
-const RELATED_GUIDES = [
-  { href: "/guides/tennessee-foreclosure-process", label: "The Tennessee foreclosure process" },
-  { href: "/guides/postpone-trustee-sale-tennessee", label: "Postponing a trustee sale" },
-  { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction" },
-  { href: "/guides/short-sale-vs-auction", label: "Short sale vs. auction" },
-  { href: "/guides/wholesaler-economics", label: "How wholesalers make money" },
-  { href: "/guides/tennessee-foreclosure-surplus-funds", label: "Claiming surplus funds" },
-]
+const RELATED_GUIDES = FORECLOSURE_GUIDES.map((g) => ({ href: g.href, label: g.short }))
+const RELATED_SITUATIONS = SITUATION_GUIDES.map((g) => ({ href: g.href, label: g.short }))
 const RELATED_COUNTIES = [
   { href: "/foreclosure/davidson-county", label: "Davidson (Nashville)" },
   { href: "/foreclosure/shelby-county", label: "Shelby (Memphis)" },
@@ -197,19 +204,44 @@ const RELATED_COUNTIES = [
   { href: "/foreclosure/rutherford-county", label: "Rutherford (Murfreesboro)" },
   { href: "/foreclosure/williamson-county", label: "Williamson (Franklin)" },
 ]
-function GuideHubLinks() {
+function GuideLinkList({
+  heading,
+  links,
+}: {
+  heading: string
+  links: Array<{ href: string; label: string }>
+}) {
+  return (
+    <div>
+      <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">{heading}</div>
+      <ul className="space-y-2">
+        {links.map((l) => (
+          <li key={l.href}>
+            <Link href={l.href} className="text-[15px] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">{l.label} →</Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function GuideHubLinks({ variant }: { variant: "foreclosure" | "situation" }) {
+  if (variant === "situation") {
+    return (
+      <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
+        <div className="grid sm:grid-cols-2 gap-8">
+          <GuideLinkList heading="Guides by situation" links={RELATED_SITUATIONS} />
+          <GuideLinkList heading="Foreclosure guides" links={RELATED_GUIDES} />
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
       <div className="grid sm:grid-cols-2 gap-8">
         <div>
-          <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">More guides</div>
-          <ul className="space-y-2">
-            {RELATED_GUIDES.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-[15px] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">{l.label} →</Link>
-              </li>
-            ))}
-          </ul>
+          <GuideLinkList heading="More guides" links={RELATED_GUIDES} />
+          <Link href="/guides" className="mt-2 inline-block text-[15px] text-[var(--ink-soft)] hover:text-[var(--mocha)] transition-colors">Estates, business closings and more →</Link>
         </div>
         <div>
           <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">Foreclosure by county</div>
@@ -285,6 +317,144 @@ function GuideDisclaimer() {
         homeowners sell through a marketed auction run by a licensed Tennessee
         auction firm.
       </p>
+    </section>
+  )
+}
+
+// CTA for the situation guides: estates, business closings, liens and
+// the rest. Sends to /start with the situation preselected, or to the
+// homepage chat.
+function SituationCta({
+  situation,
+  note,
+}: {
+  situation?: string
+  note?: React.ReactNode
+}) {
+  const href = situation ? `/start?s=${situation}` : "/start"
+  return (
+    <section className="mx-auto max-w-3xl px-6 md:px-10 mt-14">
+      <div className="rounded-2xl bg-[var(--ink)] p-8 md:p-11 text-[var(--paper)]">
+        <div className="mb-3 text-[11px] uppercase tracking-[0.22em] text-[#c2b16a] font-semibold">
+          Talk to us
+        </div>
+        <h3 className="font-[family-name:var(--font-display)] text-[28px] md:text-[38px] leading-[1.12] font-semibold text-[var(--paper)]">
+          Tell us what you are dealing with. We will tell you what it is worth at auction.
+        </h3>
+        <p className="mt-4 text-[15px] md:text-[16px] leading-[1.65] text-[color-mix(in_oklab,var(--paper)_74%,transparent)]">
+          Two minutes to tell us what happened. Within one business day we
+          come back with what is worth auctioning, which licensed Tennessee
+          firm sells that kind of asset best, and what it would likely clear.{" "}
+          {note ?? (
+            <>
+              No cost to you. The buyer pays a 10% premium on top of the
+              winning bid, and FALCO is paid from that premium.
+            </>
+          )}
+        </p>
+        <div className="mt-7 flex flex-wrap items-center gap-4">
+          <Link
+            href={href}
+            className="inline-flex items-center justify-center rounded-md bg-[var(--mocha)] hover:bg-[var(--mocha-deep)] text-white font-semibold text-[15px] px-6 py-3 transition-colors"
+          >
+            Tell us what happened →
+          </Link>
+          <Link
+            href="/#ask"
+            className="text-[14px] text-[var(--paper)] underline underline-offset-4 decoration-[color-mix(in_oklab,var(--paper)_35%,transparent)]"
+          >
+            Or ask a quick question
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SituationDisclaimer() {
+  return (
+    <section className="mx-auto max-w-3xl px-6 md:px-10 mt-8">
+      <p className="text-[12.5px] leading-[1.65] text-[var(--ink-faint)]">
+        This page is general information about Tennessee and federal law, not
+        legal, tax, or financial advice, and not a promise about any outcome.
+        Laws change and every situation is different. For advice about your
+        circumstances, consult a licensed Tennessee attorney, CPA, or other
+        licensed professional. FALCO is not a law firm, a government agency,
+        or a court, and is not affiliated with any of them. FALCO does not
+        buy, list, broker, or sell anything itself. Licensed Tennessee
+        auction firms, and licensed real estate firms where real estate is
+        involved, run every sale.
+      </p>
+    </section>
+  )
+}
+
+// Visible FAQ plus matching FAQPage JSON-LD built from the same strings,
+// so the schema always mirrors what is on the page.
+export function GuideFaq({
+  items,
+}: {
+  items: Array<{ q: string; a: string }>
+}) {
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  }
+  return (
+    <section id="faq" className="scroll-mt-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
+      <h2 className="text-[27px] md:text-[36px] leading-[1.12] font-semibold text-[var(--ink)] text-balance">
+        Common questions
+      </h2>
+      <dl className="mt-5 divide-y divide-[var(--rule)] border-y border-[var(--rule)]">
+        {items.map((item) => (
+          <div key={item.q} className="py-5">
+            <dt className="text-[17px] md:text-[18px] font-semibold leading-snug text-[var(--ink)]">
+              {item.q}
+            </dt>
+            <dd className="mt-2">{item.a}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+// Numbered source list at the foot of a guide. Numbers match the inline
+// Cite markers.
+export function GuideSources({
+  sources,
+}: {
+  sources: Array<{ n: number; label: string; href: string }>
+}) {
+  return (
+    <section id="sources" className="scroll-mt-24">
+      <h2 className="text-[22px] md:text-[26px] leading-[1.15] font-semibold text-[var(--ink)]">
+        Sources
+      </h2>
+      <ol className="mt-3 space-y-1.5 text-[13.5px] leading-[1.55] text-[var(--ink-faint)]">
+        {sources.map((s) => (
+          <li key={s.n} id={`source-${s.n}`}>
+            <span className="font-semibold text-[var(--mocha)]">[{s.n}]</span>{" "}
+            <a
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="underline underline-offset-2 decoration-[var(--rule-strong)] hover:text-[var(--mocha)]"
+            >
+              {s.label}
+            </a>
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }
