@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SitePage } from "@/app/v2/site-page"
 
 export const metadata = {
   title: "Terms · FALCO Tennessee",
@@ -9,26 +10,11 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
+    <SitePage>
+    <div className="pg-legacy pg-old">
       {/* Background — same v2 stack, static */}
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[var(--paper)]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4 md:px-10">
-          <Link
-            href="/"
-            className="text-[13px] font-semibold tracking-[0.28em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors"
-          >
-            FALCO
-          </Link>
-          <Link
-            href="/"
-            className="text-[12px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
-          >
-            ← Back
-          </Link>
-        </div>
-      </header>
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-8 md:px-10 md:pt-28">
@@ -52,7 +38,7 @@ export default function TermsPage() {
               FALCO is a Tennessee distressed-real-estate intelligence and
               auction-routing operation run by Patrick Yuri Armour, a
               Tennessee-licensed auctioneer. Contact:{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>,{" "}
+              <span className="text-[var(--mocha)]">help@falco.llc</span>,{" "}
               falco.llc. By using this site or communicating
               with us, you agree to these terms.
             </p>
@@ -116,7 +102,7 @@ export default function TermsPage() {
               <strong className="text-[var(--ink)]">Help:</strong> Reply{" "}
               <span className="text-[var(--mocha)]">HELP</span> for sender
               identification and contact information, or email{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>.
+              <span className="text-[var(--mocha)]">help@falco.llc</span>.
             </p>
             <p>
               <strong className="text-[var(--ink)]">Supported carriers:</strong>{" "}
@@ -228,7 +214,7 @@ export default function TermsPage() {
           <Block title="Contact">
             <p>
               Questions about these terms:{" "}
-              <span className="text-[var(--mocha)]">falco@falco.llc</span>, or
+              <span className="text-[var(--mocha)]">help@falco.llc</span>, or
               use the{" "}
               <Link
                 href="/inquiry"
@@ -243,24 +229,8 @@ export default function TermsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto max-w-5xl px-6 py-10 md:px-10 border-t border-[var(--rule)]">
-        <div className="flex items-center justify-between flex-wrap gap-4 text-[11px] tracking-[0.18em] text-[var(--ink-faint)]">
-          <div>FALCO · Tennessee</div>
-          <div className="flex items-center gap-5">
-            <Link href="/" className="hover:text-[var(--ink-soft)] transition-colors">
-              Home
-            </Link>
-            <Link href="/privacy" className="hover:text-[var(--ink-soft)] transition-colors">
-              Privacy
-            </Link>
-            <Link href="/inquiry" className="hover:text-[var(--ink-soft)] transition-colors">
-              Contact
-            </Link>
-            <span className="text-[var(--ink-faint)]">falco.llc</span>
-          </div>
-        </div>
-      </footer>
-    </main>
+    </div>
+    </SitePage>
   )
 }
 

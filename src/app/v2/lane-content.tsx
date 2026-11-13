@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Foot, Ledger, Nav, useReveals } from "./v2-content"
+import { PageHead } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 
 /**
@@ -16,34 +17,21 @@ export default function LaneContent({ slug }: { slug: string }) {
   return (
     <>
       <Nav />
-      <main id="main">
-        <section className="hero phead">
-          <div className="hcard">
-            <div className="hcopy" data-stagger="90">
-              <p className="crumbs r">
-                <Link href="/">Home</Link> / <Link href="/#situations">Situations</Link> / {s.label}
-              </p>
-              <h1 className="d1 r">{s.h1}</h1>
-              <p className="lede r">{s.lede}</p>
-              <div className="pills r">
-                <Link className="pill light" href={s.cta.href}>
-                  {s.cta.label} <sub>→</sub>
-                </Link>
-                <a className="pill line" href="#how">
-                  How it works
-                </a>
-              </div>
-            </div>
-            <div className="hmedia">
-              <div className="frame">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.img} alt="" />
-              </div>
-            </div>
-          </div>
-        </section>
+      <main id="main" className="pg">
+        <PageHead
+          crumbs={[{ href: "/", label: "Home" }, { href: "/manifesto", label: "How it works" }, { label: s.label }]}
+          title={s.h1}
+          lede={s.lede}
+        >
+          <Link className="pill dark" href={s.cta.href}>
+            {s.cta.label} <sub>→</sub>
+          </Link>
+          <a className="pill line" href="#how">
+            How it works
+          </a>
+        </PageHead>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
             <div className="lists" data-stagger="80">
               <div className="box r">
@@ -76,7 +64,7 @@ export default function LaneContent({ slug }: { slug: string }) {
 
         {s.ledger && <Ledger full={false} />}
 
-        <section className="sec" id="how">
+        <section className="pg-sec" id="how">
           <div className="wrap">
             <div className="head">
               <div data-stagger="80">
@@ -87,29 +75,22 @@ export default function LaneContent({ slug }: { slug: string }) {
                 Stop after any one of them. Nothing is owed either way.
               </p>
             </div>
-            <div className="fcard plate r">
-              <div className="steps" data-stagger="90">
-                {s.steps.map((st, i) => (
-                  <div className="step r" key={st.h}>
-                    <p className="lbl">Step {String(i + 1).padStart(2, "0")}</p>
-                    <h3 className="d3">{st.h}</h3>
-                    <p>{st.p}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="r plate-foot">
-                <p className="sm" style={{ margin: 0 }}>
-                  Every sale is run by a licensed Tennessee firm with signed terms.
-                </p>
-                <Link className="pill light" href={s.cta.href}>
-                  {s.cta.label} <sub>→</sub>
-                </Link>
-              </div>
+            <div className="quiet-steps" data-stagger="90">
+              {s.steps.map((st, i) => (
+                <div className="r" key={st.h}>
+                  <span className="n">Step {String(i + 1).padStart(2, "0")}</span>
+                  <h3 className="d3">{st.h}</h3>
+                  <p>{st.p}</p>
+                </div>
+              ))}
             </div>
+            <p className="sm r" style={{ marginTop: 40 }}>
+              Every sale is run by a licensed Tennessee firm with signed terms.
+            </p>
           </div>
         </section>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
             <div className="head">
               <div data-stagger="80">
@@ -128,7 +109,7 @@ export default function LaneContent({ slug }: { slug: string }) {
           </div>
         </section>
 
-        <section className="sec" id="faq">
+        <section className="pg-sec" id="faq">
           <div className="wrap">
             <div className="head">
               <div data-stagger="80">
@@ -147,9 +128,9 @@ export default function LaneContent({ slug }: { slug: string }) {
           </div>
         </section>
 
-        <section className="sec">
+        <section className="pg-sec">
           <div className="wrap">
-            <div className="fcard plate r">
+            <div className="r">
               <div className="head" style={{ marginBottom: 26 }}>
                 <h2 className="d2">Not quite your situation?</h2>
                 <p className="lede note">
