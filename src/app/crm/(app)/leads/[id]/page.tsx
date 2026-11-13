@@ -9,6 +9,9 @@ import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel }
 import { Icon } from "@/app/crm/icons"
 import { Head, SalePill, StatusPill, money, relTime, shortDate, titleCase } from "@/app/crm/ui"
 import { LogForm } from "./log-form"
+import { SheetThumb } from "./sheet-thumb"
+import MathSheetContent from "@/app/crm/math-sheet/[id]/math-sheet-content"
+import { loadHomeownerSnapshot } from "@/app/crm/math-sheet/[id]/load-snapshot"
 
 export const dynamic = "force-dynamic"
 
@@ -31,6 +34,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
   const mathSheetId = await mathSheetIdFor(lead.pipeline_lead_key)
+  const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
   const owner = lead.owner_name_records || lead.full_name
   const laneTag = (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const aircraft = (Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
@@ -65,7 +69,6 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             {phones[0] ? <a className="crm-btn primary" href={`tel:+1${phones[0]}`}><Icon name="calls" />Call</a> : <span className="crm-btn" aria-disabled="true" style={{ opacity: 0.5 }}><Icon name="calls" />No phone</span>}
             {phones[0] ? <a className="crm-btn" href={`sms:+1${phones[0]}`}><Icon name="text" />Text</a> : null}
             {lead.email ? <a className="crm-btn" href={`mailto:${lead.email}`}><Icon name="mail" />Email</a> : null}
-            {mathSheetId ? <Link className="crm-btn" href={`/crm/math-sheet/${mathSheetId}`}>Math sheet</Link> : null}
             {lead.source_url ? <a className="crm-btn ghost" href={lead.source_url} target="_blank" rel="noreferrer"><Icon name="external" />Source</a> : null}
           </div>
 
@@ -101,6 +104,15 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <dt>Found</dt><dd>{shortDate(lead.staged_at)}</dd>
             </dl>
           </div>
+
+          {mathSheetId && sheet ? (
+            <div>
+              <div className="crm-section-label">Math sheet</div>
+              <SheetThumb href={`/crm/math-sheet/${mathSheetId}`}>
+                <MathSheetContent homeowner={sheet} embed layout="simple" />
+              </SheetThumb>
+            </div>
+          ) : null}
 
           {laneTag && (laneTag.lane === "commercial" || laneTag.lane === "land") ? (
             <div>

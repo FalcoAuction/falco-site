@@ -500,7 +500,7 @@ export default function MathSheetContent({
           daysToSale={daysToSale}
           loanBalance={loanBalance}
           needsVerification={arvNeedsVerification}
-          valueChecked={valueConfirmed}
+          valueChecked={embed || valueConfirmed}
           realCashOffer={realCashOffer}
         />
       ) : (
