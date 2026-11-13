@@ -247,3 +247,13 @@
 .crm-auth-card .crm-input { width: 100%; height: 36px; }
 .crm-auth-card .crm-btn { width: 100%; height: 36px; justify-content: center; margin-top: 10px; }
 .crm-brand-row { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
+
+/* Lead record: shrunken first page of the homeowner math sheet. Stays
+   white in dark mode because it is a picture of a printed page. */
+.crm-sheet-thumb { position: relative; width: 100%; max-width: 300px; min-width: 0; aspect-ratio: 8.5 / 11; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.crm-sheet-thumb-page { position: absolute; top: 0; left: 0; transform-origin: top left; transition: none !important; pointer-events: none; color: #111; background: #fff; }
+.crm-sheet-thumb-page main { min-height: 0 !important; }
+.crm-sheet-thumb-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.crm-sheet-thumb-open { position: absolute; right: 8px; bottom: 8px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(17, 17, 17, 0.85); color: #fff; opacity: 0; transition: opacity 0.15s; }
+.crm-sheet-thumb-link:hover .crm-sheet-thumb-open, .crm-sheet-thumb-link:focus-visible .crm-sheet-thumb-open { opacity: 1; }
+.crm-sheet-thumb:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14); }

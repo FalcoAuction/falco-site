@@ -138,7 +138,7 @@ const CODE_VIOLATION: ScenarioConfig = {
 
 // Two BK flavors with very different audiences and math.
 // PRE-PETITION: debtor still controls. They want to sell BEFORE filing
-// to avoid losing equity above the TN $7,500 homestead exemption.
+// to avoid losing equity above the TN homestead exemption ($35,000 individual, $52,500 joint).
 // 363 SALE: trustee/attorney post-filing. Trustee will sell. The
 // question is "via MLS or via § 363 auction." Trustee fees (11 USC
 // § 326) come out of every path's gross.
@@ -148,12 +148,12 @@ const BANKRUPTCY_PRE_PETITION: ScenarioConfig = {
   headerEyebrow: "FALCO · PRE-PETITION OPTIONS",
   dateFieldLabel: "BK filing planned",
   heroLine:
-    "Selling pre-petition through a marketed auction nets you {range} — full proceeds minus loan payoff and closing. Once you file, the BK trustee takes everything above the TN $7,500 homestead exemption.",
+    "Selling pre-petition through a marketed auction nets you {range} — full proceeds minus loan payoff and closing. Once you file, the BK trustee takes everything above the TN homestead exemption ($35,000 individual, $52,500 joint).",
   spreadComparator: "filing first and letting the trustee sell post-petition",
   path1: {
     label: "File BK first",
-    valueText: "$7,500 (exemption only)",
-    sub: "TN homestead exemption is $5,000 individual / $7,500 joint. Above that, the BK trustee captures all proceeds for creditors. You see only the exemption, regardless of equity.",
+    valueText: "Up to $35,000 ($52,500 joint)",
+    sub: "TN homestead exemption is $35,000 individual / $52,500 joint. Above that, the BK trustee captures all proceeds for creditors. You see only the exemption, regardless of equity.",
     tone: "loss",
   },
   wholesalerIntro:
@@ -161,7 +161,7 @@ const BANKRUPTCY_PRE_PETITION: ScenarioConfig = {
   auctionIntro:
     "Pre-petition marketed auction means YOU control the sale. Full proceeds pass through to you minus loan payoff and closing — no trustee, no creditors at the table. 30–45 day campaign, defined sale day. After you receive funds, you can fund the BK plan or, with debt-counseling guidance, potentially avoid filing entirely.",
   methodologyPath1:
-    "\"File BK first\" reflects TN's $5K individual / $7,500 joint homestead exemption (Tenn. Code Ann. § 26-2-301). Above that, the bankruptcy estate keeps proceeds for creditors.",
+    "\"File BK first\" reflects TN's $35,000 individual / $52,500 joint homestead exemption (Tenn. Code Ann. § 26-2-301). Above that, the bankruptcy estate keeps proceeds for creditors.",
   ctaHeader: "If you want to sell pre-petition",
   showMls: true,
   applyTrusteeFee: false,
