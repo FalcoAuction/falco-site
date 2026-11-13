@@ -18,6 +18,20 @@ import type { HomeownerSnapshot } from "./math-sheet-content"
  *  of county value. Auction to deed median 27 days; with a 30-60 day
  *  campaign that is 2 to 3 months from signing. */
 const LOCAL_AUCTIONS_N = 104
+
+/** Cash-buyer offers modeled as a range: 55% of value (what distressed
+ *  cash buyers commonly open at) up to 70% (the investor "70% rule"
+ *  ceiling). A range is more honest than one number we can't source,
+ *  and a real offer typed into Edit numbers replaces it. */
+const CASH_LOW_PCT = 0.55
+const CASH_HIGH_PCT = 0.7
+
+/** The licensed auction firm FALCO routes to. Null until a partner
+ *  agreement is signed and Patrick's principal broker is chosen. When
+ *  set, the auction box names the firm and the footer carries its name
+ *  and phone (TN advertising rules require the brokerage's name and
+ *  number on anything soliciting a listing), plus one proof line. */
+const AUCTION_PARTNER: { name: string; phone: string; proof: string } | null = null
 const TIMELINE_TEXT = "2 to 3 months"
 const TIMELINE_DAYS = 75
 
@@ -83,6 +97,8 @@ export default function SimpleSheet({
   daysToSale,
   loanBalance,
   needsVerification,
+  valueChecked,
+  realCashOffer,
 }: {
   homeowner: HomeownerSnapshot
   out: MathOutput
@@ -90,6 +106,10 @@ export default function SimpleSheet({
   daysToSale: number | null
   loanBalance: number
   needsVerification: boolean
+  /** Operator ticked "Value checked" (or typed a value in). */
+  valueChecked: boolean
+  /** A real cash offer the homeowner already has. 0 = none. */
+  realCashOffer: number
 }) {
   const s = scenarioCfg.scenario
   // Probate / post-petition: the reader is an executor, heir or trustee.
@@ -100,21 +120,42 @@ export default function SimpleSheet({
   const saleCalledOff =
     homeowner.trusteeSaleStatus === "cancelled" || homeowner.trusteeSaleStatus === "reinstated"
 
-  const cashWalks = out.wholesaler.scenario === "walks"
+  // Cash buyer: a real offer wins; otherwise a 55% to 70% range.
+  const owed = loanBalance + out.auction.low.taxLien
+  const hasRealOffer = realCashOffer > 0
+  const cashLow = hasRealOffer ? realCashOffer - owed : out.inputs.arv * CASH_LOW_PCT - owed
+  const cashHigh = hasRealOffer ? cashLow : out.inputs.arv * CASH_HIGH_PCT - owed
+  const cashWalks = cashHigh <= 0
+  const cashAmount = cashWalks
+    ? hasRealOffer
+      ? "$0"
+      : "Likely no offer"
+    : hasRealOffer || k(Math.max(0, cashLow)) === k(cashHigh)
+    ? k(Math.max(0, cashLow))
+    : `${k(Math.max(0, cashLow))} to ${k(cashHigh)}`
+
   const boxes: Box[] = []
-  const sq = statusQuo(s, out, saleCalledOff)
+  // A called-off foreclosure sale makes "usually $0" a weak and shaky
+  // comparison, so that box is dropped (the operator gets a warning).
+  const sq = saleCalledOff ? null : statusQuo(s, out, saleCalledOff)
   if (sq) boxes.push({ key: "sq", ...sq, tone: "red" })
   boxes.push({
     key: "cash",
-    label: "If you sell to a cash buyer",
-    amount: cashWalks ? "Likely no offer" : k(out.wholesaler.realisticNet),
-    note: cashWalks ? "Too much is owed for them to profit." : "They pay low so they can profit.",
+    label: hasRealOffer
+      ? `If ${estate ? "the estate takes" : "you take"} the cash offer`
+      : `If ${estate ? "the estate sells" : "you sell"} to a cash buyer`,
+    amount: cashAmount,
+    note: hasRealOffer
+      ? `${k(realCashOffer)} offer, minus what is owed.`
+      : cashWalks
+      ? "Too much is owed for them to profit."
+      : "They pay low so they can profit.",
     tone: "amber",
   })
   if (scenarioCfg.showMls) {
     boxes.push({
       key: "mls",
-      label: "If you list with an agent",
+      label: `If ${estate ? "the estate lists" : "you list"} with an agent`,
       amount: k(out.mls.netToSeller),
       note: "Can pay more, but takes months of showings and a 6% fee.",
       tone: "amber",
@@ -122,7 +163,9 @@ export default function SimpleSheet({
   }
   boxes.push({
     key: "auction",
-    label: estate ? "If the estate sells at auction with us" : "If you sell at auction with us",
+    label: AUCTION_PARTNER
+      ? `If ${estate ? "the estate sells" : "you sell"} at auction through ${AUCTION_PARTNER.name}`
+      : `If ${estate ? "the estate sells" : "you sell"} at auction through our licensed partner`,
     amount: `${k(low)} to ${k(high)}`,
     note: "Buyers bid against each other.",
     tone: "green",
@@ -139,10 +182,49 @@ export default function SimpleSheet({
   })()
 
   return (
-    <article className="print-page simple-sheet mx-auto max-w-[560px] px-5 py-8 sm:py-12 text-[#111]">
-      {needsVerification && (
-        <div className="no-print mb-5 rounded-xl bg-amber-100 p-3 text-[13px] text-amber-950">
-          Home value is a guess. Fix it under Edit numbers before sending.
+    <article className="simple-sheet mx-auto max-w-[560px] px-5 py-8 sm:py-12 text-[#111]">
+      <style>{`
+        @media print {
+          @page { size: letter; margin: 0.45in; }
+          .simple-sheet { max-width: 100% !important; padding: 0 !important; }
+          .simple-sheet, .simple-sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .simple-sheet section, .simple-sheet .box-card { break-inside: avoid; page-break-inside: avoid; }
+          .simple-sheet .print-break { break-before: page; page-break-before: always; margin-top: 0 !important; }
+          /* Fit on one sheet, front and back: page 1 = the numbers and
+             the cost, page 2 = next steps, contact card and the math. */
+          body::after { display: none !important; }
+          .simple-sheet h1 { margin-top: 22px !important; font-size: 30px !important; }
+          .simple-sheet > div, .simple-sheet > section { margin-top: 22px !important; }
+          .simple-sheet > div:first-of-type { margin-top: 0 !important; }
+          .simple-sheet .box-card { padding-top: 14px !important; padding-bottom: 14px !important; }
+          .simple-sheet .box-card + .box-card { margin-top: 10px !important; }
+          .simple-sheet .box-card .tabular-nums { font-size: 30px !important; }
+          .simple-sheet .box-card:last-child .tabular-nums { font-size: 38px !important; }
+          .simple-sheet .cost-box { padding-top: 18px !important; padding-bottom: 18px !important; }
+          .simple-sheet .print-break h2, .simple-sheet .math-section h2 { font-size: 19px !important; }
+          .simple-sheet .print-break ol { margin-top: 12px !important; }
+          .simple-sheet .print-break ol > li + li { margin-top: 10px !important; }
+          .simple-sheet .contact-card { padding: 16px 20px !important; }
+          .simple-sheet .contact-card > div + div { margin-top: 12px !important; }
+          .simple-sheet .math-section dl { margin-top: 10px !important; font-size: 13px !important; }
+          .simple-sheet .math-section dl > div { padding-top: 5px !important; padding-bottom: 5px !important; }
+          .simple-sheet .math-section ul { margin-top: 12px !important; font-size: 11.5px !important; line-height: 1.45 !important; }
+          .simple-sheet .math-section ul > li + li { margin-top: 5px !important; }
+          .simple-sheet .math-section > p { margin-top: 10px !important; }
+        }
+      `}</style>
+      {(needsVerification || !valueChecked || saleCalledOff) && (
+        <div className="no-print mb-5 space-y-1 rounded-xl bg-amber-100 p-3 text-[13px] text-amber-950">
+          {needsVerification && <div>Home value is a guess. Fix it under Edit numbers before sending.</div>}
+          {!needsVerification && !valueChecked && (
+            <div>
+              Check the home value ({k(out.inputs.arv)}) against a real comp, then tick &quot;Value
+              checked&quot; up top.
+            </div>
+          )}
+          {saleCalledOff && (
+            <div>This foreclosure sale looks called off. Confirm it before sending. The foreclosure box is hidden.</div>
+          )}
         </div>
       )}
 
@@ -174,7 +256,7 @@ export default function SimpleSheet({
       </div>
 
       {/* COST */}
-      <section className="mt-16 rounded-2xl bg-[#f6f6f4] px-6 py-8 text-center">
+      <section className="cost-box mt-16 rounded-2xl bg-[#f6f6f4] px-6 py-8 text-center">
         <p className="text-[26px] font-bold leading-tight">
           <span className="underline decoration-[#d92d20] decoration-[3px] underline-offset-[6px]">
             It costs you $0 to use us.
@@ -185,7 +267,7 @@ export default function SimpleSheet({
       </section>
 
       {/* WHAT HAPPENS NEXT */}
-      <section className="mt-20">
+      <section className="mt-20 print-break">
         <h2 className="text-[22px] font-bold tracking-[-0.01em]">What happens next</h2>
         <ol className="mt-5 space-y-5">
           <Step n={1} title="We talk for 15 minutes">
@@ -202,7 +284,7 @@ export default function SimpleSheet({
       </section>
 
       {/* CONTACT CARD */}
-      <section className="mt-20 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <section className="contact-card mt-20 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/media/falco-bird-black.png" alt="" className="h-14 w-auto" />
@@ -226,7 +308,7 @@ export default function SimpleSheet({
       </section>
 
       {/* HOW WE GOT THESE NUMBERS */}
-      <section className="mt-20">
+      <section className="math-section mt-20">
         <h2 className="text-[22px] font-bold tracking-[-0.01em]">How we got these numbers</h2>
         <dl className="mt-5 divide-y divide-[#eee] border-y border-[#eee] text-[16px]">
           <MathRow label="What the house is worth" value={k(out.inputs.arv)} />
@@ -262,12 +344,20 @@ export default function SimpleSheet({
             <strong className="text-[#222]">The loan amount is an estimate.</strong> If payments were missed,
             late fees and legal fees can make the real payoff higher. We will confirm it with your lender.
           </li>
-          {!cashWalks && (
-            <li>
-              <strong className="text-[#222]">The cash offer</strong> assumes a buyer pays about{" "}
-              {cashPct(out)}% of what the house is worth. Have a real offer? We will compare it for you.
-            </li>
-          )}
+          <li>
+            {hasRealOffer ? (
+              <>
+                <strong className="text-[#222]">The cash offer</strong> is the {k(realCashOffer)} offer you
+                told us about, minus what is owed.
+              </>
+            ) : (
+              <>
+                <strong className="text-[#222]">The cash offer</strong> assumes a buyer pays{" "}
+                {pct(CASH_LOW_PCT)} to {pct(CASH_HIGH_PCT)} of what the house is worth. That is the usual
+                range for a fast cash sale. Have a real offer? We will put it on this sheet.
+              </>
+            )}
+          </li>
           <li>
             <strong className="text-[#222]">Who pays the auction fee?</strong> The winning buyer pays a 10% fee
             on top of their bid. It does not come out of your money.
@@ -284,8 +374,13 @@ export default function SimpleSheet({
           )}
         </ul>
 
+        {AUCTION_PARTNER && (
+          <p className="mt-6 text-[14px] text-[#555]">{AUCTION_PARTNER.proof}</p>
+        )}
         <p className="mt-8 text-[12px] text-[#999]">
-          FALCO · Nashville, Tennessee · Auctions are run by licensed Tennessee auction companies.
+          {AUCTION_PARTNER
+            ? `Auction conducted by ${AUCTION_PARTNER.name}, ${AUCTION_PARTNER.phone}. FALCO · Nashville, Tennessee.`
+            : "FALCO · Nashville, Tennessee · Auctions are run by licensed Tennessee auction companies."}
         </p>
       </section>
     </article>
@@ -302,7 +397,7 @@ function BoxCard({ box }: { box: Box }) {
   const t = TONES[box.tone]
   const big = box.tone === "green"
   return (
-    <div className={`rounded-2xl px-6 ${big ? "py-7" : "py-5"} ${t.box}`}>
+    <div className={`box-card rounded-2xl px-6 ${big ? "py-7" : "py-5"} ${t.box}`}>
       <div className={`text-[17px] font-semibold ${big ? "text-white" : "text-[#333]"}`}>{box.label}</div>
       <div
         className={`mt-1 font-bold tracking-[-0.02em] leading-[1.05] tabular-nums ${t.amount} ${
@@ -350,13 +445,6 @@ function MathRow({ label, value, bold }: { label: string; value: string; bold?: 
   )
 }
 
-function cashPct(out: MathOutput): number {
-  return Math.round(
-    (out.wholesaler.scenario === "stretched"
-      ? out.inputs.wholesalerStretchPct
-      : out.inputs.wholesalerMaoPct) * 100
-  )
-}
 
 function pct(n: number): string {
   return `${Math.round(n * 100)}%`

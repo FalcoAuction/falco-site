@@ -281,10 +281,22 @@ export default function MathSheetContent({
   }
   const out = useMemo(() => computeMath(inputs), [inputs])
   const arvNeedsVerification = !hasPipelineArv && !arvManuallyEdited
+  // Simple sheet: a wrong home value sinks the whole page, so every send
+  // needs an explicit check (or a hand-typed value) first.
+  const [valueChecked, setValueChecked] = useState<boolean>(false)
+  const [realCashOffer, setRealCashOffer] = useState<number>(0)
+  const valueConfirmed = valueChecked || arvManuallyEdited
+  const blockSend = arvNeedsVerification || (layout === "simple" && !valueConfirmed)
   const handlePrint = () => {
     if (arvNeedsVerification) {
       window.alert(
         "Verify ARV before sending: this sheet is using a fallback value, not a pipeline AVM or comp."
+      )
+      return
+    }
+    if (layout === "simple" && !valueConfirmed) {
+      window.alert(
+        "Check the home value against a real comp, then tick Value checked (or type the right value under Edit numbers)."
       )
       return
     }
@@ -396,15 +408,31 @@ export default function MathSheetContent({
             >
               Email →
             </a>
+            {layout === "simple" && (
+              <label className="flex items-center gap-1.5 text-white/75 cursor-pointer select-none whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={valueConfirmed}
+                  disabled={arvManuallyEdited}
+                  onChange={(e) => setValueChecked(e.target.checked)}
+                  className="accent-emerald-400"
+                />
+                Value checked
+              </label>
+            )}
             <button
               onClick={handlePrint}
               className={`rounded-md font-semibold px-3.5 py-1.5 transition-colors ${
-                arvNeedsVerification
+                blockSend
                   ? "bg-amber-300 hover:bg-amber-200 text-black"
                   : "bg-emerald-400 hover:bg-emerald-300 text-black"
               }`}
             >
-              {arvNeedsVerification ? "Verify ARV before PDF" : "Print / Save PDF"}
+              {arvNeedsVerification
+                ? "Verify ARV before PDF"
+                : blockSend
+                ? "Check value first"
+                : "Print / Save PDF"}
             </button>
           </div>
         </div>
@@ -436,6 +464,11 @@ export default function MathSheetContent({
             <NumInput label="Auction low %" value={auctionMinPct * 100} step={1} onChange={(v) => setAuctionMinPct(v / 100)} />
             <NumInput label="Auction high %" value={auctionMaxPct * 100} step={1} onChange={(v) => setAuctionMaxPct(v / 100)} />
           </div>
+          {layout === "simple" && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
+              <NumInput label="Real cash offer ($)" value={realCashOffer} step={1000} onChange={setRealCashOffer} />
+            </div>
+          )}
           {isCodeViolation && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5">
               <NumInput label="Monthly fines ($)" value={monthlyFineAccrual} step={100} onChange={setMonthlyFineAccrual} />
@@ -467,6 +500,8 @@ export default function MathSheetContent({
           daysToSale={daysToSale}
           loanBalance={loanBalance}
           needsVerification={arvNeedsVerification}
+          valueChecked={valueConfirmed}
+          realCashOffer={realCashOffer}
         />
       ) : (
       <article
