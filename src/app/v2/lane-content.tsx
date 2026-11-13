@@ -1,158 +1,143 @@
 "use client"
 
 import Link from "next/link"
-import { Foot, Ledger, Nav, useReveals } from "./v2-content"
-import { PageHead } from "./site-page"
+import { Ledger } from "./v2-content"
+import { PageHead, PageSec, SitePage } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 
 /**
- * One template for every /situations/[slug] page. Plain scrolling
- * sections (no sticky deck): these pages are read top to bottom by
- * someone deciding whether to call, so nothing should pin or cover.
+ * One template for every /situations/[slug] page. People arrive from the
+ * footer, from a guide's "How FALCO handles..." link, or from search, so
+ * each page answers the practical question (what FALCO does about this,
+ * what it costs, what happens next) and points back to the guide for the
+ * legal detail. Same building blocks as the rest of the site.
  */
 export default function LaneContent({ slug }: { slug: string }) {
-  useReveals()
   const s = SITUATION_BY_SLUG[slug]
   const others = SITUATIONS.filter((o) => o.slug !== slug)
+
   return (
-    <>
-      <Nav />
-      <main id="main" className="pg">
-        <PageHead
-          crumbs={[{ href: "/", label: "Home" }, { href: "/manifesto", label: "How it works" }, { label: s.label }]}
-          title={s.h1}
-          lede={s.lede}
-        >
+    <SitePage>
+      <PageHead
+        crumbs={[{ href: "/", label: "Home" }, { label: s.label }]}
+        label="How FALCO helps"
+        title={s.h1}
+        lede={s.lede}
+      >
+        <Link className="pill dark" href={s.cta.href}>
+          {s.cta.label} <sub>→</sub>
+        </Link>
+        <Link className="pill line" href="/#ask">
+          Ask a question
+        </Link>
+      </PageHead>
+
+      <PageSec
+        label="Is this you?"
+        title="Who we help here."
+        note={`We usually hear about these from ${s.found
+          .map((f) => f.charAt(0).toLowerCase() + f.slice(1))
+          .join(", ")
+          .replace(/, ([^,]*)$/, ", or $1")}.`}
+      >
+        <ul className="rows r">
+          {s.who.map((w) => (
+            <li key={w}>
+              <b>{w}</b>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      <PageSec label="What gets sold" title="What we can route.">
+        <ul className="rows r">
+          {s.assets.map((a) => (
+            <li key={a}>
+              <b>{a}</b>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      {s.ledger && <Ledger full={false} />}
+
+      <PageSec
+        id="how"
+        label="How it works"
+        title="Three steps."
+        note="Stop after any one of them. Nothing is owed either way."
+      >
+        <div className="quiet-steps" data-stagger="90">
+          {s.steps.map((st, i) => (
+            <div className="r" key={st.h}>
+              <span className="n">Step {String(i + 1).padStart(2, "0")}</span>
+              <h3 className="d3">{st.h}</h3>
+              <p>{st.p}</p>
+            </div>
+          ))}
+        </div>
+      </PageSec>
+
+      <PageSec label="What it costs" title="Nothing to you.">
+        <ul className="rows r">
+          <li>
+            <b>No listing fee and no commission from your side.</b>
+          </li>
+          <li>
+            <b>The buyer pays a 10% premium on top of the winning bid.</b>
+            <span>That is how the auction firm and FALCO are paid.</span>
+          </li>
+          <li>
+            <b>If it doesn&apos;t sell, you owe nobody anything.</b>
+          </li>
+        </ul>
+      </PageSec>
+
+      <PageSec label="Straight talk" title="What you should know.">
+        <ul className="rows r">
+          {s.straight.map((t) => (
+            <li key={t.h}>
+              <b>{t.h}</b>
+              <span>{t.p}</span>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      <PageSec id="faq" label="Common questions" title="Straight answers.">
+        <div className="faq r">
+          {s.faq.map((item) => (
+            <details key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </PageSec>
+
+      <PageSec label="Next step" title="Ready when you are." note="Free, and nothing is owed either way.">
+        <div className="pills r">
           <Link className="pill dark" href={s.cta.href}>
             {s.cta.label} <sub>→</sub>
           </Link>
-          <a className="pill line" href="#how">
-            How it works
-          </a>
-        </PageHead>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="lists" data-stagger="80">
-              <div className="box r">
-                <p className="lbl" style={{ margin: 0 }}>Who this is for</p>
-                <ul>
-                  {s.who.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="box r">
-                <p className="lbl" style={{ margin: 0 }}>What we can route</p>
-                <ul>
-                  {s.assets.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="box r">
-                <p className="lbl" style={{ margin: 0 }}>How we usually find it</p>
-                <ul>
-                  {s.found.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {s.ledger && <Ledger full={false} />}
-
-        <section className="pg-sec" id="how">
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="lbl r">How it works</p>
-                <h2 className="d2 r">Three steps.</h2>
-              </div>
-              <p className="lede note r">
-                Stop after any one of them. Nothing is owed either way.
-              </p>
-            </div>
-            <div className="quiet-steps" data-stagger="90">
-              {s.steps.map((st, i) => (
-                <div className="r" key={st.h}>
-                  <span className="n">Step {String(i + 1).padStart(2, "0")}</span>
-                  <h3 className="d3">{st.h}</h3>
-                  <p>{st.p}</p>
-                </div>
-              ))}
-            </div>
-            <p className="sm r" style={{ marginTop: 40 }}>
-              Every sale is run by a licensed Tennessee firm with signed terms.
-            </p>
-          </div>
-        </section>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="lbl r">Straight talk</p>
-                <h2 className="d2 r">What you should know.</h2>
-              </div>
-            </div>
-            <div className="lists" data-stagger="80">
-              {s.straight.map((t) => (
-                <div className="box r" key={t.h}>
-                  <h4 style={{ marginTop: 0 }}>{t.h}</h4>
-                  <p>{t.p}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pg-sec" id="faq">
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="lbl r">Common questions</p>
-                <h2 className="d2 r">Straight answers.</h2>
-              </div>
-            </div>
-            <div className="faq r">
-              {s.faq.map((item) => (
-                <details key={item.q}>
-                  <summary>{item.q}</summary>
-                  <p>{item.a}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="r">
-              <div className="head" style={{ marginBottom: 26 }}>
-                <h2 className="d2">Not quite your situation?</h2>
-                <p className="lede note">
-                  Most sales start with one of these. If yours doesn&apos;t fit,
-                  tell us anyway.
-                </p>
-              </div>
-              <div className="others">
-                {others.map((o) => (
-                  <Link className="pill line" key={o.slug} href={`/situations/${o.slug}`}>
-                    {o.label}
-                  </Link>
-                ))}
-                <Link className="pill light" href="/start">
-                  Something else <sub>→</sub>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-      <Foot />
-    </>
+          <Link className="pill line" href={s.guide.href}>
+            Read the guide: {s.guide.label}
+          </Link>
+        </div>
+        <p className="lbl r" style={{ marginTop: "clamp(48px,6vw,80px)" }}>
+          Not quite your situation?
+        </p>
+        <ul className="rows r">
+          {others.map((o) => (
+            <li key={o.slug}>
+              <Link href={`/situations/${o.slug}`}>
+                <b>{o.label}</b>
+                <span>{o.short}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+    </SitePage>
   )
 }
