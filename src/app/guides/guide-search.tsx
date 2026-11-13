@@ -40,92 +40,77 @@ export default function GuideSearch({ groups }: { groups: GuideGroup[] }) {
 
   return (
     <>
-      <div className="mx-auto max-w-3xl px-6 md:px-10 pb-10">
-        <label htmlFor="guide-search" className="sr-only">
-          Search the guides
-        </label>
-        <input
-          id="guide-search"
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search the guides: probate, storage auction, tax sale, boat title..."
-          autoComplete="off"
-          className="w-full rounded-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] px-4 py-3.5 text-[16px] text-[var(--ink)] placeholder:text-[var(--ink-faint)] outline-none focus:border-[var(--mocha)] transition-colors"
-        />
-        <p aria-live="polite" className="mt-2 min-h-[1.25em] text-[13px] text-[var(--ink-faint)]">
-          {filtering && matchCount > 0
-            ? `${matchCount} ${matchCount === 1 ? "guide matches" : "guides match"}`
-            : ""}
-        </p>
-      </div>
+      <section className="gd-srch">
+        <div className="gd-in">
+          <label htmlFor="guide-search" className="lbl" style={{ display: "block" }}>
+            Search the guides
+          </label>
+          <input
+            id="guide-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Probate, storage auction, tax sale, boat title..."
+            autoComplete="off"
+            className="gd-search"
+          />
+          <p aria-live="polite" className="gd-count">
+            {filtering && matchCount > 0
+              ? `${matchCount} ${matchCount === 1 ? "guide matches" : "guides match"}`
+              : ""}
+          </p>
 
-      <div className="mx-auto max-w-3xl px-6 pb-16 md:px-10 space-y-16">
-        {filtering && matchCount === 0 && (
-          <div className="rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 md:p-7">
-            <h2 className="text-[24px] md:text-[30px] leading-tight font-semibold text-[var(--ink)]">
-              No guide matches that yet.
-            </h2>
-            <p className="mt-2 text-[14px] md:text-[15px] leading-[1.6] text-[var(--ink-faint)]">
-              Ask us directly. Tell us what you are dealing with and we will
-              point you to the right answer, or the right licensed Tennessee
-              firm.
-            </p>
-            <Link
-              href="/#ask"
-              className="mt-3 inline-block text-[13px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
-            >
-              Ask your question →
-            </Link>
-          </div>
-        )}
-
-        {groups.map((group, gi) => (
-          <section
-            key={group.id}
-            id={group.id}
-            hidden={filtering && !visible[gi].some(Boolean)}
-            className="scroll-mt-24"
-          >
-            <div className="border-t border-[var(--rule-strong)] pt-6">
-              <h2 className="text-[30px] md:text-[40px] leading-[1.08] font-semibold text-[var(--ink)] text-balance">
-                {group.label}
-              </h2>
-              <p className="mt-3 text-[15px] md:text-[16px] leading-[1.6] text-[var(--ink-soft)] max-w-[62ch]">
-                {group.intro}
+          {filtering && matchCount === 0 && (
+            <div className="gd-none">
+              <h2 className="d3">No guide matches that yet.</h2>
+              <p>
+                Ask us directly. Tell us what you are dealing with and we will
+                point you to the right answer, or the right licensed Tennessee
+                firm.
               </p>
-              {group.situationHref && (
-                <Link
-                  href={group.situationHref}
-                  className="mt-3 inline-block text-[13px] font-semibold text-[var(--mocha)] hover:text-[var(--mocha-deep)]"
-                >
-                  How FALCO handles this →
-                </Link>
-              )}
+              <Link className="pill dark" href="/#ask">
+                Ask FALCO <sub>→</sub>
+              </Link>
             </div>
-            <div className="mt-6 grid gap-4">
+          )}
+        </div>
+      </section>
+
+      {groups.map((group, gi) => (
+        <section
+          key={group.id}
+          id={group.id}
+          hidden={filtering && !visible[gi].some(Boolean)}
+          className="gd-sec gd-grp"
+        >
+          <div className="gd-in">
+            <p className="lbl r">{String(gi + 1).padStart(2, "0")}</p>
+            <h2 className="d2 r">{group.label}</h2>
+            <p className="lede r">{group.intro}</p>
+            <div className="gd-rows r">
               {group.guides.map((g, i) => (
                 <Link
                   key={g.href}
                   href={g.href}
                   hidden={filtering && !visible[gi][i]}
-                  className="group rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-6 md:p-7 hover:border-[var(--mocha)] transition-colors"
+                  className="gd-row"
                 >
-                  <h3 className="text-[24px] md:text-[30px] leading-tight font-semibold text-[var(--ink)]">
-                    {g.title}
-                  </h3>
-                  <p className="mt-2 text-[14px] md:text-[15px] leading-[1.6] text-[var(--ink-faint)]">
-                    {g.blurb}
-                  </p>
-                  <span className="mt-3 inline-block text-[13px] font-semibold text-[var(--mocha)]">
-                    Read the guide →
-                  </span>
+                  <div>
+                    <h3>{g.title}</h3>
+                    <p>{g.blurb}</p>
+                  </div>
+                  <span className="arr" aria-hidden>→</span>
                 </Link>
               ))}
             </div>
-          </section>
-        ))}
-      </div>
+            {group.situationHref && (
+              <Link href={group.situationHref} className="gd-more r">
+                How FALCO handles this
+              </Link>
+            )}
+          </div>
+        </section>
+      ))}
     </>
   )
 }

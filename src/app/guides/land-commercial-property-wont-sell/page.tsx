@@ -327,16 +327,16 @@ export default function LandCommercialGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/selling-estate-property-tennessee", label: "Selling estate and probate property" },
-          { href: "/guides/tennessee-tax-sale-delinquent-property", label: "Behind on property taxes?" },
-          { href: "/situations/hard-to-sell", label: "How FALCO handles hard-to-sell property" },
-          { href: "/start?s=hard-to-sell", label: "Tell us about the property" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/selling-estate-property-tennessee", label: "Selling estate and probate property" },
+            { href: "/guides/tennessee-tax-sale-delinquent-property", label: "Behind on property taxes?" },
+            { href: "/situations/hard-to-sell", label: "How FALCO handles hard-to-sell property" },
+            { href: "/start?s=hard-to-sell", label: "Tell us about the property" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

@@ -261,16 +261,16 @@ export default function TnForeclosureProcessGuide() {
             information, not legal advice.
           </p>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. marketed auction: the math" },
-          { href: "/guides/wholesaler-economics", label: "How a wholesaler prices your house" },
-          { href: "/guides/short-sale-vs-auction", label: "Short sale vs. selling before the sale" },
-          { href: "/homeowners", label: "Get your numbers: free 15-minute call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. marketed auction: the math" },
+            { href: "/guides/wholesaler-economics", label: "How a wholesaler prices your house" },
+            { href: "/guides/short-sale-vs-auction", label: "Short sale vs. selling before the sale" },
+            { href: "/homeowners", label: "Get your numbers: free 15-minute call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

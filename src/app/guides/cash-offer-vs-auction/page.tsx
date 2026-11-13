@@ -171,16 +171,16 @@ export default function CashOfferVsAuctionGuide() {
             taking the first offer without seeing the other number.
           </GuideKey>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/wholesaler-economics", label: "The 70% formula, broken all the way down" },
-          { href: "/guides/tennessee-foreclosure-process", label: "How the Tennessee foreclosure timeline works" },
-          { href: "/guides/short-sale-vs-auction", label: "What if I owe more than it's worth?" },
-          { href: "/homeowners", label: "See your actual numbers: free call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/wholesaler-economics", label: "The 70% formula, broken all the way down" },
+            { href: "/guides/tennessee-foreclosure-process", label: "How the Tennessee foreclosure timeline works" },
+            { href: "/guides/short-sale-vs-auction", label: "What if I owe more than it's worth?" },
+            { href: "/homeowners", label: "See your actual numbers: free call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

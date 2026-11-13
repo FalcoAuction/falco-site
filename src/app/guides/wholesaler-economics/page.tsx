@@ -157,15 +157,15 @@ export default function WholesalerEconomicsGuide() {
             .
           </GuideKey>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction: the full comparison" },
-          { href: "/guides/tennessee-foreclosure-process", label: "The Tennessee foreclosure timeline" },
-          { href: "/homeowners", label: "What would your home actually clear? Free call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction: the full comparison" },
+            { href: "/guides/tennessee-foreclosure-process", label: "The Tennessee foreclosure timeline" },
+            { href: "/homeowners", label: "What would your home actually clear? Free call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

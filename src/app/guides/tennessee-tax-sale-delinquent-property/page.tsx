@@ -306,22 +306,20 @@ export default function TaxSaleGuide() {
 
         <GuideFaq items={FAQ} />
 
-        <GuideSources sources={SOURCES} />
-        <p className="text-[var(--ink-faint)] text-[13px]">
-          Statute text above was checked against the current published
-          Tennessee Code and the 2026 redemption amendment. County practices
-          vary, so confirm amounts and dates with your county trustee or clerk.
-        </p>
-      </GuideShell>
+        <GuideSources
+          sources={SOURCES}
+          note="Statute text above was checked against the current published Tennessee Code and the 2026 redemption amendment. County practices vary, so confirm amounts and dates with your county trustee or clerk."
+        />
 
-      <GuideRelated
-        links={[
-          { href: "/guides/land-commercial-property-wont-sell", label: "Land or commercial property that won't sell" },
-          { href: "/guides/tennessee-foreclosure-surplus-funds", label: "Foreclosure surplus funds" },
-          { href: "/guides/selling-estate-property-tennessee", label: "Inherited property with back taxes" },
-          { href: "/start", label: "Tell us what you are dealing with" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/land-commercial-property-wont-sell", label: "Land or commercial property that won't sell" },
+            { href: "/guides/tennessee-foreclosure-surplus-funds", label: "Foreclosure surplus funds" },
+            { href: "/guides/selling-estate-property-tennessee", label: "Inherited property with back taxes" },
+            { href: "/start", label: "Tell us what you are dealing with" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

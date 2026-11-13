@@ -311,16 +311,16 @@ export default function BankruptcyReceivershipGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
-          { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, equipment, boats and aircraft" },
-          { href: "/situations/bankruptcy", label: "How FALCO works with trustees and receivers" },
-          { href: "/start?s=bankruptcy", label: "Tell us about the case" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
+            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, equipment, boats and aircraft" },
+            { href: "/situations/bankruptcy", label: "How FALCO works with trustees and receivers" },
+            { href: "/start?s=bankruptcy", label: "Tell us about the case" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

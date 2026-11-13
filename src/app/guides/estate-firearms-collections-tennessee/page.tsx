@@ -271,16 +271,16 @@ export default function EstateFirearmsGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/selling-estate-property-tennessee", label: "Selling estate and probate property" },
-          { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and equipment" },
-          { href: "/situations/estate", label: "How FALCO handles estates" },
-          { href: "/start?s=estate", label: "Tell us about the estate" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/selling-estate-property-tennessee", label: "Selling estate and probate property" },
+            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and equipment" },
+            { href: "/situations/estate", label: "How FALCO handles estates" },
+            { href: "/start?s=estate", label: "Tell us about the estate" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

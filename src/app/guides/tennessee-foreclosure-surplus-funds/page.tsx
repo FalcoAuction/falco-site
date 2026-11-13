@@ -177,16 +177,16 @@ export default function SurplusFundsGuide() {
             Tennessee attorney about claiming surplus in your specific case.
           </p>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/tennessee-foreclosure-process", label: "How the Tennessee foreclosure process works" },
-          { href: "/guides/postpone-trustee-sale-tennessee", label: "Can you postpone the sale?" },
-          { href: "/foreclosure", label: "Clerk & Master contacts for your county" },
-          { href: "/homeowners", label: "Sell before the sale: free 15-min call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/tennessee-foreclosure-process", label: "How the Tennessee foreclosure process works" },
+            { href: "/guides/postpone-trustee-sale-tennessee", label: "Can you postpone the sale?" },
+            { href: "/foreclosure", label: "Clerk & Master contacts for your county" },
+            { href: "/homeowners", label: "Sell before the sale: free 15-min call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

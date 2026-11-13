@@ -274,21 +274,20 @@ export default function VehiclesEquipmentGuide() {
 
         <GuideFaq items={FAQ} />
 
-        <GuideSources sources={SOURCES} />
-        <p className="text-[var(--ink-faint)] text-[13px]">
-          Tax rates and fees change. Confirm current amounts with your county
-          clerk, TWRA or the FAA before you sell.
-        </p>
-      </GuideShell>
+        <GuideSources
+          sources={SOURCES}
+          note="Tax rates and fees change. Confirm current amounts with your county clerk, TWRA or the FAA before you sell."
+        />
 
-      <GuideRelated
-        links={[
-          { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
-          { href: "/guides/tennessee-lien-sales", label: "Tennessee lien sales" },
-          { href: "/guides/estate-firearms-collections-tennessee", label: "Estate firearms and collections" },
-          { href: "/start", label: "Tell us what you have" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
+            { href: "/guides/tennessee-lien-sales", label: "Tennessee lien sales" },
+            { href: "/guides/estate-firearms-collections-tennessee", label: "Estate firearms and collections" },
+            { href: "/start", label: "Tell us what you have" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

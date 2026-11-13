@@ -379,16 +379,16 @@ export default function EstatePropertyGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/estate-firearms-collections-tennessee", label: "Selling firearms and collections from an estate" },
-          { href: "/guides/land-commercial-property-wont-sell", label: "Land with multiple owners" },
-          { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and equipment" },
-          { href: "/start?s=estate", label: "Tell us about the estate" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/estate-firearms-collections-tennessee", label: "Selling firearms and collections from an estate" },
+            { href: "/guides/land-commercial-property-wont-sell", label: "Land with multiple owners" },
+            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and equipment" },
+            { href: "/start?s=estate", label: "Tell us about the estate" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

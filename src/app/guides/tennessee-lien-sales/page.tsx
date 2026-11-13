@@ -347,16 +347,16 @@ export default function LienSalesGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and aircraft: titles and paperwork" },
-          { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
-          { href: "/situations/lien-sale", label: "How FALCO handles lien sales" },
-          { href: "/start?s=lien-sale", label: "Tell us what you are holding" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and aircraft: titles and paperwork" },
+            { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
+            { href: "/situations/lien-sale", label: "How FALCO handles lien sales" },
+            { href: "/start?s=lien-sale", label: "Tell us what you are holding" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

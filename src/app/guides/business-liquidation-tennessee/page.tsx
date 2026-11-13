@@ -323,16 +323,16 @@ export default function BusinessLiquidationGuide() {
         <GuideFaq items={FAQ} />
 
         <GuideSources sources={SOURCES} />
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, equipment, boats and aircraft" },
-          { href: "/guides/bankruptcy-receivership-sales-tennessee", label: "Bankruptcy and receivership sales" },
-          { href: "/situations/business-closing", label: "How FALCO handles business closings" },
-          { href: "/start?s=business-closing", label: "Tell us about the business" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, equipment, boats and aircraft" },
+            { href: "/guides/bankruptcy-receivership-sales-tennessee", label: "Bankruptcy and receivership sales" },
+            { href: "/situations/business-closing", label: "How FALCO handles business closings" },
+            { href: "/start?s=business-closing", label: "Tell us about the business" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }

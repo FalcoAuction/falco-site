@@ -142,15 +142,15 @@ export default function ShortSaleVsAuctionGuide() {
             professional, even though it is not what we do.
           </GuideKey>
         </GuideSection>
-      </GuideShell>
 
-      <GuideRelated
-        links={[
-          { href: "/guides/tennessee-foreclosure-process", label: "The full Tennessee foreclosure timeline" },
-          { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction: the math" },
-          { href: "/homeowners", label: "Find out where you stand: free call" },
-        ]}
-      />
+        <GuideRelated
+          links={[
+            { href: "/guides/tennessee-foreclosure-process", label: "The full Tennessee foreclosure timeline" },
+            { href: "/guides/cash-offer-vs-auction", label: "Cash offer vs. auction: the math" },
+            { href: "/homeowners", label: "Find out where you stand: free call" },
+          ]}
+        />
+      </GuideShell>
     </>
   )
 }
