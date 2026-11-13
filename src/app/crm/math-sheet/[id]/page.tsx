@@ -15,7 +15,7 @@ export default async function MathSheetPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ view?: string }>
+  searchParams: Promise<{ view?: string; layout?: string }>
 }) {
   const session = await readAdminSessionFromCookies()
   if (!session) redirect("/crm/login")
@@ -110,6 +110,7 @@ export default async function MathSheetPage({
     <MathSheetContent
       homeowner={snapshot}
       scenarioOverride={view as Scenario | null}
+      layout={sp.layout === "classic" ? "classic" : "simple"}
     />
   )
 }

@@ -24,6 +24,7 @@ import {
   foreclosureHeroLine,
   foreclosureSpreadComparator,
 } from "@/lib/foreclosure-language"
+import SimpleSheet from "./simple-sheet"
 
 export type HomeownerSnapshot = {
   id: string
@@ -84,6 +85,7 @@ export default function MathSheetContent({
   backLabel = "← CRM",
   scenarioOverride,
   embed = false,
+  layout = "simple",
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /crm so the
@@ -98,6 +100,9 @@ export default function MathSheetContent({
    *  renders only the printable sheet. Used by the off-screen iframe in
    *  the lead-page share flow so html-to-image captures a clean PNG. */
   embed?: boolean
+  /** "simple" (default): one-page plain-language sheet. "classic": the
+   *  full walkthrough with every table (?layout=classic). */
+  layout?: "simple" | "classic"
 }) {
   // Toggle URL is built client-side from the current pathname — passing
   // a function from the server page would crash the RSC boundary
@@ -287,7 +292,7 @@ export default function MathSheetContent({
   }
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900 print:bg-white">
+    <main className={`min-h-screen ${layout === "simple" ? "bg-[#f3f2f0]" : "bg-white"} text-neutral-900 print:bg-white`}>
       {/* Print-only styles */}
       <style>{`
         @media print {
@@ -367,6 +372,14 @@ export default function MathSheetContent({
             </div>
           </div>
           <div className="flex items-center gap-3 text-[12px]">
+            {pathname && (
+              <Link
+                href={layout === "classic" ? pathname : `${pathname}?layout=classic`}
+                className="text-white/65 hover:text-white transition-colors"
+              >
+                {layout === "classic" ? "Simple view" : "Full math"}
+              </Link>
+            )}
             {scenarioCfg.viewToggle && pathname && (
               <Link
                 href={`${pathname}?view=${scenarioCfg.viewToggle.scenario}`}
@@ -441,6 +454,16 @@ export default function MathSheetContent({
       )}
 
       {/* PRINTABLE SHEET */}
+      {layout === "simple" ? (
+        <SimpleSheet
+          homeowner={homeowner}
+          out={out}
+          scenarioCfg={scenarioCfg}
+          daysToSale={daysToSale}
+          loanBalance={loanBalance}
+          needsVerification={arvNeedsVerification}
+        />
+      ) : (
       <article
         className={`print-page mx-auto max-w-3xl px-6 md:px-10 py-10 md:py-14 ${
           embed ? "embed-narrow" : ""
@@ -1083,6 +1106,7 @@ export default function MathSheetContent({
           </div>
         </footer>
       </article>
+      )}
     </main>
   )
 }
