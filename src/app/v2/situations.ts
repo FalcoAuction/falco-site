@@ -307,11 +307,15 @@ export const HUB_FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "What does it cost me?",
-    a: "FALCO charges sellers nothing. Any auction fee comes out of the sale proceeds, never out of pocket, and the terms are in writing before you sign anything. On home sales the buyer pays the fee on top of the winning bid.",
+    a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid, and that is how the auction firm and FALCO are paid. If it doesn't sell, you owe nobody anything.",
   },
   {
     q: "Who actually runs the sale?",
     a: "A licensed Tennessee auction firm that specializes in that asset. Real estate goes to licensed real estate auction firms. Firearms only go to auctioneers who hold a federal firearms license. FALCO is founded by a licensed Tennessee auctioneer and does not list or broker real estate itself.",
+  },
+  {
+    q: "How do you choose the auction firm?",
+    a: "By track record. We keep data on every sale we route: what it cleared against what the asset was worth, whether it closed on schedule, and which firms draw the most bidders for which kinds of assets. Your asset goes to the licensed firm most likely to net you the most for that type of property, in that part of Tennessee.",
   },
   {
     q: "How did you find me?",

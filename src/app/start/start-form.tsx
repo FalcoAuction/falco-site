@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useTransition } from "react"
-import { Foot, Nav, useReveals } from "../v2/v2-content"
+import { Foot, Nav } from "../v2/v2-content"
 import { ASSET_CLASSES, SITUATIONS } from "../v2/situations"
 
 const ROLES = [
@@ -15,44 +15,43 @@ const ROLES = [
 ]
 
 const OTHER = { slug: "other", label: "Something else" }
+const STEPS = 5
 
 /**
- * One intake for every situation. Posts to the existing /api/inquiry
- * (general_inquiries) so it needs no new table: the situation, role and
- * assets ride in topic and message. ?s=<situation>&r=<role> preselect.
+ * One intake for every situation, one question per screen. Posts to the
+ * existing /api/inquiry (general_inquiries), so it needs no new table:
+ * the answers ride in topic and message. ?s=<situation>&r=<role> preselect.
  */
 export default function StartForm({ s, r }: { s?: string; r?: string }) {
-  useReveals()
-  const [situation, setSituation] = useState(
+  const presetSituation =
     s && (SITUATIONS.some((x) => x.slug === s) || s === OTHER.slug) ? s : ""
-  )
+  const [step, setStep] = useState(presetSituation ? 1 : 0)
+  const [situation, setSituation] = useState(presetSituation)
   const [role, setRole] = useState(r && ROLES.some((x) => x.id === r) ? r : "")
   const [assets, setAssets] = useState<string[]>([])
+  const [county, setCounty] = useState("")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
-  const [county, setCounty] = useState("")
   const [notes, setNotes] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
   const [pending, start] = useTransition()
 
+  const next = () => setStep((n) => Math.min(n + 1, STEPS - 1))
+  const back = () => setStep((n) => Math.max(n - 1, 0))
   const toggleAsset = (h: string) =>
     setAssets((cur) => (cur.includes(h) ? cur.filter((a) => a !== h) : [...cur, h]))
 
   const sitLabel =
-    SITUATIONS.find((s) => s.slug === situation)?.label ?? (situation ? OTHER.label : "")
-  const roleLabel = ROLES.find((r) => r.id === role)?.label ?? ""
+    SITUATIONS.find((x) => x.slug === situation)?.label ?? (situation ? OTHER.label : "")
+  const roleLabel = ROLES.find((x) => x.id === role)?.label ?? ""
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!situation) {
-      setError("Pick the situation closest to yours.")
-      return
-    }
     const message = [
-      `Situation: ${sitLabel}`,
+      `Situation: ${sitLabel || "(not given)"}`,
       roleLabel && `I am: ${roleLabel}`,
       assets.length > 0 && `Needs to sell: ${assets.join(", ")}`,
       county && `County: ${county}`,
@@ -70,7 +69,7 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
           email,
           phone,
           company: "",
-          topic: `Start: ${sitLabel}${roleLabel ? ` / ${roleLabel}` : ""}`,
+          topic: `Start: ${sitLabel || "unspecified"}${roleLabel ? ` / ${roleLabel}` : ""}`,
           message,
         }),
       })
@@ -79,135 +78,190 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
         setError(body?.error ?? "Something went wrong. Try again or email falco@falco.llc.")
         return
       }
-      setDone("Got it. We'll get back to you within one business day with what we see.")
+      setDone(true)
     })
   }
+
+  // The bar never starts empty, and only reaches 100% once it's sent.
+  const progress = done ? 100 : Math.round(((step + 1) / (STEPS + 1)) * 100)
 
   return (
     <>
       <Nav />
-      <main id="main">
-        <section className="sec" style={{ paddingTop: 24 }}>
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="crumbs r">
-                  <Link href="/">Home</Link> / Start here
-                </p>
-                <h1 className="d1 r">Tell us what happened.</h1>
-              </div>
-              <p className="lede note r">
-                Two minutes. We&apos;ll come back within one business day with
-                what is worth auctioning, who would sell it and what it would
-                likely clear. Free, and nothing is owed either way.
-              </p>
+      <main id="main" className="st">
+        <div className="st-wrap">
+          <div className="st-top">
+            <div
+              className="st-bar"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <i style={{ width: `${progress}%` }} />
             </div>
-
-            <div className="formcard r" style={{ maxWidth: 880 }}>
-              {done ? (
-                <div>
-                  <h2 className="d3" style={{ marginBottom: 12 }}>Thank you.</h2>
-                  <p className="lede">{done}</p>
-                  <p style={{ marginTop: 20 }}>
-                    <Link className="pill line" href="/">
-                      Back to home
-                    </Link>
-                  </p>
-                </div>
+            <div className="st-meta">
+              {step > 0 && !done ? (
+                <button type="button" className="st-back" onClick={back}>
+                  ← Back
+                </button>
               ) : (
-                <form onSubmit={submit}>
-                  <div className="qblock">
-                    <p className="qnum"><b>01</b><span>What happened?</span></p>
-                    <div className="chips big">
-                      {[...SITUATIONS, OTHER].map((s) => (
-                        <button
-                          key={s.slug}
-                          type="button"
-                          className="chip"
-                          aria-pressed={situation === s.slug}
-                          onClick={() => setSituation(s.slug)}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="qblock">
-                    <p className="qnum"><b>02</b><span>What needs to sell?</span></p>
-                    <p className="xs" style={{ margin: "-6px 0 12px" }}>Pick all that apply. Not sure is fine.</p>
-                    <div className="chips big">
-                      {ASSET_CLASSES.map((a) => (
-                        <button
-                          key={a.h}
-                          type="button"
-                          className="chip"
-                          aria-pressed={assets.includes(a.h)}
-                          onClick={() => toggleAsset(a.h)}
-                        >
-                          {a.h}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="qblock">
-                    <p className="qnum"><b>03</b><span>Who are you in this?</span></p>
-                    <div className="chips big">
-                      {ROLES.map((r) => (
-                        <button
-                          key={r.id}
-                          type="button"
-                          className="chip"
-                          aria-pressed={role === r.id}
-                          onClick={() => setRole(r.id)}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <p className="qnum"><b>04</b><span>How do we reach you?</span></p>
-                  <div className="form">
-                    <div className="f">
-                      <label htmlFor="stName">Your name</label>
-                      <input id="stName" required value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
-                    </div>
-                    <div className="f">
-                      <label htmlFor="stEmail">Email</label>
-                      <input id="stEmail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                    </div>
-                    <div className="f">
-                      <label htmlFor="stPhone">Phone (optional)</label>
-                      <input id="stPhone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
-                    </div>
-                    <div className="f">
-                      <label htmlFor="stCounty">County</label>
-                      <input id="stCounty" value={county} onChange={(e) => setCounty(e.target.value)} placeholder="Davidson, Wilson..." />
-                    </div>
-                    <div className="f full">
-                      <label htmlFor="stNotes">Anything we should know?</label>
-                      <textarea id="stNotes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Dates, what's owed, who else is involved. Whatever you have." />
-                    </div>
-                  </div>
-
-                  {error && <div className="warn">{error}</div>}
-
-                  <div className="send">
-                    <button className="pill dark" type="submit" disabled={pending}>
-                      {pending ? "Sending..." : "Send"} <sub>→</sub>
-                    </button>
-                    <p className="xs" style={{ margin: 0, maxWidth: "52ch" }}>
-                      We only use this to get back to you. Nothing is shared or
-                      sold. Rather email? <a href="mailto:falco@falco.llc" style={{ textDecoration: "underline" }}>falco@falco.llc</a>
-                    </p>
-                  </div>
-                </form>
+                <span />
               )}
+              <span>{done ? "Done" : `${step + 1} of ${STEPS}`}</span>
             </div>
           </div>
-        </section>
+
+          <div className="st-step" key={done ? "done" : step}>
+            {done ? (
+              <>
+                <h1 className="st-q">Thank you. We&apos;ve got it.</h1>
+                <p className="st-sub">
+                  We&apos;ll get back to you within one business day with what we
+                  see. Nothing is owed either way.
+                </p>
+                <Link className="pill line" href="/">
+                  Back to home
+                </Link>
+              </>
+            ) : step === 0 ? (
+              <>
+                <h1 className="st-q">What happened?</h1>
+                <p className="st-sub">Pick the one closest to yours.</p>
+                <div className="st-opts">
+                  {[...SITUATIONS, OTHER].map((x) => (
+                    <button
+                      key={x.slug}
+                      type="button"
+                      className="st-opt"
+                      aria-pressed={situation === x.slug}
+                      onClick={() => {
+                        setSituation(x.slug)
+                        next()
+                      }}
+                    >
+                      {x.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : step === 1 ? (
+              <>
+                <h1 className="st-q">What needs to sell?</h1>
+                <p className="st-sub">Pick all that apply. Not sure is fine.</p>
+                <div className="st-opts two">
+                  {ASSET_CLASSES.map((a) => (
+                    <button
+                      key={a.h}
+                      type="button"
+                      className="st-opt"
+                      aria-pressed={assets.includes(a.h)}
+                      onClick={() => toggleAsset(a.h)}
+                    >
+                      {a.h}
+                    </button>
+                  ))}
+                </div>
+                <div className="st-go">
+                  <button type="button" className="pill dark" onClick={next}>
+                    {assets.length ? "Next" : "Skip"} <sub>→</sub>
+                  </button>
+                </div>
+              </>
+            ) : step === 2 ? (
+              <>
+                <h1 className="st-q">Who are you in this?</h1>
+                <div className="st-opts">
+                  {ROLES.map((x) => (
+                    <button
+                      key={x.id}
+                      type="button"
+                      className="st-opt"
+                      aria-pressed={role === x.id}
+                      onClick={() => {
+                        setRole(x.id)
+                        next()
+                      }}
+                    >
+                      {x.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : step === 3 ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  next()
+                }}
+              >
+                <h1 className="st-q">Where is it?</h1>
+                <p className="st-sub">The Tennessee county is enough.</p>
+                <input
+                  className="st-in"
+                  value={county}
+                  onChange={(e) => setCounty(e.target.value)}
+                  placeholder="Davidson, Wilson, Knox..."
+                  aria-label="County"
+                  autoFocus
+                />
+                <div className="st-go">
+                  <button type="submit" className="pill dark">
+                    {county.trim() ? "Next" : "Skip"} <sub>→</sub>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={submit}>
+                <h1 className="st-q">How do we reach you?</h1>
+                <p className="st-sub">We only use this to get back to you.</p>
+                <input
+                  className="st-in"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your name"
+                  aria-label="Your name"
+                  autoComplete="name"
+                  autoFocus
+                />
+                <input
+                  className="st-in"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  aria-label="Email"
+                  autoComplete="email"
+                />
+                <input
+                  className="st-in"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone (optional)"
+                  aria-label="Phone"
+                  autoComplete="tel"
+                />
+                <textarea
+                  className="st-in"
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Anything else? Dates, what's owed, who's involved. (optional)"
+                  aria-label="Anything else"
+                />
+                {error && <div className="warn">{error}</div>}
+                <div className="st-go">
+                  <button type="submit" className="pill dark" disabled={pending}>
+                    {pending ? "Sending..." : "Send"} <sub>→</sub>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       </main>
       <Foot />
     </>
