@@ -235,7 +235,7 @@ function GuideCta() {
           </Link>
         </div>
         <p className="gd-mail r">
-          Or email <a href="mailto:falco@falco.llc">falco@falco.llc</a>
+          Or email <a href="mailto:help@falco.llc">help@falco.llc</a>
         </p>
       </div>
     </section>
