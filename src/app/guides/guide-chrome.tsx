@@ -425,7 +425,7 @@ export function GuideJsonLd({
       name: "FALCO",
       logo: {
         "@type": "ImageObject",
-        url: "https://falco.llc/falco-logo.png",
+        url: "https://falco.llc/falco-logo-square.png",
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
