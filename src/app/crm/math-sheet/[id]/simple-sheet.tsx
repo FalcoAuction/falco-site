@@ -214,7 +214,7 @@ export default function SimpleSheet({
           .simple-sheet .action-tiles svg { height: 17px !important; width: 17px !important; }
           .simple-sheet .contact-card img { height: 76px !important; }
           .simple-sheet .card-quote { margin-top: 10px !important; font-size: 14px !important; }
-          .simple-sheet .contact-line { margin-top: 10px !important; }
+          .simple-sheet .contact-line { margin-top: 8px !important; gap: 1px !important; font-size: 14px !important; }
           .simple-sheet .math-section dl { margin-top: 10px !important; font-size: 13px !important; }
           .simple-sheet .math-section dl > div { padding-top: 5px !important; padding-bottom: 5px !important; }
           .simple-sheet .math-section ul { margin-top: 12px !important; font-size: 11.5px !important; line-height: 1.45 !important; }
@@ -314,18 +314,12 @@ export default function SimpleSheet({
             <ActionTile href="sms:+16012138868" label="Text" icon="text" />
             <ActionTile href="mailto:falco@falco.llc" label="Email" icon="mail" />
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[15px] text-[#444] contact-line">
-            <a href="tel:+16012138868" className="font-semibold text-[#111] tabular-nums">
+          <div className="contact-line mt-4 flex flex-col items-center gap-1 text-center text-[16px] text-[#111]">
+            <a href="tel:+16012138868" className="font-semibold tabular-nums">
               601-213-8868
             </a>
-            <span className="text-[#ccc]">|</span>
-            <a href="mailto:falco@falco.llc" className="text-[#111]">
-              falco@falco.llc
-            </a>
-            <span className="text-[#ccc]">|</span>
-            <a href="https://falco.llc" className="text-[#111]">
-              falco.llc
-            </a>
+            <a href="mailto:falco@falco.llc">falco@falco.llc</a>
+            <a href="https://www.falco.llc">www.falco.llc</a>
           </div>
         </div>
       </section>
