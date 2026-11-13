@@ -23,22 +23,24 @@ const GA_ID = "G-PYSVEK735L";
 export const metadata: Metadata = {
   title: "FALCO | Everything has a buyer.",
   description:
-    "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
-  // Square (512x512) white falcon on the dark brand background. The old
-  // /falco-logo.png favicon was non-square (341x512) AND white-on-
-  // transparent, so Google rejected it on shape and it was invisible on
-  // white — hence no icon in search results. This one is square and
-  // visible on any background.
+    "Any distressed asset in Tennessee, from a house to an estate to a business closing, routed to the licensed auction firm that sells it best. No cost to you; the buyer pays the premium.",
+  // Square (512x512) black falcon on white, the same bird the site uses.
+  // Google needs a square icon that reads on light and dark result pages.
   icons: {
-    icon: [{ url: "/favicon-512.png", type: "image/png", sizes: "512x512" }],
-    shortcut: "/favicon-512.png",
-    apple: "/favicon-512.png",
+    // New file names, so browsers that cached the old white-on-black
+    // icon have to fetch this one. /favicon.ico is the same bird.
+    icon: [
+      { url: "/falco-icon-2026.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/falco-icon-2026.png",
+    apple: { url: "/falco-apple-icon-2026.png", sizes: "180x180" },
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
     title: "FALCO | Everything has a buyer.",
     description:
-      "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
+      "Any distressed asset in Tennessee, from a house to an estate to a business closing, routed to the licensed auction firm that sells it best. No cost to you; the buyer pays the premium.",
     url: "https://falco.llc",
     siteName: "FALCO",
     images: [
@@ -49,20 +51,6 @@ export const metadata: Metadata = {
         alt: "FALCO routes distressed Tennessee assets to auction",
       },
     ],
-    // Some platforms (Discord, Facebook) play a linked og:video alongside
-    // the og:image preview. Most (iMessage, Slack, Twitter, LinkedIn,
-    // WhatsApp) ignore it and just show the image — that's expected.
-    videos: [
-      {
-        // hero-share.mp4 is the hero loop with the headline burned in via
-        // ffmpeg drawtext, sized + vignetted for share previews. Used by
-        // platforms that play og:video inline (iMessage, Discord, Facebook).
-        url: "https://falco.llc/video/hero-share.mp4",
-        width: 1280,
-        height: 720,
-        type: "video/mp4",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -70,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FALCO | Everything has a buyer.",
     description:
-      "FALCO routes Tennessee estates, closings, foreclosures, bankruptcies and lien sales to the licensed auctioneer who sells each asset best. No FALCO fee to sellers.",
+      "Any distressed asset in Tennessee, from a house to an estate to a business closing, routed to the licensed auction firm that sells it best. No cost to you; the buyer pays the premium.",
     images: ["/opengraph-image"],
   },
 };

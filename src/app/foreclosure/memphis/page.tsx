@@ -30,7 +30,7 @@ const JSON_LD = {
   publisher: {
     "@type": "Organization",
     name: "FALCO",
-    logo: { "@type": "ImageObject", url: "https://falco.llc/falco-logo.png" },
+    logo: { "@type": "ImageObject", url: "https://falco.llc/falco-logo-square.png" },
   },
   about: { "@type": "City", name: "Memphis, Tennessee" },
   mainEntityOfPage: { "@type": "WebPage", "@id": "https://falco.llc/foreclosure/memphis" },

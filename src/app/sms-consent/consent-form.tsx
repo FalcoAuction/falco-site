@@ -1,12 +1,10 @@
 "use client"
 
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
+import { SMS_CONSENT_TEXT as CONSENT_TEXT } from "@/lib/sms-consent"
 
-// Shown verbatim on the last screen next to an unchecked box, and sent
-// with the request so the stored consent matches what the person saw.
-const CONSENT_TEXT =
-  "I agree to receive case-specific text messages from FALCO (Patrick Armour, TN licensed auctioneer) at the number I provided. Message frequency varies. Message and data rates may apply. Reply STOP to opt out at any time. Consent is not a condition of any purchase or service."
-
+// The shared wording, shown verbatim next to an unchecked box on the last
+// screen and sent with the request so the stored consent matches it.
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
 /** SMS opt-in, one question per screen. Same payload as before. */
