@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "claim-tax-sale-excess-proceeds-tennessee"
 const HEADLINE = "How to Claim Tax Sale Excess Proceeds in Tennessee"
 const DESCRIPTION =
   "Who is owed the money left over after a Tennessee property tax sale, the order it is paid, how to file the motion, county filing fees, when unclaimed money goes to the state, and what to know before signing with a surplus recovery firm."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-claim-tax-sale-excess-proceeds-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/claim-tax-sale-excess-proceeds-tennessee",
+  }),
 }
 
 const SOURCES = [

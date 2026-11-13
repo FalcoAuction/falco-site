@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-tax-sale-redemption-period"
 const HEADLINE = "Tennessee Tax Sale Redemption Period: The 2026 Change"
 const DESCRIPTION =
   "How long you have to redeem property after a Tennessee tax sale under the law that took effect July 1, 2026, the old periods for earlier sales, the 30-day rule for vacant property, what redemption costs, and how to file."
 
+const META_TITLE = "Tennessee Tax Sale Redemption Period (2026 Law Change) | FALCO"
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: "Tennessee Tax Sale Redemption Period (2026 Law Change) | FALCO",
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-tax-sale-redemption-period",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-tax-sale-redemption-period",
+  }),
 }
 
 const SOURCES = [

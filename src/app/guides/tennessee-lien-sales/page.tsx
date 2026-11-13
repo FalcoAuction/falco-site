@@ -9,16 +9,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-lien-sales"
 const HEADLINE = "Lien Sales in Tennessee: Marinas, Storage, Repair Shops and Towing"
 const DESCRIPTION =
   "How Tennessee lien sales work for marinas and boat storage, self-storage facilities, repair shops and towing companies: the notice and publication rules, the new Abandoned Vehicle Portal, surplus, and how the buyer gets title."
 
+const META_TITLE = "Tennessee Lien Sales: Marina, Storage, Mechanic's and Towing Liens | FALCO"
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: "Tennessee Lien Sales: Marina, Storage, Mechanic's and Towing Liens | FALCO",
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-lien-sales",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-lien-sales",
+  }),
 }
 
 const SOURCES = [

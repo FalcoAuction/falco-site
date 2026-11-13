@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "land-commercial-property-wont-sell"
 const HEADLINE = "Land or Commercial Property That Won't Sell in Tennessee"
 const DESCRIPTION =
   "When an auction beats another listing for Tennessee land and commercial property, how licensed real estate auctions work, and how heirs' property and property with multiple owners gets to a sale, including partition and Tennessee's heirs property law."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-land-commercial-property-wont-sell",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/land-commercial-property-wont-sell",
+  }),
 }
 
 const SOURCES = [

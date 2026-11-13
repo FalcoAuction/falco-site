@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "do-you-need-probate-to-sell-a-house-tennessee"
 const HEADLINE = "Do You Need Probate to Sell a House in Tennessee?"
 const DESCRIPTION =
   "Not always. When Tennessee heirs can sell an inherited house without opening an estate, the six-month rule that protects buyers from estate creditors, probating a will as a muniment of title, and property that skips probate entirely."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-do-you-need-probate-to-sell-a-house-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/do-you-need-probate-to-sell-a-house-tennessee",
+  }),
 }
 
 const SOURCES = [

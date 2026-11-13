@@ -7,12 +7,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Tennessee Foreclosure Surplus Funds: How to Claim Your Money | FALCO"
+const META_DESCRIPTION =
+  "If your Tennessee home sold at foreclosure for more than you owed, the surplus may be yours. How it works, where it goes, how to claim it for free, and the fee-cap and scam traps to avoid."
 
 export const metadata = {
-  title: "Tennessee Foreclosure Surplus Funds: How to Claim Your Money | FALCO",
-  description:
-    "If your Tennessee home sold at foreclosure for more than you owed, the surplus may be yours. How it works, where it goes, how to claim it for free, and the fee-cap and scam traps to avoid.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/tennessee-foreclosure-surplus-funds" },
+  ...ogMeta({
+    key: "guide-tennessee-foreclosure-surplus-funds",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-foreclosure-surplus-funds",
+  }),
 }
 
 export default function SurplusFundsGuide() {

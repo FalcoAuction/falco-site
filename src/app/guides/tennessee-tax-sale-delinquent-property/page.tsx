@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-tax-sale-delinquent-property"
 const HEADLINE = "Selling Tax-Delinquent Property Before a Tennessee Tax Sale"
 const DESCRIPTION =
   "When Tennessee property taxes go delinquent, how the county's tax lawsuit and sale work, the redemption period after the 2026 change, excess proceeds, and why selling before the sale usually keeps more of the equity."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-tax-sale-delinquent-property",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-tax-sale-delinquent-property",
+  }),
 }
 
 const SOURCES = [

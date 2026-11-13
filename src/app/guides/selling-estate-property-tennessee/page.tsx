@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "selling-estate-property-tennessee"
 const HEADLINE = "Selling Estate and Probate Property in Tennessee"
 const DESCRIPTION =
   "How estate property gets sold in Tennessee: the executor's authority, when a court has to approve a sale, the creditor period, heirs who disagree, and selling the house alongside the vehicles, firearms and collections."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-selling-estate-property-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/selling-estate-property-tennessee",
+  }),
 }
 
 const SOURCES = [

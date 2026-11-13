@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-abandoned-vehicle-portal-motion-act"
 const HEADLINE = "Tennessee's Abandoned Vehicle Portal and the MOTION Act"
 const DESCRIPTION =
   "For Tennessee towing companies, repair shops and storage lots: the MOTION Act's ownership-check and notice deadlines, the 20-day reclaim window, storage limits, the Abandoned Vehicle Portal and the January 25, 2027 deadline, and how unclaimed vehicles are sold and titled."
 
+const META_TITLE = "Tennessee Abandoned Vehicle Portal and MOTION Act Deadlines | FALCO"
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: "Tennessee Abandoned Vehicle Portal and MOTION Act Deadlines | FALCO",
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-abandoned-vehicle-portal-motion-act",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-abandoned-vehicle-portal-motion-act",
+  }),
 }
 
 const SOURCES = [

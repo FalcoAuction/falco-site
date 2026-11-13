@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-small-estate-limited-letters"
 const HEADLINE = "Small Estates in Tennessee: Limited Letters"
 const DESCRIPTION =
   "How Tennessee's small estate process works since 2023: the $50,000 personal property limit, who can file and when, bond, what limited letters let you do, why they never cover real estate, and the separate route for vehicles."
 
+const META_TITLE = `${HEADLINE} ($50,000 Limit) | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} ($50,000 Limit) | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-small-estate-limited-letters",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-small-estate-limited-letters",
+  }),
 }
 
 const SOURCES = [

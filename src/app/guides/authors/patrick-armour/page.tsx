@@ -4,12 +4,22 @@ import { AUTHOR_HREF } from "../../guide-chrome"
 import { GUIDE_GROUPS } from "../../guide-index"
 import GuideReveals from "../../guide-reveals"
 import "../../guides.css"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Patrick Yuri Armour, Licensed Tennessee Auctioneer | FALCO Guides"
+const META_DESCRIPTION =
+  "Who writes FALCO's Tennessee guides, his license, and how every guide is researched, cited and kept current."
 
 export const metadata = {
-  title: "Patrick Yuri Armour, Licensed Tennessee Auctioneer | FALCO Guides",
-  description:
-    "Who writes FALCO's Tennessee guides, his license, and how every guide is researched, cited and kept current.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: AUTHOR_HREF },
+  ...ogMeta({
+    key: "guides",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: AUTHOR_HREF,
+  }),
 }
 
 const COMMISSION_HREF = "https://www.tn.gov/commerce/regboards/auctioneers/support.html"

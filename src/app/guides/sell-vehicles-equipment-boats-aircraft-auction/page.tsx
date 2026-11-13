@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "sell-vehicles-equipment-boats-aircraft-auction"
 const HEADLINE = "Selling Vehicles, Equipment, Boats and Aircraft at Auction in Tennessee"
 const DESCRIPTION =
   "What you need to sell a vehicle, piece of equipment, boat or aircraft at auction in Tennessee: titles and registration, odometer rules, liens and UCC filings, FAA paperwork, sales tax, and how licensed auction firms run the sale."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-sell-vehicles-equipment-boats-aircraft-auction",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/sell-vehicles-equipment-boats-aircraft-auction",
+  }),
 }
 
 const SOURCES = [

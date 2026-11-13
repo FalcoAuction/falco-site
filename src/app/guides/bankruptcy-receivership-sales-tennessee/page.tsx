@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "bankruptcy-receivership-sales-tennessee"
 const HEADLINE = "Bankruptcy and Receivership Sales in Tennessee"
 const DESCRIPTION =
   "How assets are sold in a Tennessee bankruptcy or receivership: Chapter 7 trustee sales, court approval of sales and auctioneers, notice to creditors, exemptions and what debtors keep, local rules in Tennessee's three bankruptcy districts, and receiver sales under Tennessee's receivership act."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-bankruptcy-receivership-sales-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/bankruptcy-receivership-sales-tennessee",
+  }),
 }
 
 const SOURCES = [

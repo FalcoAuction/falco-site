@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "estate-firearms-collections-tennessee"
 const HEADLINE = "Selling Firearms and Collections From a Tennessee Estate"
 const DESCRIPTION =
   "What federal and Tennessee law allow an executor to do with inherited firearms, how NFA items are handled, who can legally buy, and how coins, art and other collections from an estate are sold."
 
+const META_TITLE = `${HEADLINE}, Legally | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE}, Legally | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-estate-firearms-collections-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/estate-firearms-collections-tennessee",
+  }),
 }
 
 const SOURCES = [

@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "selling-inherited-house-with-siblings-tennessee"
 const HEADLINE = "Selling an Inherited House With Siblings in Tennessee"
 const DESCRIPTION =
   "Who owns what share of an inherited Tennessee house, how siblings split costs while they hold it, what happens to the mortgage, and how partition and Tennessee's heirs property buyout work when you cannot agree."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-selling-inherited-house-with-siblings-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/selling-inherited-house-with-siblings-tennessee",
+  }),
 }
 
 const SOURCES = [
