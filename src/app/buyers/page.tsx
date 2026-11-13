@@ -1,19 +1,18 @@
 import BuyerSignupForm from "./buyer-signup-form"
 import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import { ogMeta } from "@/lib/og"
 
 export const metadata = {
   title: "Buy Distressed Assets at Auction in Tennessee | FALCO Buyer Access",
   description:
     "Homes, land, vehicles, equipment and more headed to open bidding in Tennessee. Register once and hear about matching auctions before they go public.",
   alternates: { canonical: "/buyers" },
-  openGraph: {
+  ...ogMeta({
+    key: "buyers",
     title: "Buy Distressed Assets at Auction in Tennessee | FALCO Buyer Access",
-    description:
-      "Register once and hear about matching Tennessee auctions first: homes, land, vehicles, equipment and more.",
-    url: "https://falco.llc/buyers",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
-    type: "website",
-  },
+    description: "Homes, land, vehicles, equipment and more headed to open bidding in Tennessee. Register once and hear about matching auctions before they go public.",
+    path: "/buyers",
+  }),
 }
 
 export default function BuyersLandingPage() {

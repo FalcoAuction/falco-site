@@ -1,12 +1,19 @@
 import Link from "next/link"
 import { COUNTIES } from "./county-list"
 import { SitePage } from "@/app/v2/site-page"
+import { ogMeta } from "@/lib/og"
 
 export const metadata = {
   title: "Tennessee Foreclosure Help by County | FALCO",
   description:
     "Facing foreclosure in Tennessee? Find how trustee sales work in your county, where notices are published, and how to sell before the sale to keep your equity. Davidson, Shelby, Knox, Hamilton, Rutherford, Williamson and more.",
   alternates: { canonical: "/foreclosure" },
+  ...ogMeta({
+    key: "foreclosure",
+    title: "Tennessee Foreclosure Help by County | FALCO",
+    description: "Facing foreclosure in Tennessee? Find how trustee sales work in your county, where notices are published, and how to sell before the sale to keep your equity. Davidson, Shelby, Knox, Hamilton, Rutherford, Williamson and more.",
+    path: "/foreclosure",
+  }),
 }
 
 export default function ForeclosureCountyIndex() {

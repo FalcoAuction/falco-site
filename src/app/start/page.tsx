@@ -1,10 +1,17 @@
 import StartForm from "./start-form"
+import { ogMeta } from "@/lib/og"
 
 export const metadata = {
   title: "Start Here: Tell Us What Has to Sell | FALCO",
   description:
     "Estate, business closing, foreclosure, bankruptcy or lien sale in Tennessee? Two minutes, and we come back within one business day with what is worth auctioning and what it would likely clear.",
   alternates: { canonical: "/start" },
+  ...ogMeta({
+    key: "start",
+    title: "Start Here: Tell Us What Has to Sell | FALCO",
+    description: "Estate, business closing, foreclosure, bankruptcy or lien sale in Tennessee? Two minutes, and we come back within one business day with what is worth auctioning and what it would likely clear.",
+    path: "/start",
+  }),
 }
 
 // ?s=<situation>&r=<role> preselect the answers when a situation page
