@@ -57,9 +57,9 @@ export default function HomeownerForm() {
 
   return (
     <FormShell
-      eyebrow="For homeowners · Tennessee"
+      eyebrow="For homeowners"
       title="A free 15-minute call. Real math. No pitch."
-      intro="Tell us about the property. Within one business day we'll come back to you with the actual numbers for your situation: what your home is worth, what you'd walk away with through a marketed auction (the kind a state-licensed auction firm runs — not the trustee sale at the courthouse), and whether that route actually fits. If it doesn't, we'll tell you that plainly."
+      intro="Tell us about the property. Within one business day we'll send you the real numbers: what it's worth, what a marketed auction would leave you, and whether that route fits. If it doesn't, we'll say so plainly."
     >
       {success ? (
         <FormSuccess msg={success} />

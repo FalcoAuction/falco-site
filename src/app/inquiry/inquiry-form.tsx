@@ -49,9 +49,9 @@ export default function InquiryForm() {
 
   return (
     <FormShell
-      eyebrow="General inquiry"
+      eyebrow="Contact"
       title="Don't fit the other forms? Tell us what you're up to."
-      intro="Press, partnerships outside auction, vendors, investor introductions, anyone curious about the model — drop a note. We respond within one business day."
+      intro="Press, partnerships, vendors, or anything else. Drop a note and we'll reply within one business day."
     >
       {success ? (
         <FormSuccess msg={success} />

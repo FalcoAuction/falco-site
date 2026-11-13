@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { COUNTIES } from "./county-list"
+import { SitePage } from "@/app/v2/site-page"
 
 export const metadata = {
   title: "Tennessee Foreclosure Help by County | FALCO",
@@ -10,17 +11,8 @@ export const metadata = {
 
 export default function ForeclosureCountyIndex() {
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--mocha-wash)]">
-      <header className="sticky top-0 z-30 border-b border-[var(--rule)] bg-[color-mix(in_oklab,var(--paper)_86%,transparent)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4 md:px-10">
-          <Link href="/" className="text-[14px] font-semibold tracking-[0.3em] text-[var(--ink)] hover:text-[var(--mocha)] transition-colors">
-            FALCO
-          </Link>
-          <Link href="/" className="text-[13px] tracking-wide text-[var(--ink-faint)] hover:text-[var(--mocha)] transition-colors">
-            Home →
-          </Link>
-        </div>
-      </header>
+    <SitePage>
+    <div className="pg-legacy pg-old">
 
       <section className="mx-auto max-w-3xl px-6 pt-16 pb-10 md:px-10 md:pt-24">
         <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.22em] text-[var(--mocha)] font-semibold">
@@ -71,6 +63,7 @@ export default function ForeclosureCountyIndex() {
           and we&apos;ll run your numbers wherever your home is.
         </p>
       </section>
-    </main>
+    </div>
+    </SitePage>
   )
 }

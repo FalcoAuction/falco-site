@@ -780,5 +780,51 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
   .why .split{display:block}
   .why .split .why-media{aspect-ratio:auto;height:calc(100svh - var(--navh,72px));width:100vw;max-width:none;
     margin:36px 0 0 calc(50% - 50vw);border-radius:0}
-  .why-media-cta{display:inline-flex;position:absolute;left:20px;bottom:max(24px,env(safe-area-inset-bottom));z-index:2}
+  .why-media-cta{display:inline-flex;position:absolute;left:50%;top:50%;z-index:2;
+    transform:translate(-50%,-50%)}
+  .why-media-cta:hover{transform:translate(-50%,calc(-50% - 1px))}
 }
+
+/* ---------- sub-pages: shared frame (v2/site-page.tsx) ---------- */
+.pg-head{padding-block:clamp(48px,8vw,112px) clamp(40px,5vw,72px)}
+.pg-head h1{max-width:17ch;margin-bottom:22px;text-wrap:balance}
+.pg-head .lede{max-width:54ch}
+.pg-head-cta{margin-top:32px;display:flex;flex-wrap:wrap;gap:10px}
+.pg-sec{padding-block:clamp(72px,9vw,140px);border-top:1px solid var(--line-2)}
+.pg-narrow{max-width:860px}
+.pg .head h2{max-width:20ch;text-wrap:balance}
+.rows{list-style:none;margin:0;padding:0;display:grid}
+.rows li{padding:18px 0 18px 28px;border-top:1px solid var(--line-2);position:relative;font-size:1.05rem;max-width:62ch}
+.rows li:last-child{border-bottom:1px solid var(--line-2)}
+.rows li::before{content:"";position:absolute;left:2px;top:1.6em;width:12px;height:1.5px;background:var(--ink)}
+.rows li b{font-weight:500}
+.rows li span{display:block;color:var(--muted);font-size:.96rem;margin-top:2px}
+
+/* forms on sub-pages (form-shell.tsx) */
+.pg-form{max-width:760px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:28px;
+  padding:clamp(22px,3.4vw,40px);box-shadow:0 40px 90px -50px rgba(12,12,11,.3)}
+.pg-label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 8px}
+.pg-label em{font-style:normal;color:var(--ink);margin-left:3px}
+.pg-in{display:block;width:100%;padding:14px 18px;border-radius:14px;border:1px solid var(--line-2);
+  background:var(--page);font-size:1rem;color:var(--ink);transition:border-color .25s}
+.pg-in::placeholder{color:var(--muted-2)}
+.pg-in:focus{outline:0;border-color:var(--ink)}
+.pg-hint{margin-top:6px;font-size:.82rem;color:var(--muted-2)}
+.pg-done{text-align:center;padding:18px 0}
+.pg-done h3{font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.03em;margin:0 0 10px}
+.pg-done p{color:var(--muted);margin:0}
+
+/* Older pages keep their markup inside .pg-legacy; these rules (unlayered,
+   so they beat Tailwind utilities) bring their type in line: no tracked
+   uppercase eyebrows, no mono or display fonts, quieter headings. */
+.pg-legacy .uppercase{text-transform:none;letter-spacing:0!important}
+.pg-legacy [class*="tracking-[0."]{letter-spacing:0}
+.pg-legacy [class*="font-[family-name:var(--font-mono)]"],
+.pg-legacy [class*="font-[family-name:var(--font-display)]"]{font-family:var(--f)}
+.pg-legacy .italic{font-style:normal}
+.pg-legacy h2{font-weight:500;letter-spacing:-.03em}
+.pg-legacy h3{font-weight:500;letter-spacing:-.022em}
+.pg-old{padding:clamp(24px,4vw,56px) 0 clamp(72px,9vw,140px)}
+.pg-legacy h1{font-weight:500;letter-spacing:-.04em}
+.pg-legacy section + section{margin-top:clamp(28px,3vw,44px)}
+.pg-legacy h2.uppercase,.pg-legacy h3.uppercase{font-size:1.2rem!important;color:var(--ink)!important;font-weight:500}
