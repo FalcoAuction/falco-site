@@ -27,9 +27,14 @@ export const metadata: Metadata = {
   // Square (512x512) black falcon on white, the same bird the site uses.
   // Google needs a square icon that reads on light and dark result pages.
   icons: {
-    icon: [{ url: "/favicon-512.png", type: "image/png", sizes: "512x512" }],
-    shortcut: "/favicon-512.png",
-    apple: "/favicon-512.png",
+    // New file names, so browsers that cached the old white-on-black
+    // icon have to fetch this one. /favicon.ico is the same bird.
+    icon: [
+      { url: "/falco-icon-2026.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/falco-icon-2026.png",
+    apple: { url: "/falco-apple-icon-2026.png", sizes: "180x180" },
   },
   metadataBase: new URL("https://falco.llc"),
   openGraph: {
