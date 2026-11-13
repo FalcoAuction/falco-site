@@ -1,18 +1,15 @@
 "use client"
 
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
-import { SitePage } from "../v2/site-page"
 
 const FAIL = "Something went wrong. Try again or email sales@falco.llc."
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
-/** Auction firm partnership inquiry, one question per screen. Same payload as before. */
+/** Auction firm partnership inquiry, one question per screen. Same payload as
+ *  before. Rendered inside the /partners page. */
 export default function PartnerForm() {
   return (
-    <SitePage>
-      <div className="st-wrap">
-        <StepForm
-          label="For auction firms"
+    <StepForm
           steps={[
             {
               kind: "fields",
@@ -76,8 +73,6 @@ export default function PartnerForm() {
             title: "Thank you. We've got it.",
             text: "We'll reach out within one business day to set up a call. Questions before then: sales@falco.llc.",
           }}
-        />
-      </div>
-    </SitePage>
+    />
   )
 }

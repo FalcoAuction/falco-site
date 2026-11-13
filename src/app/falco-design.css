@@ -839,3 +839,6 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
   border:1px solid var(--line-2);background:var(--surface-2);cursor:pointer;font-size:.95rem;line-height:1.55;color:var(--muted)}
 .st-check input{margin-top:4px;width:18px;height:18px;accent-color:var(--ink);flex:none}
 .pg-form .stf .st-wrap,.pg-form .stf{padding:0}
+.quiet-steps.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.quiet-steps.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.quiet-steps.four{grid-template-columns:1fr}}
