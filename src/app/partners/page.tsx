@@ -1,11 +1,18 @@
 import PartnerForm from "./partner-form"
 import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import { ogMeta } from "@/lib/og"
 
 export const metadata = {
   title: "For Auction Firms: Matched Sellers in Tennessee | FALCO",
   description:
     "Run a Tennessee auction firm? FALCO routes sellers with real value and real deadlines to the firm whose buyers want what they have. You run the sale.",
   alternates: { canonical: "/partners" },
+  ...ogMeta({
+    key: "partners",
+    title: "For Auction Firms: Matched Sellers in Tennessee | FALCO",
+    description: "Run a Tennessee auction firm? FALCO routes sellers with real value and real deadlines to the firm whose buyers want what they have. You run the sale.",
+    path: "/partners",
+  }),
 }
 
 export default function PartnersPage() {

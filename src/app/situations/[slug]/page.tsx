@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import LaneContent from "../../v2/lane-content"
 import { SITUATIONS, SITUATION_BY_SLUG } from "../../v2/situations"
+import { ogMeta } from "@/lib/og"
 
 export const dynamicParams = false
 
@@ -20,6 +21,7 @@ export async function generateMetadata({
     title: s.title,
     description: s.description,
     alternates: { canonical: `/situations/${s.slug}` },
+    ...ogMeta({ key: `situation-${s.slug}`, title: s.title, description: s.description, path: `/situations/${s.slug}` }),
   }
 }
 

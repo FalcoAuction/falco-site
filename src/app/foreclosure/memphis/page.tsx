@@ -6,12 +6,19 @@ import {
   Cite,
 } from "../../guides/guide-chrome"
 import { SitePage } from "@/app/v2/site-page"
+import { ogMeta } from "@/lib/og"
 
 export const metadata = {
   title: "Facing Foreclosure in Memphis? Sell Before the Sale, Keep Your Equity | FALCO",
   description:
     "Memphis homeowners get more lowball cash offers than anywhere in Tennessee. If you're facing foreclosure, here's why those offers underpay you and how a marketed auction protects your equity before the trustee sale.",
   alternates: { canonical: "/foreclosure/memphis" },
+  ...ogMeta({
+    key: "memphis",
+    title: "Facing Foreclosure in Memphis? Sell Before the Sale, Keep Your Equity | FALCO",
+    description: "Memphis homeowners get more lowball cash offers than anywhere in Tennessee. If you're facing foreclosure, here's why those offers underpay you and how a marketed auction protects your equity before the trustee sale.",
+    path: "/foreclosure/memphis",
+  }),
 }
 
 const JSON_LD = {
