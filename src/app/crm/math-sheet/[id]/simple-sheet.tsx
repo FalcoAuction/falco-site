@@ -287,7 +287,7 @@ export default function SimpleSheet({
       <section className="contact-card mt-20 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/media/falco-bird-black.png" alt="" className="h-14 w-auto" />
+          <img src="/media/patrick-armour.jpg" alt="Patrick Yuri Armour" className="h-24 w-auto shrink-0 rounded-xl object-cover" />
           <div>
             <div className="text-[22px] font-bold leading-tight">Patrick Yuri Armour</div>
             <div className="text-[15px] font-semibold text-[#12804a]">CEO / Founder, FALCO</div>
