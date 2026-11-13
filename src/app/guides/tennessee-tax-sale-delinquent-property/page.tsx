@@ -79,6 +79,7 @@ export default function TaxSaleGuide() {
       />
       <GuideShell
         variant="situation"
+        answer="Tennessee property taxes go delinquent March 1, then grow 1.5% a month until the county sues and the court orders a sale. You can sell before that and pay the taxes from the proceeds at closing. After a tax sale confirmed on or after July 1, 2026, you have one year to redeem, or 90 days if the taxes were more than three years behind."
         eyebrow="Property tax guide"
         title={
           <>

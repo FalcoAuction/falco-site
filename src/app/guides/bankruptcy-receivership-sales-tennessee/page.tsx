@@ -96,6 +96,7 @@ export default function BankruptcyReceivershipGuide() {
             including any buyer&apos;s premium, before anything sells.
           </>
         }
+        answer="In a bankruptcy, the trustee or debtor sells property outside the ordinary course only after notice to creditors and court approval, and any auctioneer must be approved by the court, which also sets the auctioneer's pay. A Tennessee receiver selling commercial real estate also needs court approval, but the sale does not have to be an auction."
         eyebrow="Bankruptcy guide"
         title={
           <>

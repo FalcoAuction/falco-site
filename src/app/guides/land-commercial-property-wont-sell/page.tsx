@@ -81,6 +81,7 @@ export default function LandCommercialGuide() {
       <GuideShell
         variant="situation"
         situation="hard-to-sell"
+        answer="An auction tends to beat another listing when the property is hard to price, has already sat, or has to sell by a date. In Tennessee a real estate auction must be run by someone licensed as both an auctioneer and a real estate broker. If co-owners cannot agree, any of them can ask a court to divide or sell the property."
         eyebrow="Land and commercial guide"
         title={
           <>

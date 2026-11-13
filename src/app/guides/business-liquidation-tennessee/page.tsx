@@ -85,6 +85,7 @@ export default function BusinessLiquidationGuide() {
       <GuideShell
         variant="situation"
         situation="business-closing"
+        answer="Close in order: give any required layoff notices and pay final wages on time, find out which lenders have liens on which assets, clear the sales tax, sell the assets, then dissolve the company. Federal WARN generally applies at 100 or more employees and requires 60 days' notice; Tennessee's own law covers employers with 50 to 99."
         eyebrow="Business closing guide"
         title={
           <>

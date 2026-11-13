@@ -76,6 +76,7 @@ export default function EstateFirearmsGuide() {
       <GuideShell
         variant="situation"
         situation="estate"
+        answer="An executor can pass a firearm to an heir named in the will or entitled by inheritance, even in another state, if that heir may legally own it. Selling is where the risk is: never sell to someone you know or have reason to believe is prohibited, send out-of-state buyers through a licensed dealer, and transfer NFA items like suppressors only through ATF."
         eyebrow="Estate guide"
         title={
           <>

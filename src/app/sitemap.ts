@@ -49,6 +49,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/guides/tennessee-lien-sales`, changeFrequency: "monthly", priority: 0.75 },
     { url: `${base}/guides/tennessee-tax-sale-delinquent-property`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/guides/land-commercial-property-wont-sell`, changeFrequency: "monthly", priority: 0.75 },
+    // Spoke guides: one specific question each, linked up to a pillar.
+    { url: `${base}/guides/tennessee-tax-sale-redemption-period`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/claim-tax-sale-excess-proceeds-tennessee`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/guides/tennessee-abandoned-vehicle-portal-motion-act`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/guides/tennessee-small-estate-limited-letters`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/guides/selling-inherited-house-with-siblings-tennessee`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/do-you-need-probate-to-sell-a-house-tennessee`, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${base}/guides/authors/patrick-armour`, changeFrequency: "yearly", priority: 0.4 },
     // The math walkthrough — conversion/education asset linked from the
     // homepage three-exits table.
     { url: `${base}/math`, changeFrequency: "monthly", priority: 0.7 },

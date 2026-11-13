@@ -84,6 +84,7 @@ export default function EstatePropertyGuide() {
       <GuideShell
         variant="situation"
         situation="estate"
+        answer="Nobody can sell estate property until a court issues letters to the executor or administrator. In Tennessee the house passes straight to the heirs or the people named in the will, so it is sold under a power of sale in the will, by all the heirs signing together, or by court order. Vehicles, guns and collections can usually be sold by the personal representative without a court order."
         eyebrow="Estate guide"
         title={
           <>

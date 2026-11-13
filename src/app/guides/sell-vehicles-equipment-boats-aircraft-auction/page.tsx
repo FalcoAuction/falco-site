@@ -81,6 +81,7 @@ export default function VehiclesEquipmentGuide() {
       <GuideShell
         variant="situation"
         situation="business-closing"
+        answer="Have the title or registration, any lien payoff, keys and records ready before the auction. Vehicles transfer by title and may need an odometer disclosure, boats are registered but not titled in Tennessee, aircraft transfer through the FAA registry, and liens on equipment usually show up as UCC filings with the Secretary of State."
         eyebrow="Asset guide"
         title={
           <>

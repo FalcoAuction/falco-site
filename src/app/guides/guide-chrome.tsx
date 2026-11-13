@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Foot, Nav } from "../v2/v2-content"
-import { FORECLOSURE_GUIDES, SITUATION_GUIDES } from "./guide-index"
+import { FORECLOSURE_GUIDES, PILLAR_GUIDES } from "./guide-index"
 import GuideReveals from "./guide-reveals"
 import "./guides.css"
 
@@ -10,6 +10,8 @@ import "./guides.css"
 // not depend on a .gd ancestor. Look and spacing follow the manifesto:
 // shared Nav and Foot, sentence-case .lbl labels, big .d1/.d2 heads, one
 // idea per section, lists as rule-separated rows. Styles in guides.css.
+
+export const AUTHOR_HREF = "/guides/authors/patrick-armour"
 
 // variant "situation" swaps the foreclosure CTA and disclaimer for the
 // any-asset versions; `situation` is the /start?s= slug to preselect.
@@ -22,6 +24,7 @@ export function GuideShell({
   variant = "foreclosure",
   situation,
   ctaNote,
+  answer,
 }: {
   eyebrow: string
   title: React.ReactNode
@@ -31,6 +34,9 @@ export function GuideShell({
   variant?: "foreclosure" | "situation"
   situation?: string
   ctaNote?: React.ReactNode
+  // Two or three sentences that answer the page's main question outright.
+  // Sits above the fold so answer engines and skimmers get it first.
+  answer?: React.ReactNode
 }) {
   return (
     <>
@@ -49,8 +55,16 @@ export function GuideShell({
             </nav>
             <h1 className="d1 r">{title}</h1>
             <p className="lede r">{standfirst}</p>
+            {answer && (
+              <div className="gd-answer r">
+                <p className="lbl">Short answer</p>
+                <p>{answer}</p>
+              </div>
+            )}
             <p className="gd-by r">
-              <strong>Patrick Yuri Armour</strong>
+              <Link href={AUTHOR_HREF} rel="author">
+                <strong>Patrick Yuri Armour</strong>
+              </Link>
               <span>Licensed Tennessee auctioneer</span>
               <span>Updated {updated}</span>
             </p>
@@ -156,7 +170,7 @@ export function GuideRelated({
 // pages with the most search demand. Five of six guides were sitting in
 // "crawled, currently not indexed" with almost no internal links in.
 const RELATED_GUIDES = FORECLOSURE_GUIDES.map((g) => ({ href: g.href, label: g.short }))
-const RELATED_SITUATIONS = SITUATION_GUIDES.map((g) => ({ href: g.href, label: g.short }))
+const RELATED_SITUATIONS = PILLAR_GUIDES.map((g) => ({ href: g.href, label: g.short }))
 const RELATED_COUNTIES = [
   { href: "/foreclosure/davidson-county", label: "Davidson (Nashville)" },
   { href: "/foreclosure/shelby-county", label: "Shelby (Memphis)" },
@@ -419,6 +433,7 @@ export function GuideJsonLd({
       "@type": "Person",
       name: "Patrick Yuri Armour",
       jobTitle: "Licensed Tennessee Auctioneer",
+      url: `https://falco.llc${AUTHOR_HREF}`,
     },
     publisher: {
       "@type": "Organization",
