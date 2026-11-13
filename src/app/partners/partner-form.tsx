@@ -52,6 +52,7 @@ export default function PartnerForm() {
               ],
             },
           ]}
+          smsOptIn={{ name: "fullName", phone: "phone" }}
           onSubmit={(v) =>
             postJson(
               "/api/partners/inquiry",

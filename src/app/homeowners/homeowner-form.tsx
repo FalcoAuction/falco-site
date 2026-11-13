@@ -69,6 +69,7 @@ export default function HomeownerForm() {
               ],
             },
           ]}
+          smsOptIn={{ name: "fullName", phone: "phone", property: "propertyAddress" }}
           onSubmit={(v) =>
             postJson(
               "/api/homeowners/request",

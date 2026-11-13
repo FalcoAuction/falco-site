@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useState, useTransition } from "react"
 import { Foot, Nav } from "../v2/v2-content"
 import { ASSET_CLASSES, SITUATIONS } from "../v2/situations"
+import { SMS_CONSENT_TEXT, recordSmsConsent } from "@/lib/sms-consent"
 
 const ROLES = [
   { id: "owner", label: "Owner or family" },
@@ -36,6 +37,8 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
   const [notes, setNotes] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [optIn, setOptIn] = useState(false)
+  const [optInNote, setOptInNote] = useState<string | null>(null)
   const [pending, start] = useTransition()
 
   const next = () => setStep((n) => Math.min(n + 1, STEPS - 1))
@@ -50,6 +53,10 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
   function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (optIn && phone.replace(/[^0-9]/g, "").length < 10) {
+      setError("Add a mobile number to get texts, or uncheck the text box.")
+      return
+    }
     const message = [
       `Situation: ${sitLabel || "(not given)"}`,
       roleLabel && `I am: ${roleLabel}`,
@@ -77,6 +84,11 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
       if (!res.ok) {
         setError(body?.error ?? "Something went wrong. Try again or email help@falco.llc.")
         return
+      }
+      // Recorded separately; a failure here never undoes the request.
+      if (optIn) {
+        const consentErr = await recordSmsConsent({ name: fullName.trim(), phone: phone.trim() })
+        setOptInNote(consentErr ? "Your text opt-in didn't save. We'll stick to email." : null)
       }
       setDone(true)
     })
@@ -120,6 +132,7 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
                   We&apos;ll get back to you within one business day with what we
                   see. Nothing is owed either way.
                 </p>
+                {optInNote && <p className="st-sub">{optInNote}</p>}
                 <Link className="pill line" href="/">
                   Back to home
                 </Link>
@@ -252,6 +265,14 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
                   placeholder="Anything else? Dates, what's owed, who's involved. (optional)"
                   aria-label="Anything else"
                 />
+                {/* Optional SMS opt-in: unchecked and never required (A2P 10DLC). */}
+                <label className="st-check st-optin">
+                  <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
+                  <span>
+                    {SMS_CONSENT_TEXT.replace(" Privacy policy: falco.llc/privacy.", "")}{" "}
+                    <Link href="/privacy">Privacy policy</Link>. Optional.
+                  </span>
+                </label>
                 {error && <div className="warn">{error}</div>}
                 <div className="st-go">
                   <button type="submit" className="pill dark" disabled={pending}>

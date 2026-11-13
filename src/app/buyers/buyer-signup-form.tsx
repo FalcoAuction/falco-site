@@ -68,6 +68,7 @@ export default function BuyerSignupForm() {
           ],
         },
       ]}
+      smsOptIn={{ name: "fullName", phone: "phone" }}
       onSubmit={(v) =>
         postJson(
           "/api/buyers/register",

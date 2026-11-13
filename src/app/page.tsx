@@ -23,7 +23,7 @@ const JSON_LD = {
   "@type": "ProfessionalService",
   name: "FALCO",
   url: "https://falco.llc",
-  logo: "https://falco.llc/falco-logo.png",
+  logo: "https://falco.llc/falco-logo-square.png",
   image: "https://falco.llc/opengraph-image",
   description:
     "FALCO finds Tennessee property and assets that have to be sold after a death, a debt, a closing or a court case, and routes each one to the licensed auctioneer who sells it best. No cost to sellers; the buyer pays the premium.",
@@ -51,6 +51,16 @@ const FAQ_JSON_LD = {
   })),
 }
 
+// WebSite markup is what Google uses for the site name shown above the
+// result, and it helps it build sitelinks from the nav and footer pages.
+const SITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "FALCO",
+  alternateName: "FALCO Tennessee",
+  url: "https://falco.llc/",
+}
+
 export default function HomePage() {
   return (
     <>
@@ -61,6 +71,10 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
       />
       <HubContent />
     </>

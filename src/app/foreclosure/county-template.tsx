@@ -69,7 +69,7 @@ export function CountyJsonLd({ d }: { d: CountyData }) {
     publisher: {
       "@type": "Organization",
       name: "FALCO",
-      logo: { "@type": "ImageObject", url: "https://falco.llc/falco-logo.png" },
+      logo: { "@type": "ImageObject", url: "https://falco.llc/falco-logo-square.png" },
     },
     about: {
       "@type": "AdministrativeArea",

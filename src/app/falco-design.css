@@ -842,3 +842,8 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 .quiet-steps.four{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:1100px){.quiet-steps.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.quiet-steps.four{grid-template-columns:1fr}}
+.st-optin{margin-top:18px;font-size:.86rem}
+.st-optin a{text-decoration:underline;text-underline-offset:3px;color:var(--ink)}
+/* five footer columns need room; step down before they collide */
+@media(max-width:1100px) and (min-width:821px){.fgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.fgrid a{overflow-wrap:anywhere}
