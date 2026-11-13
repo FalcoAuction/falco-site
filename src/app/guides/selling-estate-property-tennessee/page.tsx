@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "selling-estate-property-tennessee"
 const HEADLINE = "Selling Estate and Probate Property in Tennessee"
 const DESCRIPTION =
   "How estate property gets sold in Tennessee: the executor's authority, when a court has to approve a sale, the creditor period, heirs who disagree, and selling the house alongside the vehicles, firearms and collections."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-selling-estate-property-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/selling-estate-property-tennessee",
+  }),
 }
 
 const SOURCES = [
@@ -84,6 +95,7 @@ export default function EstatePropertyGuide() {
       <GuideShell
         variant="situation"
         situation="estate"
+        answer="Nobody can sell estate property until a court issues letters to the executor or administrator. In Tennessee the house passes straight to the heirs or the people named in the will, so it is sold under a power of sale in the will, by all the heirs signing together, or by court order. Vehicles, guns and collections can usually be sold by the personal representative without a court order."
         eyebrow="Estate guide"
         title={
           <>

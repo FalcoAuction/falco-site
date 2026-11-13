@@ -7,12 +7,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Cash Offer vs. Marketed Auction in Tennessee: The Real Math | FALCO"
+const META_DESCRIPTION =
+  "A 'we buy houses' cash offer versus a marketed auction, side by side, with the numbers distressed Tennessee sellers rarely get to see. What each one actually nets you after the loan is paid."
 
 export const metadata = {
-  title: "Cash Offer vs. Marketed Auction in Tennessee: The Real Math | FALCO",
-  description:
-    "A 'we buy houses' cash offer versus a marketed auction, side by side, with the numbers distressed Tennessee sellers rarely get to see. What each one actually nets you after the loan is paid.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/cash-offer-vs-auction" },
+  ...ogMeta({
+    key: "guide-cash-offer-vs-auction",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/cash-offer-vs-auction",
+  }),
 }
 
 export default function CashOfferVsAuctionGuide() {

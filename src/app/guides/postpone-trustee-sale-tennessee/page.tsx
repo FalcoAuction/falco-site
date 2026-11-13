@@ -7,12 +7,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Can You Postpone a Trustee Sale in Tennessee? Your Options | FALCO"
+const META_DESCRIPTION =
+  "How to postpone or stop a Tennessee trustee sale before the date: reinstatement, a pending sale, bankruptcy, and what the lender controls. Plain English from a licensed TN auctioneer."
 
 export const metadata = {
-  title: "Can You Postpone a Trustee Sale in Tennessee? Your Options | FALCO",
-  description:
-    "How to postpone or stop a Tennessee trustee sale before the date: reinstatement, a pending sale, bankruptcy, and what the lender controls. Plain English from a licensed TN auctioneer.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/postpone-trustee-sale-tennessee" },
+  ...ogMeta({
+    key: "guide-postpone-trustee-sale-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/postpone-trustee-sale-tennessee",
+  }),
 }
 
 export default function PostponeTrusteeSaleGuide() {

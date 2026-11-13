@@ -9,16 +9,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "tennessee-lien-sales"
 const HEADLINE = "Lien Sales in Tennessee: Marinas, Storage, Repair Shops and Towing"
 const DESCRIPTION =
   "How Tennessee lien sales work for marinas and boat storage, self-storage facilities, repair shops and towing companies: the notice and publication rules, the new Abandoned Vehicle Portal, surplus, and how the buyer gets title."
 
+const META_TITLE = "Tennessee Lien Sales: Marina, Storage, Mechanic's and Towing Liens | FALCO"
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: "Tennessee Lien Sales: Marina, Storage, Mechanic's and Towing Liens | FALCO",
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-tennessee-lien-sales",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-lien-sales",
+  }),
 }
 
 const SOURCES = [
@@ -80,6 +91,7 @@ export default function LienSalesGuide() {
       <GuideShell
         variant="situation"
         situation="lien-sale"
+        answer="A marina, storage facility, repair shop or tow company can sell property it lawfully holds for unpaid charges, but only after the exact notice its statute requires. Marina liens can be enforced once charges are three months past due, storage sales can be held online, and from January 25, 2027 towed and abandoned vehicle sales must be advertised on the state's portal."
         eyebrow="Lien sale guide"
         title={
           <>
@@ -115,8 +127,8 @@ export default function LienSalesGuide() {
             call the price unreasonable.
           </GuideKey>
           <GuideNote label="New in 2025 and 2026">
-            Tennessee&apos;s old abandoned vehicle law has been repealed and
-            replaced by the MOTION Act of 2025.
+            Tennessee rewrote its towing and abandoned vehicle law in the
+            MOTION Act of 2025.
             <Cite href={src(10)} n={10} /> The state&apos;s Abandoned Vehicle
             Portal went live on October 27, 2026. Starting January 25, 2027,
             towing companies, law enforcement and garagekeepers must enter
@@ -350,7 +362,7 @@ export default function LienSalesGuide() {
 
         <GuideRelated
           links={[
-            { href: "/guides/sell-vehicles-equipment-boats-aircraft-auction", label: "Vehicles, boats and aircraft: titles and paperwork" },
+            { href: "/guides/tennessee-abandoned-vehicle-portal-motion-act", label: "The abandoned vehicle portal, step by step" },
             { href: "/guides/business-liquidation-tennessee", label: "Liquidating a closing business" },
             { href: "/situations/lien-sale", label: "How FALCO handles lien sales" },
             { href: "/start?s=lien-sale", label: "Tell us what you are holding" },
