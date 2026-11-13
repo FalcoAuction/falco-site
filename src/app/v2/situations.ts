@@ -21,6 +21,8 @@ export type Situation = {
   straight: Array<{ h: string; p: string }>
   faq: Array<{ q: string; a: string }>
   cta: { label: string; href: string }
+  /** The full legal walkthrough for this situation on /guides. */
+  guide: { label: string; href: string }
   ledger?: boolean
 }
 
@@ -31,7 +33,7 @@ export const SITUATIONS: Situation[] = [
     short: "The house, the truck, the guns, the collections. Settled without giving them away.",
     title: "Selling Estate Property at Auction in Tennessee | FALCO",
     description:
-      "Executor or heir in Tennessee? FALCO routes every estate asset, from the house to the vehicles, firearms and collections, to the licensed auctioneer who sells it best. No FALCO fee to the estate.",
+      "Executor or heir in Tennessee? FALCO routes every estate asset, from the house to the vehicles, firearms and collections, to the licensed auctioneer who sells it best. No cost to the estate; the buyer pays the premium.",
     h1: "Settle the estate without giving it away.",
     lede: "When someone passes, the house, the truck, the guns and the collections all need a buyer, usually while the family is grieving and the bills keep coming. We sort out what is worth auctioning, send each piece to the Tennessee specialist who sells that kind of thing best, and keep the executor in the loop the whole way.",
     img: "/media/house-single.jpg",
@@ -65,9 +67,10 @@ export const SITUATIONS: Situation[] = [
     faq: [
       { q: "Do all the heirs have to agree?", a: "The executor or administrator is the one with authority to sell. Families usually do better when everyone sees the same numbers, so we put them in writing for all of you." },
       { q: "The estate has property in more than one county. Is that a problem?", a: "No. We work across Tennessee and route each asset to a firm that covers where it sits." },
-      { q: "What does it cost the estate?", a: "FALCO charges the estate nothing. Any auction fee comes out of the sale proceeds, never out of pocket, and it is in writing before anyone signs." },
+      { q: "What does it cost the estate?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us about the estate", href: "/start?s=estate" },
+    guide: { label: "Selling estate and probate property in Tennessee", href: "/guides/selling-estate-property-tennessee" },
   },
   {
     slug: "business-closing",
@@ -75,7 +78,7 @@ export const SITUATIONS: Situation[] = [
     short: "Equipment, fleet, inventory and the building. Sold to buyers who compete, not hauled off.",
     title: "Business Liquidation Auctions in Tennessee | FALCO",
     description:
-      "Closing a Tennessee business? FALCO routes equipment, vehicles, inventory and real estate to the licensed auctioneers who know each market. No FALCO fee to the seller.",
+      "Closing a Tennessee business? FALCO routes equipment, vehicles, inventory and real estate to the licensed auctioneers who know each market. No cost to the seller; the buyer pays the premium.",
     h1: "Closing the doors shouldn't mean a fire sale.",
     lede: "Equipment, vehicles, inventory and the building itself are worth the most when buyers compete for them. We get every asset to the auctioneer who knows that market, so the business closes on the best numbers it can.",
     img: "/media/record.jpg",
@@ -108,9 +111,10 @@ export const SITUATIONS: Situation[] = [
     faq: [
       { q: "Can the building and the equipment sell separately?", a: "Yes, and they usually should. Each goes to the buyers who want it, on its own sale or in one coordinated event." },
       { q: "We still owe on some of the equipment. Can it be sold?", a: "Usually, with the lender's sign-off. The payoff comes out of the sale and the lien is released at closing." },
-      { q: "What does it cost the business?", a: "FALCO charges the seller nothing. Auction fees come out of the proceeds and are in writing before you sign." },
+      { q: "What does it cost the business?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us about the business", href: "/start?s=business-closing" },
+    guide: { label: "Liquidating a closing business in Tennessee", href: "/guides/business-liquidation-tennessee" },
   },
   {
     slug: "foreclosure",
@@ -140,11 +144,12 @@ export const SITUATIONS: Situation[] = [
     ],
     straight: [
       { h: "We don't buy your house", p: "If we did, every dollar we made on the spread would be a dollar out of your equity." },
-      { h: "No cost to you", p: "The buyer pays the auction fee on top of the winning bid. If it doesn't sell, you owe nobody anything." },
+      { h: "No cost to you", p: "The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
       { h: "We'll tell you if it won't work", p: "If nothing clears the loan, we say so and point you to a short sale, a modification or counsel instead." },
     ],
     faq: FAQ_ITEMS.slice(0, 5),
     cta: { label: "Get your numbers", href: "/homeowners" },
+    guide: { label: "The Tennessee foreclosure process, start to finish", href: "/guides/tennessee-foreclosure-process" },
     ledger: true,
   },
   {
@@ -189,6 +194,7 @@ export const SITUATIONS: Situation[] = [
       { q: "Can you handle mixed estates?", a: "Yes. Real estate, rolling stock and personal property can each go to a specialist and still report back through one contact." },
     ],
     cta: { label: "Talk to us about a case", href: "/start?s=bankruptcy&r=trustee" },
+    guide: { label: "Bankruptcy and receivership sales in Tennessee", href: "/guides/bankruptcy-receivership-sales-tennessee" },
   },
   {
     slug: "lien-sale",
@@ -227,9 +233,10 @@ export const SITUATIONS: Situation[] = [
     ],
     faq: [
       { q: "Can you sell a boat with no title?", a: "Often, through the lien sale process. The auctioneer will tell you up front what the state requires for that vessel." },
-      { q: "What does it cost us?", a: "FALCO charges the lienholder nothing. Auction fees come out of the sale and are in writing before you sign." },
+      { q: "What does it cost us?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us what you're holding", href: "/start?s=lien-sale&r=lienholder" },
+    guide: { label: "Lien sales in Tennessee", href: "/guides/tennessee-lien-sales" },
   },
   {
     slug: "hard-to-sell",
@@ -271,6 +278,7 @@ export const SITUATIONS: Situation[] = [
       { q: "Several of us inherited it. Can it still sell?", a: "Yes, with everyone's signature or a court order. We'll explain which applies before anyone spends money." },
     ],
     cta: { label: "Tell us about the property", href: "/start?s=hard-to-sell" },
+    guide: { label: "Land or commercial property that won't sell", href: "/guides/land-commercial-property-wont-sell" },
   },
 ]
 
