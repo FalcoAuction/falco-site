@@ -203,9 +203,15 @@ export default function SimpleSheet({
           .simple-sheet .cost-box { padding-top: 18px !important; padding-bottom: 18px !important; }
           .simple-sheet .print-break h2, .simple-sheet .math-section h2 { font-size: 19px !important; }
           .simple-sheet .print-break ol { margin-top: 12px !important; }
-          .simple-sheet .print-break ol > li + li { margin-top: 10px !important; }
+          .simple-sheet .print-break ol > li + li { margin-top: 8px !important; }
+          .simple-sheet .print-break ol li > div:last-child > div:last-child { font-size: 13px !important; }
           .simple-sheet .contact-card { padding: 16px 20px !important; }
-          .simple-sheet .contact-card > div + div { margin-top: 12px !important; }
+          .simple-sheet .contact-card > div + div { margin-top: 12px !important; padding-top: 12px !important; }
+          .simple-sheet .action-tiles a { padding-top: 8px !important; padding-bottom: 8px !important; gap: 4px !important; }
+          .simple-sheet .action-tiles a > span:first-child { height: 34px !important; width: 34px !important; }
+          .simple-sheet .action-tiles svg { height: 17px !important; width: 17px !important; }
+          .simple-sheet .contact-card img { height: 76px !important; }
+          .simple-sheet .contact-line { margin-top: 10px !important; }
           .simple-sheet .math-section dl { margin-top: 10px !important; font-size: 13px !important; }
           .simple-sheet .math-section dl > div { padding-top: 5px !important; padding-bottom: 5px !important; }
           .simple-sheet .math-section ul { margin-top: 12px !important; font-size: 11.5px !important; line-height: 1.45 !important; }
@@ -295,8 +301,9 @@ export default function SimpleSheet({
           </div>
         </div>
         <div className="mt-6 border-t border-[#eee] pt-5">
-          {/* Tap targets: on a phone these open the dialer, messages and mail. */}
-          <div className="no-print grid grid-cols-3 gap-3">
+          {/* Tap targets: on a phone these open the dialer, messages and mail.
+              Kept in print so a texted PDF carries them as live links. */}
+          <div className="action-tiles grid grid-cols-3 gap-3">
             <ActionTile href="tel:+16012138868" label="Call" icon="phone" />
             <ActionTile href="sms:+16012138868" label="Text" icon="text" />
             <ActionTile href="mailto:falco@falco.llc" label="Email" icon="mail" />
