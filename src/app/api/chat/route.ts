@@ -126,7 +126,11 @@ export async function POST(req: NextRequest) {
       reply?: unknown
       lead?: Lead | null
     }
-    reply = typeof parsed.reply === "string" ? parsed.reply.trim() : ""
+    // The prompt forbids em dashes, but the model still slips them in.
+    reply =
+      typeof parsed.reply === "string"
+        ? parsed.reply.replace(/\s*[—–]\s*/g, ", ").trim()
+        : ""
     lead = parsed.lead && typeof parsed.lead === "object" ? parsed.lead : null
   } catch (e) {
     console.error("chat completion failed:", e)
