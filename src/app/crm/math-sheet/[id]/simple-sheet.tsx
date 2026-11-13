@@ -213,6 +213,7 @@ export default function SimpleSheet({
           .simple-sheet .action-tiles a > span:first-child { height: 34px !important; width: 34px !important; }
           .simple-sheet .action-tiles svg { height: 17px !important; width: 17px !important; }
           .simple-sheet .contact-card img { height: 76px !important; }
+          .simple-sheet .card-quote { margin-top: 10px !important; font-size: 14px !important; }
           .simple-sheet .contact-line { margin-top: 10px !important; }
           .simple-sheet .math-section dl { margin-top: 10px !important; font-size: 13px !important; }
           .simple-sheet .math-section dl > div { padding-top: 5px !important; padding-bottom: 5px !important; }
@@ -302,6 +303,9 @@ export default function SimpleSheet({
             <div className="text-[15px] text-[#666]">Nashville, Tennessee</div>
           </div>
         </div>
+        <blockquote className="card-quote mt-5 border-l-[3px] border-[#12804a] pl-4 text-[17px] font-medium leading-snug text-[#222]">
+          &ldquo;Your home&apos;s value belongs to you. Our job is making sure you keep it.&rdquo;
+        </blockquote>
         <div className="mt-6 border-t border-[#eee] pt-5">
           {/* Tap targets: on a phone these open the dialer, messages and mail.
               Kept in print so a texted PDF carries them as live links. */}
