@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next"
 import { COUNTIES } from "./foreclosure/county-list"
+import { SITUATIONS } from "./v2/situations"
 
 // Public marketing surface only. Operational routes are excluded via
 // robots.ts. lastModified is intentionally omitted on pages we don't
@@ -24,6 +25,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...countyPages,
     { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/homeowners`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/start`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${base}/professionals`, changeFrequency: "monthly", priority: 0.8 },
+    ...SITUATIONS.map((s) => ({
+      url: `${base}/situations/${s.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.85,
+    })),
     // Guides — the SEO content hub. Pillar highest, comparisons below it.
     { url: `${base}/guides`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/guides/tennessee-foreclosure-process`, changeFrequency: "monthly", priority: 0.9 },

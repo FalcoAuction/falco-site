@@ -33,7 +33,7 @@ const usd = (n: number) =>
 
 /* Reveal: adds .in to .r elements as they enter, cascading within a
    [data-stagger] group the way the static build did. */
-function useReveals() {
+export function useReveals() {
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLElement>(".r"))
     if (!els.length) return
@@ -65,7 +65,7 @@ function useReveals() {
 }
 
 /* Count-up for the hero figures. */
-function Count({ to, dur = 1100 }: { to: number; dur?: number }) {
+export function Count({ to, dur = 1100 }: { to: number; dur?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   const [n, setN] = useState(to)
   useEffect(() => {
@@ -99,7 +99,7 @@ function Count({ to, dur = 1100 }: { to: number; dur?: number }) {
 
 /* Lazy video: mounts the source only near the viewport, and serves the
    lighter mobile cut on narrow screens. */
-function LiteVideo({
+export function LiteVideo({
   src,
   srcMob,
   poster,
@@ -157,7 +157,7 @@ function LiteVideo({
 // from measurements instead: the nav height when the panel fits, and
 // viewport minus panel height (negative) when it doesn't, so it scrolls
 // through fully and pins by its bottom edge. Desktop is left alone.
-function usePanelPins() {
+export function usePanelPins() {
   useEffect(() => {
     const panels = Array.from(document.querySelectorAll<HTMLElement>(".full"))
     const nav = document.querySelector<HTMLElement>("header.nav")
@@ -168,11 +168,13 @@ function usePanelPins() {
       const mobile = window.innerWidth <= 900
       const vh = window.innerHeight
       for (const p of panels) {
+        const h = p.offsetHeight
         if (!mobile) {
-          p.style.top = ""
+          // A desktop panel taller than the screen pins by its bottom
+          // edge too, or the next panel covers its last rows unseen.
+          p.style.top = h > vh ? `${vh - h}px` : ""
           continue
         }
-        const h = p.offsetHeight
         p.style.top = `${h <= vh - navH ? navH : vh - h}px`
         // WebKit can keep the old sticky constraint until the next
         // layout; reading a layout property forces it now.
@@ -194,7 +196,7 @@ function usePanelPins() {
 // Deck effect: as the next panel slides over a pinned one, scale and dim
 // the one underneath (depth 0 when the next panel's top is at the bottom
 // of the screen, 1 when it has covered the panel).
-function useStackDepth() {
+export function useStackDepth() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
     const panels = Array.from(document.querySelectorAll<HTMLElement>(".full"))
@@ -252,7 +254,7 @@ export default function V2Content() {
   )
 }
 
-function Nav() {
+export function Nav() {
   const [stuck, setStuck] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -287,13 +289,13 @@ function Nav() {
         FALCO
       </Link>
       <nav id="menu" className={open ? "open" : undefined}>
-        <Link href="/homeowners" onClick={close}>Homeowners</Link>
+        <Link href="/#situations" onClick={close}>Situations</Link>
+        <Link href="/professionals" onClick={close}>Professionals</Link>
+        <Link href="/partners" onClick={close}>Auction firms</Link>
         <Link href="/buyers" onClick={close}>Buyers</Link>
-        <Link href="/partners" onClick={close}>Partners</Link>
-        <Link href="/foreclosure" onClick={close}>Counties</Link>
         <Link href="/guides" onClick={close}>Guides</Link>
-        <Link className="pill dark" href="/homeowners" onClick={close}>
-          Get your numbers <sub>→</sub>
+        <Link className="pill dark" href="/start" onClick={close}>
+          Start here <sub>→</sub>
         </Link>
       </nav>
       {/* Without this the mobile breakpoint hides the nav entirely and
@@ -465,7 +467,7 @@ const MEDIANS = [
   { label: "Shelby · $222k", v: 222000 },
 ]
 
-function Ledger() {
+export function Ledger({ full = true }: { full?: boolean } = {}) {
   const [value, setValue] = useState(484000)
   const [ltv, setLtv] = useState(60)
 
@@ -484,7 +486,7 @@ function Ledger() {
   const pickMedian = useCallback((v: number) => setValue(v), [])
 
   return (
-    <section className="sec full" id="math">
+    <section className={full ? "sec full" : "sec"} id="math">
       <div className="wrap">
         <div className="head">
           <div data-stagger="80">
@@ -814,14 +816,26 @@ function ClosingCta() {
   )
 }
 
-function Foot() {
+export function Foot() {
   const cols: Array<{ h: string; links: Array<{ href: string; label: string }> }> = [
     {
       h: "Start here",
       links: [
-        { href: "/homeowners", label: "Homeowners" },
-        { href: "/buyers", label: "Buyers" },
+        { href: "/start", label: "Tell us what happened" },
+        { href: "/professionals", label: "Attorneys and trustees" },
         { href: "/partners", label: "Auction firms" },
+        { href: "/buyers", label: "Buyers" },
+      ],
+    },
+    {
+      h: "Situations",
+      links: [
+        { href: "/situations/estate", label: "A death in the family" },
+        { href: "/situations/business-closing", label: "A business closing" },
+        { href: "/situations/foreclosure", label: "A sale date on the house" },
+        { href: "/situations/bankruptcy", label: "Bankruptcy or receivership" },
+        { href: "/situations/lien-sale", label: "A lien sale" },
+        { href: "/situations/hard-to-sell", label: "Land or buildings" },
       ],
     },
     {
@@ -831,17 +845,6 @@ function Foot() {
         { href: "/foreclosure", label: "Foreclosure by county" },
         { href: "/math", label: "The math" },
         { href: "/manifesto", label: "Manifesto" },
-      ],
-    },
-    {
-      h: "Counties",
-      links: [
-        { href: "/foreclosure/davidson-county", label: "Davidson" },
-        { href: "/foreclosure/shelby-county", label: "Shelby" },
-        { href: "/foreclosure/knox-county", label: "Knox" },
-        { href: "/foreclosure/hamilton-county", label: "Hamilton" },
-        { href: "/foreclosure/rutherford-county", label: "Rutherford" },
-        { href: "/foreclosure/williamson-county", label: "Williamson" },
       ],
     },
     {
@@ -866,7 +869,7 @@ function Foot() {
               FALCO
             </Link>
             <p className="sm" style={{ maxWidth: "30ch", marginTop: 14 }}>
-              Tennessee distressed property intelligence and auction routing.
+              Tennessee distressed asset intelligence and auction routing.
               Patrick Armour, TN Auctioneer #7622.
             </p>
             <p className="sm" style={{ marginTop: 10 }}>

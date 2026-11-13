@@ -22,6 +22,8 @@ const ALLOWED_ORIGINS = new Set<string>([
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false
   if (ALLOWED_ORIGINS.has(origin)) return true
+  // Parallel worktrees each run their dev server on their own port.
+  if (process.env.NODE_ENV !== "production" && /^http:\/\/localhost:\d+$/.test(origin)) return true
   try {
     const u = new URL(origin)
     if (u.host.endsWith(".vercel.app") && u.protocol === "https:") return true
@@ -46,14 +48,17 @@ const buckets = new Map<string, Bucket>()
 const WINDOW_MS = 10 * 60 * 1000 // 10 minutes
 const MAX_PER_WINDOW = 5         // 5 submissions per IP per endpoint per 10 min
 
-function checkRateLimit(key: string): { ok: true } | { ok: false; retryAfterSec: number } {
+function checkRateLimit(
+  key: string,
+  maxPerWindow: number
+): { ok: true } | { ok: false; retryAfterSec: number } {
   const now = Date.now()
   const b = buckets.get(key)
   if (!b || b.resetAt < now) {
     buckets.set(key, { count: 1, resetAt: now + WINDOW_MS })
     return { ok: true }
   }
-  if (b.count >= MAX_PER_WINDOW) {
+  if (b.count >= maxPerWindow) {
     return { ok: false, retryAfterSec: Math.ceil((b.resetAt - now) / 1000) }
   }
   b.count += 1
@@ -64,7 +69,8 @@ function checkRateLimit(key: string): { ok: true } | { ok: false; retryAfterSec:
  *  the request should be rejected, else null to continue. */
 export function guardPublicForm(
   req: NextRequest,
-  endpointName: string
+  endpointName: string,
+  options?: { maxPerWindow?: number }
 ): NextResponse | null {
   // Browsers send Origin on POST; missing Origin is suspicious for a form.
   const origin = req.headers.get("origin")
@@ -75,7 +81,7 @@ export function guardPublicForm(
     )
   }
   const ip = getClientIp(req) || "unknown"
-  const limit = checkRateLimit(`${ip}:${endpointName}`)
+  const limit = checkRateLimit(`${ip}:${endpointName}`, options?.maxPerWindow ?? MAX_PER_WINDOW)
   if (!limit.ok) {
     return NextResponse.json(
       {
