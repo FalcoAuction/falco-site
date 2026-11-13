@@ -1,8 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Foot, Nav, useReveals } from "../v2/v2-content"
-import { PageHead } from "../v2/site-page"
+import { PageHead, PageSec, SitePage } from "../v2/site-page"
 
 const ROLES = [
   { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections, handled through one contact." },
@@ -20,101 +19,73 @@ const DELIVERS = [
   { n: "04", h: "A sale record", p: "Results, bidder counts and proceeds by asset, ready for the court file or the books." },
 ]
 
+const CLEAN = [
+  { h: "No referral fees", p: "We don't pay them and we don't ask for them." },
+  { h: "We never buy", p: "We don't take a position in anything we route." },
+  { h: "No legal advice", p: "Court approval, notice periods and authority to sell stay with you and the court. We work on that timeline." },
+  { h: "Licensed firms only", p: "Real estate is listed and sold only by licensed Tennessee firms." },
+]
+
 export default function ProfessionalsContent() {
-  useReveals()
   return (
-    <>
-      <Nav />
-      <main id="main" className="pg">
-        <PageHead
-          label="For professionals"
-          title="One contact for every asset in the file."
-          lede="Estates, bankruptcies, receiverships and closings rarely hold just one kind of property. We inventory it, match each asset to the licensed Tennessee auctioneer who sells it best, and report back in a form you can file."
-        >
+    <SitePage>
+      <PageHead
+        label="For professionals"
+        title="One contact for every asset in the file."
+        lede="Estates, bankruptcies, receiverships and closings rarely hold just one kind of property. We inventory it, match each asset to the licensed Tennessee auctioneer who sells it best, and report back in a form you can file."
+      >
+        <Link className="pill dark" href="/start?r=professional">
+          Send us a file <sub>→</sub>
+        </Link>
+        <a className="pill line" href="mailto:pat@falco.llc">
+          pat@falco.llc
+        </a>
+      </PageHead>
+
+      <PageSec label="Who we work with" title="The people who have to sell it.">
+        <ul className="rows r">
+          {ROLES.map((r) => (
+            <li key={r.h}>
+              <b>{r.h}</b>
+              <span>{r.p}</span>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      <PageSec label="What you get" title="Four things, every file.">
+        <div className="quiet-steps four" data-stagger="90">
+          {DELIVERS.map((d) => (
+            <div className="r" key={d.n}>
+              <span className="n">{d.n}</span>
+              <h3 className="d3">{d.h}</h3>
+              <p>{d.p}</p>
+            </div>
+          ))}
+        </div>
+      </PageSec>
+
+      <PageSec label="How we stay clean" title="No side deals. No shortcuts.">
+        <ul className="rows r">
+          {CLEAN.map((c) => (
+            <li key={c.h}>
+              <b>{c.h}</b>
+              <span>{c.p}</span>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      <PageSec label="Send us a file" title="Two minutes to start." note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622.">
+        <div className="pills r">
           <Link className="pill dark" href="/start?r=professional">
             Send us a file <sub>→</sub>
           </Link>
           <a className="pill line" href="mailto:pat@falco.llc">
             pat@falco.llc
           </a>
-        </PageHead>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="lbl r">Who we work with</p>
-                <h2 className="d2 r">The people who have to sell it.</h2>
-              </div>
-              <p className="lede note r">
-                You have the authority and the deadline. We bring the buyers
-                and the right firm for each kind of asset.
-              </p>
-            </div>
-            <div className="agrid" data-stagger="50">
-              {ROLES.map((r) => (
-                <div className="box r" key={r.h}>
-                  <h4>{r.h}</h4>
-                  <p>{r.p}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="head">
-              <div data-stagger="80">
-                <p className="lbl r">What you get</p>
-                <h2 className="d2 r">Four things, every file.</h2>
-              </div>
-            </div>
-            <div className="quiet-steps" data-stagger="90">
-              {DELIVERS.map((d) => (
-                <div className="r" key={d.n}>
-                  <span className="n">{d.n}</span>
-                  <h3 className="d3">{d.h}</h3>
-                  <p>{d.p}</p>
-                </div>
-              ))}
-            </div>
-            <p className="r" style={{ marginTop: 40 }}>
-              <Link className="pill dark" href="/start?r=professional">
-                Send us a file <sub>→</sub>
-              </Link>
-            </p>
-          </div>
-        </section>
-
-        <section className="pg-sec">
-          <div className="wrap">
-            <div className="split">
-              <div data-stagger="80">
-                <p className="lbl r">How we stay clean</p>
-                <h2 className="d2 r">
-                  No side deals.
-                  <br />
-                  No shortcuts.
-                </h2>
-              </div>
-              <div data-stagger="80">
-                <p className="lede r">
-                  We don&apos;t pay referral fees and we don&apos;t ask for them.
-                  We never buy what we route, and we don&apos;t give legal advice.
-                </p>
-                <p className="lede r">
-                  Court approval, notice periods and authority to sell stay with
-                  you and the court. We work on that timeline, not around it.
-                  Real estate is listed and sold only by licensed Tennessee
-                  firms.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-      <Foot />
-    </>
+        </div>
+      </PageSec>
+    </SitePage>
   )
 }

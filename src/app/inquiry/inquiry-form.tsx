@@ -45,6 +45,7 @@ export default function InquiryForm() {
               ],
             },
           ]}
+          smsOptIn={{ name: "fullName", phone: "phone" }}
           onSubmit={(v) =>
             postJson(
               "/api/inquiry",

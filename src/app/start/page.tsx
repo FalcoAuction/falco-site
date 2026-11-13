@@ -1,7 +1,7 @@
 import StartForm from "./start-form"
 
 export const metadata = {
-  title: "Tell Us What Happened | FALCO Tennessee",
+  title: "Start Here: Tell Us What Has to Sell | FALCO",
   description:
     "Estate, business closing, foreclosure, bankruptcy or lien sale in Tennessee? Two minutes, and we come back within one business day with what is worth auctioning and what it would likely clear.",
   alternates: { canonical: "/start" },

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { SMS_CONSENT_TEXT, recordSmsConsent } from "@/lib/sms-consent"
 
 /**
  * One question per screen with a progress bar, the same flow as /start.
@@ -35,6 +36,7 @@ export default function StepForm({
   submitLabel = "Send",
   onSubmit,
   done,
+  smsOptIn,
 }: {
   label?: string
   steps: Step[]
@@ -43,12 +45,17 @@ export default function StepForm({
   /** Returns an error message to show, or null when it went through. */
   onSubmit: (values: StepValues) => Promise<string | null>
   done: { title: string; text: string }
+  /** Field names to use when the person ticks the optional SMS opt-in on
+   *  the last screen. Unchecked by default and never required to submit. */
+  smsOptIn?: { name: string; phone: string; property?: string }
 }) {
   const [i, setI] = useState(0)
   const [values, setValues] = useState<StepValues>(initial)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [finished, setFinished] = useState(false)
+  const [optIn, setOptIn] = useState(false)
+  const [optInNote, setOptInNote] = useState<string | null>(null)
 
   const n = steps.length
   const last = i === n - 1
@@ -66,11 +73,29 @@ export default function StepForm({
       return
     }
     setError(null)
+    const phone = smsOptIn ? str(smsOptIn.phone).trim() : ""
+    if (optIn && smsOptIn && phone.replace(/\D/g, "").length < 10) {
+      setError("Add a mobile number to get texts, or uncheck the text box.")
+      return
+    }
     setPending(true)
     try {
       const err = await onSubmit(values)
-      if (err) setError(err)
-      else setFinished(true)
+      if (err) {
+        setError(err)
+        return
+      }
+      // The request went through; the opt-in is recorded separately and a
+      // failure there never undoes it.
+      if (optIn && smsOptIn) {
+        const consentErr = await recordSmsConsent({
+          name: str(smsOptIn.name).trim(),
+          phone,
+          property: smsOptIn.property ? str(smsOptIn.property).trim() : "",
+        })
+        setOptInNote(consentErr ? "Your text opt-in didn't save. We'll stick to email." : null)
+      }
+      setFinished(true)
     } catch {
       setError("Something went wrong. Try again or email help@falco.llc.")
     } finally {
@@ -122,6 +147,7 @@ export default function StepForm({
           <>
             <h2 className="st-q">{done.title}</h2>
             <p className="st-sub">{done.text}</p>
+            {optInNote && <p className="st-sub">{optInNote}</p>}
             <Link className="pill line" href="/">
               Back to home
             </Link>
@@ -207,6 +233,22 @@ export default function StepForm({
                   onChange={(e) => set(step.name, e.target.checked)}
                 />
                 <span>{step.text}</span>
+              </label>
+            )}
+
+            {/* Optional SMS opt-in: unchecked, separate from submitting, and
+                never a condition of anything (A2P 10DLC). */}
+            {last && smsOptIn && (
+              <label className="st-check st-optin">
+                <input
+                  type="checkbox"
+                  checked={optIn}
+                  onChange={(e) => setOptIn(e.target.checked)}
+                />
+                <span>
+                  {SMS_CONSENT_TEXT.replace(" Privacy policy: falco.llc/privacy.", "")}{" "}
+                  <Link href="/privacy">Privacy policy</Link>. Optional.
+                </span>
               </label>
             )}
 
