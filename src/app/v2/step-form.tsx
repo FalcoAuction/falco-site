@@ -72,7 +72,7 @@ export default function StepForm({
       if (err) setError(err)
       else setFinished(true)
     } catch {
-      setError("Something went wrong. Try again or email falco@falco.llc.")
+      setError("Something went wrong. Try again or email help@falco.llc.")
     } finally {
       setPending(false)
     }

@@ -342,8 +342,8 @@ function Closing() {
           <a className="pill dark" href="#ask">
             Ask FALCO <sub>→</sub>
           </a>
-          <a className="pill line" href="mailto:falco@falco.llc">
-            falco@falco.llc
+          <a className="pill line" href="mailto:help@falco.llc">
+            help@falco.llc
           </a>
         </div>
       </div>
@@ -394,8 +394,8 @@ function Founder() {
               someone ran out of time.
             </blockquote>
             <p className="r">
-              <a className="pill line" href="mailto:falco@falco.llc">
-                Write to me: falco@falco.llc
+              <a className="pill line" href="mailto:pat@falco.llc">
+                Write to me: pat@falco.llc
               </a>
             </p>
           </div>

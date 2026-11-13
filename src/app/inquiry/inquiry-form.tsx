@@ -3,7 +3,7 @@
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
 import { SitePage } from "../v2/site-page"
 
-const FAIL = "Something went wrong. Try again or email falco@falco.llc."
+const FAIL = "Something went wrong. Try again or email help@falco.llc."
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
 /** General contact, one question per screen. Same payload as before. */
@@ -61,7 +61,7 @@ export default function InquiryForm() {
           }
           done={{
             title: "Thank you. We've got it.",
-            text: "We'll reply from falco@falco.llc within one business day.",
+            text: "We'll reply within one business day.",
           }}
         />
       </div>

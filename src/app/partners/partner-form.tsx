@@ -3,7 +3,7 @@
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
 import { SitePage } from "../v2/site-page"
 
-const FAIL = "Something went wrong. Try again or email falco@falco.llc."
+const FAIL = "Something went wrong. Try again or email sales@falco.llc."
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
 /** Auction firm partnership inquiry, one question per screen. Same payload as before. */
@@ -74,7 +74,7 @@ export default function PartnerForm() {
           }
           done={{
             title: "Thank you. We've got it.",
-            text: "We'll reach out from falco@falco.llc within one business day to set up a call.",
+            text: "We'll reach out within one business day to set up a call. Questions before then: sales@falco.llc.",
           }}
         />
       </div>

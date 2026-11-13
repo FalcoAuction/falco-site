@@ -34,8 +34,8 @@ export default function ProfessionalsContent() {
           <Link className="pill dark" href="/start?r=professional">
             Send us a file <sub>→</sub>
           </Link>
-          <a className="pill line" href="mailto:falco@falco.llc">
-            falco@falco.llc
+          <a className="pill line" href="mailto:pat@falco.llc">
+            pat@falco.llc
           </a>
         </PageHead>
 

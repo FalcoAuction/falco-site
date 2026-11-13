@@ -231,8 +231,8 @@ function CtaScene({ entered }: { entered: boolean }) {
         <Link href="/guides" className="hover:text-white transition-colors">
           Guides
         </Link>
-        <a href="mailto:falco@falco.llc" className="hover:text-white transition-colors">
-          falco@falco.llc
+        <a href="mailto:help@falco.llc" className="hover:text-white transition-colors">
+          help@falco.llc
         </a>
       </div>
     </div>

@@ -54,7 +54,7 @@ export default function SmsConsentPage() {
           <p>
             <strong className="text-[var(--ink)]">Opt out:</strong> reply STOP to
             any message to stop immediately. Reply HELP for help, or contact{" "}
-            <span className="text-[var(--mocha)]">falco@falco.llc</span>.
+            <span className="text-[var(--mocha)]">help@falco.llc</span>.
           </p>
           <p>
             Consent is not a condition of any purchase or service. See our{" "}
