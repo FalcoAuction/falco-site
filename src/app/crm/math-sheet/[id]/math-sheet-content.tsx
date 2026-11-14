@@ -25,6 +25,7 @@ import {
   foreclosureSpreadComparator,
 } from "@/lib/foreclosure-language"
 import SimpleSheet from "./simple-sheet"
+import SimpleSheetV2 from "./simple-sheet-v2"
 
 export type HomeownerSnapshot = {
   id: string
@@ -102,7 +103,7 @@ export default function MathSheetContent({
   embed?: boolean
   /** "simple" (default): one-page plain-language sheet. "classic": the
    *  full walkthrough with every table (?layout=classic). */
-  layout?: "simple" | "classic"
+  layout?: "simple" | "simple2" | "classic"
 }) {
   // Toggle URL is built client-side from the current pathname — passing
   // a function from the server page would crash the RSC boundary
@@ -286,7 +287,7 @@ export default function MathSheetContent({
   const [valueChecked, setValueChecked] = useState<boolean>(false)
   const [realCashOffer, setRealCashOffer] = useState<number>(0)
   const valueConfirmed = valueChecked || arvManuallyEdited
-  const blockSend = arvNeedsVerification || (layout === "simple" && !valueConfirmed)
+  const blockSend = arvNeedsVerification || (layout !== "classic" && !valueConfirmed)
   const handlePrint = () => {
     if (arvNeedsVerification) {
       window.alert(
@@ -294,7 +295,7 @@ export default function MathSheetContent({
       )
       return
     }
-    if (layout === "simple" && !valueConfirmed) {
+    if (layout !== "classic" && !valueConfirmed) {
       window.alert(
         "Check the home value against a real comp, then tick Value checked (or type the right value under Edit numbers)."
       )
@@ -408,7 +409,7 @@ export default function MathSheetContent({
             >
               Email →
             </a>
-            {layout === "simple" && (
+            {layout !== "classic" && (
               <label className="flex items-center gap-1.5 text-white/75 cursor-pointer select-none whitespace-nowrap">
                 <input
                   type="checkbox"
@@ -492,7 +493,18 @@ export default function MathSheetContent({
       )}
 
       {/* PRINTABLE SHEET */}
-      {layout === "simple" ? (
+      {layout === "simple2" ? (
+        <SimpleSheetV2
+          homeowner={homeowner}
+          out={out}
+          scenarioCfg={scenarioCfg}
+          daysToSale={daysToSale}
+          loanBalance={loanBalance}
+          needsVerification={arvNeedsVerification}
+          valueChecked={embed || valueConfirmed}
+          realCashOffer={realCashOffer}
+        />
+      ) : layout === "simple" ? (
         <SimpleSheet
           homeowner={homeowner}
           out={out}
