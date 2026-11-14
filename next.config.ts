@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   // lead link resolves its pipeline key at /crm/l/[slug].
   async redirects() {
     return [
+      // One canonical host: www.falco.llc permanently forwards to
+      // falco.llc, keeping the path, so search engines see one site.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.falco.llc" }],
+        destination: "https://falco.llc/:path*",
+        permanent: true,
+      },
       { source: "/admin", destination: "/crm", permanent: false },
       { source: "/admin/login", destination: "/crm/login", permanent: false },
       { source: "/admin/math-sheet/:id", destination: "/crm/math-sheet/:id", permanent: false },
