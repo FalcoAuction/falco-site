@@ -35,7 +35,7 @@ export default async function MathSheetPage({
     <MathSheetContent
       homeowner={snapshot}
       scenarioOverride={view as Scenario | null}
-      layout={sp.layout === "classic" ? "classic" : "simple"}
+      layout={sp.layout === "classic" ? "classic" : sp.layout === "simple" ? "simple" : "simple2"}
     />
   )
 }
