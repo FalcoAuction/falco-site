@@ -17,7 +17,7 @@ const HEADLINE = "Selling Firearms and Collections From a Tennessee Estate"
 const DESCRIPTION =
   "What federal and Tennessee law allow an executor to do with inherited firearms, how NFA items are handled, who can legally buy, and how coins, art and other collections from an estate are sold."
 
-const META_TITLE = `${HEADLINE}, Legally | FALCO`
+const META_TITLE = "Selling Estate Firearms and Collections in Tennessee | FALCO"
 const META_DESCRIPTION =
   DESCRIPTION
 

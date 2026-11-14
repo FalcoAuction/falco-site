@@ -6,7 +6,7 @@ import GuideSearch from "./guide-search"
 import "./guides.css"
 import { ogMeta } from "@/lib/og"
 
-const META_TITLE = "Tennessee Guides for Estates, Business Closings, Liens and Foreclosure | FALCO"
+const META_TITLE = "Tennessee Guides: Estates, Liens, Tax Sales, Foreclosure | FALCO"
 const META_DESCRIPTION =
   "Plain-English Tennessee guides for every distressed sale: estates and probate, closing a business, bankruptcy and receivership, lien sales, tax-delinquent property, land that won't sell, and foreclosure."
 
@@ -22,9 +22,30 @@ export const metadata = {
   }),
 }
 
+// The hub as a list of articles, in the order shown on the page.
+const HUB_LD = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "FALCO Guides",
+  url: "https://falco.llc/guides",
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: GUIDE_GROUPS.flatMap((g) => g.guides).map((g, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: g.title,
+      url: `https://falco.llc${g.href}`,
+    })),
+  },
+}
+
 export default function GuidesIndexPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(HUB_LD) }}
+      />
       <GuideReveals />
       <Nav />
       <main id="main" className="gd">

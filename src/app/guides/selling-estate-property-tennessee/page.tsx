@@ -184,7 +184,9 @@ export default function EstatePropertyGuide() {
           </GuideNote>
           <p>
             Which of these fits your family depends on the will, the debts and
-            whether the heirs agree. That is a question for the estate&apos;s
+            whether the heirs agree (our guide on{" "}
+            <Link href="/guides/do-you-need-probate-to-sell-a-house-tennessee">whether you need probate to sell a house</Link>{" "}
+            walks through it). That is a question for the estate&apos;s
             attorney, and it is worth asking early, because it decides who
             signs the listing or auction agreement and who signs at closing.
           </p>
@@ -322,7 +324,9 @@ export default function EstatePropertyGuide() {
           <p>
             The small-estate process covers personal property only. It gives
             no authority over real estate, so if the house is part of the
-            picture, one of the paths above still applies.
+            picture, one of the paths above still applies. Our guide to{" "}
+            <Link href="/guides/tennessee-small-estate-limited-letters">small estates and limited letters</Link> covers
+            who can file, bond and what the letters allow.
           </p>
         </GuideSection>
 
@@ -346,7 +350,9 @@ export default function EstatePropertyGuide() {
             <Link href="/guides/land-commercial-property-wont-sell" className="text-[var(--mocha)] hover:text-[var(--mocha-deep)] underline underline-offset-4">
               land and property with multiple owners
             </Link>{" "}
-            explains them in more depth.
+            explains them in more depth. For brothers and sisters inheriting a
+            house together, see{" "}
+            <Link href="/guides/selling-inherited-house-with-siblings-tennessee">selling an inherited house with siblings</Link>.
           </p>
         </GuideSection>
 

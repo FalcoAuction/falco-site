@@ -71,16 +71,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Only pre-fetch the heavy hero video on desktop. Mobile renders the
-            poster only (see HeroVideoBg) so pre-fetching ~4.7MB on cell would
-            waste data and slow first paint. */}
-        <link
-          rel="preload"
-          as="video"
-          href="/video/hero-loop.mp4"
-          type="video/mp4"
-          media="(min-width: 768px)"
-        />
       </head>
       <body className={`${inter.variable} ${geistMono.variable}`}>
         {children}

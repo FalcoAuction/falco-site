@@ -206,7 +206,9 @@ export default function TaxSaleGuide() {
             Redemption is real, but it is expensive, and it has to be paid in
             cash within a short window. For most owners who were behind
             because money was tight, it is harder to redeem after the sale
-            than it would have been to sell before it.
+            than it would have been to sell before it. Our guide to the{" "}
+            <Link href="/guides/tennessee-tax-sale-redemption-period">redemption period</Link> covers
+            each step and the cost.
           </p>
         </GuideSection>
 
@@ -238,7 +240,9 @@ export default function TaxSaleGuide() {
             money is not presumed abandoned until a year after the redemption
             period ends.
             <Cite href={src(10)} n={10} /> If you think excess proceeds are owed
-            to you, contact the clerk of the court that handled the tax suit.
+            to you, contact the clerk of the court that handled the tax suit,
+            or see{" "}
+            <Link href="/guides/claim-tax-sale-excess-proceeds-tennessee">how to claim tax sale excess proceeds</Link>.
           </p>
           <GuideKey>
             Excess proceeds are whatever is left after a sale that was never

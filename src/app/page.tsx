@@ -43,6 +43,13 @@ const JSON_LD = {
     "@type": "Person",
     name: "Patrick Yuri Armour",
     jobTitle: "Licensed Tennessee Auctioneer",
+    url: "https://falco.llc/guides/authors/patrick-armour",
+  },
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Nashville",
+    addressRegion: "TN",
+    addressCountry: "US",
   },
   priceRange: "Free to sellers (buyer pays premium)",
 }
