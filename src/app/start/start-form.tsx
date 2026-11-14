@@ -16,12 +16,14 @@ const ROLES = [
 ]
 
 const OTHER = { slug: "other", label: "Something else" }
-const STEPS = 5
+const STEPS = 6
 
 /**
  * One intake for every situation, one question per screen. Posts to the
- * existing /api/inquiry (general_inquiries), so it needs no new table:
- * the answers ride in topic and message. ?s=<situation>&r=<role> preselect.
+ * homeowner intake (/api/homeowners/request), so every submission lands in
+ * the CRM as a lead with the address, sale date and payoff the math sheet
+ * needs; situation, role and assets ride in situation_notes.
+ * ?s=<situation>&r=<role> preselect.
  */
 export default function StartForm({ s, r }: { s?: string; r?: string }) {
   const presetSituation =
@@ -31,6 +33,9 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
   const [role, setRole] = useState(r && ROLES.some((x) => x.id === r) ? r : "")
   const [assets, setAssets] = useState<string[]>([])
   const [county, setCounty] = useState("")
+  const [address, setAddress] = useState("")
+  const [saleDate, setSaleDate] = useState("")
+  const [owed, setOwed] = useState("")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
@@ -61,23 +66,26 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
       `Situation: ${sitLabel || "(not given)"}`,
       roleLabel && `I am: ${roleLabel}`,
       assets.length > 0 && `Needs to sell: ${assets.join(", ")}`,
-      county && `County: ${county}`,
       "",
       notes || "(no notes)",
     ]
       .filter((l) => l !== false && l !== "")
       .join("\n")
     start(async () => {
-      const res = await fetch("/api/inquiry", {
+      const res = await fetch("/api/homeowners/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
           email,
           phone,
-          company: "",
-          topic: `Start: ${sitLabel || "unspecified"}${roleLabel ? ` / ${roleLabel}` : ""}`,
-          message,
+          propertyAddress: address.trim(),
+          county: county.trim(),
+          trusteeSaleDate: saleDate || null,
+          mortgageBalance: owed.trim() || null,
+          bestCallback: "",
+          situationNotes: message,
+          referrer: `start:${situation || "unspecified"}`,
         }),
       })
       const body = await res.json().catch(() => null)
@@ -129,8 +137,8 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
               <>
                 <h1 className="st-q">Thank you. We&apos;ve got it.</h1>
                 <p className="st-sub">
-                  We&apos;ll get back to you within one business day with what we
-                  see. Nothing is owed either way.
+                  We&apos;ll send your numbers within one business day: what it
+                  would likely clear and who would sell it. Nothing is owed either way.
                 </p>
                 {optInNote && <p className="st-sub">{optInNote}</p>}
                 <Link className="pill line" href="/">
@@ -209,18 +217,61 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
                 }}
               >
                 <h1 className="st-q">Where is it?</h1>
-                <p className="st-sub">The Tennessee county is enough.</p>
+                <p className="st-sub">
+                  The property address. If it isn&apos;t a property, the city is enough.
+                </p>
+                <input
+                  className="st-in"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="123 Main St, Nashville, TN 37206"
+                  aria-label="Address or city"
+                  autoComplete="street-address"
+                  autoFocus
+                />
                 <input
                   className="st-in"
                   value={county}
                   onChange={(e) => setCounty(e.target.value)}
-                  placeholder="Davidson, Wilson, Knox..."
+                  placeholder="County (optional)"
                   aria-label="County"
-                  autoFocus
                 />
                 <div className="st-go">
                   <button type="submit" className="pill dark">
-                    {county.trim() ? "Next" : "Skip"} <sub>→</sub>
+                    Next <sub>→</sub>
+                  </button>
+                </div>
+              </form>
+            ) : step === 4 ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  next()
+                }}
+              >
+                <h1 className="st-q">The numbers you know.</h1>
+                <p className="st-sub">Leave anything you&apos;re not sure of blank.</p>
+                <label className="pg-label" htmlFor="stSale">Sale date, if there is one</label>
+                <input
+                  id="stSale"
+                  className="st-in"
+                  type="date"
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
+                />
+                <label className="pg-label" htmlFor="stOwed">Roughly what&apos;s owed on it</label>
+                <input
+                  id="stOwed"
+                  className="st-in"
+                  inputMode="numeric"
+                  value={owed}
+                  onChange={(e) => setOwed(e.target.value)}
+                  placeholder="e.g. 220000"
+                />
+                <div className="st-go">
+                  <button type="submit" className="pill dark">
+                    {saleDate || owed.trim() ? "Next" : "Skip"} <sub>→</sub>
                   </button>
                 </div>
               </form>
@@ -262,7 +313,7 @@ export default function StartForm({ s, r }: { s?: string; r?: string }) {
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Anything else? Dates, what's owed, who's involved. (optional)"
+                  placeholder="Anything else? Who's involved, what you've tried. (optional)"
                   aria-label="Anything else"
                 />
                 {/* Optional SMS opt-in: unchecked and never required (A2P 10DLC). */}
