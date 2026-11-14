@@ -4,12 +4,22 @@ import { GUIDE_GROUPS } from "./guide-index"
 import GuideReveals from "./guide-reveals"
 import GuideSearch from "./guide-search"
 import "./guides.css"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Tennessee Guides for Estates, Business Closings, Liens and Foreclosure | FALCO"
+const META_DESCRIPTION =
+  "Plain-English Tennessee guides for every distressed sale: estates and probate, closing a business, bankruptcy and receivership, lien sales, tax-delinquent property, land that won't sell, and foreclosure."
 
 export const metadata = {
-  title: "Tennessee Guides for Estates, Business Closings, Liens and Foreclosure | FALCO",
-  description:
-    "Plain-English Tennessee guides for every distressed sale: estates and probate, closing a business, bankruptcy and receivership, lien sales, tax-delinquent property, land that won't sell, and foreclosure.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides" },
+  ...ogMeta({
+    key: "guides",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides",
+  }),
 }
 
 export default function GuidesIndexPage() {

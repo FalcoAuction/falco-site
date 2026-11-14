@@ -6,12 +6,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "Short Sale vs. Selling Before the Trustee Sale in Tennessee | FALCO"
+const META_DESCRIPTION =
+  "When a short sale makes sense in Tennessee, when it doesn't, and how it compares to selling your home outright before the foreclosure. Plain-English guide from a licensed TN auctioneer."
 
 export const metadata = {
-  title: "Short Sale vs. Selling Before the Trustee Sale in Tennessee | FALCO",
-  description:
-    "When a short sale makes sense in Tennessee, when it doesn't, and how it compares to selling your home outright before the foreclosure. Plain-English guide from a licensed TN auctioneer.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/short-sale-vs-auction" },
+  ...ogMeta({
+    key: "guide-short-sale-vs-auction",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/short-sale-vs-auction",
+  }),
 }
 
 export default function ShortSaleVsAuctionGuide() {

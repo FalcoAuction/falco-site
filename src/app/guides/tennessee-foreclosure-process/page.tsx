@@ -7,12 +7,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "The Tennessee Foreclosure Process, Explained Step by Step | FALCO"
+const META_DESCRIPTION =
+  "How a Tennessee trustee sale (non-judicial foreclosure) works: the notice, the timeline, sale day, redemption, deficiency, and the options you have at each stage. Plain English, with the actual TN Code sections."
 
 export const metadata = {
-  title: "The Tennessee Foreclosure Process, Explained Step by Step | FALCO",
-  description:
-    "How a Tennessee trustee sale (non-judicial foreclosure) works: the notice, the timeline, sale day, redemption, deficiency, and the options you have at each stage. Plain English, with the actual TN Code sections.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/tennessee-foreclosure-process" },
+  ...ogMeta({
+    key: "guide-tennessee-foreclosure-process",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/tennessee-foreclosure-process",
+  }),
 }
 
 export default function TnForeclosureProcessGuide() {

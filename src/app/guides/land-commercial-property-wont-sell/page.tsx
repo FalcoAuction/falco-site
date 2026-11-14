@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "land-commercial-property-wont-sell"
 const HEADLINE = "Land or Commercial Property That Won't Sell in Tennessee"
 const DESCRIPTION =
   "When an auction beats another listing for Tennessee land and commercial property, how licensed real estate auctions work, and how heirs' property and property with multiple owners gets to a sale, including partition and Tennessee's heirs property law."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-land-commercial-property-wont-sell",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/land-commercial-property-wont-sell",
+  }),
 }
 
 const SOURCES = [
@@ -81,6 +92,7 @@ export default function LandCommercialGuide() {
       <GuideShell
         variant="situation"
         situation="hard-to-sell"
+        answer="An auction tends to beat another listing when the property is hard to price, has already sat, or has to sell by a date. In Tennessee a real estate auction must be run by someone licensed as both an auctioneer and a real estate broker. If co-owners cannot agree, any of them can ask a court to divide or sell the property."
         eyebrow="Land and commercial guide"
         title={
           <>

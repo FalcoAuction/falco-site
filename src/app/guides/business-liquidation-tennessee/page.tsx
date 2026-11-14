@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "business-liquidation-tennessee"
 const HEADLINE = "Liquidating a Closing Business in Tennessee"
 const DESCRIPTION =
   "How to close and liquidate a Tennessee business: federal WARN and Tennessee layoff notices, final paychecks, secured lenders and UCC liens, the sales tax clearance buyers ask for, dissolving the entity, and selling equipment, fleet, inventory and real estate at auction."
 
+const META_TITLE = `${HEADLINE} | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE} | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-business-liquidation-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/business-liquidation-tennessee",
+  }),
 }
 
 const SOURCES = [
@@ -85,6 +96,7 @@ export default function BusinessLiquidationGuide() {
       <GuideShell
         variant="situation"
         situation="business-closing"
+        answer="Close in order: give any required layoff notices and pay final wages on time, find out which lenders have liens on which assets, clear the sales tax, sell the assets, then dissolve the company. Federal WARN generally applies at 100 or more employees and requires 60 days' notice; Tennessee's own law covers employers with 50 to 99."
         eyebrow="Business closing guide"
         title={
           <>

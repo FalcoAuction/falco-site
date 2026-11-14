@@ -7,6 +7,8 @@ export type GuideLink = {
   title: string
   short: string
   blurb: string
+  // Pillar guides cover a whole situation; spokes answer one question.
+  pillar?: boolean
 }
 
 export type GuideGroup = {
@@ -27,6 +29,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/selling-estate-property-tennessee",
+        pillar: true,
         title: "Selling Estate and Probate Property in Tennessee",
         short: "Selling estate property",
         blurb:
@@ -34,10 +37,32 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       },
       {
         href: "/guides/estate-firearms-collections-tennessee",
+        pillar: true,
         title: "Selling Firearms and Collections From a Tennessee Estate",
         short: "Estate firearms and collections",
         blurb:
           "What federal and Tennessee law allow an executor to do with inherited guns, why licensed auctioneers handle the transfers, and how coins, art and other collections are sold.",
+      },
+      {
+        href: "/guides/do-you-need-probate-to-sell-a-house-tennessee",
+        title: "Do You Need Probate to Sell a House in Tennessee?",
+        short: "Probate to sell a house?",
+        blurb:
+          "When heirs can sell without opening an estate, when they cannot, and the ways Tennessee property passes outside probate.",
+      },
+      {
+        href: "/guides/selling-inherited-house-with-siblings-tennessee",
+        title: "Selling an Inherited House With Siblings in Tennessee",
+        short: "Inherited house with siblings",
+        blurb:
+          "Who owns what share, what one sibling can and cannot do alone, and how partition and Tennessee's heirs property law work when you cannot agree.",
+      },
+      {
+        href: "/guides/tennessee-small-estate-limited-letters",
+        title: "Small Estates in Tennessee: Limited Letters",
+        short: "Small estates: limited letters",
+        blurb:
+          "Tennessee's small-estate process since 2023: who qualifies, the $50,000 limit, what limited letters let you do, and what they cannot touch.",
       },
     ],
   },
@@ -50,6 +75,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/business-liquidation-tennessee",
+        pillar: true,
         title: "Liquidating a Closing Business in Tennessee",
         short: "Liquidating a closing business",
         blurb:
@@ -57,6 +83,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       },
       {
         href: "/guides/sell-vehicles-equipment-boats-aircraft-auction",
+        pillar: true,
         title: "Selling Vehicles, Equipment, Boats and Aircraft at Auction",
         short: "Vehicles, equipment, boats, aircraft",
         blurb:
@@ -124,6 +151,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/bankruptcy-receivership-sales-tennessee",
+        pillar: true,
         title: "Bankruptcy and Receivership Sales in Tennessee",
         short: "Bankruptcy and receivership sales",
         blurb:
@@ -140,10 +168,18 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/tennessee-lien-sales",
+        pillar: true,
         title: "Lien Sales in Tennessee: Marinas, Storage, Repair Shops and Towing",
         short: "Tennessee lien sales",
         blurb:
           "Vessel liens, self-storage, mechanic's and towing liens: who can sell, the notice and publication rules, and how the buyer gets title afterward.",
+      },
+      {
+        href: "/guides/tennessee-abandoned-vehicle-portal-motion-act",
+        title: "Tennessee's Abandoned Vehicle Portal and the MOTION Act",
+        short: "Abandoned vehicle portal",
+        blurb:
+          "For towing companies, repair shops and storage lots: the new notice deadlines, the 20-day reclaim window, and the January 25, 2027 portal deadline.",
       },
     ],
   },
@@ -155,10 +191,25 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/tennessee-tax-sale-delinquent-property",
+        pillar: true,
         title: "Selling Tax-Delinquent Property Before a Tennessee Tax Sale",
         short: "Before a Tennessee tax sale",
         blurb:
           "When Tennessee taxes go delinquent, how the county lawsuit and sale work, the redemption period, excess proceeds, and selling before the sale.",
+      },
+      {
+        href: "/guides/tennessee-tax-sale-redemption-period",
+        title: "Tennessee Tax Sale Redemption Period: The 2026 Change",
+        short: "Tax sale redemption period",
+        blurb:
+          "How long you have to redeem after a Tennessee tax sale under the July 2026 law, what it costs, and how redemption is actually done.",
+      },
+      {
+        href: "/guides/claim-tax-sale-excess-proceeds-tennessee",
+        title: "How to Claim Tax Sale Excess Proceeds in Tennessee",
+        short: "Claiming tax sale excess proceeds",
+        blurb:
+          "Who is owed the money left over after a Tennessee tax sale, the order it is paid, how to file, and what to know before signing with a recovery firm.",
       },
     ],
   },
@@ -171,6 +222,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     guides: [
       {
         href: "/guides/land-commercial-property-wont-sell",
+        pillar: true,
         title: "Land or Commercial Property That Won't Sell in Tennessee",
         short: "Land and commercial that won't sell",
         blurb:
@@ -184,6 +236,9 @@ export const GUIDE_GROUPS: GuideGroup[] = [
 export const SITUATION_GUIDES: GuideLink[] = GUIDE_GROUPS.filter(
   (g) => g.id !== "foreclosure",
 ).flatMap((g) => g.guides)
+
+// Pillars only, for the cross-link block at the foot of every guide.
+export const PILLAR_GUIDES: GuideLink[] = SITUATION_GUIDES.filter((g) => g.pillar)
 
 export const FORECLOSURE_GUIDES: GuideLink[] =
   GUIDE_GROUPS.find((g) => g.id === "foreclosure")?.guides ?? []

@@ -7,12 +7,22 @@ import {
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
+
+const META_TITLE = "How a Wholesaler Prices Your House: The 70% Rule Explained | FALCO"
+const META_DESCRIPTION =
+  "The formula behind every 'we buy houses' cash offer, why the discount exists, and exactly where your equity goes when you take one. Written by a licensed Tennessee auctioneer."
 
 export const metadata = {
-  title: "How a Wholesaler Prices Your House: The 70% Rule Explained | FALCO",
-  description:
-    "The formula behind every 'we buy houses' cash offer, why the discount exists, and exactly where your equity goes when you take one. Written by a licensed Tennessee auctioneer.",
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: "/guides/wholesaler-economics" },
+  ...ogMeta({
+    key: "guide-wholesaler-economics",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/wholesaler-economics",
+  }),
 }
 
 export default function WholesalerEconomicsGuide() {

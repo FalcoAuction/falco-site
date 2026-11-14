@@ -10,16 +10,27 @@ import {
   GuideFaq,
   GuideSources,
 } from "../guide-chrome"
+import { ogMeta } from "@/lib/og"
 
 const SLUG = "estate-firearms-collections-tennessee"
 const HEADLINE = "Selling Firearms and Collections From a Tennessee Estate"
 const DESCRIPTION =
   "What federal and Tennessee law allow an executor to do with inherited firearms, how NFA items are handled, who can legally buy, and how coins, art and other collections from an estate are sold."
 
+const META_TITLE = `${HEADLINE}, Legally | FALCO`
+const META_DESCRIPTION =
+  DESCRIPTION
+
 export const metadata = {
-  title: `${HEADLINE}, Legally | FALCO`,
-  description: DESCRIPTION,
+  title: META_TITLE,
+  description: META_DESCRIPTION,
   alternates: { canonical: `/guides/${SLUG}` },
+  ...ogMeta({
+    key: "guide-estate-firearms-collections-tennessee",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
+    path: "/guides/estate-firearms-collections-tennessee",
+  }),
 }
 
 const SOURCES = [
@@ -76,6 +87,7 @@ export default function EstateFirearmsGuide() {
       <GuideShell
         variant="situation"
         situation="estate"
+        answer="An executor can pass a firearm to an heir named in the will or entitled by inheritance, even in another state, if that heir may legally own it. Selling is where the risk is: never sell to someone you know or have reason to believe is prohibited, send out-of-state buyers through a licensed dealer, and transfer NFA items like suppressors only through ATF."
         eyebrow="Estate guide"
         title={
           <>
