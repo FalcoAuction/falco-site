@@ -1,15 +1,20 @@
-import MathDeck from "./math-deck"
+import MathContent from "./math-content"
+import { ogMeta } from "@/lib/og"
 
-// The equity story as a stepped scroll narrative. Fully static — no
-// server data. All beat copy is in the server-rendered DOM (the client
-// rig only toggles visibility), so this indexes like a normal page.
 export const metadata = {
-  title: "Foreclosure Math: Trustee Sale vs Cash Offer vs Auction | FALCO",
+  title: "The Math: Forced Sale vs Cash Offer vs Marketed Auction | FALCO",
   description:
-    "One number at a time: what a Tennessee homeowner actually keeps at the trustee sale, from a cash buyer, and through a licensed marketed auction run before the sale date.",
+    "One Tennessee house, three ways out. What a forced sale, a cash offer and a marketed auction would each leave you, with the sources behind every number.",
   alternates: { canonical: "/math" },
+  ...ogMeta({
+    key: "math",
+    title: "The Math: Forced Sale vs Cash Offer vs Marketed Auction | FALCO",
+    description:
+      "One Tennessee house, three ways out. What a forced sale, a cash offer and a marketed auction would each leave you, with the sources behind every number.",
+    path: "/math",
+  }),
 }
 
 export default function MathPage() {
-  return <MathDeck />
+  return <MathContent />
 }

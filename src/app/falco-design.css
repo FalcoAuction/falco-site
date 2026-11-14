@@ -850,3 +850,16 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 .rows li a{display:block}
 .rows li a:hover b{text-decoration:underline;text-underline-offset:3px}
 .pg #math{border-top:1px solid var(--line-2);padding-block:clamp(72px,9vw,140px)}
+
+/* ---------- /math: three exits ---------- */
+.mx-exits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:900px){.mx-exits{grid-template-columns:1fr}}
+.mx-exit{border-radius:var(--r-2);border:1px solid var(--line-2);background:var(--surface-2);padding:clamp(22px,2.6vw,30px)}
+.mx-exit .n{display:block;font-size:.82rem;color:var(--muted-2);margin-bottom:12px}
+.mx-exit h3{font-size:1.2rem;letter-spacing:-.022em;margin:0}
+.mx-amount{font-size:clamp(1.7rem,2.8vw,2.3rem);font-weight:500;letter-spacing:-.04em;margin:10px 0 16px;
+  font-variant-numeric:tabular-nums;line-height:1.05}
+.mx-exit ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mx-exit li{font-size:.93rem;color:var(--muted);line-height:1.5}
+.mx-exit.on{background:var(--plate);border-color:var(--plate);color:#fff}
+.mx-exit.on .n,.mx-exit.on li{color:var(--on-dark-mute)}

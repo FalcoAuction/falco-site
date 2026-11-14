@@ -58,6 +58,11 @@ const PAGES: Record<string, Card> = {
     title: "Opt in to texts from FALCO.",
     sub: "Case-specific messages only. No spam. Reply STOP any time.",
   },
+  math: {
+    kicker: "The math",
+    title: "One house. Three ways out.",
+    sub: "What a forced sale, a cash offer and a marketed auction would each leave you, with sources.",
+  },
   guides: {
     kicker: "Guides",
     title: "Selling in a hard moment, in plain English.",
