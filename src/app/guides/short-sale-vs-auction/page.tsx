@@ -3,6 +3,7 @@ import {
   GuideSection,
   GuideKey,
   GuideNote,
+  Cite,
   GuideRelated,
   GuideJsonLd,
 } from "../guide-chrome"
@@ -32,10 +33,11 @@ export default function ShortSaleVsAuctionGuide() {
         headline="Short Sale vs. Selling Before the Trustee Sale in Tennessee"
         description="When a short sale makes sense in Tennessee, when it doesn't, and how it compares to selling your home outright before the foreclosure."
         datePublished="2026-07-12"
-        dateModified="2026-07-12"
+        dateModified="2026-11-14"
         breadcrumbName="Short Sale vs. Auction"
       />
       <GuideShell
+        answer="A short sale is for owners who owe more than the home is worth: the lender agrees to take less than the balance, and unless it waives the rest in writing, you may still owe it. Since 2026, forgiven mortgage debt is generally taxable unless an exception such as insolvency applies. If your home is worth more than you owe, you do not need a short sale. Selling before the trustee sale lets you keep the difference."
         eyebrow="Comparison guide"
         title={
           <>
@@ -51,7 +53,7 @@ export default function ShortSaleVsAuctionGuide() {
             up costs people money. Here is how to tell which one is yours.
           </>
         }
-        updated="July 2026"
+        updated="November 2026"
       >
         <GuideSection title="The one question that decides everything">
           <p>
@@ -72,17 +74,34 @@ export default function ShortSaleVsAuctionGuide() {
           <p>
             A short sale is when you sell the home for{" "}
             <strong className="text-[var(--ink)]">less than you owe</strong> and
-            the lender agrees to accept that lower amount and release the
-            mortgage. It is a tool for people who are underwater. The lender has
-            to approve it, which takes time and paperwork, and there can be tax
-            and credit consequences worth talking through with a professional.
+            the lender agrees to accept that lower amount and release its lien.
+            It is a tool for people who are underwater. The lender has to
+            approve it, which takes time and paperwork.
           </p>
+          <GuideNote label="Get the remaining balance waived in writing">
+            Releasing the lien is not the same as forgiving the debt. Unless
+            the lender agrees in writing to waive the remaining balance, it may
+            still be able to collect it.
+            <Cite href="https://www.consumerfinance.gov/ask-cfpb/what-is-a-short-sale-en-290/" n={1} /> Tennessee
+            law allows lenders to pursue a deficiency after a foreclosure, so
+            the waiver matters here.
+            <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-117/" n={2} />
+          </GuideNote>
+          <GuideNote label="The tax change in 2026">
+            Forgiven debt is generally treated as income, and the lender
+            reports it on Form 1099-C. The federal exclusion for forgiven
+            mortgage debt on a primary home does not apply to debt forgiven
+            after December 31, 2025. Other exceptions, such as insolvency, can
+            still apply.
+            <Cite href="https://www.irs.gov/publications/p4681" n={3} /> Talk to a
+            tax professional before you sign.
+          </GuideNote>
           <GuideNote label="Who should handle a short sale">
             Because a short sale requires negotiating with your lender, it is
             best run through a{" "}
             <strong className="text-[var(--ink)]">licensed Tennessee real estate
             broker</strong> experienced with lender approvals, and it is worth
-            a conversation with a tax advisor about forgiven-debt consequences.
+            a conversation with a tax advisor.
             This is not a do-it-yourself situation, and it is not something to
             hand to whoever knocked on your door.
           </GuideNote>
@@ -96,8 +115,8 @@ export default function ShortSaleVsAuctionGuide() {
             is to sell the home for close to full value, pay off the loan, and{" "}
             <strong className="text-[var(--ink)]">walk away with the difference</strong>
             . A marketed auction is built for exactly this: real buyer
-            competition, a compressed 30-to-45-day timeline, and your equity
-            preserved.
+            competition, a set sale date usually a matter of weeks out, and
+            your equity preserved.
           </p>
         </GuideSection>
 
@@ -120,7 +139,7 @@ export default function ShortSaleVsAuctionGuide() {
                 <tr className="border-b border-[var(--rule)]">
                   <td className="py-3 px-4 text-[var(--ink-faint)]">Lender approval</td>
                   <td className="py-3 px-4">Required</td>
-                  <td className="py-3 px-4">Not required (loan is paid in full)</td>
+                  <td className="py-3 px-4">Not required (loan and liens are paid in full)</td>
                 </tr>
                 <tr className="border-b border-[var(--rule)]">
                   <td className="py-3 px-4 text-[var(--ink-faint)]">What you walk with</td>
@@ -130,12 +149,12 @@ export default function ShortSaleVsAuctionGuide() {
                 <tr className="border-b border-[var(--rule)]">
                   <td className="py-3 px-4 text-[var(--ink-faint)]">Timeline</td>
                   <td className="py-3 px-4">Slower; depends on lender</td>
-                  <td className="py-3 px-4">30 – 45 days typical</td>
+                  <td className="py-3 px-4">Weeks, to a set sale date</td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4 text-[var(--ink-faint)]">Run it through</td>
                   <td className="py-3 px-4">Licensed real estate broker</td>
-                  <td className="py-3 px-4">Licensed Tennessee auction firm</td>
+                  <td className="py-3 px-4">Licensed Tennessee real estate and auction firm</td>
                 </tr>
               </tbody>
             </table>
