@@ -109,7 +109,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <div>
               <div className="crm-section-label">Math sheet</div>
               <SheetThumb href={`/crm/math-sheet/${mathSheetId}`}>
-                <MathSheetContent homeowner={sheet} embed layout="simple" />
+                <MathSheetContent homeowner={sheet} embed layout="simple2" />
               </SheetThumb>
             </div>
           ) : null}

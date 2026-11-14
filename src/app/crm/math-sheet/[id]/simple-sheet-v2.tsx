@@ -3,7 +3,8 @@ import type { Scenario, ScenarioConfig } from "./scenario-config"
 import type { HomeownerSnapshot } from "./math-sheet-content"
 
 /**
- * REVISED homeowner math sheet (v2, under review; ?layout=simple2).
+ * Homeowner math sheet, current default (layout "simple2"; the previous
+ * version is simple-sheet.tsx, still reachable with ?layout=simple).
  * Differences from simple-sheet.tsx: honest status-quo ranges (foreclosure
  * shows the surplus a third-party bidder can leave; a cash range that starts
  * at the payoff reads "Up to"), the site's black-and-white look with color

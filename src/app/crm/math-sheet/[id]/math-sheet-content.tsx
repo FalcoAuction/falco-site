@@ -86,7 +86,7 @@ export default function MathSheetContent({
   backLabel = "← CRM",
   scenarioOverride,
   embed = false,
-  layout = "simple",
+  layout = "simple2",
 }: {
   homeowner: HomeownerSnapshot
   /** Where the chrome back-link goes. Defaults to /crm so the
@@ -101,7 +101,8 @@ export default function MathSheetContent({
    *  renders only the printable sheet. Used by the off-screen iframe in
    *  the lead-page share flow so html-to-image captures a clean PNG. */
   embed?: boolean
-  /** "simple" (default): one-page plain-language sheet. "classic": the
+  /** "simple2" (default): the revised plain-language sheet. "simple": the
+   *  previous version (?layout=simple). "classic": the
    *  full walkthrough with every table (?layout=classic). */
   layout?: "simple" | "simple2" | "classic"
 }) {
