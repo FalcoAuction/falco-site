@@ -81,7 +81,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <dt>Value</dt><dd>{money(lead.property_value ?? opp?.property_value) || "Not valued"}{valueSource ? <span className="crm-faint"> · {valueSource}</span> : null}</dd>
               <dt>FALCO fee</dt><dd>{money(opp?.expected_fee) || "Not ranked"}</dd>
               {lead.mortgage_balance ? <><dt>Mortgage</dt><dd>{money(lead.mortgage_balance)}</dd></> : null}
-              {opp ? <><dt>Rank</dt><dd>#{opp.rank}</dd></> : null}
+              {opp ? <><dt>Rank</dt><dd>{opp.rank > 100000 ? `FL #${opp.rank - 100000}` : `#${opp.rank}`}</dd></> : null}
             </dl>
           </div>
 

@@ -149,7 +149,8 @@ BEGIN
   )
   INSERT INTO lead_opportunities (captured_on, rank, staging_id, bot_source, distress_type, county, property_address,
     owner_name, property_value, expected_fee, fit, fit_label, score, sale_date, contact)
-  SELECT current_date, rk, id, bot_source, dt, county,
+  -- rank is part of the primary key: TN keeps 1..1000, FL takes 100001..
+  SELECT current_date, rk + CASE WHEN fl THEN 100000 ELSE 0 END, id, bot_source, dt, county,
     property_address, owner_name, property_value, expected_fee, fit, fit_label, round(expected_fee * fit, 2),
     trustee_sale_date, contact
   FROM (SELECT ready.*, row_number() OVER (PARTITION BY fl ORDER BY expected_fee * fit DESC, id) AS rk FROM ready) x
