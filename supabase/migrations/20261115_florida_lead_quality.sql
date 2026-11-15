@@ -39,6 +39,9 @@ LANGUAGE sql STABLE AS $$
             s.raw_payload->'padctn'->>'owner', s.raw_payload->'fl_parcel'->>'owner', s.owner_name_records, s.full_name, '')) ~
           '\m(LLC|L L C|INC|CORP|CORPORATION|COMPANY|LP|LLP|LTD|TRUST|TRUSTEES?|PARTNERS|PARTNERSHIP|HOLDINGS?|PROPERTIES|PROPERTY|INVESTMENTS?|APARTMENTS|ASSOCIATION|ASSN|CHURCH|MINISTRIES|BANK|FUND|REIT|AUTHORITY|DEVELOPMENT|ENTERPRISES|GROUP|VENTURES|REALTY|CAPITAL|EQUITIES|HOUSING|METROPOLITAN GOVERNMENT|CITY OF|STATE OF)\M')
       THEN 'entity_owner' END,
+    -- FL roll use codes 070-099: churches, schools, hospitals, government,
+    -- utilities. Never a private seller.
+    CASE WHEN s.raw_payload->'fl_parcel'->>'use_code' >= '070' THEN 'public_or_institutional' END,
     -- A $5M+ building is not a FALCO auction lead (institutional sale).
     CASE WHEN coalesce(s.property_value, 0) > 5000000 THEN 'above_scope' END,
     -- Signals that are not a reason to sell: demolition permits are owners
@@ -87,12 +90,17 @@ BEGIN
     s.raw_payload->'court_notice' AS notice,
     coalesce(s.raw_payload->'metro_parcel'->>'owner_mailing', s.raw_payload->'fl_parcel'->>'mailing_address') AS owner_mailing,
     upper(coalesce(s.raw_payload->'metro_parcel'->>'land_use', s.raw_payload->'padctn_owner_match'->>'land_use',
-      CASE WHEN s.raw_payload->'fl_parcel'->>'residential' = 'true' THEN 'RESIDENTIAL'
-           WHEN jsonb_typeof(s.raw_payload->'fl_parcel') = 'object' THEN 'NONRESIDENTIAL' END, '')) AS land_use,
+      -- DOR use codes: 000-009 residential except 003 (10+ unit apartments).
+      CASE WHEN s.raw_payload->'fl_parcel'->>'use_code' IN ('000','001','002','004','005','006','007','008','009') THEN 'RESIDENTIAL'
+           -- not 'NONRESIDENTIAL': the fit regex would match its RESIDENTIAL
+           WHEN jsonb_typeof(s.raw_payload->'fl_parcel') = 'object' THEN 'COMMERCIAL OR INSTITUTIONAL' END, '')) AS land_use,
     coalesce(s.raw_payload->>'state', 'TN') = 'FL' AS fl,
     nullif(concat_ws(', ', s.raw_payload->>'petitioner', s.raw_payload->>'petitioner_address'), '') AS fl_petitioner,
     upper(coalesce(s.raw_payload->'nashville_codes'->>'Violations_Noted', '') || ' ' ||
-          coalesce(s.raw_payload->'nashville_codes'->>'Reported_Problem', '')) AS violations,
+          coalesce(s.raw_payload->'nashville_codes'->>'Reported_Problem', '') || ' ' ||
+          -- FL code cases: Miami-Dade 'Unsafe Structure', Orlando case names.
+          CASE WHEN s.raw_payload->>'state' = 'FL'
+            THEN coalesce(s.raw_payload->>'case_type', '') || ' ' || coalesce(s.raw_payload->>'case_name', '') ELSE '' END) AS violations,
     lead_quality_reasons(s)
       || CASE WHEN k.addr_key IS NOT NULL AND row_number() OVER (PARTITION BY k.addr_key ORDER BY s.staged_at, s.id) > 1
            THEN ARRAY['duplicate'] ELSE ARRAY[]::text[] END AS reasons
