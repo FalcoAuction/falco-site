@@ -175,10 +175,9 @@ export function usePanelPins() {
           p.style.top = h > vh ? `${vh - h}px` : ""
           continue
         }
-        p.style.top = `${h <= vh - navH ? navH : vh - h}px`
-        // WebKit can keep the old sticky constraint until the next
-        // layout; reading a layout property forces it now.
-        void p.offsetTop
+        // Phones scroll plainly (falco-design.css drops the sticky
+        // stack at this width), so no pin offset.
+        p.style.top = ""
       }
     }
     apply()
@@ -199,6 +198,8 @@ export function usePanelPins() {
 export function useStackDepth() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    // Phones scroll plainly: the scale-and-dim deck read as too busy there.
+    if (window.matchMedia("(max-width: 900px)").matches) return
     const panels = Array.from(document.querySelectorAll<HTMLElement>(".full"))
     if (panels.length < 2) return
     let raf = 0

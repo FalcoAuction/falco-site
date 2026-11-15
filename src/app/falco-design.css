@@ -863,3 +863,47 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
 .mx-exit li{font-size:.93rem;color:var(--muted);line-height:1.5}
 .mx-exit.on{background:var(--plate);border-color:var(--plate);color:#fff}
 .mx-exit.on .n,.mx-exit.on li{color:var(--on-dark-mute)}
+
+/* ---------- phones: more air, less motion ----------
+   At 375px the desktop rhythm read as crammed: a 16px gutter ran copy to
+   the screen edge, rows and cards kept desktop-tight gaps, and the
+   homepage panels pinned, scaled and dimmed under each other on every
+   scroll. Phones scroll plainly (useStackDepth and usePanelPins skip at
+   this width) and get the same breathing room the desktop has. */
+@media(max-width:900px){
+  .full{position:relative}
+  .full + .full{border-radius:0;box-shadow:none;border-top:1px solid var(--line-2)}
+  .js .r{transform:translateY(14px)}
+  .js .media.r,.js .hmedia.r{transform:translateY(18px)}
+}
+@media(max-width:640px){
+  :root{--sp:84px}
+  .wrap,.nav,.hero-stats{padding-inline:24px}
+  .lede{font-size:1.04rem;line-height:1.6}
+  .head{margin-bottom:40px;gap:18px}
+  .lbl{margin-bottom:16px}
+  .pills{gap:12px}
+  .calm:not(.hero-chat):not(.why){min-height:0;padding-block:96px}
+  .calm .head{margin-bottom:48px}
+  .pg-head{padding-block:56px 64px}
+  .pg-head h1{margin-bottom:24px}
+  .pg-head-cta{margin-top:36px}
+  .pg-sec,.mf-sec,.pg #math{padding-block:96px}
+  .rows li,.mf-list li{padding:24px 0 24px 30px}
+  .rows li::before{top:calc(1.6em + 6px)}
+  .mf-list li::before{top:calc(1.55em + 8px)}
+  .rows li span{margin-top:6px;line-height:1.6}
+  .ways{margin:36px 0 40px}
+  .ways li{padding:22px 0}
+  .mf-steps li{grid-template-columns:44px minmax(0,1fr);padding:30px 0}
+  .faq summary{padding-block:26px}
+  .sitgrid,.agrid,.lists,.mx-exits,.mf-exits,.grid2,.grid3{gap:16px}
+  .sit,.box,.mx-exit{padding:28px 24px}
+  .sit{gap:10px}
+  .quiet-steps{gap:44px}
+  .close-line .lede{margin:24px auto 38px}
+  .founder-mission{margin:40px 0 36px}
+  /* guides.css loads after this file; the extra class wins the tie */
+  .gd .gd-in{padding-inline:24px}
+  .gd .gd-sec{padding-block:96px}
+}
