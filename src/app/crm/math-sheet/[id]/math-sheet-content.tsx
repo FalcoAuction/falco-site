@@ -372,16 +372,16 @@ export default function MathSheetContent({
 
       {/* CHROME (hidden on print + embed mode) */}
       {!embed && (
-      <div className="no-print bg-[#060606] text-white border-b border-white/[0.08]">
+      <div className="no-print bg-white text-[#111] border-b border-[#e5e5e5]">
         <div className="mx-auto max-w-5xl px-5 md:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Link
               href={backHref}
-              className="text-[12px] tracking-[0.22em] text-white/55 hover:text-white transition-colors whitespace-nowrap"
+              className="text-[13px] text-[#666] hover:text-[#111] transition-colors whitespace-nowrap"
             >
               {backLabel}
             </Link>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-300/70 truncate">
+            <div className="text-[13px] font-medium text-[#111] truncate">
               Math sheet · {homeowner.fullName || "(no name)"}
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function MathSheetContent({
             {pathname && (
               <Link
                 href={layout === "classic" ? pathname : `${pathname}?layout=classic`}
-                className="text-white/65 hover:text-white transition-colors"
+                className="text-[#666] hover:text-[#111] transition-colors"
               >
                 {layout === "classic" ? "Simple view" : "Full math"}
               </Link>
@@ -397,37 +397,37 @@ export default function MathSheetContent({
             {scenarioCfg.viewToggle && pathname && (
               <Link
                 href={`${pathname}?view=${scenarioCfg.viewToggle.scenario}`}
-                className="rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
+                className="rounded-full border border-[#e5e5e5] px-3 py-1.5 text-[#111] hover:bg-[#f6f6f4] transition-colors"
               >
                 {scenarioCfg.viewToggle.label}
               </Link>
             )}
             <a
               href={`mailto:${homeowner.email}?subject=${encodeURIComponent(
-                `Your FALCO math — ${homeowner.propertyAddress || "your property"}`
+                `Your FALCO numbers for ${homeowner.propertyAddress || "your property"}`
               )}`}
-              className="text-white/65 hover:text-white transition-colors"
+              className="text-[#666] hover:text-[#111] transition-colors"
             >
               Email →
             </a>
             {layout !== "classic" && (
-              <label className="flex items-center gap-1.5 text-white/75 cursor-pointer select-none whitespace-nowrap">
+              <label className="flex items-center gap-1.5 text-[#444] cursor-pointer select-none whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={valueConfirmed}
                   disabled={arvManuallyEdited}
                   onChange={(e) => setValueChecked(e.target.checked)}
-                  className="accent-emerald-400"
+                  className="accent-black"
                 />
                 Value checked
               </label>
             )}
             <button
               onClick={handlePrint}
-              className={`rounded-md font-semibold px-3.5 py-1.5 transition-colors ${
+              className={`rounded-full font-medium px-4 py-1.5 transition-colors ${
                 blockSend
-                  ? "bg-amber-300 hover:bg-amber-200 text-black"
-                  : "bg-emerald-400 hover:bg-emerald-300 text-black"
+                  ? "bg-amber-200 hover:bg-amber-100 text-[#111]"
+                  : "bg-[#0c0c0b] hover:bg-[#2a2a28] text-white"
               }`}
             >
               {arvNeedsVerification
@@ -443,9 +443,9 @@ export default function MathSheetContent({
             so the page reads like the homeowner sees it. */}
         <details
           open={layout === "classic"}
-          className="mx-auto max-w-5xl px-5 md:px-8 py-3 border-t border-white/[0.06]"
+          className="mx-auto max-w-5xl px-5 md:px-8 py-3 border-t border-[#efefec]"
         >
-          <summary className="cursor-pointer select-none text-[11px] uppercase tracking-[0.22em] text-white/55 hover:text-white">
+          <summary className="cursor-pointer select-none text-[12px] text-[#666] hover:text-[#111]">
             Edit numbers
           </summary>
           <div className="h-3" />
@@ -484,7 +484,7 @@ export default function MathSheetContent({
               <NumInput label="Construction months" value={constructionMonths} step={1} onChange={setConstructionMonths} />
             </div>
           )}
-          <div className="mt-2 text-[10px] text-white/35 leading-[1.5]">
+          <div className="mt-2 text-[11px] text-[#888] leading-[1.5]">
             ARV source: {arvSourceLabel}. Replace fallback values with a real AVM or comp before sending.
             <br />
             Closing costs default {fmt(closingCosts)}, buyer&apos;s premium {fmtPct(seed.buyerPremiumPct)} (paid by buyer), wholesale model {baseWholesalePct} base / {stretchWholesalePct} stretch.
@@ -1181,13 +1181,13 @@ function NumInput({
 }) {
   return (
     <label className="block">
-      <div className="text-[10px] uppercase tracking-[0.16em] text-white/45 mb-1">{label}</div>
+      <div className="text-[11px] text-[#888] mb-1">{label}</div>
       <input
         type="number"
         value={value}
         step={step}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-full rounded-md bg-black/40 border border-white/12 px-2.5 py-1.5 text-[13px] text-white outline-none focus:border-emerald-400/60 tabular-nums"
+        className="w-full rounded-md bg-[#f6f6f4] border border-[#e5e5e5] px-2.5 py-1.5 text-[13px] text-[#111] outline-none focus:border-[#111] tabular-nums"
       />
     </label>
   )
