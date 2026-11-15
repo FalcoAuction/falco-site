@@ -160,6 +160,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 {pp.caveats?.length ? <><dt>Check</dt><dd>{pp.caveats.map((c, i) => <div key={i} className="crm-faint">{c}</div>)}</dd></> : null}
                 {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{pp.contacts.attorney.address.join(", ")}</div> : null}</dd></> : null}
                 {pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{r.address.join(", ")}</div> : null}</div>)}</dd></> : null}
+                {pp.contacts?.plaintiff ? <><dt>Plaintiff</dt><dd>{pp.contacts.plaintiff}</dd></> : null}
                 {pp.contacts?.probate_docket ? <><dt>Docket</dt><dd>{pp.contacts.probate_docket}</dd></> : null}
                 {pp.contacts?.bankruptcy_docket ? <><dt>Case</dt><dd><a href={pp.contacts.bankruptcy_docket} target="_blank" rel="noreferrer">{pp.contacts.case_number ?? "Docket"}</a></dd></> : null}
               </dl>

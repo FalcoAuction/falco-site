@@ -261,12 +261,12 @@ export type AircraftTag = {
 // raw_payload.personal_property (the personal_property_lane bot): only leads
 // worth a high-value estate, liquidation, seizure or owner-asset auction.
 export type PersonalPropertyTag = {
-  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset"; grade: "A" | "B"
+  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest"; grade: "A" | "B"
   categories: string[]; est_value_min: number | null; signals: string[]; caveats: string[]
   contacts?: {
     attorney?: { names?: string[]; address?: string[] | null }
     representatives?: { name: string; address?: string[] | null }[]
-    probate_docket?: string; bankruptcy_docket?: string; case_number?: string
+    probate_docket?: string; bankruptcy_docket?: string; case_number?: string; plaintiff?: string
   }
 }
 // raw_payload.operator_contents: what the operator learned on a call. Written
@@ -278,6 +278,7 @@ export type OperatorContents = {
 }
 export const PP_LANE_LABEL: Record<PersonalPropertyTag["lane"], string> = {
   estate: "Estate contents", business_liquidation: "Business liquidation", seizure: "Tax seizure", owner_asset: "Owner asset",
+  vessel_arrest: "Vessel arrest",
 }
 export type BucketRow = {
   staging_id: string; property_address: string | null; county: string | null; owner_name: string | null
