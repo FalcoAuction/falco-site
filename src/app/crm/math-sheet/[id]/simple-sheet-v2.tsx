@@ -273,7 +273,7 @@ export default function SimpleSheetV2({
             {homeowner.fullName || (estate ? "the owner" : "you")}
           </div>
           {homeowner.propertyAddress && <div>{homeowner.propertyAddress}</div>}
-          <div>Prepared {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+          <div>Prepared {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}</div>
         </div>
       </div>
 
