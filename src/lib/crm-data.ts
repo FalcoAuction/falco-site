@@ -19,7 +19,12 @@ export type Opportunity = {
 export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus | null; next_action_at: string | null; last_contact_at: string | null }
 
 // Saved views, Close-style: each is a filter you work top to bottom.
-export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "working"
+export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "florida" | "working"
+// Florida counties the FL bots stage (lowercased as lead_opportunities
+// stores them). Florida leads get their own view and stay out of the
+// Tennessee views, so the Middle TN dial lists are unchanged.
+export const FL_COUNTIES = ["miami-dade", "broward", "palm beach", "hillsborough", "orange", "pinellas", "duval", "lee", "collier", "sarasota"]
+const FL_IN = `(${FL_COUNTIES.map((c) => `"${c}"`).join(",")})`
 export type BucketKey = "commercial" | "land" | "assets"
 export const BUCKETS: { key: BucketKey; label: string }[] = [
   { key: "commercial", label: "CRE" },
@@ -35,6 +40,7 @@ export const VIEWS: { key: ViewKey; label: string }[] = [
   { key: "court", label: "Court sale" },
   { key: "bankruptcy", label: "Bankruptcy" },
   { key: "code", label: "Code violation" },
+  { key: "florida", label: "Florida" },
   { key: "working", label: "In progress" },
 ]
 
@@ -52,8 +58,10 @@ export async function latestOpportunityDay(): Promise<string | null> {
   return (r.data?.[0] as { captured_on: string } | undefined)?.captured_on ?? null
 }
 
-function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte: Function; or: Function }>(q: Q, view: ViewKey): Q {
+function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte: Function; or: Function; in: Function; not: Function }>(q: Q, view: ViewKey): Q {
   const today = isoDay(new Date())
+  if (view === "florida") return q.in("county", FL_COUNTIES)
+  q = q.not("county", "in", FL_IN)
   switch (view) {
     case "soon": return q.gte("sale_date", today).lte("sale_date", isoDay(addDays(14)))
     case "foreclosure": return q.ilike("fit_label", "Foreclosure%")
@@ -126,10 +134,13 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("lead_opportunities").select("fit_label,sale_date").eq("captured_on", day).limit(5000)
-  const rows = (r.data ?? []) as { fit_label: string; sale_date: string | null }[]
+  const r = await supabaseAdmin.from("lead_opportunities").select("fit_label,sale_date,county").eq("captured_on", day).limit(5000)
+  const all = (r.data ?? []) as { fit_label: string; sale_date: string | null; county: string | null }[]
+  const fl = new Set(FL_COUNTIES)
+  const rows = all.filter((x) => !fl.has(x.county ?? ""))
   const today = isoDay(new Date()), soon = isoDay(addDays(14))
-  const c: Partial<Record<ViewKey, number>> = { all: rows.length, soon: 0, foreclosure: 0, estate: 0, tax: 0, court: 0, bankruptcy: 0, code: 0 }
+  const c: Partial<Record<ViewKey, number>> = { all: rows.length, soon: 0, foreclosure: 0, estate: 0, tax: 0, court: 0, bankruptcy: 0, code: 0,
+    florida: all.length - rows.length }
   for (const x of rows) {
     if (x.sale_date && x.sale_date >= today && x.sale_date <= soon) c.soon!++
     if (x.fit_label.startsWith("Foreclosure")) c.foreclosure!++
@@ -258,10 +269,32 @@ export type AircraftTag = {
   n_number: string; aircraft: string; value_band_label: string; registrant: string; registrant_address: string
   registration_status: string | null; match_type?: string; confidence?: string
 }
+// raw_payload.personal_property (the personal_property_lane bot): only leads
+// worth a high-value estate, liquidation, seizure or owner-asset auction.
+export type PersonalPropertyTag = {
+  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest"; grade: "A" | "B"
+  categories: string[]; est_value_min: number | null; signals: string[]; caveats: string[]
+  contacts?: {
+    attorney?: { names?: string[]; address?: string[] | null }
+    representatives?: { name: string; address?: string[] | null }[]
+    probate_docket?: string; bankruptcy_docket?: string; case_number?: string; plaintiff?: string
+  }
+}
+// raw_payload.operator_contents: what the operator learned on a call. Written
+// only by /api/crm/contents, never by a bot.
+export type OperatorContents = {
+  vehicles: string; boats_rvs: string; firearms_count: number | null; firearms_collection: boolean
+  coins_jewelry_art: string; tractors_equipment: string; other: string; est_value: number | null
+  updated_at: string; updated_by: string
+}
+export const PP_LANE_LABEL: Record<PersonalPropertyTag["lane"], string> = {
+  estate: "Estate contents", business_liquidation: "Business liquidation", seizure: "Tax seizure", owner_asset: "Owner asset",
+  vessel_arrest: "Vessel arrest",
+}
 export type BucketRow = {
   staging_id: string; property_address: string | null; county: string | null; owner_name: string | null
   distress_type: string | null; bot_source: string; sale_date: string | null; property_value: number | null
-  lane: LaneTag | null; aircraft: AircraftTag[] | null
+  lane: LaneTag | null; aircraft: AircraftTag[] | null; pp: PersonalPropertyTag | null
   slug: string | null; status: DialerStatus | null; last_contact_at: string | null
 }
 export type GradeFilter = "qualified" | "A" | "B" | "C" | "all"
@@ -269,7 +302,7 @@ export type GradeFilter = "qualified" | "A" | "B" | "C" | "all"
 type StagedBucket = {
   id: string; property_address: string | null; county: string | null; owner_name_records: string | null; full_name: string | null
   distress_type: string | null; bot_source: string; trustee_sale_date: string | null; property_value: number | null
-  pipeline_lead_key: string | null; lane?: LaneTag | null; aircraft?: AircraftTag[] | null
+  pipeline_lead_key: string | null; lane?: LaneTag | null; aircraft?: AircraftTag[] | null; pp?: PersonalPropertyTag | null
 }
 const BUCKET_COLS = "id,property_address,county,owner_name_records,full_name,distress_type,bot_source,trustee_sale_date,property_value,pipeline_lead_key"
 
@@ -285,13 +318,26 @@ async function bucketWorkflow(rows: StagedBucket[]): Promise<BucketRow[]> {
     return {
       staging_id: r.id, property_address: r.property_address, county: r.county, owner_name: r.owner_name_records ?? r.full_name,
       distress_type: r.distress_type, bot_source: r.bot_source, sale_date: r.trustee_sale_date,
-      property_value: r.property_value ?? r.lane?.value ?? null, lane: r.lane ?? null, aircraft: r.aircraft ?? null,
+      property_value: r.property_value ?? r.lane?.value ?? null, lane: r.lane ?? null, aircraft: r.aircraft ?? null, pp: r.pp ?? null,
       slug: r.pipeline_lead_key, status: w?.status ?? null, last_contact_at: w?.last_contact_at ?? null,
     }
   })
 }
 
 const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
+
+// Ids of every high-value asset lead: aircraft owners plus personal-property
+// lanes. Each query is answered from its own partial index
+// (20261113_staging_aircraft_index.sql, 20261114_staging_personal_property_index.sql).
+async function assetIds(): Promise<string[] | { error: string }> {
+  if (!supabaseAdmin) return { error: "Database not configured." }
+  const [a, p] = await Promise.all([
+    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500),
+    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->personal_property", "is", null).limit(500),
+  ])
+  if (a.error || p.error) return { error: (a.error ?? p.error)!.message }
+  return [...new Set([...(a.data ?? []), ...(p.data ?? [])].map((r) => (r as { id: string }).id))]
+}
 
 export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter; county?: string; q?: string } = {}):
   Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
@@ -302,11 +348,11 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
     // Two steps on purpose: the partial index answers "which ids" as an
     // index-only scan, but asking for the tag in the same query makes the
     // planner (no stats on the expression) seq-scan all of staging (~6 s).
-    const ids = await supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500)
-    if (ids.error) return { rows: [], grades, error: ids.error.message }
-    const idList = ((ids.data ?? []) as { id: string }[]).map((r) => r.id)
+    const idList = await assetIds()
+    if ("error" in idList) return { rows: [], grades, error: idList.error }
     if (idList.length) {
-      const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},aircraft:raw_payload->aircraft`).in("id", idList)
+      const r = await supabaseAdmin.from("homeowner_requests_staging")
+        .select(`${BUCKET_COLS},aircraft:raw_payload->aircraft,pp:raw_payload->personal_property`).in("id", idList)
       if (r.error) return { rows: [], grades, error: r.error.message }
       all.push(...((r.data ?? []) as unknown as StagedBucket[]))
     }
@@ -326,7 +372,7 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
   for (const r of all) {
     const k = propertyKey(r)
     const prev = byAddr.get(k)
-    if (!prev || (GRADE_ORDER[r.lane?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? ""] ?? 9)) byAddr.set(k, r)
+    if (!prev || (GRADE_ORDER[r.lane?.grade ?? r.pp?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? prev.pp?.grade ?? ""] ?? 9)) byAddr.set(k, r)
   }
   let rows = [...byAddr.values()]
   if (opts.county) rows = rows.filter((r) => (r.county ?? "").toLowerCase().replace(/\s+county$/, "") === opts.county)
@@ -341,7 +387,7 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
   }
   const grade = opts.grade ?? (bucket === "assets" ? "all" : "qualified")
   if (bucket !== "assets" && grade !== "all") rows = rows.filter((r) => (grade === "qualified" ? !!r.lane?.grade : r.lane?.grade === grade))
-  rows.sort((a, b) => (GRADE_ORDER[a.lane?.grade ?? ""] ?? 9) - (GRADE_ORDER[b.lane?.grade ?? ""] ?? 9)
+  rows.sort((a, b) => (GRADE_ORDER[a.lane?.grade ?? a.pp?.grade ?? ""] ?? 9) - (GRADE_ORDER[b.lane?.grade ?? b.pp?.grade ?? ""] ?? 9)
     || (b.lane?.land_flip?.score ?? 0) - (a.lane?.land_flip?.score ?? 0)
     || Number(b.property_value ?? b.lane?.value ?? 0) - Number(a.property_value ?? a.lane?.value ?? 0))
   // Every row in the view (a few hundred); the tab count must match.
@@ -372,11 +418,10 @@ export async function bucketCounts(): Promise<Record<BucketKey, number>> {
     }
     return unique(rows)
   }
-  // Ids first through the partial index (see listBucket), then addresses.
+  // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {
-    const ids = await db.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500)
-    const idList = ((ids.data ?? []) as { id: string }[]).map((r) => r.id)
-    if (!idList.length) return 0
+    const idList = await assetIds()
+    if (!Array.isArray(idList) || !idList.length) return 0
     const r = await db.from("homeowner_requests_staging").select("id,property_address").in("id", idList)
     return unique((r.data ?? []) as R[])
   }
