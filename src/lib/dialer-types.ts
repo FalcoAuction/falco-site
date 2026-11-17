@@ -184,6 +184,12 @@ export function distressTypeLabel(raw: string | null | undefined): {
   }
   if (v === "FORECLOSURE") return { label: "Foreclosure", category: "foreclosure" }
   if (v === "FSBO") return { label: "FSBO", category: "fsbo" }
+  // Bankruptcy events: the stay is gone or going, so the lender can restart
+  // the foreclosure the filing paused.
+  if (v === "BK_DISMISSED") return { label: "Bankruptcy dismissed", category: "pre_foreclosure" }
+  if (v === "BK_DISMISSAL_MOTION") return { label: "Bankruptcy, dismissal requested", category: "pre_foreclosure" }
+  if (v === "BK_STAY_RELIEF") return { label: "Bankruptcy, lender stay relief", category: "pre_foreclosure" }
+  if (v === "BK_ABANDONED") return { label: "Bankruptcy, trustee abandoned", category: "pre_foreclosure" }
   return {
     label: v
       ? v.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())

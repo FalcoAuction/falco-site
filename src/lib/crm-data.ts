@@ -68,7 +68,9 @@ function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte
     case "estate": return q.ilike("fit_label", "Estate%")
     case "tax": return q.eq("fit_label", "Tax sale")
     case "court": return q.ilike("fit_label", "Court%")
-    case "bankruptcy": return q.eq("fit_label", "Bankruptcy")
+    // "Bankruptcy" (new filings) plus the event labels: dismissed, dismissal
+    // requested, lender stay relief, trustee abandoned.
+    case "bankruptcy": return q.ilike("fit_label", "Bankruptcy%")
     case "code": return q.ilike("fit_label", "Code violation%")
     default: return q
   }
@@ -147,7 +149,7 @@ export async function viewCounts(day: string | null): Promise<Partial<Record<Vie
     else if (x.fit_label.startsWith("Estate")) c.estate!++
     else if (x.fit_label === "Tax sale") c.tax!++
     else if (x.fit_label.startsWith("Court")) c.court!++
-    else if (x.fit_label === "Bankruptcy") c.bankruptcy!++
+    else if (x.fit_label.startsWith("Bankruptcy")) c.bankruptcy!++
     else if (x.fit_label.startsWith("Code violation")) c.code!++
   }
   return c
