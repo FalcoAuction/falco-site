@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { PP_LANE_LABEL, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents, type PersonalPropertyTag } from "@/lib/crm-data"
+import { PP_LANE_LABEL, addressText, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents, type PersonalPropertyTag } from "@/lib/crm-data"
 import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import { Icon } from "@/app/crm/icons"
 import { Head, SalePill, StatusPill, money, relTime, shortDate, titleCase } from "@/app/crm/ui"
@@ -158,8 +158,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 {pp.est_value_min ? <><dt>Est. value</dt><dd>{money(pp.est_value_min)}+ <span className="crm-faint">rough</span></dd></> : null}
                 <dt>Why</dt><dd>{pp.signals.map((s, i) => <div key={i} className="crm-muted">{s}</div>)}</dd>
                 {pp.caveats?.length ? <><dt>Check</dt><dd>{pp.caveats.map((c, i) => <div key={i} className="crm-faint">{c}</div>)}</dd></> : null}
-                {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{pp.contacts.attorney.address.join(", ")}</div> : null}</dd></> : null}
-                {pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{r.address.join(", ")}</div> : null}</div>)}</dd></> : null}
+                {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{addressText(pp.contacts.attorney.address)}</div> : null}</dd></> : null}
+                {pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{addressText(r.address)}</div> : null}</div>)}</dd></> : null}
+                {pp.contacts?.owner ? <><dt>Owner</dt><dd>{pp.contacts.owner}</dd></> : null}
+                {pp.contacts?.marina ? <><dt>Marina</dt><dd>{pp.contacts.marina.name}{pp.contacts.marina.address ? <div className="crm-faint">{pp.contacts.marina.address}</div> : null}</dd></> : null}
+                {pp.contacts?.trustee ? <><dt>Trustee</dt><dd>{pp.contacts.trustee.name}{pp.contacts.trustee.phone ? <div><a href={`tel:${pp.contacts.trustee.phone.replace(/[^\d+]/g, "")}`}>{pp.contacts.trustee.phone}</a></div> : null}{pp.contacts.trustee.email ? <div className="crm-faint">{pp.contacts.trustee.email}</div> : null}</dd></> : null}
+                {pp.contacts?.counsel?.length ? <><dt>Counsel</dt><dd>{pp.contacts.counsel.map((c) => <div key={c.name}>{c.name}{c.firm ? <span className="crm-faint"> · {c.firm}</span> : null}{c.phone ? <div><a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>{c.phone}</a></div> : null}{c.email ? <div className="crm-faint">{c.email}</div> : null}</div>)}</dd></> : null}
                 {pp.contacts?.plaintiff ? <><dt>Plaintiff</dt><dd>{pp.contacts.plaintiff}</dd></> : null}
                 {pp.contacts?.probate_docket ? <><dt>Docket</dt><dd>{pp.contacts.probate_docket}</dd></> : null}
                 {pp.contacts?.bankruptcy_docket ? <><dt>Case</dt><dd><a href={pp.contacts.bankruptcy_docket} target="_blank" rel="noreferrer">{pp.contacts.case_number ?? "Docket"}</a></dd></> : null}

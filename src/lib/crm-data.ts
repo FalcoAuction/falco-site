@@ -272,14 +272,21 @@ export type AircraftTag = {
 // raw_payload.personal_property (the personal_property_lane bot): only leads
 // worth a high-value estate, liquidation, seizure or owner-asset auction.
 export type PersonalPropertyTag = {
-  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest"; grade: "A" | "B"
+  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest" | "vessel_lien"; grade: "A" | "B"
   categories: string[]; est_value_min: number | null; signals: string[]; caveats: string[]
   contacts?: {
-    attorney?: { names?: string[]; address?: string[] | null }
-    representatives?: { name: string; address?: string[] | null }[]
+    // Addresses are line arrays from TN court notices, plain strings from FL clerk files.
+    attorney?: { names?: string[]; address?: string[] | string | null }
+    representatives?: { name: string; address?: string[] | string | null }[]
     probate_docket?: string; bankruptcy_docket?: string; case_number?: string; plaintiff?: string
+    owner?: string
+    marina?: { name: string; address?: string | null }
+    trustee?: { name: string; phone?: string | null; email?: string | null }
+    counsel?: { name: string; firm?: string | null; phone?: string | null; email?: string | null }[]
   }
 }
+export const addressText = (a: string[] | string | null | undefined): string =>
+  Array.isArray(a) ? a.join(", ") : (a ?? "")
 // raw_payload.operator_contents: what the operator learned on a call. Written
 // only by /api/crm/contents, never by a bot.
 export type OperatorContents = {
@@ -289,7 +296,7 @@ export type OperatorContents = {
 }
 export const PP_LANE_LABEL: Record<PersonalPropertyTag["lane"], string> = {
   estate: "Estate contents", business_liquidation: "Business liquidation", seizure: "Tax seizure", owner_asset: "Owner asset",
-  vessel_arrest: "Vessel arrest",
+  vessel_arrest: "Vessel arrest", vessel_lien: "Marina lien",
 }
 export type BucketRow = {
   staging_id: string; property_address: string | null; county: string | null; owner_name: string | null
