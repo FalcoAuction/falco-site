@@ -311,7 +311,7 @@ export async function submitHomeownerRequest(
   }
 
   // Notify FALCO ops
-  const subject = `🏠 Homeowner request: ${row.full_name}${row.trustee_sale_date ? ` (sale ${row.trustee_sale_date})` : ""}`
+  const subject = `Homeowner request: ${row.full_name}${row.trustee_sale_date ? ` (sale ${row.trustee_sale_date})` : ""}`
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
 <div style="max-width:600px;margin:0 auto">
 <div style="padding:16px 0;border-bottom:2px solid #10b981">
@@ -441,7 +441,7 @@ export async function submitGeneralInquiry(
     return { ok: false, error: `Submission failed: ${error.message}` }
   }
 
-  const subject = `📨 General inquiry: ${row.full_name}${row.topic ? ` · ${row.topic}` : ""}`
+  const subject = `Inquiry: ${row.full_name}${row.topic ? ` · ${row.topic}` : ""}`
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
 <div style="max-width:600px;margin:0 auto">
 <div style="padding:16px 0;border-bottom:2px solid #10b981">
@@ -561,7 +561,7 @@ export async function submitPartnerInquiry(
     return { ok: false, error: `Submission failed: ${error.message}` }
   }
 
-  const subject = `🤝 Auction partner inquiry: ${row.company || row.full_name}`
+  const subject = `Auction partner inquiry: ${row.company || row.full_name}`
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
 <div style="max-width:600px;margin:0 auto">
 <div style="padding:16px 0;border-bottom:2px solid #10b981">

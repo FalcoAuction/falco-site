@@ -261,7 +261,7 @@ export async function GET(req: NextRequest) {
   ${
     pendingApproval.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #b45309;">⚠️ Awaiting your approval (${pendingApproval.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #b45309;">Awaiting your approval (${pendingApproval.length})</h2>
     <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">
       The bot drafted but didn't auto-send. Open the dialer Inbox to approve or rewrite each.
     </div>
@@ -273,7 +273,7 @@ export async function GET(req: NextRequest) {
   ${
     autoSent.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #15803d;">✓ Auto-replied (${autoSent.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #15803d;">Auto-replied (${autoSent.length})</h2>
     <ul style="list-style: none; padding: 0;">${autoSentList}</ul>
   </section>`
       : ""
@@ -282,7 +282,7 @@ export async function GET(req: NextRequest) {
   ${
     undelivered.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">✗ Carrier-undelivered (${undelivered.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">Carrier-undelivered (${undelivered.length})</h2>
     <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">
       Twilio accepted these but the carrier didn't deliver. Often = landline,
       spam-filter, or disconnected number. If this count is high vs delivered,
@@ -296,7 +296,7 @@ export async function GET(req: NextRequest) {
   ${
     dncEvents.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">🚫 STOP / DNC (${dncEvents.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">STOP / DNC (${dncEvents.length})</h2>
     <ul>${dncList}</ul>
   </section>`
       : ""
@@ -305,7 +305,7 @@ export async function GET(req: NextRequest) {
   ${
     failed.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">✗ Send failures (${failed.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #991b1b;">Send failures (${failed.length})</h2>
     <ul>${failedList}</ul>
   </section>`
       : ""
@@ -314,7 +314,7 @@ export async function GET(req: NextRequest) {
   ${
     inbound.length > 0
       ? `<section style="margin-bottom: 24px;">
-    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #475569;">📥 All inbound (${inbound.length})</h2>
+    <h2 style="font-size: 16px; margin: 0 0 8px 0; color: #475569;">All inbound (${inbound.length})</h2>
     <ul>${inboundList}</ul>
   </section>`
       : ""

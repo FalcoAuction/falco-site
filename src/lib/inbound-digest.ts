@@ -55,9 +55,9 @@ function leadRowsHtml(leads: Lead[]): string {
     .join("")
 }
 
-function sectionHtml(title: string, emoji: string, leads: Lead[]): string {
+function sectionHtml(title: string, leads: Lead[]): string {
   return `<div style="margin-top:24px">
-  <div style="font-size:11px;letter-spacing:0.22em;color:#10b981;text-transform:uppercase;font-weight:700;margin-bottom:8px">${emoji} ${esc(title)}<span style="color:rgba(255,255,255,0.45);margin-left:8px;letter-spacing:normal;text-transform:none;font-weight:400">${leads.length}</span></div>
+  <div style="font-size:11px;letter-spacing:0.22em;color:#10b981;text-transform:uppercase;font-weight:700;margin-bottom:8px">${esc(title)}<span style="color:rgba(255,255,255,0.45);margin-left:8px;letter-spacing:normal;text-transform:none;font-weight:400">${leads.length}</span></div>
   <table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:8px;overflow:hidden">
     <tbody>${leadRowsHtml(leads)}</tbody>
   </table>
@@ -130,7 +130,7 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     month: "long",
     day: "numeric",
   })
-  const subject = `FALCO daily digest — ${totals.total} new lead${totals.total === 1 ? "" : "s"} (${today})`
+  const subject = `FALCO daily digest: ${totals.total} new lead${totals.total === 1 ? "" : "s"} (${today})`
 
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#060606;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
 <div style="max-width:640px;margin:0 auto;background:#0a0a0a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden">
@@ -140,11 +140,11 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     <div style="font-size:13px;color:#9ca3af;margin-top:4px">${esc(today)} · falco.llc/crm</div>
   </div>
   <div style="padding:6px 28px 24px">
-    ${sectionHtml("Pipeline (FALCO-pulled)", "🛰", last.pipeline)}
-    ${sectionHtml("Inbound homeowners", "🏠", last.homeowners)}
-    ${sectionHtml("Buyers", "🆕", last.buyers)}
-    ${sectionHtml("Auction partners", "🤝", last.partners)}
-    ${sectionHtml("General inquiries", "📨", last.inquiries)}
+    ${sectionHtml("Pipeline (FALCO-pulled)", last.pipeline)}
+    ${sectionHtml("Inbound homeowners", last.homeowners)}
+    ${sectionHtml("Buyers", last.buyers)}
+    ${sectionHtml("Auction partners", last.partners)}
+    ${sectionHtml("General inquiries", last.inquiries)}
   </div>
   <div style="padding:14px 28px;border-top:1px solid rgba(255,255,255,0.06);color:#4b5563;font-size:11px;text-align:center;letter-spacing:0.16em;text-transform:uppercase">
     <a href="https://falco.llc/crm/inbox" style="color:#10b981;text-decoration:none">Open the CRM inbox →</a>
@@ -156,15 +156,15 @@ export async function sendInboundDigest(opts?: { force?: boolean }): Promise<Dig
     `FALCO Daily Digest — ${today}`,
     `${totals.total} new lead${totals.total === 1 ? "" : "s"} in the last 24 hours`,
     "",
-    ...leadTextLines(last.pipeline, "🛰 Pipeline (FALCO-pulled)"),
+    ...leadTextLines(last.pipeline, "Pipeline (FALCO-pulled)"),
     "",
-    ...leadTextLines(last.homeowners, "🏠 Inbound homeowners"),
+    ...leadTextLines(last.homeowners, "Inbound homeowners"),
     "",
-    ...leadTextLines(last.buyers, "🆕 Buyers"),
+    ...leadTextLines(last.buyers, "Buyers"),
     "",
-    ...leadTextLines(last.partners, "🤝 Auction partners"),
+    ...leadTextLines(last.partners, "Auction partners"),
     "",
-    ...leadTextLines(last.inquiries, "📨 General inquiries"),
+    ...leadTextLines(last.inquiries, "General inquiries"),
     "",
     "Open the inbox: https://falco.llc/crm/inbox",
   ].join("\n")

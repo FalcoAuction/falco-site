@@ -139,7 +139,7 @@ export async function notifyAuctionPartnerOnBooking(ctx: BookedNotifyContext): P
       wholesalerNet = Math.max(0, Math.round(m.wholesaler.realisticNet))
     }
 
-    const subject = `🔥 New Auction Call Booked — ${address}${dts !== null ? ` (${dts}d to sale)` : ""}`
+    const subject = `Auction call booked: ${address}${dts !== null ? ` (${dts}d to sale)` : ""}`
 
     const callTimeStr = ctx.nextActionAt ? fmtDateTime(ctx.nextActionAt) : "Not scheduled yet — confirm with seller"
 
@@ -455,7 +455,7 @@ export async function notifyQualifiedLeadDelivered(
     if (lead.yearBuilt) propBits.push(`built ${lead.yearBuilt}`)
     const propSnapshot = propBits.join("  ·  ")
 
-    const subject = `[Qualified Lead] ${lead.address} — appointment ${apptStr}`
+    const subject = `[Qualified Lead] ${lead.address}, appointment ${apptStr}`
 
     const mathSheetUrl = `https://falco.llc/crm/l/${ctx.listingSlug}`
     const dialerUrl = `https://falco.llc/crm/l/${ctx.listingSlug}`

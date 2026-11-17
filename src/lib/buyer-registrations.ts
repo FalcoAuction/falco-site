@@ -205,8 +205,8 @@ async function notifyBuyerSignup(reg: BuyerRegistration, alreadyExisted: boolean
   }
 
   const subject = alreadyExisted
-    ? `🔁 Buyer re-registered: ${reg.fullName}`
-    : `🆕 New Buyer Registered: ${reg.fullName}${reg.cashReady ? " · CASH READY" : ""}`
+    ? `Buyer updated their profile: ${reg.fullName}`
+    : `New buyer: ${reg.fullName}${reg.cashReady ? " · cash ready" : ""}`
 
   const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
 <div style="max-width:600px;margin:0 auto">
@@ -238,7 +238,7 @@ ${reg.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
     reg.counties ? `Counties: ${reg.counties}` : "",
     reg.propertyTypes ? `Types: ${reg.propertyTypes}` : "",
     reg.strategies ? `Strategies: ${reg.strategies}` : "",
-    reg.cashReady ? "CASH READY ✓" : "",
+    reg.cashReady ? "Cash ready" : "",
     reg.fundingSource ? `Funding: ${reg.fundingSource}` : "",
     reg.closeSpeedDays ? `Close in: ${reg.closeSpeedDays} days` : "",
     reg.referrer ? `Via: ${reg.referrer}` : "",
