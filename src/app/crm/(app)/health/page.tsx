@@ -10,10 +10,13 @@ export const dynamic = "force-dynamic"
 type Row = { bot_source: string; total: number; launch_ready: number; reasons: Record<string, number> }
 const REASONS: Record<string, string> = {
   outside_focus: "Outside the 10 Middle TN counties", no_property: "No property address", owner_unmatched: "Decedent not matched to a parcel",
-  no_value: "No property value", below_fee_floor: "Value under $50k", entity_owner: "Owner is an LLC, church or government",
+  no_value: "No property value", below_fee_floor: "Value under $150k", entity_owner: "Owner is an LLC, church or government",
   no_contact_path: "Estate with no executor or attorney address", sale_passed: "Sale date already passed",
   estate_over_6mo: "Estate notice over 6 months old", duplicate: "Same address as an earlier lead",
   above_scope: "Value over $5M", weak_signal: "Not a reason to sell",
+  nuisance_violation: "Code case is a nuisance ticket, not a failing structure",
+  bankruptcy_filing_only: "New bankruptcy filing (trustee or court controls the house)",
+  no_equity: "Owes 90% or more of the value", no_owner_contact: "No owner name or mailing address",
 }
 
 export default async function HealthPage() {
