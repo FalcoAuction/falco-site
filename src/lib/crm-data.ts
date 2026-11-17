@@ -16,7 +16,9 @@ export type Opportunity = {
   fit_label: string; score: number; sale_date: string | null; contact: string | null
 }
 
-export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus | null; next_action_at: string | null; last_contact_at: string | null }
+export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus | null; next_action_at: string | null; last_contact_at: string | null
+  /** A phone on file. Without one the lead waits for paid skip tracing. */
+  has_phone: boolean }
 
 // Saved views, Close-style: each is a filter you work top to bottom.
 export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "florida" | "working"
@@ -78,9 +80,11 @@ function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte
 
 /** Slug (pipeline_lead_key) and workflow for a page of opportunities. */
 async function attachWorkflow(opps: Opportunity[]): Promise<LeadRow[]> {
-  if (!supabaseAdmin || opps.length === 0) return opps.map((o) => ({ ...o, slug: null, status: null, next_action_at: null, last_contact_at: null }))
-  const keys = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key").in("id", opps.map((o) => o.staging_id))
-  const slugOf = new Map(((keys.data ?? []) as { id: string; pipeline_lead_key: string | null }[]).map((r) => [r.id, r.pipeline_lead_key]))
+  if (!supabaseAdmin || opps.length === 0) return opps.map((o) => ({ ...o, slug: null, status: null, next_action_at: null, last_contact_at: null, has_phone: false }))
+  const keys = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,phone").in("id", opps.map((o) => o.staging_id))
+  const keyRows = (keys.data ?? []) as { id: string; pipeline_lead_key: string | null; phone: string | null }[]
+  const slugOf = new Map(keyRows.map((r) => [r.id, r.pipeline_lead_key]))
+  const phoned = new Set(keyRows.filter((r) => (r.phone ?? "").trim()).map((r) => r.id))
   const slugs = [...new Set([...slugOf.values()].filter(Boolean))] as string[]
   const wf = slugs.length
     ? await supabaseAdmin.from("dialer_lead_workflow").select("listing_slug,status,next_action_at,last_contact_at").in("listing_slug", slugs)
@@ -89,7 +93,8 @@ async function attachWorkflow(opps: Opportunity[]): Promise<LeadRow[]> {
   return opps.map((o) => {
     const slug = slugOf.get(o.staging_id) ?? null
     const w = slug ? wfOf.get(slug) : undefined
-    return { ...o, slug, status: w?.status ?? null, next_action_at: w?.next_action_at ?? null, last_contact_at: w?.last_contact_at ?? null }
+    return { ...o, slug, status: w?.status ?? null, next_action_at: w?.next_action_at ?? null, last_contact_at: w?.last_contact_at ?? null,
+      has_phone: phoned.has(o.staging_id) }
   })
 }
 

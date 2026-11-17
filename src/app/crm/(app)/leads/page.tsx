@@ -90,7 +90,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           </div>
         ) : null}
         <span style={{ flex: 1 }} />
-        <span className="crm-faint">{rowsShown} shown</span>
+        <span className="crm-faint">
+          {rowsShown} shown
+          {ranked && !bucket ? ` · ${ranked.rows.filter((r) => !r.has_phone).length} need a phone` : ""}
+        </span>
       </form>
       {error ? <div className="crm-body"><div className="crm-error">{error}</div></div> : null}
       {rowsShown === 0 && !error ? <div className="crm-empty">Nothing in this view.</div>
@@ -107,7 +110,7 @@ function RankedTable({ rows }: { rows: LeadRow[] }) {
       <thead>
         <tr>
           <th>Property</th><th className="hide-sm">Situation</th><th>Status</th><th className="hide-sm">Sale</th>
-          <th className="num hide-sm hide-md">Value</th><th className="num">Fee</th><th className="hide-sm hide-md">Last touch</th>
+          <th className="num hide-sm hide-md">Value</th><th className="num">Fee</th><th className="hide-sm hide-md">Reach</th><th className="hide-sm hide-md">Last touch</th>
         </tr>
       </thead>
       <tbody>
@@ -122,6 +125,7 @@ function RankedTable({ rows }: { rows: LeadRow[] }) {
             <td className="hide-sm"><SalePill date={r.sale_date} /></td>
             <td className="num hide-sm hide-md crm-muted">{compactMoney(r.property_value)}</td>
             <td className="num">{money(r.expected_fee)}</td>
+            <td className="hide-sm hide-md">{r.has_phone ? "Phone" : <span className="crm-faint">Mail only</span>}</td>
             <td className="hide-sm hide-md crm-faint">{relTime(r.last_contact_at) || ""}</td>
           </RowLink>
         ))}
