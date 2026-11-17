@@ -34,6 +34,7 @@ export default async function CrmAppLayout({ children }: { children: React.React
           ] },
           { label: "Outreach", items: [
             { href: "/crm/outreach", label: "Campaigns", icon: "outreach" },
+            { href: "/crm/outreach/queue", label: "Outreach queue", icon: "mail" },
             { href: "/crm/attorneys", label: "Estate attorneys", icon: "attorney" },
           ] },
           { label: "System", items: [

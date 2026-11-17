@@ -38,6 +38,10 @@
     {
       "path": "/api/cron/sunday-call-sheet",
       "schedule": "0 23 * * 0"
+    },
+    {
+      "path": "/api/cron/outreach-signals",
+      "schedule": "30 13 * * *"
     }
   ]
 }
