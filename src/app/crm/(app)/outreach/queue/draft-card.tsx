@@ -7,10 +7,14 @@ import { useRouter } from "next/navigation"
 export type DraftView = {
   id: string; signal: string; staging_id: string; recipient_name: string; recipient_firm: string | null
   recipient_address: string | null; to_email: string | null; subject: string; body_text: string
-  facts: { decedent?: string; county?: string; docket?: string; address?: string; value?: number } | null
+  facts: {
+    decedent?: string; county?: string; docket?: string; address?: string; value?: number
+    debtors?: string[]; court?: string; caseNumber?: string | null; confidence?: string | null
+  } | null
   status: string; created_at: string
 }
 
+const COURT: Record<string, string> = { tnmb: "M.D. Tenn.", tneb: "E.D. Tenn.", tnwb: "W.D. Tenn." }
 const money = (n?: number) => (n ? "$" + Math.round(n).toLocaleString("en-US") : "")
 
 export function DraftCard({ d }: { d: DraftView }) {
@@ -54,7 +58,9 @@ export function DraftCard({ d }: { d: DraftView }) {
         <div>
           <h2 style={{ marginBottom: 2 }}>{d.recipient_name}{d.recipient_firm ? <span className="crm-faint"> · {d.recipient_firm}</span> : null}</h2>
           <div className="crm-muted" style={{ fontSize: 12.5 }}>
-            Estate of {f.decedent} · {f.county ? `${f.county[0].toUpperCase()}${f.county.slice(1)} County` : ""}{f.docket ? ` ${f.docket}` : ""} · {f.address} · {money(f.value)}
+            {d.signal === "trustee_case"
+              ? <>Ch. 7 trustee · {(f.debtors ?? []).join(" and ")} · {COURT[f.court ?? ""] ?? f.court}{f.caseNumber ? ` ${f.caseNumber}` : ""} · {f.address} · {money(f.value)}{f.confidence ? ` · match: ${f.confidence}` : ""}</>
+              : <>Estate of {f.decedent} · {f.county ? `${f.county[0].toUpperCase()}${f.county.slice(1)} County` : ""}{f.docket ? ` ${f.docket}` : ""} · {f.address} · {money(f.value)}</>}
           </div>
           {d.recipient_address ? <div className="crm-faint" style={{ fontSize: 12 }}>Office on the notice: {d.recipient_address}</div> : null}
         </div>

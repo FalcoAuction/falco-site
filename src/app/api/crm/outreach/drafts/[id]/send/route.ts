@@ -13,11 +13,11 @@ import { buildEmail, remainingToday, sendGate, type Campaign, type Contact } fro
 
 export const dynamic = "force-dynamic"
 
-const CAMPAIGN = "estate-attorney-signal"
+const CAMPAIGN: Record<string, string> = { probate_notice: "estate-attorney-signal", trustee_case: "trustee-signal" }
 const PER_ADDRESS_DAYS = 7
 const fromAddress = () => process.env.FALCO_OUTREACH_FROM?.trim() || "FALCO <falco@falco.llc>"
 
-type Draft = { id: string; status: string; subject: string; body_text: string; to_email: string | null; contact_id: string | null; recipient_name: string; recipient_firm: string | null }
+type Draft = { id: string; signal: string; status: string; subject: string; body_text: string; to_email: string | null; contact_id: string | null; recipient_name: string; recipient_firm: string | null }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!getAdminSession(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
@@ -32,11 +32,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   const dryRun = body.dry_run !== false
 
-  const [{ data: draft }, { data: campaign }] = await Promise.all([
-    db.from("outreach_drafts").select("*").eq("id", id).maybeSingle<Draft>(),
-    db.from("outreach_campaigns").select("*").eq("slug", CAMPAIGN).maybeSingle<Campaign>(),
-  ])
+  const { data: draft } = await db.from("outreach_drafts").select("*").eq("id", id).maybeSingle<Draft>()
   if (!draft) return NextResponse.json({ error: "draft not found" }, { status: 404 })
+  const { data: campaign } = await db.from("outreach_campaigns").select("*")
+    .eq("slug", CAMPAIGN[draft.signal] ?? "").maybeSingle<Campaign>()
   if (!campaign) return NextResponse.json({ error: "campaign missing; run the migration" }, { status: 500 })
   if (draft.status === "sent") return NextResponse.json({ error: "already sent" }, { status: 409 })
   if (!draft.to_email || !draft.contact_id) return NextResponse.json({ error: "no email on this draft" }, { status: 400 })
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (remainingToday(campaign, today.count ?? 0, 1) < 1) reasons.push("Daily cap for this campaign reached.")
 
   const contact: Contact = {
-    id: draft.contact_id, kind: "attorney", org_name: draft.recipient_firm, person_name: draft.recipient_name,
+    id: draft.contact_id, kind: draft.signal === "trustee_case" ? "trustee" : "attorney", org_name: draft.recipient_firm, person_name: draft.recipient_name,
     title: null, email: draft.to_email, county: null,
   }
   let msg

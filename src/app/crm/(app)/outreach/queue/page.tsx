@@ -37,7 +37,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
   const totalValue = drafts.reduce((a, d) => a + (Number(d.facts?.value) || 0), 0)
   return (
     <>
-      <Head title="Outreach queue" sub="Drafts written from new estate filings, addressed to the estate's attorney">
+      <Head title="Outreach queue" sub="Drafts written from new estate filings and Chapter 7 cases with real property, addressed to the attorney or trustee">
         <RunSignals />
         <Link className="crm-btn ghost" href="/crm/outreach">Campaigns</Link>
       </Head>
@@ -55,11 +55,11 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
           </div>
         ) : null}
         {drafts.length === 0 ? (
-          <div className="crm-empty">Nothing here. New estate filings are drafted every morning, or press Find new.</div>
+          <div className="crm-empty">Nothing here. New estate filings and Chapter 7 cases are drafted every morning, or press Find new.</div>
         ) : (
           <>
             <div className="crm-muted" style={{ fontSize: 13 }}>
-              {drafts.length} draft{drafts.length === 1 ? "" : "s"} · {money(totalValue)} in estate property · newest {relTime(drafts[0].created_at)}
+              {drafts.length} draft{drafts.length === 1 ? "" : "s"} · {money(totalValue)} in property · newest {relTime(drafts[0].created_at)}
             </div>
             {drafts.map((d) => <DraftCard key={d.id} d={d} />)}
           </>
