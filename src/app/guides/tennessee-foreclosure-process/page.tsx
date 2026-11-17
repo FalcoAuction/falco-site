@@ -33,10 +33,11 @@ export default function TnForeclosureProcessGuide() {
         headline="The Tennessee Foreclosure Process, Explained Step by Step"
         description="How a Tennessee trustee sale (non-judicial foreclosure) works: the notice, the timeline, sale day, redemption, deficiency, and the options at each stage, with the actual TN Code sections."
         datePublished="2026-07-12"
-        dateModified="2026-07-12"
+        dateModified="2026-11-14"
         breadcrumbName="Tennessee Foreclosure Process"
       />
       <GuideShell
+        answer="Tennessee foreclosures are usually non-judicial: a trustee sells the home at a public auction without a court case. Federal rules generally bar the servicer from starting until you are more than 120 days behind. The sale must be advertised in a local newspaper at least twice, with the first notice at least 20 days before the sale, and posted online for 20 days."
         eyebrow="Foreclosure guide"
         title={
           <>
@@ -46,13 +47,13 @@ export default function TnForeclosureProcessGuide() {
         }
         standfirst={
           <>
-            Tennessee moves fast. It is one of the quickest states in the
-            country to take a home. Here is exactly how a trustee sale works,
+            Tennessee foreclosures move fast because most never go to court.
+            Here is exactly how a trustee sale works,
             how long it takes, and what your options are at each step, with
             the real law behind each one.
           </>
         }
-        updated="July 2026"
+        updated="November 2026"
       >
         <GuideSection title="Tennessee is a non-judicial foreclosure state">
           <p>
@@ -68,10 +69,10 @@ export default function TnForeclosureProcessGuide() {
             <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-101/" n={1} />
           </p>
           <GuideKey>
-            No court means no built-in delay. A Tennessee trustee sale can
-            happen roughly a month after the required notice runs. That speed
-            is the single most important thing to understand: the clock is
-            shorter here than in most states.
+            No court means no built-in delay. Once the notice is published, a
+            Tennessee trustee sale can happen as soon as 20 days after the first
+            newspaper notice. That speed is the most important thing to
+            understand.
           </GuideKey>
         </GuideSection>
 
@@ -82,17 +83,17 @@ export default function TnForeclosureProcessGuide() {
             you for help, or if you file for bankruptcy.
           </p>
 
-          <GuideNote label="Step 1 — You fall behind (day 0 to ~120)">
+          <GuideNote label="Step 1: You fall behind (day 0 to about 120)">
             Under federal mortgage-servicing rules, your servicer generally
             cannot start the foreclosure until you are{" "}
             <strong className="text-[var(--ink)]">more than 120 days behind</strong>
-            .<Cite href="https://www.law.cornell.edu/cfr/text/12/1024" n={2} /> This
+            .<Cite href="https://www.law.cornell.edu/cfr/text/12/1024.41" n={2} /> This
             120-day window is usually the real gate, and it is also your best
             window to act, because you have the most options while nothing has
             been filed yet.
           </GuideNote>
 
-          <GuideNote label="Step 2 — Notice of the sale is published">
+          <GuideNote label="Step 2: Notice of the sale is published">
             Once the servicer moves forward, Tennessee law requires the sale to
             be advertised in a newspaper in the county where the property sits.
             As of a 2025 change in the law, that is now{" "}
@@ -102,29 +103,29 @@ export default function TnForeclosureProcessGuide() {
             <strong className="text-[var(--ink)]">first notice has to run at least
             20 days before the sale date</strong>.
             <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-101/" n={1} />{" "}
-            The trustee also has to mail you a copy of the notice by certified
-            mail on or before that first publication date.
+            The trustee also has to mail you a copy of the notice by registered
+            or certified mail, return receipt requested, on or before that
+            first publication date.
           </GuideNote>
 
-          <GuideNote label="Step 3 — The sale date arrives">
-            The trustee sale is a public auction, almost always held at the
-            county courthouse. Anyone can bid, including the lender, which
-            usually bids the amount you owe. The winning bidder has to pay
-            immediately in cash or certified funds. In about 60 seconds, the
-            home changes hands.
+          <GuideNote label="Step 3: The sale date arrives">
+            The trustee sale is a public auction at the time and place stated
+            in the notice. That is often the county courthouse, and since 2025
+            the law also allows an online bidding platform. Anyone can bid,
+            including the lender. Payment terms are set in the notice, and the
+            sale itself is usually over quickly.
+            <Cite href="https://www.capitol.tn.gov/Bills/114/Amend/HA0382.pdf" n={4} />
           </GuideNote>
 
           <GuideKey>
-            Fastest realistic path: about four months from your first missed
-            payment to a sale, made up of the ~120-day federal period plus the
-            ~20-to-30-day notice window. Many cases run longer. Almost none run
-            shorter.
+            Fastest realistic path: roughly five months from your first missed
+            payment to a sale, made up of the 120-day federal period plus at
+            least 20 days of notice. Many cases run longer.
           </GuideKey>
 
           <p className="text-[var(--ink-faint)] text-[14px]">
-            One wrinkle: if the county has no newspaper, the notice gets posted
-            for 30 days in at least five public places, one of which must be
-            the courthouse door.
+            One wrinkle: if the county has no newspaper, the notice is published
+            by the online posting instead.
             <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-103/" n={3} />
           </p>
         </GuideSection>
@@ -133,19 +134,18 @@ export default function TnForeclosureProcessGuide() {
           <p>
             Tennessee updated its foreclosure-notice rules effective{" "}
             <strong className="text-[var(--ink)]">July 1, 2025</strong> (Public
-            Chapter 515, the bill practitioners call the Foreclosure
-            Modernization Act).
+            Chapter 515).
             <Cite href="https://wapp.capitol.tn.gov/apps/BillInfo/default.aspx?BillNumber=HB1127&GA=114" n={4} />{" "}
             The headline changes: newspaper notices dropped from three to two,
             a new online-posting requirement was added (20 continuous days,
             through a posting company registered with the Tennessee Secretary
-            of State), and postponement rules were clarified. The 20-day
-            minimum before the sale did not change.
+            of State), and postponed sales must now also be announced online.
+            The 20-day minimum before the sale did not change.
           </p>
           <p className="text-[var(--ink-faint)] text-[14px]">
-            Practical takeaway: the notice period is slightly shorter and now
-            lives online too, so a sale is easier to miss in the paper but
-            easier to find on the web. If you think a sale may be scheduled,
+            Practical takeaway: the 20-day minimum is the same, but there are
+            fewer newspaper runs and the notice now lives online too, so a sale
+            is easier to miss in the paper but easier to find on the web. If you think a sale may be scheduled,
             the online posting is worth checking.
           </p>
         </GuideSection>
@@ -159,11 +159,13 @@ export default function TnForeclosureProcessGuide() {
           </p>
 
           <GuideNote label="Reinstating (curing the default)">
-            Most Tennessee deeds of trust let you{" "}
+            Many deeds of trust let you{" "}
             <strong className="text-[var(--ink)]">reinstate</strong> by paying the
-            past-due amount, plus fees and costs, any time before the sale.
-            This is a right that comes from your loan contract, not a general
-            state law, so the exact deadline is in your paperwork. If you can
+            past-due amount, plus fees and costs, up to a cutoff before the
+            sale. That right comes from your loan contract, not a Tennessee
+            statute, and the cutoff can be several days before the sale date,
+            so read your deed of trust or ask the servicer for the deadline in
+            writing. If you can
             raise the arrears, this stops the sale and puts the loan back on
             track.
           </GuideNote>
@@ -174,18 +176,20 @@ export default function TnForeclosureProcessGuide() {
             pays off the loan and{" "}
             <strong className="text-[var(--ink)]">the rest is yours</strong>. The
             catch is speed: a normal retail listing can take months you may not
-            have. A marketed auction runs on a compressed timeline (often 30 to
-            45 days) and still exposes the home to real competing buyers, which
-            is the whole point. This is what FALCO helps homeowners do, at no
+            have. A marketed auction runs to a set sale date, usually a matter
+            of weeks, and still exposes the home to real competing buyers,
+            which is the whole point. This is what FALCO helps homeowners do, at no
             cost to you.
           </GuideNote>
 
           <GuideNote label="Chapter 13 bankruptcy">
             Filing Chapter 13 triggers an{" "}
             <strong className="text-[var(--ink)]">automatic stay</strong> that
-            halts the trustee sale immediately, even the morning of. It is the
-            one tool that reliably stops a sale in the final days, and it lets
-            you catch up arrears over time. It also has real long-term
+            generally halts the trustee sale the moment the case is filed, even
+            the morning of, and Chapter 13 lets you catch up arrears over time.
+            The stay is limited or does not arise at all for people who had a
+            prior bankruptcy dismissed within the past year.
+            <Cite href="https://www.law.cornell.edu/uscode/text/11/362" n={7} /> It also has real long-term
             consequences. This is a legal decision for a Tennessee bankruptcy
             attorney, not something to do on a website&apos;s say-so.
           </GuideNote>
@@ -223,16 +227,17 @@ export default function TnForeclosureProcessGuide() {
             after a sale.
             <Cite href="https://law.justia.com/codes/tennessee/title-66/chapter-8/section-66-8-101/" n={6} /> But
             that right can be waived in the deed of trust, and{" "}
-            <strong className="text-[var(--ink)]">nearly every Tennessee mortgage
-            waives it</strong>. In practice, once the trustee sale closes, the
-            home is gone. Do not count on redemption.
+            <strong className="text-[var(--ink)]">standard deeds of trust
+            routinely waive it</strong>. Check yours, but in practice, once the
+            trustee sale closes, the home is usually gone.
           </GuideNote>
 
           <GuideNote label="What happens to money above what I owed? (Surplus)">
             If the home sells for more than the debt plus costs, the extra,
             called <strong className="text-[var(--ink)]">surplus funds</strong>,
-            flows down the priority ladder: sale costs, then the foreclosing
-            lender, then any junior lienholders, then{" "}
+            generally flows down the priority ladder set by the deed of trust
+            and longstanding law: sale costs, then the foreclosing lender, then
+            any junior lienholders, then{" "}
             <strong className="text-[var(--ink)]">you, the former owner</strong>.
             The trustee holds it and, if there is any dispute, often deposits
             it with the court. If you think there may be surplus after a sale,
@@ -243,11 +248,12 @@ export default function TnForeclosureProcessGuide() {
             If the sale brings less than you owed, the lender can pursue you for
             the shortfall, called a{" "}
             <strong className="text-[var(--ink)]">deficiency judgment</strong>.
-            <Cite href="https://natlawreview.com/article/foreclosure-sales-and-deficiency-judgments-tennessee" n={5} /> Tennessee
-            law gives you a defense: the deficiency is measured against the
-            property&apos;s fair market value, and if you can show the home
-            sold for materially less than it was worth, the court uses the
-            higher value instead. This is one more reason a low courthouse-step
+            <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-117/" n={5} /> Tennessee
+            law gives you a defense: the sale price is presumed to be fair
+            market value, but if you show the home sold for materially less
+            than it was worth, the deficiency is measured against fair market
+            value instead. A deficiency suit must be filed within two years of
+            the sale. This is one more reason a low courthouse-step
             price hurts you twice.
           </GuideNote>
         </GuideSection>
@@ -264,9 +270,10 @@ export default function TnForeclosureProcessGuide() {
           </GuideKey>
           <p className="text-[var(--ink-faint)] text-[14px]">
             Sources: Tenn. Code Ann. Title 35, Ch. 5 (§§ 35-5-101, 35-5-103,
-            35-5-104, 35-5-118); Tenn. Code Ann. § 66-8-101 and § 66-8-103
+            35-5-104, 35-5-117); Tenn. Code Ann. § 66-8-101 and § 66-8-103
             (redemption and waiver); Public Chapter 515 (2025), amending Title
-            35; 12 C.F.R. Part 1024 (federal 120-day rule). Law changes, and
+            35; 12 C.F.R. § 1024.41(f) (federal 120-day rule); 11 U.S.C. § 362
+            (automatic stay). Law changes, and
             how it applies depends on your paperwork. This is general
             information, not legal advice.
           </p>

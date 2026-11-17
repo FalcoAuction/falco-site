@@ -1,3 +1,4 @@
+import Link from "next/link"
 import {
   GuideShell,
   GuideSection,
@@ -16,7 +17,7 @@ const HEADLINE = "Lien Sales in Tennessee: Marinas, Storage, Repair Shops and To
 const DESCRIPTION =
   "How Tennessee lien sales work for marinas and boat storage, self-storage facilities, repair shops and towing companies: the notice and publication rules, the new Abandoned Vehicle Portal, surplus, and how the buyer gets title."
 
-const META_TITLE = "Tennessee Lien Sales: Marina, Storage, Mechanic's and Towing Liens | FALCO"
+const META_TITLE = "Tennessee Lien Sales: Marina, Storage, Repair and Towing | FALCO"
 const META_DESCRIPTION =
   DESCRIPTION
 
@@ -304,6 +305,11 @@ export default function LienSalesGuide() {
             old way will not meet the law.
             <Cite href={src(13)} n={13} />
           </GuideKey>
+          <p>
+            The full step-by-step, with the notice contents and storage
+            limits, is in our guide to{" "}
+            <Link href="/guides/tennessee-abandoned-vehicle-portal-motion-act">the abandoned vehicle portal and the MOTION Act</Link>.
+          </p>
         </GuideSection>
 
         <GuideSection id="title" title="Title after the sale">

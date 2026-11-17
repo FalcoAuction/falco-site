@@ -17,7 +17,7 @@ const HEADLINE = "Selling Vehicles, Equipment, Boats and Aircraft at Auction in 
 const DESCRIPTION =
   "What you need to sell a vehicle, piece of equipment, boat or aircraft at auction in Tennessee: titles and registration, odometer rules, liens and UCC filings, FAA paperwork, sales tax, and how licensed auction firms run the sale."
 
-const META_TITLE = `${HEADLINE} | FALCO`
+const META_TITLE = "Selling Vehicles, Boats and Aircraft at Auction in Tennessee | FALCO"
 const META_DESCRIPTION =
   DESCRIPTION
 

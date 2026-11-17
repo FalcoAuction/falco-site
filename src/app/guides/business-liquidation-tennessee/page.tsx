@@ -19,7 +19,7 @@ const DESCRIPTION =
 
 const META_TITLE = `${HEADLINE} | FALCO`
 const META_DESCRIPTION =
-  DESCRIPTION
+  "Closing a Tennessee business: WARN and state layoff notices, final pay, lenders and UCC liens, sales tax clearance, dissolving the company, and selling the assets at auction."
 
 export const metadata = {
   title: META_TITLE,

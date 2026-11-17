@@ -19,7 +19,7 @@ const DESCRIPTION =
 
 const META_TITLE = `${HEADLINE} | FALCO`
 const META_DESCRIPTION =
-  DESCRIPTION
+  "When an auction beats another listing for Tennessee land and commercial property, who can run a real estate auction, and how heirs' property and co-owners get to a sale."
 
 export const metadata = {
   title: META_TITLE,

@@ -19,7 +19,7 @@ const DESCRIPTION =
 
 const META_TITLE = "Tennessee Abandoned Vehicle Portal and MOTION Act Deadlines | FALCO"
 const META_DESCRIPTION =
-  DESCRIPTION
+  "For Tennessee tow companies, repair shops and storage lots: MOTION Act notice deadlines, the 20-day reclaim window, and the Abandoned Vehicle Portal deadline of January 25, 2027."
 
 export const metadata = {
   title: META_TITLE,

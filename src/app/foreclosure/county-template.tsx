@@ -8,6 +8,7 @@ import {
 } from "../guides/guide-chrome"
 import { SitePage } from "@/app/v2/site-page"
 import { ogMeta } from "@/lib/og"
+import { COUNTIES } from "./county-list"
 
 // Data shape for a Tennessee county foreclosure page. Every field that
 // carries a claim (sale location, newspaper, offices) must come from a
@@ -335,6 +336,23 @@ export async function CountyPage({ d }: { d: CountyData }) {
             </span>
           </div>
         </div>
+      </section>
+
+      {/* Every other county page, so each one is reachable from more than
+          the /foreclosure index. */}
+      <section className="mx-auto max-w-3xl px-6 md:px-10 mt-12">
+        <div className="mb-3 text-[11px] uppercase tracking-[0.2em] text-[var(--ink-faint)] font-semibold">
+          Foreclosure in other Tennessee counties
+        </div>
+        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[14px]">
+          {COUNTIES.filter((c) => c.slug !== d.slug).map((c) => (
+            <li key={c.slug}>
+              <Link href={`/foreclosure/${c.slug}`} className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline underline-offset-4 decoration-[var(--rule)]">
+                {c.county} ({c.seat})
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* YMYL disclaimer — same guardrails as the guides. */}

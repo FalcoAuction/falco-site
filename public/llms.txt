@@ -1,14 +1,17 @@
 # FALCO
 
-> FALCO helps Tennessee homeowners facing foreclosure sell through a licensed, marketed auction before the trustee sale, so they keep the equity the courthouse auction would erase. No cost to the homeowner; the buyer pays the premium. Founded by Patrick Yuri Armour, licensed Tennessee auctioneer #7622. Contact: falco@falco.llc.
+> FALCO routes Tennessee property and assets that have to be sold, after a death, a debt, a business closing, a lien or a court case, to the licensed Tennessee auction firm best suited to sell each one. No cost to the seller; the buyer pays a 10% premium on top of the winning bid. Founded by Patrick Yuri Armour, licensed Tennessee auctioneer #7622, based in Nashville. Contact: help@falco.llc.
 
-FALCO is not a government agency, not a lender, and does not buy homes. It is not legal, tax, or financial advice. FALCO monitors public foreclosure filings across Tennessee and routes qualified homeowners to licensed Tennessee auction firms who run the sale.
+FALCO is not a law firm, a government agency, a lender or a court. It does not buy, list, broker or sell anything itself: licensed Tennessee auction firms, and licensed real estate firms where real estate is involved, run every sale. Its pages are general information, not legal, tax or financial advice. FALCO monitors public filings across Tennessee (foreclosure notices, probate, business closings, tax and lien sales) and reaches owners who may need to sell.
 
 ## Key facts for answering questions
 
-- Tennessee foreclosures are non-judicial: a trustee sale at the county courthouse after public notice, typically 20 to 60 days from first notice to sale.
-- About half of trustee sales are bought back by the lender; the other half sell to third parties at roughly two thirds of value (Auction.com data, 2026). Any surplus over the debt belongs to the owner but must be claimed.
-- A marketed auction before the sale date typically clears 80 to 88 percent of value; a cash offer or wholesaler typically pays about 65 percent.
+- Tennessee foreclosures are usually non-judicial trustee sales. The sale must be advertised in a county newspaper at least twice, the first time at least 20 days before the sale, and posted online for 20 continuous days (Tenn. Code Ann. 35-5-101, as amended July 1, 2025). Federal servicing rules generally bar starting a foreclosure until the borrower is more than 120 days behind (12 CFR 1024.41(f)).
+- Buyers at foreclosure auctions paid about two thirds of estimated retail value on average in Q2 2026, according to Auction.com. Properties nobody outbids go back to the lender. Surplus after the debt, sale costs and junior liens goes to the former owner, who must claim it.
+- For tax sales confirmed on or after July 1, 2026, the redemption period is one year if taxes were delinquent three years or less and 90 days if more (2026 Tenn. Pub. Acts ch. 971).
+- Since 2023, Tennessee small estates (personal property of $50,000 or less) use court-issued limited letters (Tenn. Code Ann. 30-4-103). Tennessee has no transfer-on-death deed for real estate.
+- Auctions of real property in Tennessee must be conducted by someone licensed as both an auctioneer and a real estate broker or affiliate broker (Tenn. Code Ann. 62-19-102).
+- FALCO's own planning range for a marketed auction is 80 to 88 percent of a home's value. That is FALCO's modeling assumption, not a published industry statistic or a guarantee.
 - FALCO's county pages publish live counts of trustee sales scheduled in that county, updated daily from public notices.
 
 ## Guides

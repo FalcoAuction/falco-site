@@ -41,7 +41,7 @@ const SOURCES = [
   { n: 5, label: "Tenn. Code Ann. § 66-29-176 (agreements to locate unclaimed property)", href: "https://codes.findlaw.com/tn/title-66-property/tn-code-sect-66-29-176/" },
   { n: 6, label: "Tennessee Department of Treasury, Unclaimed Property", href: "https://treasury.tn.gov/Unclaimed-Property" },
   { n: 7, label: "Tennessee Department of Treasury, Third-Party Locators", href: "https://treasury.tn.gov/Unclaimed-Property/About-Unclaimed-Property/Third-Party-Locators" },
-  { n: 8, label: "Tennessee Supreme Court, unauthorized practice of law statutes (Tenn. Code Ann. §§ 23-3-101, 23-3-103)", href: "https://www.tncourts.gov/sites/default/files/docs/upl_statutes.pdf" },
+  { n: 8, label: "Tenn. Code Ann. § 23-3-103 (unauthorized practice of law)", href: "https://codes.findlaw.com/tn/title-23-attorneys-at-law/tn-code-sect-23-3-103.html" },
   { n: 9, label: "Tenn. Code Ann. § 30-2-712 (recorded affidavit of heirship)", href: "https://codes.findlaw.com/tn/title-30-administration-of-estates/tn-code-sect-30-2-712/" },
 ]
 const src = (n: number) => SOURCES[n - 1].href

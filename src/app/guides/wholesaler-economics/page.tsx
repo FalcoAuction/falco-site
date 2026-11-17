@@ -11,7 +11,7 @@ import { ogMeta } from "@/lib/og"
 
 const META_TITLE = "How a Wholesaler Prices Your House: The 70% Rule Explained | FALCO"
 const META_DESCRIPTION =
-  "The formula behind every 'we buy houses' cash offer, why the discount exists, and exactly where your equity goes when you take one. Written by a licensed Tennessee auctioneer."
+  "The rule of thumb behind most 'we buy houses' cash offers, worked out on a real example: why the discount exists, where your equity goes, and what Tennessee's 2025 wholesaling law requires."
 
 export const metadata = {
   title: META_TITLE,
@@ -31,12 +31,13 @@ export default function WholesalerEconomicsGuide() {
       <GuideJsonLd
         slug="wholesaler-economics"
         headline="How a Wholesaler Prices Your House: The 70% Rule Explained"
-        description="The formula behind every 'we buy houses' cash offer, why the discount exists, and where your equity goes when you take one."
+        description="The rule of thumb behind most 'we buy houses' cash offers, why the discount exists, and where your equity goes when you take one."
         datePublished="2026-07-12"
-        dateModified="2026-07-12"
+        dateModified="2026-11-14"
         breadcrumbName="Wholesaler Economics"
       />
       <GuideShell
+        answer="Most wholesalers and cash investors start from the 70% rule: offer no more than 70% of the home's fixed-up value, minus repairs. On a $484,000 home needing $25,000 of work, that is $313,800, and a wholesaler's fee comes out of it. Wholesaling is legal in Tennessee, but since 2025 the wholesaler must give you written disclosures."
         eyebrow="Comparison guide"
         title={
           <>
@@ -46,13 +47,13 @@ export default function WholesalerEconomicsGuide() {
         }
         standfirst={
           <>
-            Every &quot;we buy houses&quot; cash offer runs on the same
-            formula. Once you can see it, the offer in your inbox stops looking
-            like a lifeline and starts looking like exactly what it is: a
+            Most &quot;we buy houses&quot; cash offers start from the same rule
+            of thumb. Once you can see it, the offer in your inbox stops
+            looking like a lifeline and starts looking like what it is: a
             wholesale price. Here is the whole thing, worked out.
           </>
         }
-        updated="July 2026"
+        updated="November 2026"
       >
         <GuideSection title="What a wholesaler actually does">
           <p>
@@ -60,12 +61,16 @@ export default function WholesalerEconomicsGuide() {
             it. They put it under contract at a low price, then sell that
             contract to an investor for a fee, often without ever owning the
             home. Their profit is the gap between what they talk you down to
-            and what the investor will pay. To protect that gap, they price
-            using a fixed formula, and they price to win it every time.
+            and what the investor will pay. To protect that gap, many price
+            from the same rule of thumb.
           </p>
           <GuideNote label="Why this matters to you">
-            None of this makes wholesalers villains. It is a legal, understood
-            business. But it means their offer is engineered around{" "}
+            None of this makes wholesalers villains. Wholesaling is legal in
+            Tennessee, and a 2025 state law requires wholesalers to give
+            sellers written disclosures, including that they intend to market
+            the contract to someone else, before you sign.
+            <Cite href="https://www.capitol.tn.gov/Bills/114/Bill/SB0909.pdf" n={2} /> But
+            it means their offer is engineered around{" "}
             <strong className="text-[var(--ink)]">their</strong> margin, not your
             equity. The number they give you is the largest discount they think
             you will accept, not the most your home is worth.
@@ -74,20 +79,20 @@ export default function WholesalerEconomicsGuide() {
 
         <GuideSection id="the-formula" title="The 70% rule, line by line">
           <p>
-            The industry-standard formula is called the{" "}
-            <strong className="text-[var(--ink)]">maximum allowable offer</strong>,
-            and its ceiling is 70% of a home&apos;s fixed-up value, minus
-            repairs.
-            <Cite href="https://www.investopedia.com/terms/1/70-percent-rule.asp" n={1} /> Here it
-            is on a home worth about $484,000 fixed up:
+            Investors often work out a{" "}
+            <strong className="text-[var(--ink)]">maximum allowable offer</strong>{" "}
+            with the 70% rule, a rule of thumb rather than a standard: 70% of
+            the home&apos;s fixed-up value, minus repairs. The 30% that is left
+            is meant to cover the investor&apos;s profit, holding and resale
+            costs.
+            <Cite href="https://www.biggerpockets.com/blog/70-percent-rule" n={1} /> Here
+            it is on a home worth about $484,000 fixed up:
           </p>
           <div className="rounded-xl border border-[var(--rule-strong)] bg-[var(--paper-raised)] overflow-hidden">
             {[
               ["After-repair value (what it's worth fixed up)", "$484,000"],
-              ["× 70% ceiling", "$338,800"],
-              ["− Repairs the investor expects to do", "− $25,000"],
-              ["− Wholesaler's assignment fee", "− $10,000"],
-              ["− Investor's required profit margin", "− $40,000"],
+              ["x 70%", "$338,800"],
+              ["Minus repairs the investor expects to do", "- $25,000"],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -98,27 +103,25 @@ export default function WholesalerEconomicsGuide() {
               </div>
             ))}
             <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[var(--paper-raised)] text-[15px] font-semibold">
-              <span className="text-[var(--ink)]">Offer to you</span>
-              <span className="tabular-nums text-[var(--ink-soft)] whitespace-nowrap">≈ $263,800</span>
+              <span className="text-[var(--ink)]">Most a 70%-rule buyer offers</span>
+              <span className="tabular-nums text-[var(--ink-soft)] whitespace-nowrap">$313,800</span>
             </div>
           </div>
           <p>
-            On a home worth nearly half a million dollars, the machine produces
-            an offer around $264,000. Every dollar between that number and the
-            real value is not lost. It is transferred, from you to the buyer.
+            If a wholesaler sits in the middle, their assignment fee usually
+            comes out of that number too. With a $10,000 fee, the offer to you
+            is about $303,800 on a home worth nearly half a million dollars.
           </p>
         </GuideSection>
 
         <GuideSection id="where-equity-goes" title="Where your equity goes">
           <p>
-            Look at the three deductions under the 70% ceiling. Repairs are
-            real, but the investor does them and keeps the upside. The
-            assignment fee is the wholesaler&apos;s cut for making the
-            introduction. The profit margin is exactly that. Add them up and
-            you are looking at roughly{" "}
-            <strong className="text-[var(--ink)]">$75,000</strong> that leaves your
-            side of the table on this one house, on top of the 30% haircut the
-            formula started with.
+            The gap between the $484,000 value and the $313,800 offer is about{" "}
+            <strong className="text-[var(--ink)]">$170,000</strong>. Repairs are
+            $25,000 of it, and they are real work the investor will pay for.
+            The other $145,000 or so covers the investor&apos;s profit, holding
+            and resale costs, and any wholesaler&apos;s fee. That is the price
+            of a fast, certain close.
           </p>
           <GuideKey>
             The discount is not a fee for a service. It is the difference
@@ -144,7 +147,7 @@ export default function WholesalerEconomicsGuide() {
               ],
               [
                 "Nobody else is calling",
-                "Agents do not chase distress. Auction firms do not market to homeowners. Lenders certainly do not. The cash buyer is often the only voice in the room.",
+                "Few agents or auction firms reach out to homeowners facing foreclosure, and lenders do not. The cash buyer is often the only voice in the room.",
               ],
             ].map(([h, b]) => (
               <div key={h} className="rounded-lg border border-[var(--rule-strong)] bg-[var(--paper-raised)] p-4">

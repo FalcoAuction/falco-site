@@ -19,7 +19,7 @@ const DESCRIPTION =
 
 const META_TITLE = `${HEADLINE} | FALCO`
 const META_DESCRIPTION =
-  DESCRIPTION
+  "How Tennessee bankruptcy and receivership sales work: trustee sales, court approval of sales and auctioneers, notice to creditors, exemptions, and receiver sales."
 
 export const metadata = {
   title: META_TITLE,

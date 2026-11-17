@@ -33,10 +33,11 @@ export default function SurplusFundsGuide() {
         headline="Tennessee Foreclosure Surplus Funds: How to Claim Your Money"
         description="If a Tennessee home sold at foreclosure for more than the debt, the surplus may belong to the former owner. How it works, where it goes, and how to claim it for free."
         datePublished="2026-07-12"
-        dateModified="2026-07-12"
+        dateModified="2026-11-14"
         breadcrumbName="Foreclosure Surplus Funds"
       />
       <GuideShell
+        answer="If a Tennessee trustee sale brings more than the debt and costs, the extra generally goes to junior lienholders and then to the former owner. The trustee holds it, and if there is a dispute it may be deposited with the court. You can claim it yourself or through your own attorney. If it reaches the state's unclaimed property program, claiming it there is free."
         eyebrow="Foreclosure guide"
         title={
           <>
@@ -53,7 +54,7 @@ export default function SurplusFundsGuide() {
             claim what is yours without paying a recovery company a big cut.
           </>
         }
-        updated="July 2026"
+        updated="November 2026"
       >
         <GuideSection title="What surplus funds are">
           <p>
@@ -121,9 +122,10 @@ export default function SurplusFundsGuide() {
 
         <GuideSection id="unclaimed" title="If nobody claims it: the state holds it for you">
           <p>
-            Surplus that sits unclaimed does not disappear. Money held by a court
-            is treated as abandoned about a year after it becomes payable, and is
-            then sent to the{" "}
+            Surplus that sits unclaimed does not disappear. If the trustee has
+            deposited it with a court, money held by the court is treated as
+            abandoned about a year after it becomes payable, and is then sent
+            to the{" "}
             <strong className="text-[var(--ink)]">Tennessee Department of Treasury,
             Unclaimed Property Division</strong>.
             <Cite href="https://law.justia.com/codes/tennessee/title-66/chapter-29/part-1/section-66-29-105/" n={4} /> That
@@ -145,8 +147,7 @@ export default function SurplusFundsGuide() {
           <p>
             If your home sold with surplus, you may get letters or calls from
             companies offering to &quot;recover&quot; your money for a
-            percentage, often 20 to 40 percent. Before you sign anything, know
-            two things.
+            percentage of it. Before you sign anything, know two things.
           </p>
           <GuideNote label="1. Once the money is with the state, the fee is capped">
             Tennessee caps what a locator can charge to recover property already
@@ -158,21 +159,21 @@ export default function SurplusFundsGuide() {
             a 30 percent offer to claim money the state is already holding for you
             is not enforceable in Tennessee.
           </GuideNote>
-          <GuideNote label="2. Only a lawyer can file your claim in court">
-            In Tennessee, drafting and filing a court claim, or representing you
-            in the proceeding, is the practice of law. A non-attorney who does
-            that for a fee is breaking the law.
-            <Cite href="https://www.tncourts.gov/sites/default/files/docs/upl_statutes.pdf" n={7} /> A
-            locator can tell you money exists; a licensed Tennessee attorney is
-            who actually pursues a disputed claim.
+          <GuideNote label="2. You can file yourself; someone else filing for you must be a lawyer">
+            You can file your own claim. But in Tennessee, drafting and filing
+            a court claim for someone else, or representing them in court, is
+            the practice of law, and a non-attorney who does it is breaking the
+            law.
+            <Cite href="https://codes.findlaw.com/tn/title-23-attorneys-at-law/tn-code-sect-23-3-103.html" n={7} /> A
+            locator can tell you money exists; you or a licensed Tennessee
+            attorney pursue the claim.
           </GuideNote>
         </GuideSection>
 
         <GuideSection title="The better outcome: don't leave surplus behind in the first place">
           <GuideKey>
-            Surplus funds are what is left after the courthouse auction takes its
-            cut, and a courthouse sale almost always clears well below what your
-            home is worth. If you still have time before the sale, selling the
+            Surplus funds are what is left after a courthouse auction that was
+            built to cover a debt, not to find the buyer who will pay the most. If you still have time before the sale, selling the
             home yourself through a marketed auction usually puts far more of your
             equity in your pocket, directly at closing, than chasing scraps
             afterward. That is what FALCO helps Tennessee homeowners do, at no

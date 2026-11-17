@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Ledger } from "./v2-content"
 import { PageHead, PageSec, SitePage } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
+import { GUIDE_GROUPS } from "../guides/guide-index"
 
 /**
  * One template for every /situations/[slug] page. People arrive from the
@@ -15,6 +16,10 @@ import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 export default function LaneContent({ slug }: { slug: string }) {
   const s = SITUATION_BY_SLUG[slug]
   const others = SITUATIONS.filter((o) => o.slug !== slug)
+  // Every guide filed under this situation on the /guides hub, so new
+  // spokes show up here without touching this file.
+  const guides =
+    GUIDE_GROUPS.find((g) => g.situationHref === `/situations/${slug}`)?.guides ?? []
 
   return (
     <SitePage>
@@ -114,6 +119,21 @@ export default function LaneContent({ slug }: { slug: string }) {
           ))}
         </div>
       </PageSec>
+
+      {guides.length > 1 && (
+        <PageSec label="Guides" title="The rules, in plain language.">
+          <ul className="rows r">
+            {guides.map((g) => (
+              <li key={g.href}>
+                <Link href={g.href}>
+                  <b>{g.title}</b>
+                  <span>{g.blurb}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </PageSec>
+      )}
 
       <PageSec label="Next step" title="Ready when you are." note="Free, and nothing is owed either way.">
         <div className="pills r">

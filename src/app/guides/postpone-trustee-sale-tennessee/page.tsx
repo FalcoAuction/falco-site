@@ -33,10 +33,11 @@ export default function PostponeTrusteeSaleGuide() {
         headline="Can You Postpone a Trustee Sale in Tennessee?"
         description="How to postpone or stop a Tennessee trustee sale before the date: reinstatement, a pending sale, bankruptcy, and what the lender controls."
         datePublished="2026-07-12"
-        dateModified="2026-07-12"
+        dateModified="2026-11-14"
         breadcrumbName="Postpone a Trustee Sale"
       />
       <GuideShell
+        answer="Sometimes. The lender, through the trustee, decides whether a Tennessee trustee sale is postponed, so you need a reason it will act on: paying the past-due amount to reinstate, a real sale already in motion that would pay the loan off, or a bankruptcy filing, which generally stops the sale when it is filed. A postponed sale can go forward on the new date within a year without new newspaper notices."
         eyebrow="Foreclosure guide"
         title={
           <>
@@ -53,15 +54,16 @@ export default function PostponeTrusteeSaleGuide() {
             back or stopped, and who controls each one.
           </>
         }
-        updated="July 2026"
+        updated="November 2026"
       >
         <GuideSection title="First, the hard truth about who is in control">
           <p>
             A trustee sale in Tennessee is run by the trustee named in your deed
             of trust, on behalf of your lender. That means{" "}
             <strong className="text-[var(--ink)]">the lender ultimately controls
-            whether the sale is postponed</strong>. There is no form you file at
-            the courthouse to push the date yourself. What you can do is give the
+            whether the sale is postponed</strong>. There is no simple form you
+            file at the courthouse to push the date yourself; stopping a sale
+            over a legal defect takes a lawsuit, which is a job for an attorney. What you can do is give the
             lender, or the law, a reason to move it.
           </p>
           <GuideKey>
@@ -73,13 +75,14 @@ export default function PostponeTrusteeSaleGuide() {
 
         <GuideSection id="reinstate" title="Lever 1: Reinstate (pay the past-due amount)">
           <p>
-            Most Tennessee deeds of trust give you a contractual right to{" "}
+            Many deeds of trust give you a contractual right to{" "}
             <strong className="text-[var(--ink)]">reinstate</strong> the loan, that
-            is, pay the arrears plus fees and stop the sale, any time before it
-            happens. If you can raise the back-due amount, this is the cleanest
+            is, pay the arrears plus fees and stop the sale, up to a cutoff
+            before the sale. That cutoff can be several days before the sale
+            date. If you can raise the back-due amount, this is the cleanest
             stop: the loan goes back to current and the sale is called off. The
             exact cutoff and payoff figure are in your loan documents, so ask
-            your servicer for a written reinstatement quote.
+            your servicer for a written reinstatement quote right away.
           </p>
         </GuideSection>
 
@@ -106,11 +109,13 @@ export default function PostponeTrusteeSaleGuide() {
         <GuideSection id="bankruptcy" title="Lever 3: Bankruptcy's automatic stay">
           <p>
             Filing bankruptcy triggers an{" "}
-            <strong className="text-[var(--ink)]">automatic stay</strong> that halts
-            the trustee sale immediately, even the morning of the sale. Chapter
-            13 in particular lets many homeowners cure their arrears over time
-            and keep the home. It is the one tool that reliably stops a sale in
-            the final hours.
+            <strong className="text-[var(--ink)]">automatic stay</strong> that
+            generally halts the trustee sale the moment the case is filed, even
+            the morning of the sale. Chapter 13 in particular lets many
+            homeowners cure their arrears over time and keep the home. The stay
+            is limited, or does not arise at all, for people who had a prior
+            bankruptcy dismissed within the past year.
+            <Cite href="https://www.law.cornell.edu/uscode/text/11/362" n={1} />
           </p>
           <GuideNote label="This is a legal decision, not a website one">
             Bankruptcy has real, lasting consequences and is not right for
@@ -125,13 +130,14 @@ export default function PostponeTrusteeSaleGuide() {
         <GuideSection id="how-postponement-works" title="How a postponement actually works in Tennessee">
           <p>
             When a Tennessee sale is postponed, the trustee announces the new
-            date. Under the 2025 update to the foreclosure-notice law (Public
-            Chapter 515), a sale postponed within one year can proceed on the new
-            date without starting the newspaper advertising over, as long as the
-            new date is announced online and at the original sale location.
-            <Cite href="https://wapp.capitol.tn.gov/apps/BillInfo/default.aspx?BillNumber=HB1127&GA=114" n={1} />{" "}
-            Postponements of more than 30 days generally require the trustee to
-            mail notice of the new date at least 10 days beforehand.
+            date at the date, time and place of the scheduled sale. A sale can
+            be postponed to a date within one year and go forward without new
+            newspaper notices, a rule Tennessee has had since 2011. Since the
+            2025 update (Public Chapter 515), the new date must also be
+            announced online, unless the delay is less than five days.
+            Postponements of more than 30 days require the trustee to mail
+            notice of the new date to the borrower at least 10 days beforehand.
+            <Cite href="https://codes.findlaw.com/tn/title-35-fiduciaries-and-trust-estates/tn-code-sect-35-5-101/" n={2} />
           </p>
           <p className="text-[var(--ink-faint)] text-[14px]">
             Practical point: a postponement buys time, it does not erase the
