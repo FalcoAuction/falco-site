@@ -116,15 +116,20 @@ async function sendConfirmationEmail(
 }
 
 /**
- * Wraps a confirmation body in the FALCO email shell. Pass in the friendly
- * intro, an optional key/value details block, and the closer paragraph.
+ * Wraps a confirmation body in the FALCO email shell, styled like the site:
+ * warm off-white ground, one white card, black type, the bird mark, no
+ * accent color. Table layout and inline styles so it holds up in Gmail,
+ * Outlook and Apple Mail. Pass the greeting, the intro, an optional
+ * key/value details block, an optional echo of what they typed, an
+ * optional highlighted line (`note`), and the closer.
  */
-function confirmationTemplate({
+export function confirmationTemplate({
   greeting,
   intro,
   details,
   detailsLabel,
   echoMessage,
+  note,
   closer,
 }: {
   greeting: string
@@ -134,78 +139,81 @@ function confirmationTemplate({
   /** Optional: echo back a multi-line message the user typed (for the
    *  general-inquiry form so they can see what we received). */
   echoMessage?: string
+  /** Optional: one short line set apart in a tinted box, e.g. the
+   *  no-cost line for sellers. */
+  note?: string
   closer: string
 }): { html: string; text: string } {
-  const detailRows = (details ?? [])
-    .filter((d) => d.value && d.value.trim())
+  const ink = "#0c0c0b"
+  const muted = "#6d6c66"
+  const line = "#ecebe7"
+  const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+  const rows = (details ?? []).filter((d) => d.value && d.value.trim())
+  const label = detailsLabel ?? "What you sent us"
+
+  const detailRows = rows
     .map(
-      (d) =>
-        `<tr><td style="padding:10px 14px;color:#9ca3af;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;width:160px;vertical-align:top">${esc(
+      (d, i) =>
+        `<tr><td style="padding:12px 0;${i ? `border-top:1px solid ${line};` : ""}color:${muted};font-size:14px;vertical-align:top;width:44%">${esc(
           d.label
-        )}</td><td style="padding:10px 14px;color:#fff;font-size:14px">${esc(
+        )}</td><td style="padding:12px 0;${i ? `border-top:1px solid ${line};` : ""}color:${ink};font-size:14px;text-align:right;vertical-align:top">${esc(
           d.value
         )}</td></tr>`
     )
     .join("")
 
-  const html = `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#060606;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<div style="max-width:560px;margin:0 auto;background:#0a0a0a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden">
-  <div style="padding:24px 28px 18px;border-bottom:1px solid rgba(255,255,255,0.06)">
-    <div style="font-size:11px;letter-spacing:0.32em;color:#10b981;font-weight:700;text-transform:uppercase">FALCO</div>
-    <div style="font-size:22px;font-weight:600;color:#fff;margin-top:10px;line-height:1.2">${esc(greeting)}</div>
-  </div>
-  <div style="padding:22px 28px 4px">
-    <p style="margin:0;color:#d1d5db;font-size:15px;line-height:1.65">${esc(intro)}</p>
-  </div>
-  ${
-    detailRows
-      ? `<div style="padding:18px 28px 0">
-           <div style="font-size:10px;letter-spacing:0.22em;color:#10b981;text-transform:uppercase;margin-bottom:8px;font-weight:600">${esc(detailsLabel ?? "What you sent us")}</div>
-           <table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:8px">
-             ${detailRows}
-           </table>
-         </div>`
-      : ""
-  }
-  ${
-    echoMessage && echoMessage.trim()
-      ? `<div style="padding:18px 28px 0">
-           <div style="font-size:10px;letter-spacing:0.22em;color:#10b981;text-transform:uppercase;margin-bottom:8px;font-weight:600">Your message</div>
-           <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:14px 16px;color:#e5e7eb;font-size:14px;line-height:1.6;white-space:pre-wrap;font-family:inherit">${esc(echoMessage.trim())}</div>
-         </div>`
-      : ""
-  }
-  <div style="padding:22px 28px 28px">
-    <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.65">${esc(closer)}</p>
-    <p style="margin:18px 0 0;color:#9ca3af;font-size:13px;line-height:1.65">Reply to this email anytime — it goes straight to us.<br/><span style="color:#6b7280">— The FALCO team</span></p>
-  </div>
-  <div style="padding:14px 28px;border-top:1px solid rgba(255,255,255,0.06);color:#4b5563;font-size:11px;text-align:center;letter-spacing:0.16em;text-transform:uppercase">FALCO · Tennessee · falco.llc</div>
-</div>
+  const section = (inner: string) => `<tr><td style="padding:0 0 26px">${inner}</td></tr>`
+  const small = (t: string) =>
+    `<div style="font-size:13px;color:${muted};margin:0 0 8px">${esc(t)}</div>`
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${esc(greeting)}</title>
+<style>@media (max-width:480px){.fc-card{padding:28px 22px 24px !important}.fc-h1{font-size:23px !important}}</style></head>
+<body style="margin:0;padding:0;background:#f3f2f0;-webkit-text-size-adjust:100%">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f2f0;font-family:${font};color:${ink}">
+<tr><td align="center" style="padding:36px 16px 40px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+    <tr><td style="padding:0 4px 22px">
+      <a href="https://falco.llc" style="text-decoration:none;color:${ink}"><img src="https://falco.llc/media/falco-bird-ink.png" width="27" height="32" alt="FALCO" style="display:inline-block;vertical-align:middle;border:0"><span style="display:inline-block;vertical-align:middle;margin-left:10px;font-size:17px;font-weight:700;letter-spacing:-0.03em">FALCO</span></a>
+    </td></tr>
+    <tr><td class="fc-card" style="background:#ffffff;border:1px solid #e7e5e0;border-radius:24px;padding:36px 32px 30px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${section(`<h1 class="fc-h1" style="margin:0;font-size:26px;line-height:1.15;font-weight:500;letter-spacing:-0.025em;color:${ink}">${esc(greeting)}</h1>`)}
+        ${section(`<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3935">${esc(intro)}</p>`)}
+        ${note && note.trim() ? section(`<div style="background:#f3f2f0;border-radius:14px;padding:16px 18px;font-size:15px;line-height:1.55;color:${ink}">${esc(note.trim())}</div>`) : ""}
+        ${detailRows ? section(`${small(label)}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${line};border-bottom:1px solid ${line}">${detailRows}</table>`) : ""}
+        ${echoMessage && echoMessage.trim() ? section(`${small("Your message")}<div style="background:#f3f2f0;border-radius:14px;padding:16px 18px;font-size:15px;line-height:1.6;color:${ink};white-space:pre-wrap">${esc(echoMessage.trim())}</div>`) : ""}
+        ${section(`<p style="margin:0;font-size:15px;line-height:1.6;color:#3a3935">${esc(closer)}</p>`)}
+        <tr><td style="padding:22px 0 0;border-top:1px solid ${line}">
+          <p style="margin:0;font-size:15px;line-height:1.5;color:${ink};font-weight:500">Patrick Armour</p>
+          <p style="margin:2px 0 0;font-size:14px;line-height:1.5;color:${muted}">Founder, FALCO. Licensed Tennessee Auctioneer #7622</p>
+          <p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:${muted}">Reply to this email or call or text <a href="tel:+16012138868" style="color:${ink};text-decoration:none;white-space:nowrap">601-213-8868</a>.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+    <tr><td style="padding:22px 4px 0;font-size:12px;line-height:1.6;color:#8e8d86;text-align:center">
+      FALCO, Nashville, Tennessee. <a href="https://falco.llc" style="color:#8e8d86">falco.llc</a><br>Licensed Tennessee auction firms run every sale.
+    </td></tr>
+  </table>
+</td></tr>
+</table>
 </body></html>`
 
   const text = [
     greeting,
     "",
     intro,
-    ...(details && detailRows
-      ? [
-          "",
-          `${detailsLabel ?? "What you sent us"}:`,
-          ...details
-            .filter((d) => d.value && d.value.trim())
-            .map((d) => `  ${d.label}: ${d.value}`),
-        ]
-      : []),
-    ...(echoMessage && echoMessage.trim()
-      ? ["", "Your message:", echoMessage.trim()]
-      : []),
+    ...(note && note.trim() ? ["", note.trim()] : []),
+    ...(rows.length ? ["", `${label}:`, ...rows.map((d) => `  ${d.label}: ${d.value}`)] : []),
+    ...(echoMessage && echoMessage.trim() ? ["", "Your message:", echoMessage.trim()] : []),
     "",
     closer,
     "",
-    "Reply to this email anytime — it goes straight to us.",
-    "— The FALCO team",
+    "Patrick Armour",
+    "Founder, FALCO. Licensed Tennessee Auctioneer #7622",
+    "Reply to this email or call or text 601-213-8868.",
     "",
-    "FALCO · Tennessee · falco.llc",
+    "FALCO, Nashville, Tennessee. falco.llc",
+    "Licensed Tennessee auction firms run every sale.",
   ].join("\n")
 
   return { html, text }
@@ -339,21 +347,23 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
 
   // Confirmation back to the homeowner
   const homeownerConfirm = confirmationTemplate({
-    greeting: `${firstName(row.full_name)}, we got your request.`,
+    greeting: `${firstName(row.full_name)}, we got it.`,
     intro:
-      "Thanks for reaching out. We're going to pull the public records on your property and put together the actual math for your situation. You'll hear from us within one business day.",
+      "Thanks for reaching out. We're pulling the public records now, and within one business day you'll have your numbers: what it would likely clear at a marketed auction, what you'd keep after what's owed, and how that compares to the other ways out.",
+    note:
+      "It costs you $0. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid, and that's how the auction firm and FALCO are paid.",
     details: [
       { label: "Property", value: row.property_address },
       { label: "County", value: row.county },
-      { label: "Trustee sale date", value: fmtDateHuman(row.trustee_sale_date) },
+      { label: "Sale date", value: fmtDateHuman(row.trustee_sale_date) },
       {
-        label: "Est. mortgage balance",
+        label: "Owed, roughly",
         value: row.mortgage_balance ? fmtCurrency(row.mortgage_balance) : "",
       },
-      { label: "Best callback", value: row.best_callback },
+      { label: "Best time to call", value: row.best_callback },
     ],
     closer:
-      "When we come back, we'll show you what your home would clear at a marketed auction (run by a state-licensed Tennessee auction firm), what you'd walk away with after the loan is paid, and how that compares to letting the trustee sale go through. If the auction route doesn't fit your situation, we'll tell you that plainly.",
+      "Every sale is run by a licensed Tennessee auction firm, and you only sign if the numbers make sense. If an auction isn't the right fit, we'll tell you plainly.",
   })
   // Send notification + confirmation in parallel, but AWAIT both so the
   // serverless function doesn't tear down before the HTTP requests to
@@ -362,7 +372,7 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     sendNotificationEmail(subject, html, text),
     sendConfirmationEmail(
       email,
-      "We got your FALCO request — math coming within one business day",
+      "We got it. Your numbers are coming within one business day",
       homeownerConfirm.html,
       homeownerConfirm.text
     ),
@@ -374,7 +384,7 @@ ${row.situation_notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12
     alreadyExisted,
     message: alreadyExisted
       ? "Got it. We updated your request and will be in touch within one business day with the math on what your home would clear at a marketed auction."
-      : "Got it. We'll be in touch within one business day with the math on your specific situation — what your home would clear at a marketed auction vs. what you'd lose at the trustee sale.",
+      : "Got it. Within one business day we'll send your numbers: what it would likely clear at a marketed auction and what you'd keep.",
   }
 }
 
@@ -460,7 +470,7 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
   const inquiryConfirm = confirmationTemplate({
     greeting: `${firstName(row.full_name)}, message received.`,
     intro:
-      "Thanks for getting in touch with FALCO. We've got your note and someone will read it personally. Expect a reply within one business day.",
+      "Thanks for writing to FALCO. A person reads every message, and you'll hear back within one business day.",
     details: [
       { label: "Topic", value: row.topic },
       { label: "Company", value: row.company },
@@ -468,13 +478,13 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
     ],
     echoMessage: row.message,
     closer:
-      "If anything's time-sensitive, just hit reply — it lands directly in our inbox.",
+      "If it's time-sensitive, say so in a reply and we'll move it to the front.",
   })
   await Promise.allSettled([
     sendNotificationEmail(subject, html, text),
     sendConfirmationEmail(
       email,
-      "We got your message — replying within one business day",
+      "We got your message",
       inquiryConfirm.html,
       inquiryConfirm.text
     ),
@@ -585,8 +595,8 @@ ${row.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
   const partnerConfirm = confirmationTemplate({
     greeting: `${firstName(row.full_name)}, thanks for reaching out.`,
     intro: row.company
-      ? `We got your inquiry from ${row.company} and will be in touch within one business day to set up a call.`
-      : "We got your inquiry and will be in touch within one business day to set up a call.",
+      ? `We got your inquiry from ${row.company}. We'll reach out within one business day to set up a call.`
+      : "We got your inquiry. We'll reach out within one business day to set up a call.",
     details: [
       { label: "County coverage", value: row.county_coverage },
       {
@@ -600,13 +610,13 @@ ${row.notes ? `<tr><td style="padding:8px 12px;color:#888;font-size:12px;vertica
       { label: "Fee structure", value: row.fee_structure },
     ],
     closer:
-      "On the call we'll walk you through how the inventory pipeline works, what we'd send your way, and how the partnership fee structure lays out. No surprises, no contract pressure.",
+      "On the call we'll cover how sellers reach us, how we match each asset to the firm that sells it best, and how FALCO is paid: a share of the buyer's premium, never anything from the seller. No contract pressure.",
   })
   await Promise.allSettled([
     sendNotificationEmail(subject, html, text),
     sendConfirmationEmail(
       email,
-      "FALCO got your partner inquiry — call within one business day",
+      "We got your auction partner inquiry",
       partnerConfirm.html,
       partnerConfirm.text
     ),
