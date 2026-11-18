@@ -50,7 +50,12 @@ export default function AgentsContent() {
       <PageHead
         label="For real estate agents"
         title="Get paid on the listings that won't sell."
-        lede={`${REFERRAL_PCT}% of the winning bid, paid to your broker at closing. Send the expireds, the estates and the sellers out of time, and a licensed Tennessee auction firm sells it on a set date.`}
+        lede={
+          <>
+            <b>{REFERRAL_PCT}% of the winning bid</b>, paid to your broker at closing. Send the expireds, the
+            estates and the sellers out of time, and a licensed Tennessee auction firm sells it on a set date.
+          </>
+        }
       >
         <a className="pill dark" href="#join">
           Sign up <sub>→</sub>
