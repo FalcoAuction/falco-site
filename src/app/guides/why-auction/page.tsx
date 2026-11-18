@@ -38,7 +38,7 @@ const SOURCES = [
   { n: 7, label: "Buchak, Matvos, Piskorski and Seru, \"Why is Intermediating Houses so Difficult? Evidence from iBuyers,\" NBER Working Paper 28252, revised 2025", href: "https://www.nber.org/papers/w28252" },
   { n: 8, label: "Campbell, Giglio and Pathak, \"Forced Sales and House Prices,\" American Economic Review 101(5), 2011", href: "https://www.aeaweb.org/articles?id=10.1257/aer.101.5.2108" },
   { n: 9, label: "Cohen, Coughlin and Yao, \"Sales of Distressed Residential Property: What Have We Learned from Recent Research?\" Federal Reserve Bank of St. Louis Review 98(3), 2016", href: "https://fedinprint.org/item/fedlrv/25907" },
-  { n: 10, label: "HousingWire on Auction.com's Auction Market Dispatch, Q4 2025", href: "https://www.housingwire.com/articles/q4-2025-foreclosure-auctions/" },
+  { n: 10, label: "HousingWire on Auction.com's Auction Market Dispatch, Q3 2026", href: "https://www.housingwire.com/articles/foreclosure-auctions-up-25-in-the-past-year-hit-a-post-pandemic-peak/" },
   { n: 11, label: "ATTOM, underwater mortgages in foreclosure, Q2 2023", href: "https://www.attomdata.com/news/market-trends/figuresfriday/top-10-u-s-states-with-highest-shares-of-underwater-mortgages-in-foreclosure-in-q2-2023/" },
   { n: 12, label: "National Association of Realtors, existing-home sales for October 2026", href: "https://www.nar.realtor/newsroom/existing-home-sales-decreased-5-5-percent-october-nar-report" },
   { n: 13, label: "National Association of Realtors, Realtors Confidence Index", href: "https://www.nar.realtor/research-and-statistics/research-reports/realtors-confidence-index" },
@@ -84,7 +84,7 @@ const FAQ = [
   },
   {
     q: "Is my money safe?",
-    a: "Tennessee requires every principal auctioneer to hold sale proceeds in an escrow or trust account, give the seller a signed closing statement, and pay over funds within a reasonable time. A state recovery fund covers unpaid court judgments against licensees, up to set limits.",
+    a: "Tennessee requires every principal auctioneer to hold sale proceeds in an escrow or trust account, give the seller a signed closing statement, and pay over funds within a reasonable time. If a licensee breaks the auctioneer law and a court judgment for your loss goes unpaid for 60 days, a state recovery fund covers it, up to set limits.",
   },
   {
     q: "What if the bids don't get high enough?",
@@ -166,7 +166,8 @@ export default function WhyAuctionGuide() {
             <Cite href={SOURCES[7].href} n={8} /> A Federal Reserve review puts
             most estimates above 12%.
             <Cite href={SOURCES[8].href} n={9} /> At foreclosure auctions in
-            late 2025, winning bids averaged 67.4% of estimated value.
+            the third quarter of 2026, winning bids averaged 65.3% of estimated
+            value.
             <Cite href={SOURCES[9].href} n={10} />
           </GuideNote>
           <GuideKey>
@@ -253,9 +254,9 @@ export default function WhyAuctionGuide() {
             <Cite href={SOURCES[28].href} n={29} />
           </GuideNote>
           <GuideNote label="A recovery fund">
-            A state fund pays unpaid court judgments against licensed
-            auctioneers, up to set limits. You can look up any license before
-            you sign.
+            If a licensee breaks the auctioneer law and a court judgment for
+            your loss goes unpaid for 60 days, a state fund covers it, up to
+            set limits. You can look up any license before you sign.
             <Cite href={SOURCES[30].href} n={31} />
             <Cite href={SOURCES[31].href} n={32} />
           </GuideNote>
@@ -280,7 +281,7 @@ export default function WhyAuctionGuide() {
 
         <GuideSources
           sources={SOURCES}
-          note="Every link was opened and checked against the claim in November 2026. Tennessee statute text is from FindLaw's copy of the code; confirm against the official code before relying on it. Most of the price research studies homes in Australia, New Zealand and Singapore, where auctions are common; the cash-offer, instant-buyer and foreclosure studies are from the US."
+          note="Every link was opened and checked against the claim in November 2026. The Tennessee statutes and rules cited were checked against the General Assembly's public chapters for 2024 through 2026 and the Secretary of State's current rules (November 2025): none of the sections cited has changed. Most of the price research studies homes in Australia, New Zealand and Singapore, where auctions are common; the cash-offer, instant-buyer and foreclosure studies are from the US."
         />
       </GuideShell>
     </>

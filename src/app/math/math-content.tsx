@@ -9,13 +9,13 @@ import { AnswersCue, PageHead, PageSec, SitePage, WHY_AUCTION_HREF } from "../v2
  * /math: one example house, the three ways out, and the sources, on the
  * site's shared frame. The percentages match the math sheet every seller
  * receives (simple-sheet-v2.tsx): auction 80% to 88% of value from 104
- * local auctions, cash offers 55% to 70%, outside foreclosure bids 67.6%.
+ * local auctions, cash offers 55% to 70%, outside foreclosure bids 65.3% (Auction.com, Q3 2026).
  */
 
 const VALUE = 500_000
 const OWED = 300_000
 const CLOSING = 5_000
-const BID_RATIO = 0.676
+const BID_RATIO = 0.653
 const CASH_LOW = 0.55
 const CASH_HIGH = 0.7
 const AUCTION_LOW = 0.8
@@ -136,8 +136,8 @@ export default function MathContent() {
           <li>
             <b>Foreclosure bids</b>
             <span>
-              Auction.com, Q2 2026: outside buyers paid an average of 67.6% of value, and about half of sales went
-              back to the lender instead.
+              Auction.com, Q3 2026: outside buyers paid an average of 65.3% of value, and 45.5% of foreclosure
+              auctions sold. The rest went back to the lender.
             </span>
           </li>
           <li>
