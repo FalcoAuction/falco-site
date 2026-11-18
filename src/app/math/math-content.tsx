@@ -115,7 +115,7 @@ export default function MathContent() {
         </p>
       </PageSec>
 
-      <PageSec id="start" label="Your numbers" title="See it for what you have." note="Free, and nothing is owed either way.">
+      <PageSec id="start" label="Your numbers" title="See it for what you have.">
         <div className="pg-form r">
           <IntakeForm />
         </div>

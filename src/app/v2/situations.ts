@@ -67,7 +67,6 @@ export const SITUATIONS: Situation[] = [
     faq: [
       { q: "Do all the heirs have to agree?", a: "The executor or administrator is the one with authority to sell. Families usually do better when everyone sees the same numbers, so we put them in writing for all of you." },
       { q: "The estate has property in more than one county. Is that a problem?", a: "No. We work across Tennessee and route each asset to a firm that covers where it sits." },
-      { q: "What does it cost the estate?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us about the estate", href: "/start?s=estate" },
     guide: { label: "Selling estate and probate property in Tennessee", href: "/guides/selling-estate-property-tennessee" },
@@ -111,7 +110,6 @@ export const SITUATIONS: Situation[] = [
     faq: [
       { q: "Can the building and the equipment sell separately?", a: "Yes, and they usually should. Each goes to the buyers who want it, on its own sale or in one coordinated event." },
       { q: "We still owe on some of the equipment. Can it be sold?", a: "Usually, with the lender's sign-off. The payoff comes out of the sale and the lien is released at closing." },
-      { q: "What does it cost the business?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us about the business", href: "/start?s=business-closing" },
     guide: { label: "Liquidating a closing business in Tennessee", href: "/guides/business-liquidation-tennessee" },
@@ -144,7 +142,6 @@ export const SITUATIONS: Situation[] = [
     ],
     straight: [
       { h: "We don't buy your house", p: "If we did, every dollar we made on the spread would be a dollar out of your equity." },
-      { h: "No cost to you", p: "The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
       { h: "We'll tell you if it won't work", p: "If nothing clears the loan, we say so and point you to a short sale, a modification or counsel instead." },
     ],
     faq: FAQ_ITEMS.slice(0, 5),
@@ -233,7 +230,6 @@ export const SITUATIONS: Situation[] = [
     ],
     faq: [
       { q: "Can you sell a boat with no title?", a: "Often, through the lien sale process. The auctioneer will tell you up front what the state requires for that vessel." },
-      { q: "What does it cost us?", a: "Nothing. No listing fee and no commission from your side. The buyer pays a 10% premium on top of the winning bid. If it doesn't sell, you owe nobody anything." },
     ],
     cta: { label: "Tell us what you're holding", href: "/start?s=lien-sale&r=lienholder" },
     guide: { label: "Lien sales in Tennessee", href: "/guides/tennessee-lien-sales" },

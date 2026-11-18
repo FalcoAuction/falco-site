@@ -31,7 +31,7 @@ export default function PartnersPage() {
         </a>
       </PageHead>
 
-      <PageSec label="What you get" title="Three things, no noise.">
+      <PageSec label="What you get" title="Two things, no noise.">
         <ul className="rows r">
           <li>
             <b>Sellers who expect your call</b>
@@ -40,10 +40,6 @@ export default function PartnersPage() {
           <li>
             <b>Matched to what you sell</b>
             <span>Land to land firms, equipment to equipment auctioneers. Routing weighs what each firm clears, how often sales close, and which buyers it reaches.</span>
-          </li>
-          <li>
-            <b>Terms in writing first</b>
-            <span>A simple signed agreement before anything is routed. Your sale, your process.</span>
           </li>
         </ul>
       </PageSec>
@@ -75,7 +71,7 @@ export default function PartnersPage() {
           <div className="r">
             <span className="n">Step 03</span>
             <h3 className="d3">Sellers come to you</h3>
-            <p>Matched by asset, county and track record. You run the sale your way.</p>
+            <p>You get the introduction and run the sale your way.</p>
           </div>
         </div>
       </PageSec>

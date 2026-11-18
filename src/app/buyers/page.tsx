@@ -32,11 +32,11 @@ export default function BuyersLandingPage() {
         <ul className="rows r">
           <li>
             <b>First notice</b>
-            <span>An email the moment something matching your criteria is headed to auction.</span>
+            <span>An email before a match goes public.</span>
           </li>
           <li>
             <b>Open bidding</b>
-            <span>Every sale is run by a licensed Tennessee auction firm, in the open, on a set date.</span>
+            <span>In the open, on a set date, with every bid visible.</span>
           </li>
           <li>
             <b>A standard premium</b>
@@ -45,7 +45,7 @@ export default function BuyersLandingPage() {
         </ul>
       </PageSec>
 
-      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. We only email when something matches. Questions: sales@falco.llc.">
+      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. Questions: sales@falco.llc.">
         <div className="pg-form pg-legacy r">
           <BuyerSignupForm />
         </div>
@@ -62,12 +62,12 @@ export default function BuyersLandingPage() {
           <div className="r">
             <span className="n">Step 02</span>
             <h3 className="d3">We route the sale</h3>
-            <p>Sellers come to us when something has to sell. We send it to the licensed firm that sells it best.</p>
+            <p>Sellers come to us when something has to sell. We send it to the firm that sells it best.</p>
           </div>
           <div className="r">
             <span className="n">Step 03</span>
             <h3 className="d3">You bid</h3>
-            <p>When it matches your criteria, you hear about it first. The auction firm runs the sale.</p>
+            <p>Inspect it, register with the auction firm and bid on sale day.</p>
           </div>
         </div>
       </PageSec>

@@ -53,7 +53,7 @@ export default function LaneContent({ slug }: { slug: string }) {
         </ul>
       </PageSec>
 
-      <PageSec id="start" label="Get your numbers" title="Two minutes to start." note="Free, and nothing is owed either way.">
+      <PageSec id="start" label="Get your numbers" title="Two minutes to start.">
         <div className="pg-form r">
           <IntakeForm situation={s.slug} />
         </div>
@@ -94,7 +94,7 @@ export default function LaneContent({ slug }: { slug: string }) {
         id="how"
         label="How it works"
         title="Three steps."
-        note="Stop after any one of them. Nothing is owed either way."
+        note="Stop after any one of them."
       >
         <div className="quiet-steps" data-stagger="90">
           {s.steps.map((st, i) => (

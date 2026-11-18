@@ -4,7 +4,7 @@ import IntakeForm from "../v2/intake-form"
 import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 
 const ROLES = [
-  { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections, handled through one contact." },
+  { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections." },
   { h: "Executors and administrators", p: "A plan for every asset, in writing, that you can show the heirs and the court." },
   { h: "Bankruptcy trustees", p: "Firms that already know court-approved employment and sales, matched by asset class." },
   { h: "Receivers and lenders", p: "Collateral sold in the open, on a schedule, with results asset by asset." },
@@ -13,10 +13,9 @@ const ROLES = [
 ]
 
 const DELIVERS = [
-  { n: "01", h: "One contact", p: "Every asset in the file runs through one person. You don't chase six auction houses." },
-  { n: "02", h: "Inventory with ranges", p: "What is there, a value range for each item, and what is not worth auctioning." },
-  { n: "03", h: "Licensed routing", p: "Each class goes to a licensed Tennessee specialist with signed terms on file." },
-  { n: "04", h: "A sale record", p: "Results, bidder counts and proceeds by asset, ready for the court file or the books." },
+  { n: "01", h: "Inventory with ranges", p: "What is there, a value range for each item, and what is not worth auctioning." },
+  { n: "02", h: "A specialist per asset", p: "Each asset class goes to its own firm, with signed terms on file." },
+  { n: "03", h: "A sale record", p: "Results, bidder counts and proceeds by asset, ready for the court file or the books." },
 ]
 
 const CLEAN = [
@@ -42,8 +41,8 @@ export default function ProfessionalsContent() {
         </a>
       </PageHead>
 
-      <PageSec label="What you get" title="Four things, every file.">
-        <div className="quiet-steps four" data-stagger="90">
+      <PageSec label="What you get" title="Three things, every file.">
+        <div className="quiet-steps" data-stagger="90">
           {DELIVERS.map((d) => (
             <div className="r" key={d.n}>
               <span className="n">{d.n}</span>

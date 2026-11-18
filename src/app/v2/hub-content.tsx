@@ -246,7 +246,7 @@ function Steps() {
             <h2 className="d2 r">Three steps.</h2>
           </div>
           <p className="lede note r">
-            Stop after any one of them. Nothing is owed either way.
+            Stop after any one of them.
           </p>
         </div>
         <div className="quiet-steps" data-stagger="90">

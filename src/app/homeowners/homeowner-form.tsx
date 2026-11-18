@@ -27,7 +27,7 @@ export default function HomeownerForm() {
         </a>
       </PageHead>
 
-      <PageSec id="start" label="Get your numbers" title="Two minutes to start." note="Free, and nothing is owed either way.">
+      <PageSec id="start" label="Get your numbers" title="Two minutes to start.">
         <div className="pg-form r">
         <StepForm
           submitLabel="Get my numbers"
@@ -118,7 +118,7 @@ export default function HomeownerForm() {
         id="answers"
         label="How it works"
         title="Three steps."
-        note="Stop after any one of them. Nothing is owed either way."
+        note="Stop after any one of them."
       >
         <div className="quiet-steps" data-stagger="90">
           {FORECLOSURE.steps.map((st, i) => (
@@ -131,11 +131,8 @@ export default function HomeownerForm() {
         </div>
       </PageSec>
 
-      <PageSec label="What it costs" title="Nothing to you.">
+      <PageSec label="What it costs" title="How it gets paid.">
         <ul className="rows r">
-          <li>
-            <b>No listing fee and no commission from your side.</b>
-          </li>
           <li>
             <b>The buyer pays a 10% premium on top of the winning bid.</b>
             <span>That is how the auction firm and FALCO are paid.</span>
