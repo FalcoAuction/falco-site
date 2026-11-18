@@ -27,10 +27,12 @@ import type { HomeownerSnapshot } from "./math-sheet-content"
  *  campaign that is 2 to 3 months from signing. */
 const LOCAL_AUCTIONS_N = 104
 
-/** Cash-buyer offers modeled as a range: 55% of value (what distressed
- *  cash buyers commonly open at) up to 70% (the investor "70% rule"
- *  ceiling). A range is more honest than one number we can't source,
- *  and a real offer typed into Edit numbers replaces it. */
+/** Investor offers modeled as a range: 55% of value (where investors
+ *  buying distressed homes commonly open) up to 70% (the "70% rule"
+ *  investors use as a ceiling: 70% of value minus repairs). Labelled as an
+ *  investor offer, not any cash buyer: big instant buyers pay much closer
+ *  to market (NBER w28252: about 3 points under). A real offer typed into
+ *  Edit numbers replaces the range. */
 const CASH_LOW_PCT = 0.55
 const CASH_HIGH_PCT = 0.7
 
@@ -165,17 +167,17 @@ export default function SimpleSheetV2({
     key: "cash",
     label: hasRealOffer
       ? `If ${estate ? "the estate takes" : "you take"} the cash offer`
-      : `If ${estate ? "the estate sells" : "you sell"} to a cash buyer`,
+      : `If ${estate ? "the estate sells" : "you sell"} to an investor`,
     amount: cashAmount,
     note: hasRealOffer
       ? `${k(realCashOffer)} offer, minus what is owed.`
       : cashWalks
       ? "Too much is owed for them to profit."
       : Math.round(cashLow / 1000) <= 0
-      ? `Cash buyers usually offer ${pct(CASH_LOW_PCT)} to ${pct(CASH_HIGH_PCT)} of value. The low end only covers what is owed.`
+      ? `Investors usually offer ${pct(CASH_LOW_PCT)} to ${pct(CASH_HIGH_PCT)} of value. The low end only covers what is owed.`
       : s === "probate"
       ? "Investors watch probate filings and mail low offers."
-      : "They pay low so they can profit.",
+      : `Investors usually offer ${pct(CASH_LOW_PCT)} to ${pct(CASH_HIGH_PCT)} of value so they can profit.`,
     tone: "amber",
   })
   if (scenarioCfg.showMls) {
@@ -183,7 +185,7 @@ export default function SimpleSheetV2({
       key: "mls",
       label: `If ${estate ? "the estate lists" : "you list"} with an agent`,
       amount: k(out.mls.netToSeller),
-      note: "Can pay more, but takes months of showings and a 6% fee.",
+      note: "Can pay more, but takes months of showings and about 5% to 6% in agent fees.",
       tone: "amber",
     })
   }
@@ -409,9 +411,10 @@ export default function SimpleSheetV2({
               </>
             ) : (
               <>
-                <strong className="text-[#222]">The cash offer</strong> assumes a buyer pays{" "}
-                {pct(CASH_LOW_PCT)} to {pct(CASH_HIGH_PCT)} of what the house is worth. That is the usual
-                range for a fast cash sale. Have a real offer? We will put it on this sheet.
+                <strong className="text-[#222]">The investor offer</strong> assumes {pct(CASH_LOW_PCT)} to{" "}
+                {pct(CASH_HIGH_PCT)} of what the house is worth. Investors who buy homes that need work
+                usually cap their offer at 70% of value, minus repairs. Have a real offer? We will put it on
+                this sheet.
               </>
             )}
           </li>
