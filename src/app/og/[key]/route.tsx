@@ -33,6 +33,11 @@ const PAGES: Record<string, Card> = {
     title: "One contact for every asset in the file.",
     sub: "Inventory, licensed routing by asset class, and a sale record for the court file.",
   },
+  agents: {
+    kicker: "For real estate agents",
+    title: "Get paid on the listings that won't sell.",
+    sub: "1% of the winning bid, paid to your broker at closing. Your seller pays no commission.",
+  },
   partners: {
     kicker: "For auction firms",
     title: "Sellers with real value, routed to your specialty.",

@@ -10,6 +10,7 @@ export const ROLES = [
   { id: "owner", label: "Owner or family" },
   { id: "executor", label: "Executor or administrator" },
   { id: "professional", label: "Attorney or advisor" },
+  { id: "agent", label: "Real estate agent" },
   { id: "trustee", label: "Trustee or receiver" },
   { id: "lienholder", label: "Lienholder" },
   { id: "other", label: "Something else" },

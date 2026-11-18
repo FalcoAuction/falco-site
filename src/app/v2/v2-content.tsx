@@ -342,6 +342,7 @@ export function Nav() {
 const NAV_LINKS = [
   { href: "/manifesto", label: "How it works" },
   { href: "/professionals", label: "Professionals" },
+  { href: "/agents", label: "Agents" },
   { href: "/partners", label: "Auction firms" },
   { href: "/buyers", label: "Buyers" },
   { href: "/guides", label: "Guides" },
@@ -857,6 +858,7 @@ export function Foot() {
       links: [
         { href: "/start", label: "Tell us what happened" },
         { href: "/professionals", label: "Attorneys and trustees" },
+        { href: "/agents", label: "Real estate agents" },
         { href: "/partners", label: "Auction firms" },
         { href: "/buyers", label: "Buyers" },
       ],

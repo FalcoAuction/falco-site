@@ -499,6 +499,127 @@ ${row.topic ? `<div style="margin-top:12px;font-size:12px;color:#888;text-transf
 }
 
 // ============================================================================
+// Real estate agent signup (/agents)
+// ============================================================================
+
+export type AgentSignupInput = {
+  email: string
+  fullName: string
+  phone?: string
+  licenseNumber?: string
+  brokerage?: string
+  principalBroker?: string
+  inventory?: string[]
+  propertyAddress?: string
+  notes?: string
+  ipAddress?: string | null
+  userAgent?: string | null
+}
+
+/** Stored in general_inquiries (topic "Agent signup", brokerage in company)
+ *  so signups show in the CRM inbox without a new table. */
+export async function submitAgentSignup(input: AgentSignupInput): Promise<SubmitResult> {
+  if (!supabaseAdmin) {
+    return { ok: false, error: supabaseAdminConfigError ?? "Database not configured." }
+  }
+  const email = normEmail(input.email)
+  if (!email || !EMAIL_RE.test(email)) {
+    return { ok: false, error: "A valid email is required." }
+  }
+  const fullName = (input.fullName ?? "").trim()
+  const license = (input.licenseNumber ?? "").trim()
+  const brokerage = (input.brokerage ?? "").trim()
+  const principal = (input.principalBroker ?? "").trim()
+  if (!fullName) return { ok: false, error: "Please tell us your name." }
+  if (!license) return { ok: false, error: "Please add your Tennessee license number." }
+  if (!brokerage || !principal) {
+    return { ok: false, error: "Please add your brokerage and principal broker." }
+  }
+  const inventory = (input.inventory ?? []).map((x) => String(x).trim()).filter(Boolean).slice(0, 10)
+  const property = (input.propertyAddress ?? "").trim()
+  const notes = (input.notes ?? "").trim()
+
+  const message = [
+    `License: ${license}`,
+    `Brokerage: ${brokerage}`,
+    `Principal broker: ${principal}`,
+    inventory.length ? `Has: ${inventory.join(", ")}` : "",
+    property ? `Property: ${property}` : "",
+    notes ? `\n${notes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  const row = {
+    email,
+    full_name: fullName,
+    phone: (input.phone ?? "").trim(),
+    company: brokerage,
+    topic: "Agent signup",
+    message,
+    ip_address: input.ipAddress ?? null,
+    user_agent: input.userAgent ?? null,
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("general_inquiries")
+    .insert(row)
+    .select("id")
+    .single()
+  if (error) {
+    console.error("submitAgentSignup error:", error.message)
+    return { ok: false, error: `Submission failed: ${error.message}` }
+  }
+
+  const subject = `🔑 Agent signup: ${fullName} · ${brokerage}${property ? " · has a property" : ""}`
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+<div style="max-width:600px;margin:0 auto">
+<div style="padding:16px 0;border-bottom:2px solid #10b981">
+<div style="font-size:10px;letter-spacing:2px;color:#10b981;text-transform:uppercase">FALCO · Agent Signup</div>
+<div style="font-size:22px;font-weight:700;margin-top:4px">${esc(fullName)}</div>
+<div style="font-size:13px;color:#888;margin-top:2px">${esc(email)}${row.phone ? ` · ${esc(row.phone)}` : ""}</div>
+</div>
+<div style="font-size:14px;color:#fff;margin-top:16px;background:#111;padding:12px 16px;border-radius:6px;white-space:pre-wrap;line-height:1.55">${esc(message)}</div>
+<div style="color:#888;font-size:12px;margin-top:12px">Verify the license on the TREC lookup before sending the firm's referral agreement to the principal broker.</div>
+</div></body></html>`
+  const text = [
+    `Agent signup: ${fullName}`,
+    `Email: ${email}`,
+    ...(row.phone ? [`Phone: ${row.phone}`] : []),
+    "",
+    message,
+  ].join("\n")
+
+  const agentConfirm = confirmationTemplate({
+    greeting: `${firstName(fullName)}, you're signed up.`,
+    intro:
+      "We'll check your license with the Tennessee Real Estate Commission, then send the auction firm's referral agreement to your principal broker. That usually takes one business day.",
+    note: "Your broker is paid 1% of the winning bid at closing, by the auction firm, under that written agreement. Your seller pays no commission.",
+    detailsLabel: "What you sent us",
+    details: [
+      { label: "License", value: license },
+      { label: "Brokerage", value: brokerage },
+      { label: "Principal broker", value: principal },
+      { label: "Property", value: property },
+    ],
+    closer: property
+      ? "We'll have numbers on that property back to you within one business day: a likely range, the firm we'd route it to, and the timeline."
+      : "Got a property? Reply with the address and what's going on, and we'll send numbers within one business day.",
+  })
+  await Promise.allSettled([
+    sendNotificationEmail(subject, html, text),
+    sendConfirmationEmail(email, "You're signed up with FALCO", agentConfirm.html, agentConfirm.text),
+  ])
+
+  return {
+    ok: true,
+    id: String(data.id),
+    alreadyExisted: false,
+    message: "You're signed up. We'll be in touch within one business day.",
+  }
+}
+
+// ============================================================================
 // Partner inquiry (auction company)
 // ============================================================================
 
