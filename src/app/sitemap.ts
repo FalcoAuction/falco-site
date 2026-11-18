@@ -27,6 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/homeowners`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/start`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/professionals`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/agents`, changeFrequency: "monthly", priority: 0.8 },
     ...SITUATIONS.map((s) => ({
       url: `${base}/situations/${s.slug}`,
       changeFrequency: "monthly" as const,
