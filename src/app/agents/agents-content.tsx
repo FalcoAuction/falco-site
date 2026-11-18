@@ -89,9 +89,15 @@ export default function AgentsContent() {
         <div className="pg-form r">
           <AgentForm />
         </div>
+        {/* Same markup as AnswersCue in site-page.tsx (#87). */}
+        <p className="answers-cue r" style={{ marginTop: "clamp(28px,4vw,44px)" }}>
+          <a className="pill line" href="#answers">
+            Questions? Answers below <sub>↓</sub>
+          </a>
+        </p>
       </PageSec>
 
-      <PageSec label="When auction fits" title="The listings that sit.">
+      <PageSec id="answers" label="When auction fits" title="The listings that sit.">
         <ul className="rows r">
           {FITS.map((f) => (
             <li key={f.h}>
