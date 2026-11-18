@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Ledger } from "./v2-content"
 import IntakeForm from "./intake-form"
-import { AnswersCue, PageHead, PageSec, SitePage } from "./site-page"
+import { AnswersCue, PageHead, PageSec, SitePage, WhyAuctionLink } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 import { GUIDE_GROUPS } from "../guides/guide-index"
 
@@ -105,6 +105,7 @@ export default function LaneContent({ slug }: { slug: string }) {
             </div>
           ))}
         </div>
+        <WhyAuctionLink />
       </PageSec>
 
       <PageSec label="Straight talk" title="What you should know.">

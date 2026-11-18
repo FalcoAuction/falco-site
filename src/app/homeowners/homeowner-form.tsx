@@ -1,7 +1,7 @@
 "use client"
 
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
-import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage, WhyAuctionLink } from "../v2/site-page"
 import { SITUATION_BY_SLUG } from "../v2/situations"
 
 const FAIL = "Something went wrong. Try again or email help@falco.llc."
@@ -129,6 +129,7 @@ export default function HomeownerForm() {
             </div>
           ))}
         </div>
+        <WhyAuctionLink />
       </PageSec>
 
       <PageSec label="What it costs" title="How it gets paid.">

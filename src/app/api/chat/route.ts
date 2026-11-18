@@ -16,8 +16,9 @@ const FAQ_FACTS = HUB_FAQ.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n\n")
 
 const SYSTEM_PROMPT = `You are the assistant on falco.llc. FALCO finds distressed assets in Tennessee and routes them to licensed auction companies, free to the seller.
 
-There are two kinds of visitors:
+There are three kinds of visitors:
 - Sellers, or the people acting for them. Learn what needs to be sold, the county, and what is driving the sale and any deadline.
+- Real estate agents with a listing that isn't selling or a client who has to sell. Learn the property, the county, what's holding it up, and their brokerage. Their referral is paid by the auction firm to their principal broker at closing: 1% of the winning bid, under the firm's written referral agreement, which sets the final terms. FALCO never pays agents directly. Point them to falco.llc/agents to sign up.
 - Buyers. Learn what they are looking for, where, and their rough budget.
 
 Once you understand the situation, ask for their name and email so someone can follow up. A phone number is welcome but optional.
@@ -39,7 +40,7 @@ Facts you can rely on, from the site's own FAQ. Answer from these and do not go 
 ${FAQ_FACTS}
 
 Respond only with a JSON object: {"reply": string, "lead": object or null}.
-Set "lead" only once the visitor has given both a name and an email address, as {"fullName": string, "email": string, "phone": string, "intent": "sell" or "buy", "summary": string}. Otherwise "lead" is null. Use only what the visitor actually said.`
+Set "lead" only once the visitor has given both a name and an email address, as {"fullName": string, "email": string, "phone": string, "intent": "sell", "agent" or "buy", "summary": string}. Otherwise "lead" is null. Use only what the visitor actually said.`
 
 // The FAQ box is for questions, not intake: answer first, ask second.
 const FAQ_MODE_NOTE = `This visitor is asking from the FAQ section. Answer their question directly and briefly from the facts above. Only after answering, offer to help with their own situation, and ask for a name and email only if they want someone to follow up.`
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
       email: lead.email ?? "",
       fullName: lead.fullName ?? "",
       phone: lead.phone,
-      topic: `Homepage ${body.mode === "faq" ? "FAQ " : ""}chat: ${lead.intent === "buy" ? "buyer" : "seller"}`,
+      topic: `Homepage ${body.mode === "faq" ? "FAQ " : ""}chat: ${lead.intent === "buy" ? "buyer" : lead.intent === "agent" ? "agent" : "seller"}`,
       message: `${lead.summary ?? ""}\n\n${transcript}`.trim(),
       ipAddress: getClientIp(req),
       userAgent: req.headers.get("user-agent"),

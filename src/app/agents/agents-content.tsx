@@ -1,6 +1,7 @@
 "use client"
 
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import Link from "next/link"
+import { PageHead, PageSec, SitePage, WHY_AUCTION_HREF, WhyAuctionLink } from "../v2/site-page"
 import AgentForm from "./agent-form"
 
 /** The referral, as a share of the winning bid. Paid by the auction firm to
@@ -60,9 +61,9 @@ export default function AgentsContent() {
         <a className="pill dark" href="#join">
           Sign up <sub>→</sub>
         </a>
-        <a className="pill line" href="mailto:pat@falco.llc">
-          pat@falco.llc
-        </a>
+        <Link className="pill line" href={WHY_AUCTION_HREF}>
+          Why auction
+        </Link>
       </PageHead>
 
       <PageSec label="What you make" title={`On a ${usd(EXAMPLE_BID)} house.`}>
@@ -119,6 +120,7 @@ export default function AgentsContent() {
             </div>
           ))}
         </div>
+        <WhyAuctionLink label="The full case, with sources" />
       </PageSec>
 
       <PageSec label="Why route it through FALCO" title="The right firm, not the nearest one.">

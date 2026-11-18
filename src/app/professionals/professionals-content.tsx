@@ -1,7 +1,7 @@
 "use client"
 
 import IntakeForm from "../v2/intake-form"
-import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage, WhyAuctionLink } from "../v2/site-page"
 
 const ROLES = [
   { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections." },
@@ -74,6 +74,7 @@ export default function ProfessionalsContent() {
             </li>
           ))}
         </ul>
+        <WhyAuctionLink />
       </PageSec>
 
       <PageSec label="How we stay clean" title="No side deals. No shortcuts.">

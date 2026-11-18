@@ -4,7 +4,7 @@ import Link from "next/link"
 import ChatBox from "./chat-box"
 import { HUB_FAQ } from "./situations"
 import { Foot, LiteVideo, Nav, useReveals } from "./v2-content"
-import { AnswersCue } from "./site-page"
+import { AnswersCue, WHY_AUCTION_HREF } from "./site-page"
 
 /**
  * Homepage, simplified: the hero is the chat, and every section after it
@@ -87,6 +87,9 @@ function WhyWeExist() {
             <p className="r why-cta">
               <Link className="pill line" href="/manifesto">
                 How it works, start to finish <sub>→</sub>
+              </Link>{" "}
+              <Link className="pill line" href={WHY_AUCTION_HREF}>
+                Why auction <sub>→</sub>
               </Link>
             </p>
           </div>
