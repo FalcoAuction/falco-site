@@ -64,6 +64,9 @@ export default function AgentsContent() {
         <Link className="pill line" href={WHY_AUCTION_HREF}>
           Why auction
         </Link>
+        <a className="pill line" href="mailto:pat@falco.llc">
+          pat@falco.llc
+        </a>
       </PageHead>
 
       <PageSec label="What you make" title={`On a ${usd(EXAMPLE_BID)} house.`}>
