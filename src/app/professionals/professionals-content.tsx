@@ -1,10 +1,10 @@
 "use client"
 
-import Link from "next/link"
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import IntakeForm from "../v2/intake-form"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 
 const ROLES = [
-  { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections, handled through one contact." },
+  { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections." },
   { h: "Executors and administrators", p: "A plan for every asset, in writing, that you can show the heirs and the court." },
   { h: "Bankruptcy trustees", p: "Firms that already know court-approved employment and sales, matched by asset class." },
   { h: "Receivers and lenders", p: "Collateral sold in the open, on a schedule, with results asset by asset." },
@@ -13,10 +13,9 @@ const ROLES = [
 ]
 
 const DELIVERS = [
-  { n: "01", h: "One contact", p: "Every asset in the file runs through one person. You don't chase six auction houses." },
-  { n: "02", h: "Inventory with ranges", p: "What is there, a value range for each item, and what is not worth auctioning." },
-  { n: "03", h: "Licensed routing", p: "Each class goes to a licensed Tennessee specialist with signed terms on file." },
-  { n: "04", h: "A sale record", p: "Results, bidder counts and proceeds by asset, ready for the court file or the books." },
+  { n: "01", h: "Inventory with ranges", p: "What is there, a value range for each item, and what is not worth auctioning." },
+  { n: "02", h: "A specialist per asset", p: "Each asset class goes to its own firm, with signed terms on file." },
+  { n: "03", h: "A sale record", p: "Results, bidder counts and proceeds by asset, ready for the court file or the books." },
 ]
 
 const CLEAN = [
@@ -34,27 +33,16 @@ export default function ProfessionalsContent() {
         title="One contact for every asset in the file."
         lede="Estates, bankruptcies, receiverships and closings rarely hold just one kind of property. We inventory it, match each asset to the licensed Tennessee auctioneer who sells it best, and report back in a form you can file."
       >
-        <Link className="pill dark" href="/start?r=professional">
+        <a className="pill dark" href="#start">
           Send us a file <sub>→</sub>
-        </Link>
+        </a>
         <a className="pill line" href="mailto:pat@falco.llc">
           pat@falco.llc
         </a>
       </PageHead>
 
-      <PageSec label="Who we work with" title="The people who have to sell it.">
-        <ul className="rows r">
-          {ROLES.map((r) => (
-            <li key={r.h}>
-              <b>{r.h}</b>
-              <span>{r.p}</span>
-            </li>
-          ))}
-        </ul>
-      </PageSec>
-
-      <PageSec label="What you get" title="Four things, every file.">
-        <div className="quiet-steps four" data-stagger="90">
+      <PageSec label="What you get" title="Three things, every file.">
+        <div className="quiet-steps" data-stagger="90">
           {DELIVERS.map((d) => (
             <div className="r" key={d.n}>
               <span className="n">{d.n}</span>
@@ -63,6 +51,29 @@ export default function ProfessionalsContent() {
             </div>
           ))}
         </div>
+      </PageSec>
+
+      <PageSec
+        id="start"
+        label="Send us a file"
+        title="Two minutes to start."
+        note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622."
+      >
+        <div className="pg-form r">
+          <IntakeForm />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
+      <PageSec id="answers" label="Who we work with" title="The people who have to sell it.">
+        <ul className="rows r">
+          {ROLES.map((r) => (
+            <li key={r.h}>
+              <b>{r.h}</b>
+              <span>{r.p}</span>
+            </li>
+          ))}
+        </ul>
       </PageSec>
 
       <PageSec label="How we stay clean" title="No side deals. No shortcuts.">
@@ -74,17 +85,6 @@ export default function ProfessionalsContent() {
             </li>
           ))}
         </ul>
-      </PageSec>
-
-      <PageSec label="Send us a file" title="Two minutes to start." note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622.">
-        <div className="pills r">
-          <Link className="pill dark" href="/start?r=professional">
-            Send us a file <sub>→</sub>
-          </Link>
-          <a className="pill line" href="mailto:pat@falco.llc">
-            pat@falco.llc
-          </a>
-        </div>
       </PageSec>
     </SitePage>
   )

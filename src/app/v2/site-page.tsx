@@ -88,3 +88,24 @@ export function PageSec({
     </section>
   )
 }
+
+/**
+ * Sits under a page's form and points down to the answers, so people who
+ * want to read first know they're there. Same outline pill as the rest of
+ * the site; the target section carries the matching id.
+ */
+export function AnswersCue({
+  href = "#answers",
+  children = "Questions? Answers below",
+}: {
+  href?: string
+  children?: React.ReactNode
+}) {
+  return (
+    <p className="answers-cue r" style={{ marginTop: "clamp(28px,4vw,44px)" }}>
+      <a className="pill line" href={href}>
+        {children} <sub>↓</sub>
+      </a>
+    </p>
+  )
+}

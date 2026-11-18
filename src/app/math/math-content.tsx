@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { Ledger } from "../v2/v2-content"
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import IntakeForm from "../v2/intake-form"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 
 /**
  * /math: one example house, the three ways out, and the sources, on the
@@ -69,9 +70,9 @@ export default function MathContent() {
         title="One house. Three ways out."
         lede="Same house, same debt, different exits. Here is what each one would leave you, using the same numbers we put on every math sheet we send."
       >
-        <Link className="pill dark" href="/start">
+        <a className="pill dark" href="#start">
           Get your numbers <sub>→</sub>
-        </Link>
+        </a>
         <a className="pill line" href="#math">
           Run your own
         </a>
@@ -114,9 +115,16 @@ export default function MathContent() {
         </p>
       </PageSec>
 
+      <PageSec id="start" label="Your numbers" title="See it for what you have.">
+        <div className="pg-form r">
+          <IntakeForm />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
       <Ledger full={false} />
 
-      <PageSec label="Where the numbers come from" title="Sources, not guesses.">
+      <PageSec id="answers" label="Where the numbers come from" title="Sources, not guesses.">
         <ul className="rows r">
           <li>
             <b>Auction prices</b>
@@ -165,16 +173,6 @@ export default function MathContent() {
         </p>
       </PageSec>
 
-      <PageSec label="Your numbers" title="See it for what you have." note="Free, and nothing is owed either way.">
-        <div className="pills r">
-          <Link className="pill dark" href="/start">
-            Get your numbers <sub>→</sub>
-          </Link>
-          <Link className="pill line" href="/#ask">
-            Ask a question
-          </Link>
-        </div>
-      </PageSec>
     </SitePage>
   )
 }

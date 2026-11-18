@@ -4,6 +4,7 @@ import Link from "next/link"
 import ChatBox from "./chat-box"
 import { HUB_FAQ } from "./situations"
 import { Foot, LiteVideo, Nav, useReveals } from "./v2-content"
+import { AnswersCue } from "./site-page"
 
 /**
  * Homepage, simplified: the hero is the chat, and every section after it
@@ -45,6 +46,7 @@ function Hero() {
         <div className="r">
           <ChatBox />
         </div>
+        <AnswersCue href="#faq" />
       </div>
     </section>
   )
@@ -244,7 +246,7 @@ function Steps() {
             <h2 className="d2 r">Three steps.</h2>
           </div>
           <p className="lede note r">
-            Stop after any one of them. Nothing is owed either way.
+            Stop after any one of them.
           </p>
         </div>
         <div className="quiet-steps" data-stagger="90">
