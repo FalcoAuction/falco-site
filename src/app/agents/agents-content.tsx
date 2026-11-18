@@ -6,7 +6,10 @@ import AgentForm from "./agent-form"
 /** The referral, as a share of the winning bid. Paid by the auction firm to
  *  the agent's principal broker under the firm's written referral terms. */
 const REFERRAL_PCT = 1
+/** One example house for the comparison. */
 const EXAMPLE_BID = 300000
+/** A typical agent-to-agent referral: 25% of a 2.5% listing side. */
+const TYPICAL_REFERRAL = 0.025 * 0.25
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`
 
 const FITS = [
@@ -14,46 +17,40 @@ const FITS = [
   { h: "Estates", p: "Heirs in three states and a house nobody wants to manage." },
   { h: "A foreclosure date", p: "A seller with a trustee sale coming and no time for 90 days on market." },
   { h: "Houses that won't finance", p: "Condition, title or tenants that keep loan-backed buyers away." },
-  { h: "Investor exits", p: "A client who wants out of one property or ten, on a known date." },
+  { h: "Investor exits", p: "A client who wants out of one property or ten." },
   { h: "Land and commercial", p: "Farms, lots and buildings with a thin buyer pool on the MLS." },
 ]
 
 const WHY_AUCTION = [
-  { n: "01", h: "A set date", p: "Bidding opens and closes on days the seller knows in advance. No open-ended waiting." },
-  { n: "02", h: "As-is", p: "No repair list and no appraisal fight. Buyers inspect before the sale and bid on what is there." },
-  { n: "03", h: "$0 seller commission", p: "The buyer pays a 10% premium on top of the winning bid. That is how the firm, FALCO and your referral are paid." },
-  { n: "04", h: "Price set in the open", p: "Weeks of marketing and competing bids, not a courthouse-steps sale to whoever shows up." },
+  { n: "01", h: "A set date", p: "Bidding opens and closes on days the seller knows in advance." },
+  { n: "02", h: "As-is", p: "No repair list and no appraisal fight. Buyers inspect first and bid on what is there." },
+  { n: "03", h: "$0 seller commission", p: "The buyer pays a 10% premium on top of the winning bid. That pays the firm, FALCO and your referral." },
+  { n: "04", h: "Price set in the open", p: "Weeks of marketing and competing bids, not a courthouse-steps sale." },
 ]
 
 const WHY_FALCO = [
-  { h: "We pick the firm", p: "Each property goes to the licensed Tennessee auction firm whose buyers want that kind of property in that county." },
-  { h: "Numbers in writing", p: "Within one business day: a likely range, the firm, and the timeline. Something you can put in front of your seller." },
-  { h: "Your client stays yours", p: "You're copied on every update, from the first call to the closing." },
-  { h: "One contact", p: "You talk to one person, not three auction houses." },
+  { h: "We pick the firm", p: "Matched to the property and the county, using what each firm's sales actually bring in." },
+  { h: "Numbers in writing", p: "Within one business day: a likely range, the firm and the timeline, ready to put in front of your seller." },
+  { h: "Your client stays yours", p: "You're copied on every update through closing." },
 ]
 
 const CLEAN = [
-  { h: "We never pay agents directly", p: "Every referral dollar goes from the auction firm to your principal broker. Tennessee law says you're paid through your broker, so that's the only way we do it." },
+  { h: "Broker to broker", p: "The auction firm pays your principal broker, as Tennessee law requires. We never pay agents directly." },
   { h: "Terms in writing first", p: "The firm signs a referral agreement with your broker before your property goes to the firm. That agreement sets the final terms." },
   { h: "Your listing comes first", p: "If the property is under a listing agreement, your broker decides how it moves: a release, or a co-listing with the auction firm." },
   { h: "Licensed firms only", p: "Real estate auctions in Tennessee are run by firms that hold both an auction and a real estate license." },
   { h: "We never buy", p: "We don't take a position in anything we route." },
 ]
 
-/** Winning bids shown in the pay table. */
-const PAY_POINTS = [200000, 300000, 500000, 1000000]
-/** A typical agent-to-agent referral: 25% of a 2.5% listing side. */
-const TYPICAL_REFERRAL = 0.025 * 0.25
-
 export default function AgentsContent() {
-  const premium = EXAMPLE_BID * 0.1
-  const referral = EXAMPLE_BID * (REFERRAL_PCT / 100)
+  const ours = EXAMPLE_BID * (REFERRAL_PCT / 100)
+  const typical = EXAMPLE_BID * TYPICAL_REFERRAL
   return (
     <SitePage>
       <PageHead
         label="For real estate agents"
         title="Get paid on the listings that won't sell."
-        lede={`${REFERRAL_PCT}% of the winning bid, paid to your broker at closing. ${usd(referral)} on a ${usd(EXAMPLE_BID)} house. Send us the expireds, the estates and the sellers out of time, and a licensed Tennessee auction firm sells it on a set date.`}
+        lede={`${REFERRAL_PCT}% of the winning bid, paid to your broker at closing. Send the expireds, the estates and the sellers out of time, and a licensed Tennessee auction firm sells it on a set date.`}
       >
         <a className="pill dark" href="#join">
           Sign up <sub>→</sub>
@@ -63,20 +60,19 @@ export default function AgentsContent() {
         </a>
       </PageHead>
 
-      <PageSec
-        label="What you make"
-        title={`${REFERRAL_PCT}% of the winning bid. Every sale.`}
-        note="An expired listing pays nothing. The typical figure is a 25% referral on a 2.5% listing side."
-      >
+      <PageSec label="What you make" title={`On a ${usd(EXAMPLE_BID)} house.`}>
         <ul className="rows r">
-          {PAY_POINTS.map((bid) => (
-            <li key={bid}>
-              <b>
-                {usd(bid * (REFERRAL_PCT / 100))} on a {usd(bid)} sale
-              </b>
-              <span>A typical referral on the same house: {usd(bid * TYPICAL_REFERRAL)}</span>
-            </li>
-          ))}
+          <li>
+            <b>Through FALCO: {usd(ours)}</b>
+            <span>From the auction firm, at closing.</span>
+          </li>
+          <li>
+            <b>A typical referral: {usd(typical)}</b>
+            <span>25% of a 2.5% listing side.</span>
+          </li>
+          <li>
+            <b>The expired listing: $0</b>
+          </li>
         </ul>
       </PageSec>
 
@@ -84,7 +80,7 @@ export default function AgentsContent() {
         id="join"
         label="Sign up"
         title="Two minutes to get on the list."
-        note="We check your license, then the auction firm sends its referral agreement to your broker. Founded by Patrick Armour, licensed Tennessee auctioneer #7622."
+        note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622."
       >
         <div className="pg-form r">
           <AgentForm />
@@ -131,30 +127,7 @@ export default function AgentsContent() {
         </ul>
       </PageSec>
 
-      <PageSec label="Where the money comes from" title="The buyer pays. Your seller doesn't.">
-        <ul className="rows r">
-          <li>
-            <b>Winning bid</b>
-            <span>{usd(EXAMPLE_BID)}</span>
-          </li>
-          <li>
-            <b>Buyer&apos;s premium</b>
-            <span>{usd(premium)}, paid by the buyer on top of the bid</span>
-          </li>
-          <li>
-            <b>Your seller pays in commission</b>
-            <span>$0</span>
-          </li>
-          <li>
-            <b>Paid to your broker at closing</b>
-            <span>
-              {usd(referral)}, from the auction firm, under its written referral agreement
-            </span>
-          </li>
-        </ul>
-      </PageSec>
-
-      <PageSec label="How we stay clean" title="Broker to broker. Nothing on the side.">
+      <PageSec label="The rules" title="Nothing on the side.">
         <ul className="rows r">
           {CLEAN.map((c) => (
             <li key={c.h}>
