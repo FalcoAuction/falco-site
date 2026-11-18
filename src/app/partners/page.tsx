@@ -1,5 +1,5 @@
 import PartnerForm from "./partner-form"
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 import { ogMeta } from "@/lib/og"
 
 export const metadata = {
@@ -48,7 +48,19 @@ export default function PartnersPage() {
         </ul>
       </PageSec>
 
-      <PageSec label="How it works" title="Three steps.">
+      <PageSec
+        id="apply"
+        label="Start a conversation"
+        title="Five quick questions."
+        note="We'll set up a call within one business day."
+      >
+        <div className="pg-form r">
+          <PartnerForm />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
+      <PageSec id="answers" label="How it works" title="Three steps.">
         <div className="quiet-steps" data-stagger="90">
           <div className="r">
             <span className="n">Step 01</span>
@@ -65,17 +77,6 @@ export default function PartnersPage() {
             <h3 className="d3">Sellers come to you</h3>
             <p>Matched by asset, county and track record. You run the sale your way.</p>
           </div>
-        </div>
-      </PageSec>
-
-      <PageSec
-        id="apply"
-        label="Start a conversation"
-        title="Five quick questions."
-        note="We'll set up a call within one business day."
-      >
-        <div className="pg-form r">
-          <PartnerForm />
         </div>
       </PageSec>
     </SitePage>

@@ -1,5 +1,5 @@
 import BuyerSignupForm from "./buyer-signup-form"
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 import { ogMeta } from "@/lib/og"
 
 export const metadata = {
@@ -45,7 +45,14 @@ export default function BuyersLandingPage() {
         </ul>
       </PageSec>
 
-      <PageSec label="How it works" title="Three steps.">
+      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. We only email when something matches. Questions: sales@falco.llc.">
+        <div className="pg-form pg-legacy r">
+          <BuyerSignupForm />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
+      <PageSec id="answers" label="How it works" title="Three steps.">
         <div className="quiet-steps" data-stagger="90">
           <div className="r">
             <span className="n">Step 01</span>
@@ -62,12 +69,6 @@ export default function BuyersLandingPage() {
             <h3 className="d3">You bid</h3>
             <p>When it matches your criteria, you hear about it first. The auction firm runs the sale.</p>
           </div>
-        </div>
-      </PageSec>
-
-      <PageSec id="register" label="Register" title="Tell us what you buy." note="Takes 90 seconds. We only email when something matches. Questions: sales@falco.llc.">
-        <div className="pg-form pg-legacy r">
-          <BuyerSignupForm />
         </div>
       </PageSec>
     </SitePage>

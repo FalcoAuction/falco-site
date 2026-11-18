@@ -6,7 +6,7 @@ import { Foot, Nav } from "../v2/v2-content"
 import { ASSET_CLASSES, SITUATIONS } from "../v2/situations"
 import { SMS_CONSENT_TEXT, recordSmsConsent } from "@/lib/sms-consent"
 
-const ROLES = [
+export const ROLES = [
   { id: "owner", label: "Owner or family" },
   { id: "executor", label: "Executor or administrator" },
   { id: "professional", label: "Attorney or advisor" },

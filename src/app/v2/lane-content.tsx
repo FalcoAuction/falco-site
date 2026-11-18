@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { Ledger } from "./v2-content"
-import { PageHead, PageSec, SitePage } from "./site-page"
+import IntakeForm from "./intake-form"
+import { AnswersCue, PageHead, PageSec, SitePage } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 import { GUIDE_GROUPS } from "../guides/guide-index"
 
@@ -29,15 +30,38 @@ export default function LaneContent({ slug }: { slug: string }) {
         title={s.h1}
         lede={s.lede}
       >
-        <Link className="pill dark" href={s.cta.href}>
+        <a className="pill dark" href="#start">
           {s.cta.label} <sub>→</sub>
-        </Link>
-        <Link className="pill line" href="/#ask">
-          Ask a question
-        </Link>
+        </a>
+        <a className="pill line" href="#faq">
+          Common questions
+        </a>
       </PageHead>
 
+      <PageSec label="What it costs" title="Nothing to you.">
+        <ul className="rows r">
+          <li>
+            <b>No listing fee and no commission from your side.</b>
+          </li>
+          <li>
+            <b>The buyer pays a 10% premium on top of the winning bid.</b>
+            <span>That is how the auction firm and FALCO are paid.</span>
+          </li>
+          <li>
+            <b>If it doesn&apos;t sell, you owe nobody anything.</b>
+          </li>
+        </ul>
+      </PageSec>
+
+      <PageSec id="start" label="Get your numbers" title="Two minutes to start." note="Free, and nothing is owed either way.">
+        <div className="pg-form r">
+          <IntakeForm situation={s.slug} />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
       <PageSec
+        id="answers"
         label="Is this you?"
         title="Who we help here."
         note={`We usually hear about these from ${s.found
@@ -83,21 +107,6 @@ export default function LaneContent({ slug }: { slug: string }) {
         </div>
       </PageSec>
 
-      <PageSec label="What it costs" title="Nothing to you.">
-        <ul className="rows r">
-          <li>
-            <b>No listing fee and no commission from your side.</b>
-          </li>
-          <li>
-            <b>The buyer pays a 10% premium on top of the winning bid.</b>
-            <span>That is how the auction firm and FALCO are paid.</span>
-          </li>
-          <li>
-            <b>If it doesn&apos;t sell, you owe nobody anything.</b>
-          </li>
-        </ul>
-      </PageSec>
-
       <PageSec label="Straight talk" title="What you should know.">
         <ul className="rows r">
           {s.straight.map((t) => (
@@ -135,18 +144,7 @@ export default function LaneContent({ slug }: { slug: string }) {
         </PageSec>
       )}
 
-      <PageSec label="Next step" title="Ready when you are." note="Free, and nothing is owed either way.">
-        <div className="pills r">
-          <Link className="pill dark" href={s.cta.href}>
-            {s.cta.label} <sub>→</sub>
-          </Link>
-          <Link className="pill line" href={s.guide.href}>
-            Read the guide: {s.guide.label}
-          </Link>
-        </div>
-        <p className="lbl r" style={{ marginTop: "clamp(48px,6vw,80px)" }}>
-          Not quite your situation?
-        </p>
+      <PageSec label="Not quite your situation?" title="Other ways we help.">
         <ul className="rows r">
           {others.map((o) => (
             <li key={o.slug}>
@@ -157,6 +155,11 @@ export default function LaneContent({ slug }: { slug: string }) {
             </li>
           ))}
         </ul>
+        <p className="r" style={{ marginTop: "clamp(40px,5vw,64px)" }}>
+          <Link className="pill line" href={s.guide.href}>
+            Read the guide: {s.guide.label} <sub>→</sub>
+          </Link>
+        </p>
       </PageSec>
     </SitePage>
   )

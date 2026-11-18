@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
-import { PageHead, PageSec, SitePage } from "../v2/site-page"
+import IntakeForm from "../v2/intake-form"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
 
 const ROLES = [
   { h: "Estate attorneys", p: "Probate estates with a house, vehicles, firearms and collections, handled through one contact." },
@@ -34,24 +34,13 @@ export default function ProfessionalsContent() {
         title="One contact for every asset in the file."
         lede="Estates, bankruptcies, receiverships and closings rarely hold just one kind of property. We inventory it, match each asset to the licensed Tennessee auctioneer who sells it best, and report back in a form you can file."
       >
-        <Link className="pill dark" href="/start?r=professional">
+        <a className="pill dark" href="#start">
           Send us a file <sub>→</sub>
-        </Link>
+        </a>
         <a className="pill line" href="mailto:pat@falco.llc">
           pat@falco.llc
         </a>
       </PageHead>
-
-      <PageSec label="Who we work with" title="The people who have to sell it.">
-        <ul className="rows r">
-          {ROLES.map((r) => (
-            <li key={r.h}>
-              <b>{r.h}</b>
-              <span>{r.p}</span>
-            </li>
-          ))}
-        </ul>
-      </PageSec>
 
       <PageSec label="What you get" title="Four things, every file.">
         <div className="quiet-steps four" data-stagger="90">
@@ -65,6 +54,29 @@ export default function ProfessionalsContent() {
         </div>
       </PageSec>
 
+      <PageSec
+        id="start"
+        label="Send us a file"
+        title="Two minutes to start."
+        note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622."
+      >
+        <div className="pg-form r">
+          <IntakeForm />
+        </div>
+        <AnswersCue />
+      </PageSec>
+
+      <PageSec id="answers" label="Who we work with" title="The people who have to sell it.">
+        <ul className="rows r">
+          {ROLES.map((r) => (
+            <li key={r.h}>
+              <b>{r.h}</b>
+              <span>{r.p}</span>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
       <PageSec label="How we stay clean" title="No side deals. No shortcuts.">
         <ul className="rows r">
           {CLEAN.map((c) => (
@@ -74,17 +86,6 @@ export default function ProfessionalsContent() {
             </li>
           ))}
         </ul>
-      </PageSec>
-
-      <PageSec label="Send us a file" title="Two minutes to start." note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622.">
-        <div className="pills r">
-          <Link className="pill dark" href="/start?r=professional">
-            Send us a file <sub>→</sub>
-          </Link>
-          <a className="pill line" href="mailto:pat@falco.llc">
-            pat@falco.llc
-          </a>
-        </div>
       </PageSec>
     </SitePage>
   )

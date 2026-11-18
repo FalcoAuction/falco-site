@@ -4,6 +4,7 @@ import Link from "next/link"
 import ChatBox from "./chat-box"
 import { HUB_FAQ } from "./situations"
 import { Foot, LiteVideo, Nav, useReveals } from "./v2-content"
+import { AnswersCue } from "./site-page"
 
 /**
  * Homepage, simplified: the hero is the chat, and every section after it
@@ -45,6 +46,7 @@ function Hero() {
         <div className="r">
           <ChatBox />
         </div>
+        <AnswersCue href="#faq" />
       </div>
     </section>
   )

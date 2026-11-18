@@ -1,18 +1,35 @@
 "use client"
 
 import StepForm, { postJson, type StepValues } from "../v2/step-form"
-import { SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
+import { SITUATION_BY_SLUG } from "../v2/situations"
 
 const FAIL = "Something went wrong. Try again or email help@falco.llc."
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
-/** Homeowner request, one question per screen. Same payload as before. */
+const FORECLOSURE = SITUATION_BY_SLUG["foreclosure"]
+
+/** Homeowner request, one question per screen. Same payload as before.
+ *  The no-cost line leads, the form follows, the answers sit below. */
 export default function HomeownerForm() {
   return (
     <SitePage>
-      <div className="st-wrap">
+      <PageHead
+        label="For homeowners"
+        title="Sell before the trustee sale. Keep your equity."
+        lede="No cost to you: no listing fee and no commission from your side. Tell us about the house and we'll send the real numbers within one business day."
+      >
+        <a className="pill dark" href="#start">
+          Get my numbers <sub>→</sub>
+        </a>
+        <a className="pill line" href="#faq">
+          Common questions
+        </a>
+      </PageHead>
+
+      <PageSec id="start" label="Get your numbers" title="Two minutes to start." note="Free, and nothing is owed either way.">
+        <div className="pg-form r">
         <StepForm
-          label="For homeowners. Free, and nothing is owed either way."
           submitLabel="Get my numbers"
           steps={[
             {
@@ -93,7 +110,63 @@ export default function HomeownerForm() {
             text: "We'll reach out within one business day with the real numbers. Questions before then: help@falco.llc.",
           }}
         />
-      </div>
+        </div>
+        <AnswersCue />
+      </PageSec>
+
+      <PageSec
+        id="answers"
+        label="How it works"
+        title="Three steps."
+        note="Stop after any one of them. Nothing is owed either way."
+      >
+        <div className="quiet-steps" data-stagger="90">
+          {FORECLOSURE.steps.map((st, i) => (
+            <div className="r" key={st.h}>
+              <span className="n">Step {String(i + 1).padStart(2, "0")}</span>
+              <h3 className="d3">{st.h}</h3>
+              <p>{st.p}</p>
+            </div>
+          ))}
+        </div>
+      </PageSec>
+
+      <PageSec label="What it costs" title="Nothing to you.">
+        <ul className="rows r">
+          <li>
+            <b>No listing fee and no commission from your side.</b>
+          </li>
+          <li>
+            <b>The buyer pays a 10% premium on top of the winning bid.</b>
+            <span>That is how the auction firm and FALCO are paid.</span>
+          </li>
+          <li>
+            <b>If it doesn&apos;t sell, you owe nobody anything.</b>
+          </li>
+        </ul>
+      </PageSec>
+
+      <PageSec label="Straight talk" title="What you should know.">
+        <ul className="rows r">
+          {FORECLOSURE.straight.map((t) => (
+            <li key={t.h}>
+              <b>{t.h}</b>
+              <span>{t.p}</span>
+            </li>
+          ))}
+        </ul>
+      </PageSec>
+
+      <PageSec id="faq" label="Common questions" title="Straight answers.">
+        <div className="faq r">
+          {FORECLOSURE.faq.map((item) => (
+            <details key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </PageSec>
     </SitePage>
   )
 }
