@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Ledger } from "../v2/v2-content"
 import IntakeForm from "../v2/intake-form"
-import { AnswersCue, PageHead, PageSec, SitePage } from "../v2/site-page"
+import { AnswersCue, PageHead, PageSec, SitePage, WHY_AUCTION_HREF } from "../v2/site-page"
 
 /**
  * /math: one example house, the three ways out, and the sources, on the
@@ -169,6 +169,9 @@ export default function MathContent() {
         <p className="r" style={{ marginTop: 28 }}>
           <Link className="pill line" href="/manifesto">
             How it works, start to finish <sub>→</sub>
+          </Link>{" "}
+          <Link className="pill line" href={WHY_AUCTION_HREF}>
+            Why auction <sub>→</sub>
           </Link>
         </p>
       </PageSec>

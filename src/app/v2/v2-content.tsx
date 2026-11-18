@@ -879,6 +879,7 @@ export function Foot() {
       links: [
         { href: "/guides", label: "Guides" },
         { href: "/foreclosure", label: "Foreclosure by county" },
+        { href: "/guides/why-auction", label: "Why auction" },
         { href: "/math", label: "The math" },
         { href: "/manifesto", label: "Manifesto" },
       ],

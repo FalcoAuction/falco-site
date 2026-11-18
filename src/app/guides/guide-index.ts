@@ -21,6 +21,22 @@ export type GuideGroup = {
 
 export const GUIDE_GROUPS: GuideGroup[] = [
   {
+    id: "why-auction",
+    label: "Why auction",
+    intro:
+      "Before any of the situations below: why competitive bidding, and what the research says about it compared with a listing, a cash offer or a forced sale.",
+    guides: [
+      {
+        href: "/guides/why-auction",
+        pillar: true,
+        title: "Why Sell at Auction? What the Research Says",
+        short: "Why auction",
+        blurb:
+          "What economists, courts and the government have found about competitive bidding, what the alternatives cost a seller, and when an auction is the wrong call.",
+      },
+    ],
+  },
+  {
     id: "estates",
     label: "Estates and probate",
     intro:

@@ -109,3 +109,17 @@ export function AnswersCue({
     </p>
   )
 }
+
+export const WHY_AUCTION_HREF = "/guides/why-auction"
+
+/** Points anyone still asking "why auction?" to the full case, with
+ *  sources. Dropped into sections across the site. */
+export function WhyAuctionLink({ label = "Why auction? See the evidence" }: { label?: string }) {
+  return (
+    <p className="r" style={{ marginTop: "clamp(32px,4vw,48px)" }}>
+      <Link className="pill line" href={WHY_AUCTION_HREF}>
+        {label} <sub>→</sub>
+      </Link>
+    </p>
+  )
+}

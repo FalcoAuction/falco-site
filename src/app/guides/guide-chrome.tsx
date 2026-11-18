@@ -219,7 +219,11 @@ function GuideHubLinks({ variant }: { variant: "foreclosure" | "situation" }) {
             <>
               <GuideLinkList
                 heading="Foreclosure"
-                links={[...RELATED_GUIDES, { href: "/guides", label: "Estates, business closings and more" }]}
+                links={[
+                  { href: "/guides/why-auction", label: "Why auction" },
+                  ...RELATED_GUIDES,
+                  { href: "/guides", label: "Estates, business closings and more" },
+                ]}
               />
               <GuideLinkList heading="Foreclosure by county" links={RELATED_COUNTIES} />
             </>
