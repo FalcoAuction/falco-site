@@ -159,7 +159,7 @@ export default function SimpleSheet({
       key: "mls",
       label: `If ${estate ? "the estate lists" : "you list"} with an agent`,
       amount: k(out.mls.netToSeller),
-      note: "Can pay more, but takes months of showings and a 6% fee.",
+      note: "Can pay more, but takes months of showings and about 5% to 6% in agent fees.",
       tone: "amber",
     })
   }

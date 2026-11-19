@@ -48,7 +48,7 @@ export type MathInputs = {
   /** MLS clearance — what an agent-listed property typically closes at as a
    *  fraction of asking. Default 0.95 (agents over-list ~5%). */
   mlsClearancePct: number
-  /** Agent commission percentage on MLS gross sale price. Default 0.06
+  /** Agent commission percentage on MLS gross sale price. Default 0.057
    *  (3% listing + 3% buy-side, the TN norm). Buyer-side commission is
    *  legally negotiable post-NAR settlement but most TN deals still end up
    *  ~6% total. */
@@ -140,10 +140,11 @@ export function defaultInputsFor(arv: number, loanBalance: number): MathInputs {
     // (post-petition). Default off.
     applyTrusteeFee: false,
     // MLS — what most homeowners (or executors) think is their default option.
-    // 95% of asking is the typical clearance; 6% commission is TN norm;
+    // 95% of asking is the typical clearance; agent fees average about 5.7%
+    // total since the 2024 NAR settlement (Offerpad survey, 2026);
     // ~$1,500/mo carrying for ~3 months exposure is a representative bleed.
     mlsClearancePct: 0.95,
-    mlsCommissionPct: 0.06,
+    mlsCommissionPct: 0.057,
     mlsCarryingPerMonth: 1500,
     mlsCarryingMonths: 3,
     // Code-violation self-remediate path defaults to 0 fines / 0 months
@@ -177,7 +178,7 @@ export const DEFAULT_INPUTS: Omit<MathInputs, "arv" | "loanBalance"> = {
   taxLienAmount: 0,
   applyTrusteeFee: false,
   mlsClearancePct: 0.95,
-  mlsCommissionPct: 0.06,
+  mlsCommissionPct: 0.057,
   mlsCarryingPerMonth: 1500,
   mlsCarryingMonths: 3,
   monthlyFineAccrual: 0,
@@ -248,7 +249,7 @@ export type SelfRemediateScenario = {
   repairCost: number
   /** Fines accrued during the cure window (monthly × months). */
   finesAccrued: number
-  /** 6% MLS agent commission on closed price. */
+  /** MLS agent commission on closed price (default 5.7%). */
   agentCommission: number
   /** Carrying costs during cure period (taxes, insurance, mortgage if
    *  any) — same monthly rate as the standard MLS carry. */
@@ -321,7 +322,7 @@ export type MlsBreakdown = {
   listPrice: number
   /** Hammer price after typical clearance haircut (default 95% of asking). */
   closedPrice: number
-  /** 6% agent commission on closed price. */
+  /** Agent commission on closed price (default 5.7%). */
   agentCommission: number
   /** Total carrying cost during exposure (taxes, insurance, mortgage if
    *  any, lawn, utilities). */
