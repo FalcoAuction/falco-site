@@ -13,6 +13,7 @@ import {
   MIN_ESTATE_VALUE, SIGNAL_WINDOW_DAYS, contactIndex, estateDraft, estateFacts, nameKey,
   type AttorneyContact,
 } from "@/lib/outreach-signals"
+import { TRUSTEE_WINDOW_DAYS, trusteeDraft, trusteeFacts, trusteeKey } from "@/lib/outreach-trustee"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -70,16 +71,65 @@ async function run() {
       })
     }
   }
+  const created = await saveDrafts(rows)
+  const trustee = await runTrustee(blocked)
+  return { leads: leads.data?.length ?? 0, candidates: rows.length, created,
+    with_email: rows.filter((r) => r.to_email).length, trustee }
+}
+
+async function saveDrafts(rows: Record<string, unknown>[]): Promise<number> {
   let created = 0
   for (let i = 0; i < rows.length; i += 200) {
-    const res = await db.from("outreach_drafts")
+    const res = await supabaseAdmin!.from("outreach_drafts")
       .upsert(rows.slice(i, i + 200), { onConflict: "signal,staging_id,recipient_key", ignoreDuplicates: true })
       .select("id")
     if (res.error) throw new Error(res.error.message)
     created += res.data?.length ?? 0
   }
-  return { leads: leads.data?.length ?? 0, candidates: rows.length, created,
-    with_email: rows.filter((r) => r.to_email).length }
+  return created
+}
+
+/** Signal 2, trustee_case: Chapter 7 cases whose debtor appears on record as
+ *  the owner of real property, addressed to the case's panel trustee. Reads
+ *  through the partial index on bankruptcy leads with an address. */
+async function runTrustee(blocked: Set<string>) {
+  const db = supabaseAdmin!
+  const since = new Date(Date.now() - TRUSTEE_WINDOW_DAYS * 86400_000).toISOString()
+  const [leads, contacts] = await Promise.all([
+    db.from("homeowner_requests_staging")
+      .select("id,owner_name_records,full_name,property_address,property_value,property_value_source,raw_payload,staged_at")
+      .eq("distress_type", "BANKRUPTCY").not("property_address", "is", null).gte("staged_at", since)
+      .order("staged_at", { ascending: false }).limit(2000),
+    db.from("outreach_contacts").select("id,person_name,org_name,email").eq("kind", "trustee").limit(500),
+  ])
+  const err = leads.error || contacts.error
+  if (err) throw new Error(err.message)
+  const index = contactIndex((contacts.data ?? []) as AttorneyContact[])
+  const rows: Record<string, unknown>[] = []
+  let chapter7 = 0, noTrustee = 0
+  for (const lead of leads.data ?? []) {
+    const raw = ((lead as { raw_payload: Record<string, unknown> | null }).raw_payload ?? {})
+    if (String(raw.chapter ?? "").trim() === "7") {
+      chapter7++
+      if (!raw.trustee) noTrustee++
+    }
+    const f = trusteeFacts(lead as Parameters<typeof trusteeFacts>[0])
+    if (!f) continue
+    const key = trusteeKey(raw.trustee as string)
+    if (!key) continue
+    const contact = index.get(key)
+    const email = contact?.email && !blocked.has(contact.email) ? contact.email : null
+    const draft = trusteeDraft(f)
+    rows.push({
+      signal: "trustee_case", staging_id: (lead as { id: string }).id, recipient_key: key,
+      recipient_name: f.trustee, recipient_firm: contact?.org_name && contact.org_name !== contact.person_name ? contact.org_name : null,
+      recipient_address: null, contact_id: contact?.id ?? null, to_email: email,
+      subject: draft.subject, body_text: draft.body, facts: f, status: email ? "draft" : "needs_email",
+    })
+  }
+  const created = await saveDrafts(rows)
+  return { bankruptcy_with_property: leads.data?.length ?? 0, chapter7, chapter7_without_trustee: noTrustee,
+    candidates: rows.length, created, with_email: rows.filter((r) => r.to_email).length }
 }
 
 async function handle(req: NextRequest) {

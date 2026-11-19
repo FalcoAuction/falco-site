@@ -12,7 +12,7 @@ import { normalizeEmail } from "@/lib/outreach"
 
 export const dynamic = "force-dynamic"
 
-type Draft = { id: string; status: string; recipient_name: string; recipient_firm: string | null; recipient_key: string; contact_id: string | null; to_email: string | null }
+type Draft = { id: string; signal: string; status: string; recipient_name: string; recipient_firm: string | null; recipient_key: string; contact_id: string | null; to_email: string | null }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!getAdminSession(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
@@ -42,8 +42,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (r.error) return NextResponse.json({ error: r.error.message }, { status: 409 })
     } else {
       const r = await db.from("outreach_contacts").upsert({
-        kind: "attorney", person_name: draft.recipient_name, org_name: draft.recipient_firm, email,
-        source: "probate_notice", source_ref: draft.recipient_key,
+        kind: draft.signal === "trustee_case" ? "trustee" : "attorney", person_name: draft.recipient_name,
+        org_name: draft.recipient_firm, email, source: draft.signal, source_ref: draft.recipient_key,
       }, { onConflict: "source,source_ref" }).select("id").single<{ id: string }>()
       if (r.error) return NextResponse.json({ error: r.error.message }, { status: 409 })
       contactId = r.data.id
