@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Ledger } from "../v2/v2-content"
-import IntakeForm from "../v2/intake-form"
+import WhoRouter from "../v2/who-router"
 import { AnswersCue, PageHead, PageSec, SitePage, WHY_AUCTION_HREF } from "../v2/site-page"
 
 /**
@@ -117,7 +117,7 @@ export default function MathContent() {
 
       <PageSec id="start" label="Your numbers" title="See it for what you have.">
         <div className="pg-form r">
-          <IntakeForm />
+          <WhoRouter audience="seller" />
         </div>
         <AnswersCue />
       </PageSec>

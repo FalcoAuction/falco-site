@@ -2,14 +2,14 @@ import StartForm from "./start-form"
 import { ogMeta } from "@/lib/og"
 
 export const metadata = {
-  title: "Start Here: Tell Us What Has to Sell | FALCO",
+  title: "Start Here | FALCO",
   description:
-    "Estate, business closing, foreclosure, bankruptcy or lien sale in Tennessee? Two minutes, and we come back within one business day with what is worth auctioning and what it would likely clear.",
+    "Selling, referring a file, buying, or running an auction firm in Tennessee? Tell us who you are and we ask the right questions. We reply within one business day.",
   alternates: { canonical: "/start" },
   ...ogMeta({
     key: "start",
-    title: "Start Here: Tell Us What Has to Sell | FALCO",
-    description: "Estate, business closing, foreclosure, bankruptcy or lien sale in Tennessee? Two minutes, and we come back within one business day with what is worth auctioning and what it would likely clear.",
+    title: "Start Here | FALCO",
+    description: "Selling, referring a file, buying, or running an auction firm in Tennessee? Tell us who you are and we ask the right questions. We reply within one business day.",
     path: "/start",
   }),
 }
