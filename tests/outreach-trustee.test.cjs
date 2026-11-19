@@ -41,21 +41,25 @@ test('facts require chapter 7, a trustee, an address and value over the floor', 
   assert.equal(JSON.stringify(lib.trusteeFacts(row()).debtors), JSON.stringify(['John A Doe', 'Jane B Doe']))
 })
 
-test('draft says what records show, no equity claim, no em dash', () => {
+test('draft: short, the case by name, FALCO routes, 327 named, no value or pitch, no em dash', () => {
   const d = lib.trusteeDraft(lib.trusteeFacts(row()))
-  assert.match(d.subject, /^In re John A Doe, 3:26-bk-01234: 123 Main St/)
-  assert.match(d.body, /^Dear Robin,/)
-  assert.match(d.body, /Bankr\. M\.D\. Tenn\. 3:26-bk-01234/)
-  assert.match(d.body, /under both debtors' names/)
-  assert.match(d.body, /appraised by the county at about \$245,000/)
-  assert.match(d.body, /not an equity finding/)
+  assert.equal(d.subject, 'In re John A Doe and Jane B Doe, 3:26-bk-01234')
+  assert.match(d.body, /^Robin,/)
+  assert.match(d.body, /Saw the John A Doe and Jane B Doe case \(3:26-bk-01234\) is yours\./)
+  assert.match(d.body, /a property on Main St in both debtors' names/)
+  assert.match(d.body, /I run FALCO here in Nashville\./)
+  assert.match(d.body, /applies for employment under 327/)
+  assert.match(d.body, /one company to call for the whole case/)
+  assert.ok(!/\$|appraised|comparison|free/i.test(d.body), 'no value read back, no free-comparison pitch')
   assert.ok(!d.body.includes('—'))
   assert.ok(!/commission/i.test(d.body))
+  assert.ok(d.body.split(/\s+/).length < 130, 'stays short')
 })
 
 test('single-name match is worded as a match, not ownership', () => {
   const d = lib.trusteeDraft(lib.trusteeFacts(row({ owner_name_records: 'JOHN A DOE' }, { comptroller_parcel: { confidence: 'name' } })))
-  assert.match(d.body, /a name matching the debtor/)
+  assert.match(d.body, /in a name that matches the debtor/)
+  assert.equal(d.subject, 'In re John A Doe, 3:26-bk-01234')
 })
 
 test('all-caps debtor with a Jr. suffix still gets title case', () => {
