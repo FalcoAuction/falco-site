@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { Ledger } from "./v2-content"
-import IntakeForm from "./intake-form"
+import ProfessionalForm from "./professional-form"
+import WhoRouter from "./who-router"
 import { AnswersCue, PageHead, PageSec, SitePage, WhyAuctionLink } from "./site-page"
 import { SITUATIONS, SITUATION_BY_SLUG } from "./situations"
 import { GUIDE_GROUPS } from "../guides/guide-index"
@@ -14,6 +15,13 @@ import { GUIDE_GROUPS } from "../guides/guide-index"
  * what it costs, what happens next) and points back to the guide for the
  * legal detail. Same building blocks as the rest of the site.
  */
+/** Situations whose readers are professionals (trustees, receivers,
+ *  lienholders) get the professional form with the matter filled in. */
+const PRO_MATTER: Record<string, string> = {
+  bankruptcy: "Bankruptcy or receivership",
+  "lien-sale": "Lien sale",
+}
+
 export default function LaneContent({ slug }: { slug: string }) {
   const s = SITUATION_BY_SLUG[slug]
   const others = SITUATIONS.filter((o) => o.slug !== slug)
@@ -53,9 +61,17 @@ export default function LaneContent({ slug }: { slug: string }) {
         </ul>
       </PageSec>
 
-      <PageSec id="start" label="Get your numbers" title="Two minutes to start.">
+      <PageSec
+        id="start"
+        label={PRO_MATTER[slug] ? "Send us a file" : "Get your numbers"}
+        title="Two minutes to start."
+      >
         <div className="pg-form r">
-          <IntakeForm situation={s.slug} />
+          {PRO_MATTER[slug] ? (
+            <ProfessionalForm matter={PRO_MATTER[slug]} />
+          ) : (
+            <WhoRouter situation={s.slug} audience="seller" />
+          )}
         </div>
         <AnswersCue />
       </PageSec>

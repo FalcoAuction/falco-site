@@ -620,6 +620,130 @@ export async function submitAgentSignup(input: AgentSignupInput): Promise<Submit
 }
 
 // ============================================================================
+// Professional file (/professionals, /start, bankruptcy and lien-sale pages)
+// ============================================================================
+
+export type ProfessionalFileInput = {
+  role?: string
+  matter?: string
+  assets?: string[]
+  location?: string
+  caseNumber?: string
+  deadline?: string | null
+  fullName: string
+  firm?: string
+  email: string
+  phone?: string
+  notes?: string
+  ipAddress?: string | null
+  userAgent?: string | null
+}
+
+/** Stored in general_inquiries (topic "Professional file", firm in company)
+ *  so it shows in the CRM inbox with the role and matter on it. */
+export async function submitProfessionalFile(input: ProfessionalFileInput): Promise<SubmitResult> {
+  if (!supabaseAdmin) {
+    return { ok: false, error: supabaseAdminConfigError ?? "Database not configured." }
+  }
+  const email = normEmail(input.email)
+  if (!email || !EMAIL_RE.test(email)) {
+    return { ok: false, error: "A valid email is required." }
+  }
+  const fullName = (input.fullName ?? "").trim()
+  if (!fullName) return { ok: false, error: "Please tell us your name." }
+  const location = (input.location ?? "").trim()
+  if (!location) return { ok: false, error: "Please add the county or city." }
+  const role = (input.role ?? "").trim()
+  const matter = (input.matter ?? "").trim()
+  const firm = (input.firm ?? "").trim()
+  const caseNumber = (input.caseNumber ?? "").trim()
+  const deadline = (input.deadline ?? "").trim()
+  const deadlineHuman = deadline ? fmtDateHuman(deadline) || deadline : ""
+  const assets = (input.assets ?? []).map((x) => String(x).trim()).filter(Boolean).slice(0, 12)
+  const notes = (input.notes ?? "").trim()
+
+  const message = [
+    role ? `Role: ${role}` : "",
+    matter ? `Matter: ${matter}` : "",
+    assets.length ? `Needs to sell: ${assets.join(", ")}` : "",
+    `Where: ${location}`,
+    caseNumber ? `Case: ${caseNumber}` : "",
+    deadlineHuman ? `Deadline: ${deadlineHuman}` : "",
+    notes ? `\n${notes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  const row = {
+    email,
+    full_name: fullName,
+    phone: (input.phone ?? "").trim(),
+    company: firm,
+    topic: "Professional file",
+    message,
+    ip_address: input.ipAddress ?? null,
+    user_agent: input.userAgent ?? null,
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("general_inquiries")
+    .insert(row)
+    .select("id")
+    .single()
+  if (error) {
+    console.error("submitProfessionalFile error:", error.message)
+    return { ok: false, error: `Submission failed: ${error.message}` }
+  }
+
+  const who = [fullName, firm].filter(Boolean).join(", ")
+  const subject = `📁 Professional file: ${who}${matter ? ` · ${matter}` : ""}`
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#0a0a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+<div style="max-width:600px;margin:0 auto">
+<div style="padding:16px 0;border-bottom:2px solid #10b981">
+<div style="font-size:10px;letter-spacing:2px;color:#10b981;text-transform:uppercase">FALCO · Professional File</div>
+<div style="font-size:22px;font-weight:700;margin-top:4px">${esc(who)}</div>
+<div style="font-size:13px;color:#888;margin-top:2px">${esc(email)}${row.phone ? ` · ${esc(row.phone)}` : ""}</div>
+</div>
+<div style="font-size:14px;color:#fff;margin-top:16px;background:#111;padding:12px 16px;border-radius:6px;white-space:pre-wrap;line-height:1.55">${esc(message)}</div>
+</div></body></html>`
+  const text = [
+    `Professional file: ${who}`,
+    `Email: ${email}`,
+    ...(row.phone ? [`Phone: ${row.phone}`] : []),
+    "",
+    message,
+  ].join("\n")
+
+  const proConfirm = confirmationTemplate({
+    greeting: `${firstName(fullName)}, we got the file.`,
+    intro:
+      "Within one business day we'll come back with what is worth auctioning, which licensed Tennessee firm sells each asset class, and what it would likely clear.",
+    note: "No listing fee and no commission from the seller's side. The buyer pays a 10% premium on top of the winning bid.",
+    detailsLabel: "What you sent us",
+    details: [
+      { label: "Role", value: role },
+      { label: "Matter", value: matter },
+      { label: "Where", value: location },
+      { label: "Case", value: caseNumber },
+      { label: "Deadline", value: deadlineHuman },
+    ],
+    closer:
+      "Court approval, notice periods and authority to sell stay with you and the court. We work on that timeline.",
+  })
+  await Promise.allSettled([
+    sendNotificationEmail(subject, html, text),
+    sendConfirmationEmail(email, "We got the file", proConfirm.html, proConfirm.text),
+  ])
+
+  return {
+    ok: true,
+    id: String(data.id),
+    alreadyExisted: false,
+    message: "Got the file. We'll be in touch within one business day.",
+  }
+}
+
+// ============================================================================
 // Partner inquiry (auction company)
 // ============================================================================
 

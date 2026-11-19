@@ -1,6 +1,6 @@
 "use client"
 
-import IntakeForm from "../v2/intake-form"
+import ProfessionalForm from "../v2/professional-form"
 import { AnswersCue, PageHead, PageSec, SitePage, WhyAuctionLink } from "../v2/site-page"
 
 const ROLES = [
@@ -60,7 +60,7 @@ export default function ProfessionalsContent() {
         note="Founded by Patrick Armour, licensed Tennessee auctioneer #7622."
       >
         <div className="pg-form r">
-          <IntakeForm />
+          <ProfessionalForm />
         </div>
         <AnswersCue />
       </PageSec>

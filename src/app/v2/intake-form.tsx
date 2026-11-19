@@ -2,7 +2,16 @@
 
 import StepForm, { postJson, type Step, type StepValues } from "./step-form"
 import { ASSET_CLASSES, SITUATIONS } from "./situations"
-import { ROLES } from "../start/start-form"
+
+export const ROLES = [
+  { id: "owner", label: "Owner or family" },
+  { id: "executor", label: "Executor or administrator" },
+  { id: "professional", label: "Attorney or advisor" },
+  { id: "agent", label: "Real estate agent" },
+  { id: "trustee", label: "Trustee or receiver" },
+  { id: "lienholder", label: "Lienholder" },
+  { id: "other", label: "Something else" },
+]
 
 const FAIL = "Something went wrong. Try again or email help@falco.llc."
 const OTHER = "Something else"
