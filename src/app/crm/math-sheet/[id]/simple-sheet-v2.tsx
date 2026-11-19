@@ -41,11 +41,11 @@ const CASH_HIGH_PCT = 0.7
  *  number on anything soliciting a listing), plus one proof line. */
 const AUCTION_PARTNER: { name: string; phone: string; proof: string } | null = null
 
-/** Auction.com Q2 2026 (~40% of US foreclosure auctions): third-party
- *  buyers paid an average 67.6% of value, and about half of sales went to a
- *  third party instead of back to the lender. Same basis as the homepage
- *  ledger. */
-const FORECLOSURE_BID_RATIO = 0.676
+/** Auction.com Auction Market Dispatch, Q3 2026 (HousingWire, Oct 23 2026):
+ *  foreclosure auction buyers paid an average 65.3% of estimated retail
+ *  value, and the foreclosure auction sales rate was 45.5%. Same basis as
+ *  the homepage ledger and /math. */
+const FORECLOSURE_BID_RATIO = 0.653
 const TIMELINE_TEXT = "2 to 3 months"
 const TIMELINE_DAYS = 75
 
@@ -322,7 +322,7 @@ export default function SimpleSheetV2({
       <section className="contact-card mt-20 rounded-2xl border border-[#e5e5e5] bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/media/patrick-armour.jpg" alt="Patrick Yuri Armour" className="h-24 w-auto shrink-0 rounded-xl object-cover" />
+          <img src="/media/patrick.jpg" alt="Patrick Yuri Armour" className="h-24 w-auto shrink-0 rounded-xl object-cover" />
           <div>
             <div className="text-[22px] font-bold leading-tight">Patrick Yuri Armour</div>
             <div className="text-[15px] font-medium text-[#333]">CEO / Founder, FALCO</div>
@@ -393,7 +393,7 @@ export default function SimpleSheetV2({
           {s === "foreclosure" && (
             <li>
               <strong className="text-[#222]">The foreclosure range</strong> assumes an outside bidder pays about{" "}
-              {pct(FORECLOSURE_BID_RATIO)} of value, the 2026 national average. About half of foreclosure sales go
+              {pct(FORECLOSURE_BID_RATIO)} of value, the Q3 2026 national average. About half of foreclosure sales go
               back to the bank instead, and then there is nothing left over.
             </li>
           )}

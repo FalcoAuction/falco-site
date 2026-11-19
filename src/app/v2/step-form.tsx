@@ -63,8 +63,18 @@ export default function StepForm({
   const str = (k: string) => (typeof values[k] === "string" ? (values[k] as string) : "")
   const list = (k: string) => (Array.isArray(values[k]) ? (values[k] as string[]) : [])
   const set = (k: string, v: string | string[] | boolean) => setValues((cur) => ({ ...cur, [k]: v }))
-  const next = () => setI((x) => Math.min(x + 1, n - 1))
-  const back = () => setI((x) => Math.max(x - 1, 0))
+  // Focus follows the person once they've moved through the form. On first
+  // load nothing grabs focus, or the browser would scroll the page past the
+  // headline down to wherever the form sits.
+  const [moved, setMoved] = useState(false)
+  const next = () => {
+    setMoved(true)
+    setI((x) => Math.min(x + 1, n - 1))
+  }
+  const back = () => {
+    setMoved(true)
+    setI((x) => Math.max(x - 1, 0))
+  }
 
   async function advance(e?: React.FormEvent) {
     e?.preventDefault()
@@ -176,7 +186,7 @@ export default function StepForm({
                       onChange={(e) => set(f.name, e.target.value)}
                       placeholder={f.placeholder}
                       aria-label={f.label}
-                      autoFocus={k === 0}
+                      autoFocus={moved && k === 0}
                     />
                   ) : (
                     <input
@@ -190,7 +200,7 @@ export default function StepForm({
                       aria-label={f.label}
                       autoComplete={f.autoComplete}
                       inputMode={f.inputMode}
-                      autoFocus={k === 0}
+                      autoFocus={moved && k === 0}
                     />
                   )}
                   {f.hint && <p className="pg-hint">{f.hint}</p>}

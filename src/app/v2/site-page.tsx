@@ -88,3 +88,38 @@ export function PageSec({
     </section>
   )
 }
+
+/**
+ * Sits under a page's form and points down to the answers, so people who
+ * want to read first know they're there. Same outline pill as the rest of
+ * the site; the target section carries the matching id.
+ */
+export function AnswersCue({
+  href = "#answers",
+  children = "Questions? Answers below",
+}: {
+  href?: string
+  children?: React.ReactNode
+}) {
+  return (
+    <p className="answers-cue r" style={{ marginTop: "clamp(28px,4vw,44px)" }}>
+      <a className="pill line" href={href}>
+        {children} <sub>↓</sub>
+      </a>
+    </p>
+  )
+}
+
+export const WHY_AUCTION_HREF = "/guides/why-auction"
+
+/** Points anyone still asking "why auction?" to the full case, with
+ *  sources. Dropped into sections across the site. */
+export function WhyAuctionLink({ label = "Why auction? See the evidence" }: { label?: string }) {
+  return (
+    <p className="r" style={{ marginTop: "clamp(32px,4vw,48px)" }}>
+      <Link className="pill line" href={WHY_AUCTION_HREF}>
+        {label} <sub>→</sub>
+      </Link>
+    </p>
+  )
+}

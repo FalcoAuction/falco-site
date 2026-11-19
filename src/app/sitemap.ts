@@ -27,6 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/homeowners`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/start`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/professionals`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/agents`, changeFrequency: "monthly", priority: 0.8 },
     ...SITUATIONS.map((s) => ({
       url: `${base}/situations/${s.slug}`,
       changeFrequency: "monthly" as const,
@@ -34,6 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     // Guides — the SEO content hub. Pillar highest, comparisons below it.
     { url: `${base}/guides`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${base}/guides/why-auction`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/guides/tennessee-foreclosure-process`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/guides/postpone-trustee-sale-tennessee`, changeFrequency: "monthly", priority: 0.85 },
     { url: `${base}/guides/cash-offer-vs-auction`, changeFrequency: "monthly", priority: 0.8 },

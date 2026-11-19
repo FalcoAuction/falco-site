@@ -10,6 +10,7 @@ const STARTERS = [
   "A house with a sale date",
   "Closing a business",
   "Vehicles or equipment",
+  "I'm an agent with a listing to sell",
   "I'm looking to buy",
 ]
 const MAX_CHARS = 1000

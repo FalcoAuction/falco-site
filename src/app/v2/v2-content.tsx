@@ -19,14 +19,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 const CLOSING = 5000
 
-// Auction.com Q2 2026 (~40% of all US foreclosure auctions): third-party
-// buyers paid an average 67.6% of retail value, and nearly 5,000 of the
-// 10,000+ properties taken to auction sold to a third party rather than
-// reverting to the lender. So "the trustee sale leaves you nothing" is
-// only true for the roughly half that go back to the bank. Where the
-// homeowner has real equity, a third-party bid often clears the debt and
-// the excess is surplus that legally belongs to them.
-const FORECLOSURE_BID_RATIO = 0.676
+// Auction.com Auction Market Dispatch, Q3 2026 (HousingWire, Oct 23 2026):
+// foreclosure auction buyers paid an average 65.3% of estimated retail
+// value, and the foreclosure auction sales rate was 45.5%. So "the trustee
+// sale leaves you nothing" is only true for the roughly half that go back
+// to the bank. Where the homeowner has real equity, a third-party bid often
+// clears the debt and the excess is surplus that legally belongs to them.
+const FORECLOSURE_BID_RATIO = 0.653
 
 const usd = (n: number) =>
   "$" + Math.round(Math.max(n, 0)).toLocaleString("en-US")
@@ -342,6 +341,7 @@ export function Nav() {
 const NAV_LINKS = [
   { href: "/manifesto", label: "How it works" },
   { href: "/professionals", label: "Professionals" },
+  { href: "/agents", label: "Agents" },
   { href: "/partners", label: "Auction firms" },
   { href: "/buyers", label: "Buyers" },
   { href: "/guides", label: "Guides" },
@@ -693,7 +693,7 @@ export function Ledger({ full = true }: { full?: boolean } = {}) {
         <p className="disc">
           Illustrative, not an appraisal or an offer. Your real numbers depend
           on condition, title, lien position and the sale date. Trustee-sale
-          range assumes a third-party bidder at 67.6% of value, the Q2 2026
+          range assumes a third-party bidder at 65.3% of value, the Q3 2026
           national average reported by Auction.com; surplus is paid only
           after junior liens and only if you claim it.
         </p>
@@ -857,6 +857,7 @@ export function Foot() {
       links: [
         { href: "/start", label: "Tell us what happened" },
         { href: "/professionals", label: "Attorneys and trustees" },
+        { href: "/agents", label: "Real estate agents" },
         { href: "/partners", label: "Auction firms" },
         { href: "/buyers", label: "Buyers" },
       ],
@@ -877,6 +878,7 @@ export function Foot() {
       links: [
         { href: "/guides", label: "Guides" },
         { href: "/foreclosure", label: "Foreclosure by county" },
+        { href: "/guides/why-auction", label: "Why auction" },
         { href: "/math", label: "The math" },
         { href: "/manifesto", label: "Manifesto" },
       ],

@@ -7,10 +7,9 @@ const FAIL = "Something went wrong. Try again or email help@falco.llc."
 const s = (v: StepValues, k: string) => (typeof v[k] === "string" ? (v[k] as string).trim() : "")
 
 /** General contact, one question per screen. Same payload as before. */
-export default function InquiryForm() {
+/** The contact form on its own, for /start to show inline. */
+export function InquiryStepForm() {
   return (
-    <SitePage>
-      <div className="st-wrap">
         <StepForm
           label="Contact"
           steps={[
@@ -65,6 +64,14 @@ export default function InquiryForm() {
             text: "We'll reply within one business day.",
           }}
         />
+  )
+}
+
+export default function InquiryForm() {
+  return (
+    <SitePage>
+      <div className="st-wrap">
+        <InquiryStepForm />
       </div>
     </SitePage>
   )

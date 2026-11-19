@@ -4,8 +4,8 @@
 //
 // First signal: a new probate notice in a focus county with real property
 // worth the work. The recipient is the estate's attorney named on the notice.
-// Copy rules: plain, specific to the estate, accurate (value source stated),
-// no em dashes, no claim FALCO is paid on the real estate, no ask to list
+// Copy rules: written like one professional to another, short, the estate by
+// name, FALCO as the router and single contact, no em dashes, no claim FALCO is paid on the real estate, no ask to list
 // with FALCO (that would be listing solicitation; FALCO_LICENSED gates it).
 
 export const FOCUS_COUNTIES = [
@@ -94,25 +94,24 @@ export function valuePhrase(value: number, source: string | null): string {
 }
 
 export function estateDraft(f: EstateFacts): { subject: string; body: string } {
-  const where = tidyAddress(f.address)
-  const street = where.split(",")[0]
-  const county = title(f.county.replace(/\s+county$/i, ""))
-  const caseRef = f.docket ? `${county} County Probate ${f.docket}` : `${county} County probate`
+  // Written the way one professional writes another: short, plain, the
+  // estate by name, FALCO as the company that routes each asset to the
+  // right licensed firm and stays the one contact, and one easy ask.
   const decedent = personName(f.decedent)
-  const subject = `Estate of ${decedent}: ${street}`
+  const last = tokens(decedent).at(-1) ?? decedent
+  const subject = `${last} estate`
   const body = [
-    `Dear ${firstName(f.attorney)},`,
+    `${firstName(personName(f.attorney))},`,
     "",
-    `I saw the notice to creditors for the Estate of ${decedent} (${caseRef}), with you listed as counsel.`,
+    `Saw you're handling the ${decedent} estate. If the house or anything in it ends up needing to be sold, we'd like to help.`,
     "",
-    `County records list ${where} under ${decedent}'s name, ${valuePhrase(f.value, f.valueSource)}. If the estate will need to sell it, I can send a one-page comparison of the realistic net from a marketed auction, an agent listing and a fast cash sale, built from local sale results. There is no cost and no obligation.`,
+    "I run FALCO here in Nashville. We don't run auctions ourselves. We go through what the estate has, send each piece to the licensed Tennessee firm that's best at selling that kind of thing, and run point on all of it, so you've got one company to call instead of a handful of auction houses. Costs the estate nothing; the buyer's premium covers it.",
     "",
-    "FALCO works with licensed Tennessee auction firms, for the house and for contents, vehicles and equipment.",
-    "",
-    "Would that be useful for this estate? A reply is all it takes.",
+    "Worth a quick call?",
     "",
     "Patrick Armour",
-    "FALCO, Nashville",
+    "FALCO · https://falco.llc",
+    "Licensed TN Auctioneer #7622",
     "601-213-8868",
   ].join("\n")
   return { subject, body }
