@@ -291,6 +291,10 @@ export type PersonalPropertyTag = {
     trustee?: { name: string; phone?: string | null; email?: string | null }
     counsel?: { name: string; firm?: string | null; phone?: string | null; email?: string | null }[]
   }
+  // pp-v2 routing: who controls the sale and whether FALCO can route it.
+  region?: "TN" | "FL"; controller?: string; routable?: boolean; not_routable_reason?: string | null
+  route_to?: string | null; value_basis?: string | null; deadline?: string | null; primary_contact?: string
+  duplicate_of?: string
 }
 export const addressText = (a: string[] | string | null | undefined): string =>
   Array.isArray(a) ? a.join(", ") : (a ?? "")

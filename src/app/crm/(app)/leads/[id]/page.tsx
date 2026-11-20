@@ -154,8 +154,13 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <div className="crm-section-label">{PP_LANE_LABEL[pp.lane] ?? "Personal property"}</div>
               <dl className="crm-props">
                 <dt>Grade</dt><dd><span className={`pill ${pp.grade === "A" ? "green" : "blue"}`}>{pp.grade}</span></dd>
+                {pp.routable !== undefined ? <><dt>Route</dt><dd>{pp.routable ? <span className="pill green">Routes to {pp.route_to}</span> : <><span className="pill amber">Not routable</span><div className="crm-faint">{pp.not_routable_reason}</div></>}</dd></> : null}
+                {pp.controller ? <><dt>Controls sale</dt><dd>{pp.controller}</dd></> : null}
+                {pp.primary_contact ? <><dt>Start with</dt><dd>{pp.primary_contact}</dd></> : null}
+                {pp.deadline ? <><dt>Deadline</dt><dd>{pp.deadline}</dd></> : null}
                 {pp.categories?.length ? <><dt>Likely</dt><dd>{pp.categories.map((c) => c.replace(/_/g, " ")).join(", ")}</dd></> : null}
                 {pp.est_value_min ? <><dt>Est. value</dt><dd>{money(pp.est_value_min)}+ <span className="crm-faint">rough</span></dd></> : null}
+                {pp.value_basis ? <><dt>Value basis</dt><dd className="crm-faint">{pp.value_basis}</dd></> : null}
                 <dt>Why</dt><dd>{pp.signals.map((s, i) => <div key={i} className="crm-muted">{s}</div>)}</dd>
                 {pp.caveats?.length ? <><dt>Check</dt><dd>{pp.caveats.map((c, i) => <div key={i} className="crm-faint">{c}</div>)}</dd></> : null}
                 {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{addressText(pp.contacts.attorney.address)}</div> : null}</dd></> : null}
