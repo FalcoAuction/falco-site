@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { isValidAdminPassword, setAdminSession } from "@/lib/admin-session"
+import { guardPublicForm } from "@/lib/public-form-guard"
 
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
+  // Same-site only, and at most 10 attempts per IP per 10 minutes.
+  const guard = guardPublicForm(req, "crm-login", { maxPerWindow: 10 })
+  if (guard) return guard
   let body: { password?: string }
   try {
     body = await req.json()

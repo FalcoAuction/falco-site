@@ -14,7 +14,7 @@
 // Twilio Messages.json call. Already wired in twilio-send + the
 // auto-respond branch of twilio-webhook.
 //
-// Auth: optional signature verification when TWILIO_VALIDATE_SIGNATURES=1.
+// Auth: Twilio signature verified by default (TWILIO_VALIDATE_SIGNATURES=0 disables).
 
 import { NextRequest, NextResponse } from "next/server"
 import { createHmac, timingSafeEqual } from "node:crypto"
@@ -60,7 +60,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Signature check
-  if (process.env.TWILIO_VALIDATE_SIGNATURES === "1") {
+  // Verified by default: an unsigned request could fake an inbound text (and
+  // trigger an AI call and a real SMS). TWILIO_VALIDATE_SIGNATURES=0 opts out
+  // for local testing only; with no auth token configured nothing verifies.
+  if (process.env.TWILIO_VALIDATE_SIGNATURES !== "0") {
     const authToken = (process.env.TWILIO_AUTH_TOKEN || "").trim()
     const sig = req.headers.get("x-twilio-signature")
     const url = `https://${req.headers.get("host") || "falco.llc"}${req.nextUrl.pathname}`
