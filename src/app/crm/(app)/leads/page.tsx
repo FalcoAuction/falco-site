@@ -97,7 +97,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       </form>
       {error ? <div className="crm-body"><div className="crm-error">{error}</div></div> : null}
       {rowsShown === 0 && !error ? <div className="crm-empty">Nothing in this view.</div>
-        : bucket === "assets" ? <AssetTable rows={bucketData!.rows} />
+        : bucket === "assets" ? <AssetLists rows={bucketData!.rows} />
         : bucket ? <LaneTable rows={bucketData!.rows} lane={bucket} />
         : <RankedTable rows={ranked!.rows} />}
     </>
@@ -176,6 +176,26 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
   )
 }
 
+// Routable leads first; court, marina, Florida and duplicate leads are
+// relationships to work, not sellers to route.
+function AssetLists({ rows }: { rows: BucketRow[] }) {
+  const routable = rows.filter((r) => r.pp?.routable !== false)
+  const other = rows.filter((r) => r.pp?.routable === false)
+  return (
+    <>
+      <AssetTable rows={routable} />
+      {other.length ? (
+        <>
+          <div className="crm-body" style={{ paddingBottom: 0 }}>
+            <div className="crm-section-label">Relationships and not routable ({other.length})</div>
+          </div>
+          <AssetTable rows={other} />
+        </>
+      ) : null}
+    </>
+  )
+}
+
 function AssetTable({ rows }: { rows: BucketRow[] }) {
   return (
     <table className="crm-table">
@@ -201,6 +221,8 @@ function AssetTable({ rows }: { rows: BucketRow[] }) {
               </td>
               <td className="hide-sm">
                 <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
+                {p?.routable === false && p.not_routable_reason ? <div className="secondary">{p.not_routable_reason}</div>
+                  : p?.primary_contact ? <div className="secondary">Start with: {p.primary_contact}</div> : null}
                 {p?.signals?.[0] ? <div className="secondary">{p.signals[0].length > 90 ? `${p.signals[0].slice(0, 90)}...` : p.signals[0]}</div>
                   : a?.match_type ? <div className="secondary">Matched by {a.match_type.replace(/_/g, " ")}</div> : null}
               </td>
