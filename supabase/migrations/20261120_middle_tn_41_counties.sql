@@ -1,4 +1,6 @@
 -- Middle Tennessee focus = all 41 counties of the Middle grand division, not 10.
+-- Also: CHURCH_CLOSURE leads (the seller is the UMC Conference Trustees, an
+-- organization by definition) skip the entity-owner and owner-contact rules.
 -- The 10-county list kept 1,043 leads a quarter out of the ranked list.
 -- Built from the live lead_quality_reasons() definition (2026-11-20); only
 -- the outside_focus test changes. Tennessee counties now only count for
@@ -32,12 +34,12 @@ AS $function$
     CASE WHEN coalesce(s.property_value, 0) > 0 AND s.property_value < 150000 THEN 'below_fee_floor' END,
     -- Owner classifier flag, or (outside probate, where family trusts are
     -- normal) a company word in the owner of record from any source.
-    CASE WHEN coalesce(s.phone_metadata->>'owner_class', 'homeowner') <> 'homeowner'
+    CASE WHEN upper(coalesce(s.distress_type, '')) <> 'CHURCH_CLOSURE' AND (coalesce(s.phone_metadata->>'owner_class', 'homeowner') <> 'homeowner'
       OR (upper(coalesce(s.distress_type, '')) <> 'PROBATE' AND upper(coalesce(s.raw_payload->'metro_parcel'->>'owner',
             s.raw_payload->'padctn'->>'owner', s.raw_payload->'fl_parcel'->>'owner', s.raw_payload->'comptroller_parcel'->>'owner',
             s.owner_name_records, s.full_name, '')) ~
           '\m(LLC|L L C|INC|CORP|CORPORATION|COMPANY|LP|LLP|LTD|TRUST|TRUSTEES?|PARTNERS|PARTNERSHIP|HOLDINGS?|PROPERTIES|PROPERTY|INVESTMENTS?|APARTMENTS|ASSOCIATION|ASSN|CHURCH|MINISTRIES|BANK|FUND|REIT|AUTHORITY|DEVELOPMENT|ENTERPRISES|GROUP|VENTURES|REALTY|CAPITAL|EQUITIES|HOUSING|METROPOLITAN GOVERNMENT|CITY OF|STATE OF)\M')
-      THEN 'entity_owner' END,
+      ) THEN 'entity_owner' END,
     -- FL roll use codes 070-099: churches, schools, hospitals, government,
     -- utilities. Never a private seller.
     CASE WHEN s.raw_payload->'fl_parcel'->>'use_code' >= '070' THEN 'public_or_institutional' END,
@@ -76,7 +78,7 @@ AS $function$
     CASE WHEN upper(coalesce(s.distress_type, '')) <> 'PROBATE' AND (
         coalesce(btrim(coalesce(s.full_name, s.owner_name_records, s.raw_payload->'metro_parcel'->>'owner',
           s.raw_payload->'comptroller_parcel'->>'owner', s.raw_payload->'fl_parcel'->>'owner')), '') = ''
-        OR (upper(coalesce(s.distress_type, '')) NOT IN ('PRE_FORECLOSURE', 'TRUSTEE_NOTICE', 'FORECLOSURE', 'LIS_PENDENS', 'TAX_LIEN', 'COURT_SALE')
+        OR (upper(coalesce(s.distress_type, '')) NOT IN ('PRE_FORECLOSURE', 'TRUSTEE_NOTICE', 'FORECLOSURE', 'LIS_PENDENS', 'TAX_LIEN', 'COURT_SALE', 'CHURCH_CLOSURE')
           AND coalesce(btrim(s.phone), '') = ''
           AND coalesce(s.raw_payload->'metro_parcel'->>'owner_mailing', s.raw_payload->'comptroller_parcel'->>'owner_mailing',
             s.raw_payload->'fl_parcel'->>'mailing_address', '') = ''))
