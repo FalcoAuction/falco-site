@@ -1,6 +1,7 @@
 -- Middle Tennessee focus = all 41 counties of the Middle grand division, not 10.
 -- Also: CHURCH_CLOSURE leads (the seller is the UMC Conference Trustees, an
--- organization by definition) skip the entity-owner and owner-contact rules.
+-- organization by definition) skip the entity-owner and owner-contact rules;
+-- STALLED_BUILD (spec builders, usually LLCs) skips the entity-owner rule.
 -- The 10-county list kept 1,043 leads a quarter out of the ranked list.
 -- Built from the live lead_quality_reasons() definition (2026-11-20); only
 -- the outside_focus test changes. Tennessee counties now only count for
@@ -34,7 +35,7 @@ AS $function$
     CASE WHEN coalesce(s.property_value, 0) > 0 AND s.property_value < 150000 THEN 'below_fee_floor' END,
     -- Owner classifier flag, or (outside probate, where family trusts are
     -- normal) a company word in the owner of record from any source.
-    CASE WHEN upper(coalesce(s.distress_type, '')) <> 'CHURCH_CLOSURE' AND (coalesce(s.phone_metadata->>'owner_class', 'homeowner') <> 'homeowner'
+    CASE WHEN upper(coalesce(s.distress_type, '')) NOT IN ('CHURCH_CLOSURE', 'STALLED_BUILD') AND (coalesce(s.phone_metadata->>'owner_class', 'homeowner') <> 'homeowner'
       OR (upper(coalesce(s.distress_type, '')) <> 'PROBATE' AND upper(coalesce(s.raw_payload->'metro_parcel'->>'owner',
             s.raw_payload->'padctn'->>'owner', s.raw_payload->'fl_parcel'->>'owner', s.raw_payload->'comptroller_parcel'->>'owner',
             s.owner_name_records, s.full_name, '')) ~
