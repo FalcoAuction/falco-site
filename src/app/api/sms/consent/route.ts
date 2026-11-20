@@ -10,10 +10,13 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { guardPublicForm } from "@/lib/public-form-guard"
 
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
+  const guard = guardPublicForm(req, "sms-consent")
+  if (guard) return guard
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Unavailable." }, { status: 503 })
   }

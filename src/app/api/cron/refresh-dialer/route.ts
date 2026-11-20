@@ -187,6 +187,11 @@ async function runRefresh(): Promise<RefreshResult> {
   if (!supabaseAdmin) {
     return { ...result, ok: false, reason: "supabase not configured" }
   }
+  // Paid skip trace and AVM calls are parked until paid data is turned on on
+  // purpose; a funded BatchData account must not start spending by itself.
+  if ((process.env.FALCO_PAID_DATA_ENABLED ?? "").trim() !== "1") {
+    return { ...result, ok: true, reason: "paid data parked (FALCO_PAID_DATA_ENABLED != 1)" }
+  }
   const apiKey = (process.env.FALCO_BATCHDATA_API_KEY ?? "").trim()
   const attomKey = (process.env.FALCO_ATTOM_API_KEY ?? "").trim()
   if (!apiKey && !attomKey) {
