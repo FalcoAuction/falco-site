@@ -8,13 +8,20 @@
 // name, FALCO as the router and single contact, no em dashes, no claim FALCO is paid on the real estate, no ask to list
 // with FALCO (that would be listing solicitation; FALCO_LICENSED gates it).
 
-// All 41 Middle Tennessee counties (matches lead_quality_reasons()).
+// All 95 Tennessee counties: estate drafts follow the statewide ranking
+// (lead_quality_reasons, 20261120b).
 export const FOCUS_COUNTIES = [
-  "bedford", "cannon", "cheatham", "clay", "coffee", "davidson", "dekalb", "dickson", "fentress",
-  "franklin", "giles", "grundy", "hickman", "houston", "humphreys", "jackson", "lawrence", "lewis",
-  "lincoln", "macon", "marshall", "maury", "montgomery", "moore", "overton", "perry", "pickett",
-  "putnam", "robertson", "rutherford", "sequatchie", "smith", "stewart", "sumner", "trousdale",
-  "van buren", "warren", "wayne", "white", "williamson", "wilson",
+  "anderson", "bedford", "benton", "bledsoe", "blount", "bradley", "campbell", "cannon", "carroll",
+  "carter", "cheatham", "chester", "claiborne", "clay", "cocke", "coffee", "crockett", "cumberland",
+  "davidson", "decatur", "dekalb", "dickson", "dyer", "fayette", "fentress", "franklin", "gibson",
+  "giles", "grainger", "greene", "grundy", "hamblen", "hamilton", "hancock", "hardeman", "hardin",
+  "hawkins", "haywood", "henderson", "henry", "hickman", "houston", "humphreys", "jackson", "jefferson",
+  "johnson", "knox", "lake", "lauderdale", "lawrence", "lewis", "lincoln", "loudon", "mcminn",
+  "mcnairy", "macon", "madison", "marion", "marshall", "maury", "meigs", "monroe", "montgomery",
+  "moore", "morgan", "obion", "overton", "perry", "pickett", "polk", "putnam", "rhea",
+  "roane", "robertson", "rutherford", "scott", "sequatchie", "sevier", "shelby", "smith", "stewart",
+  "sullivan", "sumner", "tipton", "trousdale", "unicoi", "union", "van buren", "warren", "washington",
+  "wayne", "weakley", "white", "williamson", "wilson", "vanburen", "de kalb",
 ]
 export const MIN_ESTATE_VALUE = 150_000
 export const SIGNAL_WINDOW_DAYS = 45
