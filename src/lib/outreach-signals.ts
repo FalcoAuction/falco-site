@@ -8,9 +8,13 @@
 // name, FALCO as the router and single contact, no em dashes, no claim FALCO is paid on the real estate, no ask to list
 // with FALCO (that would be listing solicitation; FALCO_LICENSED gates it).
 
+// All 41 Middle Tennessee counties (matches lead_quality_reasons()).
 export const FOCUS_COUNTIES = [
-  "davidson", "williamson", "sumner", "rutherford", "wilson",
-  "maury", "montgomery", "cheatham", "robertson", "dickson",
+  "bedford", "cannon", "cheatham", "clay", "coffee", "davidson", "dekalb", "dickson", "fentress",
+  "franklin", "giles", "grundy", "hickman", "houston", "humphreys", "jackson", "lawrence", "lewis",
+  "lincoln", "macon", "marshall", "maury", "montgomery", "moore", "overton", "perry", "pickett",
+  "putnam", "robertson", "rutherford", "sequatchie", "smith", "stewart", "sumner", "trousdale",
+  "van buren", "warren", "wayne", "white", "williamson", "wilson",
 ]
 export const MIN_ESTATE_VALUE = 150_000
 export const SIGNAL_WINDOW_DAYS = 45
