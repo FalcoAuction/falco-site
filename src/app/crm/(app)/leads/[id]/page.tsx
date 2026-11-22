@@ -1,3 +1,4 @@
+import { metroLabel } from "@/lib/nashville-codes"
 import { landEvidence } from "@/lib/land-evidence"
 // Lead record (Attio-style): key details on the left, actions and the
 // activity timeline on the right. Reads one staging row by id plus its
@@ -45,12 +46,18 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     attorney_draft_status?: string; attorney_draft_hold_reasons?: string[] } | undefined
   const land = landEvidence(lead, { origin: lead.raw_payload?.source, lane: lead.raw_payload?.property_lane, land: lead.raw_payload?.land, roll: lead.raw_payload?.comptroller_parcel })
   const researchLand = land !== null && !land.corroborated
-  const ownerContactHeld = !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
+  const metroHeld = !!data.metroDisposition && data.metroDisposition !== "open"
+  const attrs = (lead.raw_payload?.nashville_codes ?? {}) as Record<string, unknown>
+  const review = (lead.raw_payload?.nashville_codes_review ?? {}) as Record<string, unknown>
+  const request = String(attrs.Request_Nbr ?? "").trim()
+  const caseLink = "https://services2.arcgis.com/HdTo6HJqh92wn4D8/arcgis/rest/services/Property_Standards_Violations_2/FeatureServer/0/query?f=pjson&outFields=Request_Nbr,Status,Property_Address,Property_APN,Violations_Noted,Reported_Problem&returnGeometry=false&where=" +
+    encodeURIComponent("Request_Nbr='" + request.replaceAll("'", "''") + "'").replaceAll("'", "%27")
+  const ownerContactHeld = metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
-  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
+  const sale = metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
@@ -123,6 +130,20 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </div>
           ) : null}
 
+          {data.metroDisposition && <div>
+            <div className="crm-section-label">Metro property standards case</div>
+            <dl className="crm-props">
+              <dt>Case</dt><dd>{request ? <a href={caseLink} target="_blank" rel="noopener noreferrer">{request}</a> : "Unknown"}</dd>
+              <dt>Disposition</dt><dd>{metroLabel(data.metroDisposition)}</dd>
+              <dt>Last checked</dt><dd>{String(review.checked_on || "Unverified")}</dd>
+              <dt>Official status at check</dt><dd>{String(review.official_status || "Unresolved")}</dd>
+              <dt>Recorded property</dt><dd>{String(attrs.Property_Address || "Unknown")}</dd>
+              <dt>Recorded APN</dt><dd>{String(attrs.Property_APN || "Unknown")}</dd>
+              <dt>Recorded citation</dt><dd>{String(attrs.Violations_Noted || "None recorded")}</dd>
+              {attrs.Reported_Problem ? <><dt>Reported complaint</dt><dd>{String(attrs.Reported_Problem)}</dd></> : null}
+              {review.owner_changed === true && <><dt>Owner</dt><dd>Metro owner changed; verify current ownership.</dd></>}
+            </dl>
+          </div>}
           {land && <div>
             <div className="crm-section-label">Land ownership evidence</div>
             <dl className="crm-props">

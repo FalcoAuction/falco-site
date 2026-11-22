@@ -137,11 +137,39 @@ test('asset views split held prospects and retain separate assets at the same ad
       in(field, ids) { result = result.filter(r => ids.includes(r[field])); return this },
       range() { return this }, then(done) { return Promise.resolve({ data: result }).then(done) } }
   } }
-  const crm = load('src/lib/crm-data.ts', key => key === 'react' ? { cache: f => f } :
+  const metro = load('src/lib/nashville-codes.ts', key => key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
+  const crm = load('src/lib/crm-data.ts', key => key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
     key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
   for (const [args, ids] of [[{}, ['1', '2']], [{ research: true }, ['3', '5']],
     [{ research: true, prospects: true }, ['3']]]) {
     const res = await crm.listBucket('assets', args)
     assert.deepEqual(Array.from(res.rows, r => r.staging_id), ids)
   }
+})
+
+test('Metro disposition reads only unique Metro IDs and holds missing or failed results', async () => {
+  const batches = []
+  const db = { from(table) {
+    assert.equal(table, 'homeowner_requests_staging')
+    return {
+      select(fields) { assert.equal(fields, 'id,nashville_code_disposition'); return this },
+      eq(field, value) { assert.equal(field, 'bot_source'); assert.equal(value, 'nashville_codes'); return this },
+      in(field, ids) {
+        assert.equal(field, 'id')
+        batches.push([...ids])
+        return batches.length === 1 ? { data: [
+          { id: '0', nashville_code_disposition: 'open' }, { id: '1', nashville_code_disposition: 'done' },
+        ] } : { error: { code: 'lookup-error' } }
+      },
+    }
+  } }
+  const metro = load('src/lib/nashville-codes.ts', key => key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
+  const other = { id: 'other', bot_source: 'other_producer' }
+  await metro.metroDispositions([other])
+  assert.equal(batches.length, 0)
+  const rows = Array.from({ length: 81 }, (_, i) => ({ id: String(i), bot_source: 'nashville_codes' }))
+  const result = await metro.metroDispositions([...rows, rows[0], other])
+  assert.deepEqual(batches.map(batch => batch.length), [80, 1])
+  for (const id of ['1', '2', '80']) assert.equal(metro.metroHeld(result, id), true)
+  for (const id of ['0', 'other']) assert.equal(metro.metroHeld(result, id), false)
 })
