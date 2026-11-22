@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
     .eq("pipeline_lead_key", slug).eq("bot_source", "knoxville_poh").limit(1)
   if (hearing.error) return NextResponse.json({ error: "Unable to verify lead source." }, { status: 503 })
   if (hearing.data?.length) return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
+  const researchNote = body.channel === "note" && (!body.outcome || body.outcome === "note_only") && !status && !nextAction && !nextActionAt
+  if (!researchNote) {
+    const herald = await supabaseAdmin.from("homeowner_requests_staging").select("id")
+      .eq("pipeline_lead_key", slug).eq("bot_source", "hamilton_county_herald")
+      .not("herald_elapsed_sale_date", "is", null).limit(1)
+    if (herald.error) return NextResponse.json({ error: "Unable to verify notice date." }, { status: 503 })
+    if (herald.data?.length) return NextResponse.json({ error: "Herald advertised sale date elapsed." }, { status: 409 })
+  }
   const notes = String(body.notes ?? "").slice(0, 4000)
 
   if (body.channel) {
