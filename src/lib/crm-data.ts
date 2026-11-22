@@ -95,7 +95,8 @@ function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte
 const noticeHolds = cache(async () => {
   const slugs = new Map<string, string>()
   const stagingIds = new Set<string>()
-  if (!supabaseAdmin) return { slugs, stagingIds }
+  const heraldSlugs = new Set<string>()
+  if (!supabaseAdmin) return { slugs, stagingIds, heraldSlugs }
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await supabaseAdmin.from("homeowner_requests")
       .select("pipeline_lead_key,review:phone_metadata->trustee_notice_review,flag:phone_metadata->sale_status")
@@ -115,7 +116,19 @@ const noticeHolds = cache(async () => {
     if (error) throw new Error(error.message)
     for (const row of data ?? []) stagingIds.add(row.id)
   }
-  return { slugs, stagingIds }
+  for (let offset = 0; ; offset += 250) {
+    const { data, error } = await supabaseAdmin.from("homeowner_requests_staging")
+      .select("id,pipeline_lead_key,herald_elapsed_sale_date").eq("bot_source", "hamilton_county_herald")
+      .not("herald_elapsed_sale_date", "is", null).order("id").range(offset, offset + 249)
+    if (error) throw new Error(error.message)
+    for (const row of data ?? []) {
+      if (!row.herald_elapsed_sale_date) continue
+      stagingIds.add(row.id)
+      if (row.pipeline_lead_key) heraldSlugs.add(row.pipeline_lead_key)
+    }
+    if ((data?.length ?? 0) < 250) break
+  }
+  return { slugs, stagingIds, heraldSlugs }
 })
 
 const warnRows = cache(async () => {
@@ -177,7 +190,8 @@ const workingSlugs = cache(async () => {
     if (error) throw new Error(error.message)
     const keys = data.map(row => String(row.listing_slug))
     const holds = await cityCodeWorkflowHolds(keys)
-    slugs.push(...keys.filter(key => !holds.has(key)))
+    const { heraldSlugs } = await noticeHolds()
+    slugs.push(...keys.filter(key => !holds.has(key) && !heraldSlugs.has(key)))
     if (keys.length < 80) return slugs
   }
 })
@@ -193,7 +207,8 @@ async function dueWorkflows(endOfToday: string) {
       .order("next_action_at").order("listing_slug").range(offset, offset + 24)
     if (error) throw new Error(error.message)
     const holds = await cityCodeWorkflowHolds(data.map(row => row.listing_slug))
-    due.push(...data.filter(row => !holds.has(row.listing_slug)) as DueWorkflow[])
+    const { heraldSlugs } = await noticeHolds()
+    due.push(...data.filter(row => !holds.has(row.listing_slug) && !heraldSlugs.has(row.listing_slug)) as DueWorkflow[])
     if (data.length < 25) break
   }
   return due.slice(0, 25)
@@ -278,6 +293,7 @@ export type StagedLead = {
   property_address: string | null; county: string | null; full_name: string | null; owner_name_records: string | null
   email: string | null; phone: string | null; property_value: number | null; property_value_source: string | null
   mortgage_balance: number | null; trustee_sale_date: string | null; distress_type: string | null; admin_notes: string | null
+  herald_elapsed_sale_date?: string | null
   mt_review?: unknown
   knoxville_review?: unknown
   city_review: { status?: string; official_statuses?: string[]; checked_on?: string } | null; source_url: string | null; year_built: number | null; alternate_phones: unknown; raw_payload: Record<string, unknown> | null
@@ -294,7 +310,7 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
 export async function getLead(id: string): Promise<{ metroDisposition: string | null; noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
-    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold,mt_review:phone_metadata->mt_juliet_issue_review,knoxville_review:phone_metadata->knoxville_hearing_review,city_review:phone_metadata->chattanooga_case_review")
+    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold,herald_elapsed_sale_date,mt_review:phone_metadata->mt_juliet_issue_review,knoxville_review:phone_metadata->knoxville_hearing_review,city_review:phone_metadata->chattanooga_case_review")
     .eq("id", id).maybeSingle()
   const lead = r.data as StagedLead | null
   if (!lead) return null
@@ -305,7 +321,7 @@ export async function getLead(id: string): Promise<{ metroDisposition: string | 
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
   const metroDisposition = (await metroDispositions([lead])).get(lead.id) ?? null
-  return { metroDisposition, noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? r.data?.mackie_notice_hold ?? null, lead, opp: lead.bot_source === "warn_notices" || (metroDisposition && metroDisposition !== "open") ? null : (o.data as Opportunity | null) ?? null, workflow, activities }
+  return { metroDisposition, noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? r.data?.mackie_notice_hold ?? null, lead, opp: lead.herald_elapsed_sale_date || lead.bot_source === "warn_notices" || (metroDisposition && metroDisposition !== "open") ? null : (o.data as Opportunity | null) ?? null, workflow, activities }
 }
 
 export type TodayData = {

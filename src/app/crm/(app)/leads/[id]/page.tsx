@@ -43,6 +43,13 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  if (lead.bot_source === "hamilton_county_herald" && lead.herald_elapsed_sale_date) {
+    return <><Head title={lead.property_address || "Historical Herald notice"}><Link href="/crm/leads">Back to leads</Link></Head>
+      <section className="crm-card"><h2>Herald advertised sale date elapsed</h2>
+        <p>The Herald advertised a sale for {lead.herald_elapsed_sale_date}. The sale outcome is unverified.</p>
+        {lead.source_url && <a href={lead.source_url}>Read the published notice</a>}
+      </section></>
+  }
   if (lead.bot_source === "hud_reo") {
     return <><Head title={lead.property_address || "Historical HUD record"}><Link href="/crm/leads">Back to leads</Link></Head>
       <p>Historical HUD inventory. Verify current availability with <a href="https://www.hudhomestore.gov/searchresult?citystate=TN">HUD HomeStore</a>. Auction assignment unverified.</p></>

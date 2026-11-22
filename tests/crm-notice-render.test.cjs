@@ -133,6 +133,13 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   staged.push(johnson)
   tables.dialer_lead_workflow.unshift({listing_slug:johnson.pipeline_lead_key,status:'working',next_action_at:today})
   tables.crm_visible_opportunities.push(opportunity(johnson))
+  const herald = {...staged[0], id:'00000000-0000-4001-8000-000000000098', bot_source:'hamilton_county_herald',
+    pipeline_lead_key:'herald-expired', herald_elapsed_sale_date:'2026-10-01', source_url:'https://www.hamiltoncountyherald.com/ViewNotice.aspx?id=1'}
+  staged.push(herald)
+  const expired = await render('leads/[id]/',{params:Promise.resolve({id:herald.id})})
+  assert.match(expired,/Herald advertised sale date elapsed/)
+  assert.match(expired,/2026-10-01/)
+  assert.doesNotMatch(expired,/tel:|sms:|<form|hand_to_auction/)
   const removed = await render('leads/[id]/',{params:Promise.resolve({id:johnson.id})})
   assert.match(removed,/Docket removal recorded 2026-03-26/)
   assert.doesNotMatch(removed,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee/)
