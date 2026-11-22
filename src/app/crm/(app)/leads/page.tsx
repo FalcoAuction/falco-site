@@ -5,7 +5,7 @@
 
 import Link from "next/link"
 import {
-  BUCKETS, PP_LANE_LABEL, VIEWS, bucketCounts, latestOpportunityDay, listBucket, listLeads, viewCounts,
+  BUCKETS, LAND_REVIEW_PAGE_SIZE, PP_LANE_LABEL, VIEWS, bucketCounts, latestOpportunityDay, listBucket, listLeads, viewCounts,
   type BucketKey, type BucketRow, type GradeFilter, type LeadRow, type ViewKey,
 } from "@/lib/crm-data"
 import { Icon } from "@/app/crm/icons"
@@ -19,7 +19,7 @@ const GRADES: { key: GradeFilter; label: string }[] = [
   { key: "qualified", label: "Qualified" }, { key: "A", label: "A" }, { key: "B", label: "B" }, { key: "C", label: "C" }, { key: "all", label: "All tagged" },
 ]
 
-export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string; assets?: string }> }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string; assets?: string; land?: string; page?: string }> }) {
   const sp = await searchParams
   const bucket = BUCKETS.find((b) => b.key === sp.view)?.key as BucketKey | undefined
   const view = (VIEWS.some((v) => v.key === sp.view) ? sp.view : "all") as ViewKey
@@ -28,10 +28,13 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const q = sp.q?.trim().slice(0, 80) || undefined
   const grade = GRADES.some((g) => g.key === sp.grade) ? (sp.grade as GradeFilter) : undefined
 
-  const research = bucket === "assets" && (sp.assets === "research" || sp.assets === "prospects")
+  const researchLand = bucket === "land" && sp.land === "research"
+  const landOpportunities = bucket === "land" && sp.land === "opportunities"
+  const page = sp.page && /^[1-9]\d{0,5}$/.test(sp.page) ? Number(sp.page) : 1
+  const research = researchLand || bucket === "assets" && (sp.assets === "research" || sp.assets === "prospects")
   const [ranked, bucketData, bCounts] = await Promise.all([
     bucket ? Promise.resolve(null) : listLeads(view, { county, q }),
-    bucket ? listBucket(bucket, { grade, county, q, research, prospects: sp.assets === "prospects" }) : Promise.resolve(null),
+    bucket ? listBucket(bucket, { grade, county, q, research, landOpportunities, page, prospects: sp.assets === "prospects" }) : Promise.resolve(null),
     bucketCounts(),
   ])
   const day = ranked?.day ?? null
@@ -49,11 +52,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       <Head title="Leads" sub={bucket ? undefined : day ? `Ranked ${shortDate(day)}` : "No ranking yet"}>
         <div className="crm-seg" role="group" aria-label="Lead type">
           <Link href={keep({ view: "all" })} aria-current={!bucket ? "page" : undefined}>
-            Residential <span className="crm-faint" style={{ marginLeft: 5 }}>{counts.all ?? 0}</span>
+            Residential <span title="Nightly ranked snapshot before ownership review" className="crm-faint" style={{ marginLeft: 5 }}>{counts.all ?? 0}</span>
           </Link>
           {BUCKETS.map((b) => (
             <Link key={b.key} href={keep({ view: b.key })} aria-current={b.key === bucket ? "page" : undefined}>
-              {b.label} <span className="crm-faint" style={{ marginLeft: 5 }}>{bCounts[b.key]}</span>
+              {b.label} {b.key === "land" ? bucket === "land" && !researchLand && !landOpportunities && <span className="crm-faint">{bucketData?.grades.qualified}</span>
+                : <span className="crm-faint" style={{ marginLeft: 5 }}>{bCounts[b.key]}</span>}
             </Link>
           ))}
         </div>
@@ -62,11 +66,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <nav className="crm-views" aria-label="Saved views">
           {VIEWS.map((v) => (
             <Link key={v.key} href={keep({ view: v.key })} aria-current={v.key === current ? "page" : undefined}>
-              {v.label}{counts[v.key] != null ? <span className="n">{counts[v.key]}</span> : null}
+              {v.label}{counts[v.key] != null ? <span className="n" title="Nightly ranked snapshot before ownership review">{counts[v.key]}</span> : null}
             </Link>
           ))}
         </nav>
       ) : null}
+      {bucket === "land" && <nav className="crm-views" aria-label="Land qualification">
+        <Link href={keep({ view: "land" })} aria-current={!researchLand && !landOpportunities ? "page" : undefined}>Land inventory</Link>
+        <Link href={keep({ view: "land", land: "opportunities" })} aria-current={landOpportunities ? "page" : undefined}>Corroborated opportunities</Link>
+        <Link href={keep({ view: "land", land: "research" })} aria-current={researchLand ? "page" : undefined}>Ownership research</Link>
+      </nav>}
       {bucket === "assets" && <nav className="crm-views" aria-label="Asset qualification">
         <Link href={keep({ view: "assets" })} aria-current={!research ? "page" : undefined}>High-value inventory</Link>
         <Link href={keep({ view: "assets", assets: "research" })} aria-current={sp.assets === "research" ? "page" : undefined}>Research and holds</Link>
@@ -74,19 +83,20 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       </nav>}
       <form className="crm-toolbar" action="/crm/leads">
         <input type="hidden" name="view" value={current} />
-        {research && <input type="hidden" name="assets" value={sp.assets} />}
+        {(researchLand || landOpportunities) && <input type="hidden" name="land" value={sp.land} />}
+        {bucket === "assets" && research && <input type="hidden" name="assets" value={sp.assets} />}
         {grade ? <input type="hidden" name="grade" value={grade} /> : null}
         <div style={{ position: "relative" }}>
           <span className="crm-faint" style={{ position: "absolute", left: 9, top: 8 }}><Icon name="search" size={14} /></span>
-          <input className="crm-input" name="q" defaultValue={q} placeholder="Address or owner" style={{ paddingLeft: 30, width: 240 }} />
+          <input className="crm-input" name="q" defaultValue={q} placeholder={bucket === "land" ? "Address, parcel or owner" : "Address or owner"} style={{ paddingLeft: 30, width: 240 }} />
         </div>
         <select className="crm-select" name="county" defaultValue={county ?? ""}>
           <option value="">All counties</option>
           {COUNTIES.map((c) => <option key={c} value={c}>{titleCase(c)}</option>)}
         </select>
         <button className="crm-btn" type="submit">Filter</button>
-        {(county || q) ? <Link className="crm-btn ghost" href={`/crm/leads?view=${current}`}>Clear</Link> : null}
-        {bucket && bucket !== "assets" && bucketData ? (
+        {(county || q) ? <Link className="crm-btn ghost" href={keep({ view: current, land: bucket === "land" ? sp.land : undefined, assets: sp.assets, county: undefined, q: undefined })}>Clear</Link> : null}
+        {bucket && bucket !== "assets" && !researchLand && !landOpportunities && bucketData ? (
           <div className="crm-seg" role="group" aria-label="Grade">
             {GRADES.map((g) => (
               <Link key={g.key} href={keep({ view: bucket, grade: g.key === "qualified" ? undefined : g.key })}
@@ -107,6 +117,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         : bucket === "assets" ? <AssetTable rows={bucketData!.rows} />
         : bucket ? <LaneTable rows={bucketData!.rows} lane={bucket} />
         : <RankedTable rows={ranked!.rows} />}
+      {(researchLand || landOpportunities) && bucketData && !error && <nav className="crm-toolbar" aria-label="Land results pages">
+        {page > 1 && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page - 1) })}>Previous</Link>}
+        <span>Page {page} · {bucketData.grades.all} parcels</span>
+        {page * LAND_REVIEW_PAGE_SIZE < bucketData.grades.all && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page + 1) })}>Next</Link>}
+      </nav>}
     </>
   )
 }
@@ -149,7 +164,7 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
     <table className="crm-table">
       <thead>
         <tr>
-          <th>Property</th><th>Grade</th><th className="hide-sm">{lane === "land" ? "Land" : "Type"}</th>
+          <th>Property</th><th>{lane === "land" ? "Qualification" : "Grade"}</th><th className="hide-sm">{lane === "land" ? "Land" : "Type"}</th>
           <th className="hide-sm">Distress</th><th>Status</th><th className="num hide-sm hide-md">Value</th><th className="hide-sm hide-md">Contact</th>
         </tr>
       </thead>
@@ -162,19 +177,22 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
                 <div className="primary-cell">{r.property_address ?? "No address"}</div>
                 <div className="secondary">{titleCase(r.owner_name) || "Owner unknown"} Â· {titleCase(r.county)}{t?.out_of_state_owner ? " Â· out of state" : ""}</div>
               </td>
-              <td>{t?.grade ? <span className={`pill ${GRADE_TONE[t.grade]}`}>{t.grade}</span> : <span className="crm-faint" title={t?.exclude_reason ?? ""}>{t?.exclude_reason ? "Excluded" : "Ungraded"}</span>}</td>
+              <td>{r.landEvidence ? <><span className="pill">{r.landEvidence.corroborated ? "Corroborated" : "Research only"}</span><div className="secondary" style={{ whiteSpace: "pre-wrap" }}>{r.landEvidence.parcel || "Parcel unverified"}</div></> : t?.grade ? <span className={`pill ${GRADE_TONE[t.grade]}`}>{t.grade}</span> : <span className="crm-faint" title={t?.exclude_reason ?? ""}>{t?.exclude_reason ? "Excluded" : "Ungraded"}</span>}</td>
               <td className="hide-sm crm-muted">
                 {titleCase((t?.subtype ?? "").replace(/_/g, " ")) || (lane === "land" ? "Vacant land" : "Commercial")}
                 {t?.acres ? ` Â· ${Number(t.acres).toFixed(t.acres < 10 ? 2 : 0)} ac` : ""}
-                {lane === "land" && t?.land_flip?.score ? <span className="pill accent" style={{ marginLeft: 6 }}>Flip {t.land_flip.score}</span> : null}
+                {r.landEvidence?.corroborated === false ? null : lane === "land" && t?.land_flip?.score ? <span className="pill accent" style={{ marginLeft: 6 }}>Flip {t.land_flip.score}</span> : null}
               </td>
               <td className="hide-sm">
                 <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
-                {t?.stacked_distress?.length ? <span className="pill red" style={{ marginLeft: 6 }}>Stacked</span> : null}
+                {r.landEvidence?.events.map((event, i) => <div key={i} className="secondary">
+                  {event.label} · {event.status.replaceAll("_", " ")} {event.published || event.sale}
+                </div>)}
+                {!r.landEvidence && t?.stacked_distress?.length ? <span className="pill red" style={{ marginLeft: 6 }}>Stacked</span> : null}
               </td>
               <td><StatusPill status={r.status} /></td>
               <td className="num hide-sm hide-md crm-muted">{compactMoney(r.property_value)}</td>
-              <td className="hide-sm hide-md crm-muted">{CONTACT[t?.contact_tier ?? ""] ?? titleCase((t?.contact_tier ?? "").replace(/_/g, " "))}</td>
+              <td className="hide-sm hide-md crm-muted">{r.landEvidence && !r.landEvidence.corroborated ? "Research only" : CONTACT[t?.contact_tier ?? ""] ?? titleCase((t?.contact_tier ?? "").replace(/_/g, " "))}</td>
             </RowLink>
           )
         })}

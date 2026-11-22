@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic"
 export default async function CrmAppLayout({ children }: { children: React.ReactNode }) {
   if (!(await readAdminSessionFromCookies())) redirect("/crm/login")
   const theme = await readTheme()
-  const { counts, due } = await getToday()
+  const { counts, due } = await getToday(false)
   return (
     <div className="crm crm-shell" data-theme={themeAttr(theme)}>
       <aside className="crm-side">

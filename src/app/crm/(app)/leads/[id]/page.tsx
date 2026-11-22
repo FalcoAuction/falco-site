@@ -1,3 +1,4 @@
+import { landEvidence } from "@/lib/land-evidence"
 // Lead record (Attio-style): key details on the left, actions and the
 // activity timeline on the right. Reads one staging row by id plus its
 // dialer workflow and activity history.
@@ -42,12 +43,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const pp = (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
   const probate = lead.raw_payload?.probate_review as { stage?: string; contact_hold?: boolean;
     attorney_draft_status?: string; attorney_draft_hold_reasons?: string[] } | undefined
+  const land = landEvidence(lead, { origin: lead.raw_payload?.source, lane: lead.raw_payload?.property_lane, land: lead.raw_payload?.land, roll: lead.raw_payload?.comptroller_parcel })
+  const researchLand = land !== null && !land.corroborated
   const ownerContactHeld = !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = data.noticeHold ? null : lead.trustee_sale_date || opp?.sale_date || null
-  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
+  const sale = data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
@@ -120,7 +123,36 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </div>
           ) : null}
 
-          {laneTag && (laneTag.lane === "commercial" || laneTag.lane === "land") ? (
+          {land && <div>
+            <div className="crm-section-label">Land ownership evidence</div>
+            <dl className="crm-props">
+              <dt>Qualification</dt><dd>{land.corroborated ? "Corroborated opportunity" : "Research only"}</dd>
+              <dt>Parcel</dt><dd style={{ whiteSpace: "pre-wrap" }}>{land.parcel || "Unverified"}</dd>
+              <dt>Recorded ownership</dt><dd>{land.owner || "Unverified"}</dd>
+              {land.signals.length > 0 && <><dt>Ownership signals</dt><dd>{land.signals.join(", ").replaceAll("_", " ")}</dd></>}
+              <dt>Acquisition status</dt><dd>{land.acquisitionStatus || "Unknown"}</dd>
+              {land.observed && <><dt>Observed</dt><dd>{land.observed}</dd></>}
+              {land.sourceDate && <><dt>Source refreshed</dt><dd>{land.sourceDate}</dd></>}
+              {land.source && <><dt>Ownership source</dt><dd><a href={land.source} target="_blank" rel="noopener noreferrer">Open record</a></dd></>}
+              {land.events.map((event, i) => <div key={i} style={{ display: "contents" }}>
+                <dt>Independent record</dt><dd>{event.label}
+                  {event.caseId && <div>Case {event.caseId}</div>}
+                  <div style={{ whiteSpace: "pre-wrap" }}>{event.parcel} � {event.status.replaceAll("_", " ")}</div>
+                  {event.party && <div>Recorded party {event.party}</div>}
+                  {event.method && <div>Assessor match by {event.method.replaceAll("_", " ")}</div>}
+                  {event.published && <div>Published {event.published}</div>}
+                  {event.sale && <div>Listed sale date {event.sale}</div>}
+                  {event.rejection && <div>{event.rejection}</div>}
+                  {event.reviewSource && <a href={event.reviewSource} target="_blank" rel="noopener noreferrer">Disposition source</a>}
+                  {event.source && <div><a href={event.source} target="_blank" rel="noopener noreferrer">Open evidence</a></div>}
+                </dd>
+              </div>)}
+              <dt>Sale authority</dt><dd>Unverified by land evidence</dd>
+              <dt>Outreach eligibility</dt><dd>Unverified by land evidence</dd>
+              {land.reasons.length > 0 && <><dt>Review reasons</dt><dd>{land.reasons.join(", ").replaceAll("_", " ")}</dd></>}
+            </dl>
+          </div>}
+          {!researchLand && laneTag && (laneTag.lane === "commercial" || laneTag.lane === "land") ? (
             <div>
               <div className="crm-section-label">{laneTag.lane === "land" ? "Land deal" : "Commercial"}</div>
               <dl className="crm-props">
