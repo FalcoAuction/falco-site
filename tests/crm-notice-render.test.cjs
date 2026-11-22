@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','aircraft-evidence','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -286,4 +286,31 @@ test('only a recently reviewed matching Mt. Juliet building complaint is display
   for (const change of [{status:'Archived'},{issue_id:456},{checked_on:'2000-01-01'},{finding:'other_request'}]) {
     assert.equal(mtJulietEvidence({...row, mt_review:{...review,...change}}),null)
   }
+})
+
+test('FAA overlap is research until the current aircraft, authority and transaction evidence agree', () => {
+  const { aircraftAsset } = load('src/lib/aircraft-evidence.ts', {})
+  const today='2026-11-23', row={full_name:'Example Inc'}, fact={source_url:'https://example.org/record',verified_on:today}
+  const plane={n_number:'N123',serial:'12345',registrant:'Example Inc',identity_verified:true, registration_status:'V',
+    registry_date:today,verified_on:today,registration_expires:'20280501'}
+  const asset={...fact,asset_id:'N123',kind:'aircraft',description:'Documented aircraft',serial:'12345',registrant:'Example Inc'}
+  const ev={subject_name:'Example Inc',assets:[asset],controller:{...fact,name:'Executor',role:'executor',authority:'verified'},
+    availability:{...fact,status:'available'},liens:{...fact,status:'reviewed'},deadline:{...fact,status:'none_documented'}}
+  const tag={policy:'pp-v3',qualification:'reviewed',routable:true,lane:'owner_asset',categories:['aircraft'],
+    asset_evidence:ev.assets,authority_review:ev}
+  const read=(p,pp,e)=>aircraftAsset(row,p,pp,e,today)
+  for(const result of [read([plane],null,null),read([],tag,ev),read([plane],tag,null),
+    read([{...plane,identity_verified:false}],tag,ev),read([{...plane,serial:'other'}],tag,ev),
+    read([{...plane,registry_date:'2026-10-01'}],tag,ev),read([{...plane,registration_expires:'20261001'}],tag,ev),
+    read([plane],{...tag,authority_review:{}},ev)]) {
+    assert.equal(result.pp.routable,false); assert.equal(result.confirmed.length,0)
+  }
+  assert.equal(read([plane],tag,ev).confirmed.length,1)
+  const independent={lane:'vessel_arrest',categories:['vessel'],routable:true}
+  assert.equal(read([plane],independent,null).pp,independent)
+  assert.equal(read([plane],independent,null).confirmed.length,0)
+  const mixed={...ev,assets:[{...asset,kind:'equipment',asset_id:'excavator-1'}]}
+  const result=read([plane],{...tag,authority_review:mixed,asset_evidence:mixed.assets},mixed)
+  assert.equal(result.pp.routable,true); assert.equal(result.confirmed.length,0)
+  assert.deepEqual([...result.pp.categories],['equipment'])
 })

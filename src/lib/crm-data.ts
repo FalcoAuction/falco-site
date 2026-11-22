@@ -9,6 +9,7 @@ import "server-only"
 import { cityCodeWorkflowHolds, researchOnlySources } from "@/lib/chattanooga-research"
 import { metroDispositions, metroHeld } from "@/lib/nashville-codes"
 import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
+import { aircraftAsset } from "@/lib/aircraft-evidence"
 import { warnAsset } from "@/lib/warn-evidence"
 import { landEvidence, type LandEvidence } from "@/lib/land-evidence"
 import { cache } from "react"
@@ -482,8 +483,9 @@ const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
 
 // Keep candidate discovery index-only. Filtering nested JSON here makes Postgres
 // scan all of staging. Read routing controls only after locating the tagged IDs.
+const aircraftProjection = "aircraft:raw_payload->aircraft,pp:raw_payload->personal_property,evidence:raw_payload->personal_property_evidence"
 const assetCandidates = cache(async () => {
-  type Candidate = { id: string; bot_source: string; routable: string | null; prospect: string | null; key: string | null }
+  type Candidate = { id: string; bot_source: string; routable: string | null; prospect: string | null; key: string | null; categories?: string[]; pp_lane?: string }
   const db = supabaseAdmin!
   async function taggedIds(tag: "aircraft" | "personal_property") {
     const ids: string[] = []
@@ -496,15 +498,32 @@ const assetCandidates = cache(async () => {
     }
   }
   const [aircraft, personal] = await Promise.all([taggedIds("aircraft"), taggedIds("personal_property")])
+  const aircraftIds = new Set(aircraft)
   const warn = await warnRows()
   const ids = [...new Set([...aircraft, ...personal, ...warn.keys()])]
   const rows: Candidate[] = []
   for (let i = 0; i < ids.length; i += 100) {
     const { data, error } = await db.from("homeowner_requests_staging")
-      .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key,bot_source")
+      .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key,categories:raw_payload->personal_property->categories,pp_lane:raw_payload->personal_property->>lane,bot_source")
       .in("id", ids.slice(i, i + 100))
     if (error) throw new Error(error.message)
-    for (const row of (data ?? []) as unknown as Candidate[]) {
+    const batch = (data ?? []) as unknown as Candidate[]
+    const affected = batch.filter(r => !warn.has(r.id) && (aircraftIds.has(r.id) || r.categories?.includes("aircraft") || r.pp_lane === "owner_asset"))
+    if (affected.length) {
+      const lookup = await db.from("homeowner_requests_staging")
+        .select(`id,full_name,owner_name_records,distress_type,${aircraftProjection}`).in("id", affected.map(r => r.id))
+      if (lookup.error) throw new Error(lookup.error.message)
+      for (const row of affected) {
+        const detail = lookup.data?.find(r => r.id === row.id)
+        const pp = detail && aircraftAsset(detail, detail.aircraft, detail.pp, detail.evidence).pp
+        if (!pp || pp.routable === false) {
+          row.routable = "false"
+          row.prospect = String(pp?.prospect === true)
+          row.key = pp?.dedupe_key ?? null
+        }
+      }
+    }
+    for (const row of batch) {
       if (researchOnlySource(row.bot_source)) continue
       const w = warn.get(row.id)
       rows.push(w ? { ...row, routable: String(w.routable), prospect: String(w.prospect), key: w.dedupe_key ?? null } : row)
@@ -527,9 +546,14 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
       && (!opts.prospects || row.prospect === "true")).map(row => row.id)
     for (let i = 0; i < idList.length; i += 100) {
       const r = await supabaseAdmin.from("homeowner_requests_staging")
-        .select(`${BUCKET_COLS},aircraft:raw_payload->aircraft,pp:raw_payload->personal_property`).in("id", idList.slice(i, i + 100))
+        .select(`${BUCKET_COLS},${aircraftProjection}`).in("id", idList.slice(i, i + 100))
       if (r.error) return { rows: [], grades, error: r.error.message }
-      all.push(...((r.data ?? []) as unknown as StagedBucket[]))
+      for (const row of (r.data ?? []) as unknown as (StagedBucket & { evidence?: unknown })[]) {
+        const display = aircraftAsset(row, row.aircraft, row.pp, row.evidence)
+        row.pp = display.pp
+        if (!opts.research || display.pp?.not_routable_reason !== "Aircraft sale authority unverified.") row.aircraft = display.confirmed
+        all.push(row)
+      }
     }
   } else if (bucket === "land") {
     all.push(...await loadLandRows(BUCKET_COLS))
