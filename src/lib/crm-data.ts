@@ -6,6 +6,7 @@
 // Staging is ~400 MB: only ever read it by primary key or a short id list.
 
 import "server-only"
+import { chattanoogaWorkflowHolds } from "@/lib/chattanooga-research"
 import { metroDispositions, metroHeld } from "@/lib/nashville-codes"
 import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
 import { warnAsset } from "@/lib/warn-evidence"
@@ -159,26 +160,62 @@ async function attachWorkflow(opps: Opportunity[], existingWorkflow = false): Pr
   })
 }
 
+// Filter each ordered workflow page before applying the visible-list limit.
+const workingSlugs = cache(async () => {
+  const slugs: string[] = []
+  if (!supabaseAdmin) return slugs
+  for (let offset = 0; ; offset += 80) {
+    const { data, error } = await supabaseAdmin.from("dialer_lead_workflow").select("listing_slug")
+      .not("status", "in", "(new,closed_lost,closed_won)").order("updated_at", { ascending: false })
+      .order("listing_slug").range(offset, offset + 79)
+    if (error) throw new Error(error.message)
+    const keys = data.map(row => String(row.listing_slug))
+    const holds = await chattanoogaWorkflowHolds(keys)
+    slugs.push(...keys.filter(key => !holds.has(key)))
+    if (keys.length < 80) return slugs
+  }
+})
+
+type DueWorkflow = { listing_slug: string; status: DialerStatus; next_action: string; next_action_at: string; summary_notes: string }
+
+async function dueWorkflows(endOfToday: string) {
+  const due: DueWorkflow[] = []
+  if (!supabaseAdmin) return due
+  for (let offset = 0; due.length < 25; offset += 25) {
+    const { data, error } = await supabaseAdmin.from("dialer_lead_workflow").select("listing_slug,status,next_action,next_action_at,summary_notes")
+      .lte("next_action_at", endOfToday).not("status", "in", "(closed_lost,closed_won)")
+      .order("next_action_at").order("listing_slug").range(offset, offset + 24)
+    if (error) throw new Error(error.message)
+    const holds = await chattanoogaWorkflowHolds(data.map(row => row.listing_slug))
+    due.push(...data.filter(row => !holds.has(row.listing_slug)) as DueWorkflow[])
+    if (data.length < 25) break
+  }
+  return due.slice(0, 25)
+}
+
 export async function listLeads(view: ViewKey, opts: { county?: string; q?: string; limit?: number } = {}): Promise<{ day: string | null; rows: LeadRow[]; error?: string }> {
   if (!supabaseAdmin) return { day: null, rows: [], error: "Database not configured." }
   const day = await latestOpportunityDay()
   if (!day) return { day: null, rows: [] }
   if (view === "working") {
     // Leads someone has touched: open workflow rows, newest contact first.
-    const wf = await supabaseAdmin.from("dialer_lead_workflow").select("listing_slug")
-      .not("status", "in", "(new,closed_lost,closed_won)").order("updated_at", { ascending: false }).limit(300)
-    const slugs = ((wf.data ?? []) as { listing_slug: string }[]).map((r) => r.listing_slug)
+    const slugs = (await workingSlugs()).slice(0, 300)
     if (!slugs.length) return { day, rows: [] }
     // Read the staged rows directly: a lead being worked is not always in
     // the ranked top 1,000 (no value yet, or a dialer-only lead).
-    const st = await supabaseAdmin.from("homeowner_requests_staging")
-      .select("id,bot_source,distress_type,county,property_address,owner_name_records,full_name,property_value,trustee_sale_date,pipeline_lead_key,mackie_notice_hold")
-      .in("pipeline_lead_key", slugs).limit(300)
     type St = { mackie_notice_hold: string | null; id: string; bot_source: string; distress_type: string | null; county: string | null; property_address: string | null
       owner_name_records: string | null; full_name: string | null; property_value: number | null; trustee_sale_date: string | null; pipeline_lead_key: string }
+    const staged: St[] = []
+    for (let i = 0; i < slugs.length; i += 80) {
+      const st = await supabaseAdmin.from("homeowner_requests_staging")
+        .select("id,bot_source,distress_type,county,property_address,owner_name_records,full_name,property_value,trustee_sale_date,pipeline_lead_key,mackie_notice_hold")
+        .in("pipeline_lead_key", slugs.slice(i, i + 80))
+      if (st.error) return { day, rows: [], error: st.error.message }
+      staged.push(...(st.data as St[]))
+    }
     const seen = new Set<string>()
     const opps: Opportunity[] = []
-    for (const s of (st.data ?? []) as St[]) {
+    for (const s of staged) {
       if (s.mackie_notice_hold || seen.has(s.pipeline_lead_key)) continue
       seen.add(s.pipeline_lead_key)
       const value = Number(s.property_value ?? 0)
@@ -189,7 +226,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
     }
     const rows = await attachWorkflow(opps, true)
     rows.sort((a, b) => (b.last_contact_at ?? "").localeCompare(a.last_contact_at ?? ""))
-    return { day, rows, error: st.error?.message }
+    return { day, rows }
   }
   let q = supabaseAdmin.from("crm_visible_opportunities").select(OPP_COLS).eq("captured_on", day)
   q = applyView(q, view)
@@ -235,7 +272,7 @@ export type StagedLead = {
   property_address: string | null; county: string | null; full_name: string | null; owner_name_records: string | null
   email: string | null; phone: string | null; property_value: number | null; property_value_source: string | null
   mortgage_balance: number | null; trustee_sale_date: string | null; distress_type: string | null; admin_notes: string | null
-  source_url: string | null; year_built: number | null; alternate_phones: unknown; raw_payload: Record<string, unknown> | null
+  city_review: { status?: string; official_statuses?: string[]; checked_on?: string } | null; source_url: string | null; year_built: number | null; alternate_phones: unknown; raw_payload: Record<string, unknown> | null
 }
 
 /** The promoted homeowner_requests row for a pipeline key, which is what
@@ -249,7 +286,7 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
 export async function getLead(id: string): Promise<{ metroDisposition: string | null; noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
-    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold")
+    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold,city_review:phone_metadata->chattanooga_case_review")
     .eq("id", id).maybeSingle()
   const lead = r.data as StagedLead | null
   if (!lead) return null
@@ -289,10 +326,8 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   const db = supabaseAdmin
   const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999)
   const day = await latestOpportunityDay()
-  const [due, sales, recent, qDay, sent, supp, contacts, oppCount, llCount, working] = await Promise.all([
-    db.from("dialer_lead_workflow").select("listing_slug,status,next_action,next_action_at,summary_notes")
-      .lte("next_action_at", endOfToday.toISOString()).not("status", "in", "(closed_lost,closed_won)")
-      .order("next_action_at").limit(25),
+  const [dueRows, sales, recent, qDay, sent, supp, contacts, oppCount, llCount, working] = await Promise.all([
+    dueWorkflows(endOfToday.toISOString()),
     day ? db.from("crm_visible_opportunities").select(OPP_COLS).eq("captured_on", day)
       .gte("sale_date", isoDay(new Date())).lte("sale_date", isoDay(addDays(14))).order("sale_date").limit(12) : Promise.resolve({ data: [] }),
     db.from("dialer_activities").select("id,listing_slug,occurred_at,channel,outcome,notes,next_action,next_action_at,created_by,created_at")
@@ -303,7 +338,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     db.from("outreach_contacts").select("id", { count: "exact", head: true }),
     day ? db.from("crm_visible_opportunities").select("rank", { count: "exact", head: true }).eq("captured_on", day) : Promise.resolve({ count: 0 }),
     db.from("landlord_portfolios").select("owner_name", { count: "exact", head: true }),
-    db.from("dialer_lead_workflow").select("listing_slug", { count: "exact", head: true }).not("status", "in", "(new,closed_lost,closed_won)"),
+    workingSlugs(),
   ])
   const qd = (qDay.data?.[0] as { captured_on: string } | undefined)?.captured_on ?? null
   let quality = { total: 0, ready: 0, day: qd }
@@ -311,7 +346,6 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     const q = await db.from("lead_quality_daily").select("total,launch_ready").eq("captured_on", qd)
     for (const r of (q.data ?? []) as { total: number; launch_ready: number }[]) { quality.total += r.total; quality.ready += r.launch_ready }
   }
-  const dueRows = (due.data ?? []) as { listing_slug: string; status: DialerStatus; next_action: string; next_action_at: string; summary_notes: string }[]
   const recentRows = ((recent.data ?? []) as Record<string, unknown>[]).map((r) => ({
     id: r.id as string, listingSlug: r.listing_slug as string, occurredAt: r.occurred_at as string, channel: r.channel as DialerActivity["channel"],
     outcome: r.outcome as DialerActivity["outcome"], notes: (r.notes as string) ?? "", nextAction: r.next_action as DialerActivity["nextAction"],
@@ -327,7 +361,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     recent: recentRows.map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
     quality,
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
-    counts: { leads: oppCount.count ?? 0, landlords: llCount.count ?? 0, working: working.count ?? 0 },
+    counts: { leads: oppCount.count ?? 0, landlords: llCount.count ?? 0, working: working.length },
   }
 }
 

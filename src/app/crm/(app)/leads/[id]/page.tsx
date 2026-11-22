@@ -1,4 +1,4 @@
-import { chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
+import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
@@ -98,6 +98,11 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
 
           <div>
             {chatt ? <><div className="crm-section-label">Chattanooga case {cityCase?.case_number}</div>
+              <dl className="crm-props">
+                <dt>City case status</dt><dd>{cityStatusLabel(lead.city_review)}</dd>
+                {Array.isArray(lead.city_review?.official_statuses) && <><dt>City status codes</dt><dd>{lead.city_review.official_statuses.join(", ")}</dd></>}
+                {lead.city_review?.checked_on && <><dt>City review date</dt><dd>{lead.city_review.checked_on}</dd></>}
+              </dl>
               {chatt.assessor ? <dl className="crm-props">
                 <dt>County parcel</dt><dd>{chatt.assessor.parcel}</dd>
                 <dt>County appraisal</dt><dd>{chatt.assessor.value === null ? "Unverified" : money(chatt.assessor.value)}</dd>

@@ -60,6 +60,35 @@ function reviewedCase(row: Fields) {
   return { id: str(row.id), address, caseNumber: str(r.case_number), checked, modified, records, seriousCount, truncated, assessor, parcelStatus }
 }
 
+export function cityStatusLabel(review: unknown) {
+  const labels: Record<string,string> = {
+    active: "Active", closed: "Closed", litigation_review: "Litigation review",
+    corrected: "Corrected", duplicate: "Duplicate", outside_jurisdiction: "Outside jurisdiction",
+    identity_mismatch: "Property identity mismatch", ambiguous: "Ambiguous case",
+    not_found: "Case not found", unknown: "Unknown",
+  }
+  return labels[str(obj(review).status)] ?? "Unverified"
+}
+
+// A workflow slug can have duplicate staging copies. A held copy keeps the slug on hold.
+export async function chattanoogaWorkflowHolds(slugs: string[]) {
+  const held = new Set<string>()
+  if (!slugs.length) return held
+  if (!supabaseAdmin) throw new Error("Database unavailable")
+  const fields = "pipeline_lead_key,county,property_address,case_number:raw_payload->chattanooga_codes->>case_number,review:phone_metadata->chattanooga_case_review"
+  const [stage, live] = await Promise.all([
+    supabaseAdmin.from("homeowner_requests_staging").select(`${fields},staging_status` as const)
+      .eq("bot_source", "chattanooga_codes").in("pipeline_lead_key", slugs),
+    supabaseAdmin.from("homeowner_requests").select(fields).eq("source", "bot").in("pipeline_lead_key", slugs)
+      .or("raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null"),
+  ])
+  if (stage.error || live.error) throw new Error("Unable to verify Chattanooga workflow cases")
+  for (const row of [...stage.data, ...live.data]) {
+    if (!reviewedCase({ ...row, bot_source: "chattanooga_codes" })) held.add(row.pipeline_lead_key)
+  }
+  return held
+}
+
 type Case = NonNullable<ReturnType<typeof reviewedCase>>
 type Group = { key: string; assessor: Case["assessor"]; cases: Case[] }
 

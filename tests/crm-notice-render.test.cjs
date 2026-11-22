@@ -42,7 +42,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       if(name==='lead_opportunities') assert.equal(cols,'captured_on','raw ranking used outside snapshot-day lookup')
       return this
     }, eq(k,v){rows=rows.filter(r=>r[k]===v);return this}, in(k,v){rows=rows.filter(r=>v.includes(r[k]));return this},
-    not(){return this}, or(){return this},order(){return this}, limit(){return this},range(){return this},
+    not(){return this}, or(){return this},order(){return this}, limit(n){rows=rows.slice(0,n);return this},range(lo,hi){rows=rows.slice(lo,hi+1);return this},
     gte(){return this},lte(){return this},maybeSingle(){return {data:rows[0]??null}},then(done){return Promise.resolve({data:rows,count:rows.length}).then(done)}}
     return query
   }}
@@ -79,6 +79,28 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       assert.doesNotMatch(html,/href="(?:tel|sms):|Routes to |<dt>Deadline<\/dt>|<dt>FALCO fee<\/dt>/)
     } else assert.match(html,/href="tel:/)
   }
+  const crm = imports['@/lib/crm-data']
+  const baseline = await crm.getToday()
+  const baselineWorking = (await crm.listLeads('working')).rows.map(r => r.slug).sort().join(',')
+  const statuses = ['closed','litigation_review','ambiguous','not_found','identity_mismatch','corrected',null]
+  for(let i=0;i<28;i++) {
+    const slug='chatt-held-'+i, status=statuses[i%statuses.length]
+    const review=status ? {status,official_statuses:['C'],checked_on:today} : null
+    const row={...staged[0], id:'00000000-0000-4001-8000-'+String(i).padStart(12,'0'),
+      pipeline_lead_key:slug,bot_source:'chattanooga_codes',property_address:'Held Chattanooga '+i,
+      mackie_notice_hold:null,review,city_review:review}
+    staged.push(row)
+    tables.dialer_lead_workflow.unshift({listing_slug:slug,status:'working',next_action_at:today})
+  }
+  const after=await crm.getToday()
+  assert.equal(after.counts.working,baseline.counts.working)
+  assert.equal(after.due.length,baseline.due.length,'held callbacks must not consume the first 25 slots')
+  assert.ok(after.due.every(row=>!row.slug.startsWith('chatt-held-')))
+  assert.equal((await crm.listLeads('working')).rows.map(r=>r.slug).sort().join(','),baselineWorking)
+  const detail=await render('leads/[id]/',{params:Promise.resolve({id:'00000000-0000-4001-8000-000000000000'})})
+  assert.match(detail,/<dt>City case status<\/dt><dd>Closed<\/dd>/)
+  assert.match(detail,/<dt>City status codes<\/dt><dd>C<\/dd>/)
+
 })
 
 test('Chattanooga research binds the city case and uses only the matching county review', () => {
