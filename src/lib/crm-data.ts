@@ -6,6 +6,7 @@
 // Staging is ~400 MB: only ever read it by primary key or a short id list.
 
 import "server-only"
+import { metroDispositions, metroHeld } from "@/lib/nashville-codes"
 import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
 import { landEvidence, type LandEvidence } from "@/lib/land-evidence"
 import { cache } from "react"
@@ -127,7 +128,8 @@ async function attachWorkflow(opps: Opportunity[], existingWorkflow = false): Pr
       if (!existingWorkflow && landEvidence(row, row)?.corroborated === false) research.add(row.id)
     }
   }
-  opps = opps.filter(o => !research.has(o.staging_id))
+  const metro = await metroDispositions(opps.map(o => ({ id: o.staging_id, bot_source: o.bot_source })))
+  opps = opps.filter(o => !research.has(o.staging_id) && !metroHeld(metro, o.staging_id))
   const slugOf = new Map(keyRows.map((r) => [r.id, r.pipeline_lead_key]))
   const phoned = new Set(keyRows.filter((r) => (r.phone ?? "").trim()).map((r) => r.id))
   const slugs = [...new Set([...slugOf.values()].filter(Boolean))] as string[]
@@ -194,9 +196,10 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("lead_opportunities").select("staging_id,fit_label,sale_date,county").eq("captured_on", day).limit(5000)
+  const r = await supabaseAdmin.from("lead_opportunities").select("staging_id,bot_source,fit_label,sale_date,county").eq("captured_on", day).limit(5000)
   const holds = await noticeHolds()
-  const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
+  const metro = await metroDispositions((r.data ?? []).map(row => ({ id: row.staging_id, bot_source: row.bot_source })))
+  const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id) && !metroHeld(metro, x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
   const fl = new Set(FL_COUNTIES)
   const rows = all.filter((x) => !fl.has(x.county ?? ""))
   const today = isoDay(new Date()), soon = isoDay(addDays(14))
@@ -230,7 +233,7 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
   return (r.data?.[0] as { id: string } | undefined)?.id ?? null
 }
 
-export async function getLead(id: string): Promise<{ noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
+export async function getLead(id: string): Promise<{ metroDisposition: string | null; noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
     .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload")
@@ -243,7 +246,8 @@ export async function getLead(id: string): Promise<{ noticeHold: string | null; 
     lead.pipeline_lead_key ? getWorkflow(lead.pipeline_lead_key) : Promise.resolve(null),
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
-  return { noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? null, lead, opp: (o.data as Opportunity | null) ?? null, workflow, activities }
+  const metroDisposition = (await metroDispositions([lead])).get(lead.id) ?? null
+  return { metroDisposition, noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? null, lead, opp: metroDisposition && metroDisposition !== "open" ? null : (o.data as Opportunity | null) ?? null, workflow, activities }
 }
 
 export type TodayData = {
@@ -255,12 +259,12 @@ export type TodayData = {
   counts: { leads: number; landlords: number; working: number }
 }
 
-async function stagingFor(slugs: string[]): Promise<Map<string, { id: string; address: string | null }>> {
-  const out = new Map<string, { id: string; address: string | null }>()
+async function stagingFor(slugs: string[]): Promise<Map<string, { id: string; bot_source: string; address: string | null }>> {
+  const out = new Map<string, { id: string; bot_source: string; address: string | null }>()
   if (!supabaseAdmin || !slugs.length) return out
-  const r = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,property_address").in("pipeline_lead_key", slugs).limit(500)
-  for (const x of (r.data ?? []) as { id: string; pipeline_lead_key: string; property_address: string | null }[]) {
-    if (!out.has(x.pipeline_lead_key)) out.set(x.pipeline_lead_key, { id: x.id, address: x.property_address })
+  const r = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,property_address,bot_source").in("pipeline_lead_key", slugs).limit(500)
+  for (const x of (r.data ?? []) as { id: string; bot_source: string; pipeline_lead_key: string; property_address: string | null }[]) {
+    if (!out.has(x.pipeline_lead_key)) out.set(x.pipeline_lead_key, { id: x.id, bot_source: x.bot_source, address: x.property_address })
   }
   return out
 }
@@ -301,8 +305,9 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   }))
   const holds = await noticeHolds()
   const where = await stagingFor([...new Set([...dueRows.map((d) => d.listing_slug), ...recentRows.map((r) => r.listingSlug)])])
+  const metro = await metroDispositions([...where.values()])
   return {
-    due: dueRows.filter(d => !holds.slugs.has(d.listing_slug)).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
+    due: dueRows.filter(d => !holds.slugs.has(d.listing_slug) && !metroHeld(metro, where.get(d.listing_slug)?.id ?? "")).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
     sales: reviewSales ? await attachWorkflow((sales.data ?? []) as Opportunity[]) : [],
     recent: recentRows.map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
@@ -406,7 +411,7 @@ const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
 // Keep candidate discovery index-only. Filtering nested JSON here makes Postgres
 // scan all of staging. Read routing controls only after locating the tagged IDs.
 const assetCandidates = cache(async () => {
-  type Candidate = { id: string; routable: string | null; prospect: string | null; key: string | null }
+  type Candidate = { id: string; bot_source: string; routable: string | null; prospect: string | null; key: string | null }
   const db = supabaseAdmin!
   async function taggedIds(tag: "aircraft" | "personal_property") {
     const ids: string[] = []
@@ -423,7 +428,7 @@ const assetCandidates = cache(async () => {
   const rows: Candidate[] = []
   for (let i = 0; i < ids.length; i += 100) {
     const { data, error } = await db.from("homeowner_requests_staging")
-      .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key")
+      .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key,bot_source")
       .in("id", ids.slice(i, i + 100))
     if (error) throw new Error(error.message)
     rows.push(...((data ?? []) as unknown as Candidate[]))
@@ -464,13 +469,14 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   }
   // The same property can be staged by several bots; keep one row per address.
   const holds = await noticeHolds()
+  const metro = await metroDispositions(all)
   const byAddr = new Map<string, StagedBucket>()
   for (const r of all) {
     if (bucket === "land") {
       if (opts.research ? !r.landEvidence || r.landEvidence.corroborated : r.landEvidence && !r.landEvidence.corroborated) continue
       if (opts.landOpportunities && !r.landEvidence?.corroborated) continue
     }
-    if (holds.stagingIds.has(r.id) || (bucket === "assets" && (r.pp?.routable === false) !== !!opts.research)) continue
+    if (metroHeld(metro, r.id) || holds.stagingIds.has(r.id) || (bucket === "assets" && (r.pp?.routable === false) !== !!opts.research)) continue
     const k = bucket === "assets" ? r.pp?.dedupe_key || r.id : r.parcelKey || propertyKey(r)
     const prev = byAddr.get(k)
     if (!prev || (GRADE_ORDER[r.lane?.grade ?? r.pp?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? prev.pp?.grade ?? ""] ?? 9)) byAddr.set(k, r)
@@ -506,27 +512,30 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
   const out = { commercial: 0, assets: 0 }
   if (!supabaseAdmin) return out
   const db = supabaseAdmin
-  type R = { id: string; property_address: string | null }
+  type R = { id: string; bot_source: string; property_address: string | null }
   const holds = await noticeHolds()
   const unique = (rows: R[]) => new Set(rows.filter(r => !holds.stagingIds.has(r.id)).map(propertyKey)).size
   // Graded lane rows only, matching the list's default "Qualified" filter.
   const lane = async (name: string) => {
     const rows: R[] = []
     for (let page = 0; page < 5; page++) {
-      const r = await db.from("homeowner_requests_staging").select("id,property_address")
+      const r = await db.from("homeowner_requests_staging").select("id,property_address,bot_source")
         .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", name)
         .not("raw_payload->property_lane->>grade", "is", null).order("id").range(page * 1000, page * 1000 + 999)
       const batch = (r.data ?? []) as R[]
       rows.push(...batch)
       if (batch.length < 1000) break
     }
-    return unique(rows)
+    const metro = await metroDispositions(rows)
+    return unique(rows.filter(row => !metroHeld(metro, row.id)))
   }
   // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {
     const keys = new Set<string>()
-    for (const row of await assetCandidates()) {
-      if (row.routable !== "false" && !holds.stagingIds.has(row.id)) keys.add(row.key || row.id)
+    const candidates = await assetCandidates()
+    const metro = await metroDispositions(candidates)
+    for (const row of candidates) {
+      if (!metroHeld(metro, row.id) && row.routable !== "false" && !holds.stagingIds.has(row.id)) keys.add(row.key || row.id)
     }
     return keys.size
   }
