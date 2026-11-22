@@ -184,7 +184,7 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
                 {r.landEvidence?.corroborated === false ? null : lane === "land" && t?.land_flip?.score ? <span className="pill accent" style={{ marginLeft: 6 }}>Flip {t.land_flip.score}</span> : null}
               </td>
               <td className="hide-sm">
-                <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
+                <span className="crm-muted">{r.bot_source === "warn_notices" ? "TN WARN employment notice" : titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
                 {r.landEvidence?.events.map((event, i) => <div key={i} className="secondary">
                   {event.label} · {event.status.replaceAll("_", " ")} {event.published || event.sale}
                 </div>)}
@@ -223,11 +223,11 @@ function AssetTable({ rows }: { rows: BucketRow[] }) {
                   : p ? <><span>{PP_LANE_LABEL[p.lane] ?? p.lane}</span><div className="secondary">{kinds}</div></> : null}
               </td>
               <td className="hide-sm">
-                {p ? <span className={`pill ${GRADE_TONE[p.grade]}`}>{p.grade}</span> : null}
+                {p?.grade ? <span className={`pill ${GRADE_TONE[p.grade]}`}>{p.grade}</span> : null}
                 {a?.value_band_label ? <div className="secondary">{a.value_band_label}</div> : p?.est_value_min ? <div className="secondary">~{compactMoney(p.est_value_min)}+</div> : null}
               </td>
               <td className="hide-sm">
-                <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
+                <span className="crm-muted">{r.bot_source === "warn_notices" ? "TN WARN employment notice" : titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
                 {p?.qualification && <div>{p.qualification.replaceAll("_", " ")}</div>}
                 {p?.next_action && <div className="secondary">{p.next_action}</div>}
                 {p?.routable === false && p.not_routable_reason ? <div className="secondary">{p.not_routable_reason}</div>

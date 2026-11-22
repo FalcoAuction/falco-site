@@ -8,6 +8,7 @@
 import "server-only"
 import { metroDispositions, metroHeld } from "@/lib/nashville-codes"
 import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
+import { warnAsset } from "@/lib/warn-evidence"
 import { landEvidence, type LandEvidence } from "@/lib/land-evidence"
 import { cache } from "react"
 import { trusteeNoticeHold } from "@/lib/trustee-notice"
@@ -110,11 +111,24 @@ const noticeHolds = cache(async () => {
   return { slugs, stagingIds }
 })
 
+const warnRows = cache(async () => {
+  const rows = new Map<string, PersonalPropertyTag>()
+  for (let offset = 0; ; offset += 250) {
+    const { data, error } = await supabaseAdmin!.from("homeowner_requests_staging")
+      .select("id,bot_source,full_name,owner_name_records,staging_status,warn:raw_payload->warn,warn_review:raw_payload->warn_review,personal_property:raw_payload->personal_property,personal_property_evidence:raw_payload->personal_property_evidence,aircraft:raw_payload->aircraft")
+      .eq("bot_source", "warn_notices").order("id").range(offset, offset + 249)
+    if (error) throw new Error(error.message)
+    for (const row of data ?? []) rows.set(row.id, warnAsset(row, row)!)
+    if ((data?.length ?? 0) < 250) return rows
+  }
+})
+
 /** Slug (pipeline_lead_key) and workflow for a page of opportunities. */
 async function attachWorkflow(opps: Opportunity[], existingWorkflow = false): Promise<LeadRow[]> {
   if (!supabaseAdmin || opps.length === 0) return opps.map((o) => ({ ...o, slug: null, status: null, next_action_at: null, last_contact_at: null, has_phone: false }))
   const holds = await noticeHolds()
-  opps = opps.filter(o => !holds.stagingIds.has(o.staging_id))
+  const warn = await warnRows()
+  opps = opps.filter(o => !holds.stagingIds.has(o.staging_id) && (existingWorkflow || !warn.has(o.staging_id)))
   if (!opps.length) return []
   const keyRows: { id: string; pipeline_lead_key: string | null; phone: string | null }[] = []
   const research = new Set<string>()
@@ -246,7 +260,7 @@ export async function getLead(id: string): Promise<{ metroDisposition: string | 
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
   const metroDisposition = (await metroDispositions([lead])).get(lead.id) ?? null
-  return { metroDisposition, noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? r.data?.mackie_notice_hold ?? null, lead, opp: metroDisposition && metroDisposition !== "open" ? null : (o.data as Opportunity | null) ?? null, workflow, activities }
+  return { metroDisposition, noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? r.data?.mackie_notice_hold ?? null, lead, opp: lead.bot_source === "warn_notices" || (metroDisposition && metroDisposition !== "open") ? null : (o.data as Opportunity | null) ?? null, workflow, activities }
 }
 
 export type TodayData = {
@@ -339,7 +353,7 @@ export type AircraftTag = {
 // raw_payload.personal_property (the personal_property_lane bot): only leads
 // worth a high-value estate, liquidation, seizure or owner-asset auction.
 export type PersonalPropertyTag = {
-  lane: "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest" | "vessel_lien"; grade: "A" | "B"
+  lane: "warn_research" | "estate" | "business_liquidation" | "seizure" | "owner_asset" | "vessel_arrest" | "vessel_lien"; grade: "A" | "B" | null
   categories: string[]; est_value_min: number | null; signals: string[]; caveats: string[]
   contacts?: {
     // Addresses are line arrays from TN court notices, plain strings from FL clerk files.
@@ -369,7 +383,7 @@ export type OperatorContents = {
   updated_at: string; updated_by: string
 }
 export const PP_LANE_LABEL: Record<PersonalPropertyTag["lane"], string> = {
-  estate: "Estate contents", business_liquidation: "Business liquidation", seizure: "Tax seizure", owner_asset: "Owner asset",
+  warn_research: "WARN employment notice", estate: "Estate contents", business_liquidation: "Business liquidation", seizure: "Tax seizure", owner_asset: "Owner asset",
   vessel_arrest: "Vessel arrest", vessel_lien: "Marina lien",
 }
 export type BucketRow = {
@@ -424,14 +438,18 @@ const assetCandidates = cache(async () => {
     }
   }
   const [aircraft, personal] = await Promise.all([taggedIds("aircraft"), taggedIds("personal_property")])
-  const ids = [...new Set([...aircraft, ...personal])]
+  const warn = await warnRows()
+  const ids = [...new Set([...aircraft, ...personal, ...warn.keys()])]
   const rows: Candidate[] = []
   for (let i = 0; i < ids.length; i += 100) {
     const { data, error } = await db.from("homeowner_requests_staging")
       .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key,bot_source")
       .in("id", ids.slice(i, i + 100))
     if (error) throw new Error(error.message)
-    rows.push(...((data ?? []) as unknown as Candidate[]))
+    for (const row of (data ?? []) as unknown as Candidate[]) {
+      const w = warn.get(row.id)
+      rows.push(w ? { ...row, routable: String(w.routable), prospect: String(w.prospect), key: w.dedupe_key ?? null } : row)
+    }
   }
   return rows
 })
@@ -471,7 +489,17 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   const holds = await noticeHolds()
   const metro = await metroDispositions(all)
   const byAddr = new Map<string, StagedBucket>()
+  const warn = await warnRows()
   for (const r of all) {
+    const w = warn.get(r.id)
+    if (w) {
+      if (bucket !== "assets") continue
+      r.pp = w
+      r.owner_name_records = r.full_name
+      r.property_value = null
+      r.aircraft = null
+      r.trustee_sale_date = null
+    }
     if (bucket === "land") {
       if (opts.research ? !r.landEvidence || r.landEvidence.corroborated : r.landEvidence && !r.landEvidence.corroborated) continue
       if (opts.landOpportunities && !r.landEvidence?.corroborated) continue
@@ -527,7 +555,7 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
       if (batch.length < 1000) break
     }
     const metro = await metroDispositions(rows)
-    return unique(rows.filter(row => !metroHeld(metro, row.id)))
+    return unique(rows.filter(row => row.bot_source !== "warn_notices" && !metroHeld(metro, row.id)))
   }
   // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {

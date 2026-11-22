@@ -133,12 +133,12 @@ test('asset views split held prospects and retain separate assets at the same ad
       return this
     }, not() { return this }, order() { return this }, limit() { return this },
       or(expr) { assert.ok(!expr.includes('routable'), 'routing filter before ID lookup'); return this },
-      eq(field) { assert.ok(!field.includes('personal_property'), 'qualification before ID lookup'); return this },
+      eq(field, value) { if (field === 'bot_source') result = result.filter(r => r.bot_source === value); assert.ok(!field.includes('personal_property'), 'qualification before ID lookup'); return this },
       in(field, ids) { result = result.filter(r => ids.includes(r[field])); return this },
       range() { return this }, then(done) { return Promise.resolve({ data: result }).then(done) } }
   } }
   const metro = load('src/lib/nashville-codes.ts', key => key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
-  const crm = load('src/lib/crm-data.ts', key => key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
+  const crm = load('src/lib/crm-data.ts', key => key.endsWith('warn-evidence') ? load('src/lib/warn-evidence.ts') : key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
     key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
   for (const [args, ids] of [[{}, ['1', '2']], [{ research: true }, ['3', '5']],
     [{ research: true, prospects: true }, ['3']]]) {
