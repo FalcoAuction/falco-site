@@ -1,4 +1,5 @@
 import { metroLabel } from "@/lib/nashville-codes"
+import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
 // Lead record (Attio-style): key details on the left, actions and the
 // activity timeline on the right. Reads one staging row by id plus its
@@ -36,12 +37,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
-  const mathSheetId = await mathSheetIdFor(lead.pipeline_lead_key)
+  const mathSheetId = lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
   const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
-  const owner = lead.owner_name_records || lead.full_name
-  const laneTag = (lead.raw_payload?.property_lane ?? null) as LaneTag | null
-  const aircraft = (Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
-  const pp = (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
+  const owner = lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
+  const laneTag = lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
+  const warn = warnAsset(lead, lead.raw_payload ?? {})
+  const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
+  const aircraft = (!warn && Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
+  const pp = warn ?? (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
   const probate = lead.raw_payload?.probate_review as { stage?: string; contact_hold?: boolean;
     attorney_draft_status?: string; attorney_draft_hold_reasons?: string[] } | undefined
   const land = landEvidence(lead, { origin: lead.raw_payload?.source, lane: lead.raw_payload?.property_lane, land: lead.raw_payload?.land, roll: lead.raw_payload?.comptroller_parcel })
@@ -52,12 +55,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const request = String(attrs.Request_Nbr ?? "").trim()
   const caseLink = "https://services2.arcgis.com/HdTo6HJqh92wn4D8/arcgis/rest/services/Property_Standards_Violations_2/FeatureServer/0/query?f=pjson&outFields=Request_Nbr,Status,Property_Address,Property_APN,Violations_Noted,Reported_Problem&returnGeometry=false&where=" +
     encodeURIComponent("Request_Nbr='" + request.replaceAll("'", "''") + "'").replaceAll("'", "%27")
-  const ownerContactHeld = metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
+  const ownerContactHeld = !!warn || metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
-  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
+  const sale = warn ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const situation = warn ? "TN WARN employment notice" : data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
@@ -89,19 +92,31 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div>
-            <div className="crm-section-label">Money</div>
+            {warn ? <><div className="crm-section-label">Employment notice</div>
+              <dl className="crm-props"><dt>Employment notice date(s)</dt><dd>{employmentDate(lead.raw_payload ?? {})}</dd>
+                {warnDocuments(lead.raw_payload ?? {}).map(doc => <div key={doc.label + doc.detail + doc.source}>
+                  <dt>{doc.label}</dt><dd><a href={doc.source} target="_blank" rel="noreferrer">{doc.detail}</a> {doc.date}</dd></div>)}
+              </dl>
+              {parcel && <><div className="crm-section-label">County worksite record</div>
+                <dl className="crm-props">{(parcel.previous || parcel.checkedOn) && <><dt>{parcel.previous ? "Previous parcel observation" : "Parcel checked"}</dt><dd>{parcel.checkedOn || "Date unavailable"}</dd></>}
+                  <dt>Worksite</dt><dd>{parcel.address}</dd>
+                  <dt>Parcel</dt><dd>{parcel.parcel}</dd><dt>Recorded property owner</dt><dd>{parcel.owner}</dd>
+                  <dt>County appraisal</dt><dd>{parcel.appraisal === null ? "Unspecified" : money(parcel.appraisal)}</dd>
+                  <dt>Land use</dt><dd>{parcel.landUse || "Unspecified"}</dd>
+                  <dt>Source</dt><dd><a href={parcel.url} target="_blank" rel="noreferrer">Davidson County parcel record</a></dd></dl></>}
+            </> : <><div className="crm-section-label">Money</div>
             <dl className="crm-props">
               <dt>Value</dt><dd>{money(lead.property_value ?? opp?.property_value) || "Not valued"}{valueSource ? <span className="crm-faint"> · {valueSource}</span> : null}</dd>
               <dt>FALCO fee</dt><dd>{money(opp?.expected_fee) || "Not ranked"}</dd>
               {lead.mortgage_balance ? <><dt>Mortgage</dt><dd>{money(lead.mortgage_balance)}</dd></> : null}
               {opp ? <><dt>Rank</dt><dd>{opp.rank > 100000 ? `FL #${opp.rank - 100000}` : `#${opp.rank}`}</dd></> : null}
-            </dl>
+            </dl></>}
           </div>
 
           <div>
             <div className="crm-section-label">Contact</div>
             <dl className="crm-props">
-              <dt>Owner</dt><dd>{titleCase(owner) || "Unknown"}</dd>
+              <dt>{warn ? "Employer" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
               <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}>{ownerContactHeld ? fmtPhone(p) : <a href={`tel:+1${p}`}>{fmtPhone(p)}</a>}</div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
               {lead.email ? <><dt>Email</dt><dd>{lead.email}</dd></> : null}
               {opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
@@ -218,7 +233,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <div>
               <div className="crm-section-label">{PP_LANE_LABEL[pp.lane] ?? "Personal property"}</div>
               <dl className="crm-props">
-                <dt>Grade</dt><dd><span className={`pill ${pp.grade === "A" ? "green" : "blue"}`}>{pp.grade}</span></dd>
+                {pp.grade && <><dt>Grade</dt><dd><span className={`pill ${pp.grade === "A" ? "green" : "blue"}`}>{pp.grade}</span></dd></>}
                 {pp.routable !== undefined ? <><dt>Route</dt><dd>{pp.routable ? <span className="pill green">Routes to {pp.route_to}</span> : <><span className="pill amber">Not routable</span><div className="crm-faint">{pp.holds?.length ? null : pp.not_routable_reason}</div></>}</dd></> : null}
                 {pp.qualification && <><dt>Qualification</dt><dd>{pp.qualification.replaceAll("_", " ")}</dd></>}
                 {pp.holds?.length ? <><dt>Holds</dt><dd>{pp.holds.map(h => <div key={h}>{h}</div>)}</dd></> : null}
