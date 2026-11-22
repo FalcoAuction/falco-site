@@ -60,6 +60,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
     '@/app/crm/math-sheet/[id]/load-snapshot':{}})
   imports['@/app/crm/hearing-record']=load('src/app/crm/hearing-record.tsx',imports)
   imports['@/app/crm/johnson-hearing-record']=load('src/app/crm/johnson-hearing-record.tsx',imports)
+  imports['@/app/crm/closure-receiver-record']=load('src/app/crm/closure-receiver-record.tsx',imports)
   const render = async (path,props) => renderToStaticMarkup(await load('src/app/crm/(app)/'+path+'page.tsx',imports).default(props))
   for (const html of [await render('',{}),await render('leads/',{searchParams:Promise.resolve({})})]) {
     assert.doesNotMatch(html,/Removed Address|Closed Address/)
@@ -343,4 +344,32 @@ test('FAA overlap is research until the current aircraft, authority and transact
   const result=read([plane],{...tag,authority_review:mixed,asset_evidence:mixed.assets},mixed)
   assert.equal(result.pp.routable,true); assert.equal(result.confirmed.length,0)
   assert.deepEqual([...result.pp.categories],['equipment'])
+})
+
+test('closure-only evidence stays in research and county tax routing survives receiver overlap', () => {
+  const crypto = require('node:crypto')
+  const hash = value => crypto.createHash('sha1').update(value).digest('hex')
+  const {churchRecord,receiverRecord,EvidenceCard}=load('src/app/crm/closure-receiver-record.tsx',{})
+  const html = record => renderToStaticMarkup(React.createElement(EvidenceCard,{record}))
+  const church={bot_source:'church_closure',pipeline_lead_key:hash('church_closure|Chapel|15 Main'),
+    raw_payload:{source:'twk_umc_closures',church_closure:{church:'Chapel',address:'15 Main',county:'benton'},
+      church_disposition_observation:{disposition:'contract_showing',checked_on:'2026-11-22',market:{asking_price:110000}},
+      church_parcel_lookup:{status:'held',assessment_owner:'Unsupported'}}}
+  assert.match(html(churchRecord(church)),/Under contract, showing.*Listing asking price.*110,000/)
+  assert.doesNotMatch(html(churchRecord(church)),/Unsupported|href="tel:/)
+  assert.doesNotMatch(html(churchRecord({...church,pipeline_lead_key:'wrong'})),/Under contract, showing/)
+  const review={status:'receiver_eligibility_research',parcel:'ABC  1',sale_id:'TS23',alt_parcel:'A1',
+    cases:[{address:'101 Main',warrant:'123',hearing_listed:'2026-12-10'}],roster_date:'2026-11-13',
+    property_review:{parcel:'ABC  1',status:'matched_county_bill',owner_status:'trustee_primary_owner',tax_roll_owner:'Roll Owner'},
+    sale_history:[{outcome:'historical_purchase',historical_buyer:'Former Buyer',printed_unit:'74'}]}
+  const tax={bot_source:'shelby_tax_sale',trustee_sale_date:'2027-04-13',pipeline_lead_key:hash('shelby_tax_sale|TS23|A1'),
+    raw_payload:{sale_id:'TS23',parcel:'ABC  1',alt_parcel:'A1',shelby_receiver_review:review}}
+  const card=html(receiverRecord(tax))
+  assert.match(card,/Advertised county tax-sale date.*2027-04-13/)
+  assert.match(card,/Listed court hearing.*2026-12-10/)
+  assert.match(card,/Owner on county tax bill.*Roll Owner.*Printed unit.*74.*Historical buyer.*Former Buyer/)
+  assert.equal(churchRecord(tax),null)
+  for(const delta of [{status:'no_current_roster_match'},{parcel:'other'},{sale_id:'other'},{cases:[]}]) {
+    assert.equal(receiverRecord({...tax,raw_payload:{...tax.raw_payload,shelby_receiver_review:{...review,...delta}}}),null)
+  }
 })

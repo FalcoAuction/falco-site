@@ -47,6 +47,7 @@ export async function PATCH(req: NextRequest) {
   const cur = await supabaseAdmin.from("homeowner_requests_staging").select("bot_source,raw_payload,pipeline_lead_key").eq("id", id).maybeSingle()
   if (cur.error) return NextResponse.json({ error: cur.error.message }, { status: 500 })
   if (!cur.data) return NextResponse.json({ error: "Lead not found." }, { status: 404 })
+  if (cur.data.bot_source === "church_closure") return NextResponse.json({ error: "Church closure records are research only." }, { status: 409 })
   if (cur.data.bot_source === "knoxville_poh") return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
   const raw = cur.data.raw_payload
   if (raw !== null && (typeof raw !== "object" || Array.isArray(raw))) {

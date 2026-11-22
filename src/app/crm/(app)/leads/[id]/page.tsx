@@ -1,3 +1,4 @@
+import { churchRecord, receiverRecord, EvidenceCard } from "@/app/crm/closure-receiver-record"
 import { mtJulietEvidence } from "@/lib/mt-juliet-research"
 import { knoxvilleEvidence } from "@/lib/knoxville-research"
 import { HearingRecord } from "@/app/crm/hearing-record"
@@ -45,6 +46,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  const church = churchRecord(lead)
+  if (church) return <><Head title={church.title}><Link href="/crm/leads/research/church">Church closure research</Link></Head><EvidenceCard record={church}/></>
+  const receiver = receiverRecord(lead)
   if (lead.bot_source === "hamilton_county_herald" && lead.herald_elapsed_sale_date) {
     return <><Head title={lead.property_address || "Historical Herald notice"}><Link href="/crm/leads">Back to leads</Link></Head>
       <section className="crm-card"><h2>Herald advertised sale date elapsed</h2>
@@ -134,6 +138,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       <Head title={lead.property_address ?? "Lead"}>
         <Link className="crm-btn ghost" href="/crm/leads"><Icon name="back" />Leads</Link>
       </Head>
+      {receiver && <EvidenceCard record={receiver}/>}
       <div className="crm-record">
         <aside className="crm-record-side">
           <div>
@@ -197,7 +202,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <div>
             <div className="crm-section-label">Contact</div>
             <dl className="crm-props">
-              <dt>{memphis ? "Notice borrower" : warn ? "Employer" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
+              <dt>{memphis ? "Notice borrower" : warn ? "Employer" : receiver ? "Name on tax-sale record" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
               <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}>{ownerContactHeld ? fmtPhone(p) : <a href={`tel:+1${p}`}>{fmtPhone(p)}</a>}</div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
               {lead.email ? <><dt>Email</dt><dd>{lead.email}</dd></> : null}
               {opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
@@ -208,7 +213,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <div className="crm-section-label">Property</div>
             <dl className="crm-props">
               <dt>County</dt><dd>{titleCase(lead.county)}</dd>
-              {sale ? <><dt>Sale date</dt><dd>{shortDate(sale)}</dd></> : null}
+              {sale ? <><dt>{receiver ? "County tax-sale date" : "Sale date"}</dt><dd>{shortDate(sale)}</dd></> : null}
               {lead.year_built ? <><dt>Built</dt><dd>{lead.year_built}</dd></> : null}
               {metro?.land_use ? <><dt>Land use</dt><dd>{titleCase(String(metro.land_use))}</dd></> : null}
               {metro?.owner ? <><dt>Assessor owner</dt><dd>{titleCase(String(metro.owner))}</dd></> : null}
