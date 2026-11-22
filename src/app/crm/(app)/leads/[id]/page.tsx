@@ -1,4 +1,5 @@
 import { churchRecord, receiverRecord, EvidenceCard } from "@/app/crm/closure-receiver-record"
+import { postponedCalendar, probateNotice } from "@/lib/estate-trustee-notices"
 import { mtJulietEvidence } from "@/lib/mt-juliet-research"
 import { knoxvilleEvidence } from "@/lib/knoxville-research"
 import { HearingRecord } from "@/app/crm/hearing-record"
@@ -105,7 +106,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const mathSheetId = chatt || lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
   const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
   const memphis = memphisValuation(lead)
-  const owner = memphis ? memphis.borrower : chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
+  const estate = probateNotice(lead)
+  const calendar = data.noticeHold ? null : postponedCalendar(lead)
+  const owner = estate ? estate.decedent : memphis ? memphis.borrower : chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
   const laneTag = chatt || lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const warn = warnAsset(lead, lead.raw_payload ?? {})
   const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
@@ -121,29 +124,35 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const request = String(attrs.Request_Nbr ?? "").trim()
   const caseLink = "https://services2.arcgis.com/HdTo6HJqh92wn4D8/arcgis/rest/services/Property_Standards_Violations_2/FeatureServer/0/query?f=pjson&outFields=Request_Nbr,Status,Property_Address,Property_APN,Violations_Noted,Reported_Problem&returnGeometry=false&where=" +
     encodeURIComponent("Request_Nbr='" + request.replaceAll("'", "''") + "'").replaceAll("'", "%27")
-  const ownerContactHeld = !!chatt || !!warn || metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
+  const ownerContactHeld = !!estate?.unverified || !!chatt || !!warn || metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
   const sale = chatt || warn ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
   const situation = chatt ? "Chattanooga code research" : warn ? "TN WARN employment notice" : data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
-  const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
+  const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !(estate && /^Probate .*Representatives:/i.test(s.trim())) && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
     ? ({ metro_parcel: "Metro assessor", xref_avm_enricher: "Estimated", batchdata: "BatchData", attom: "ATTOM" } as Record<string, string>)[lead.property_value_source] ?? "Estimated"
     : null
 
   return (
     <>
-      <Head title={lead.property_address ?? "Lead"}>
+      <Head title={lead.property_address ?? (estate?.docket ? "Estate case " + estate.docket : "Lead")}>
         <Link className="crm-btn ghost" href="/crm/leads"><Icon name="back" />Leads</Link>
       </Head>
+      {calendar && <section className="crm-card"><h2>Trustee sale postponed</h2>
+        <dl className="crm-props"><dt>Previous sale date</dt><dd>{calendar.prior}</dd>
+          <dt>Rescheduled trustee sale</dt><dd>{calendar.date} {calendar.time}</dd>
+          <dt>Trustee calendar checked</dt><dd>{calendar.checked}</dd></dl>
+        <a href={calendar.source}>Foundation Legal Group sale calendar</a> � {calendar.notice}
+      </section>}
       {receiver && <EvidenceCard record={receiver}/>}
       <div className="crm-record">
         <aside className="crm-record-side">
           <div>
-            <div className="crm-record-title">{lead.property_address ?? "No address"}</div>
-            <div className="crm-muted" style={{ marginTop: 2 }}>{memphis ? "Notice borrower: " : ""}{titleCase(owner) || (memphis ? "Unknown" : "Owner unknown")} · {titleCase(lead.county)}</div>
+            <div className="crm-record-title">{lead.property_address ?? (estate ? "Probate notice" : "No address")}</div>
+            <div className="crm-muted" style={{ marginTop: 2 }}>{estate ? "Decedent in notice: " : memphis ? "Notice borrower: " : ""}{titleCase(owner) || (memphis || estate ? "Unknown" : "Owner unknown")} · {titleCase(lead.county)}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
               <StatusPill status={workflow?.status} />
               <span className="pill">{situation}</span>
@@ -202,10 +211,10 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <div>
             <div className="crm-section-label">Contact</div>
             <dl className="crm-props">
-              <dt>{memphis ? "Notice borrower" : warn ? "Employer" : receiver ? "Name on tax-sale record" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
+              <dt>{estate ? "Decedent in notice" : memphis ? "Notice borrower" : warn ? "Employer" : receiver ? "Name on tax-sale record" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
               <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}>{ownerContactHeld ? fmtPhone(p) : <a href={`tel:+1${p}`}>{fmtPhone(p)}</a>}</div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
               {lead.email ? <><dt>Email</dt><dd>{lead.email}</dd></> : null}
-              {opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
+              {!estate && opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
             </dl>
           </div>
 
@@ -306,12 +315,21 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </div>
           ) : null}
 
-          {probate && <div>
+          {(probate || estate) && <div>
             <div className="crm-section-label">Estate review</div>
             <dl className="crm-props">
-              {probate.stage && <><dt>Notice stage</dt><dd>{probate.stage.replaceAll("_", " ")}</dd></>}
-              {probate.contact_hold && <><dt>Seller contact</dt><dd>On hold pending authority verification</dd></>}
-              {probate.attorney_draft_status && <><dt>Attorney research</dt><dd>{probate.attorney_draft_status.replaceAll("_", " ")}
+              {estate && <>
+                <dt>Probate docket</dt><dd>{estate.docket || "Identity unverified"}</dd>
+                {estate.date && <><dt>Notice publication</dt><dd>{estate.date}</dd></>}
+                {estate.legacy && <><dt>Estate review</dt><dd>Structured review pending</dd></>}
+                {estate.printed.length > 0 && <><dt>Conflicting printed decedent names</dt><dd>{estate.printed.join(" / ")}</dd></>}
+                <dt>Fiduciaries named in notice</dt><dd>{estate.representatives.length ? estate.representatives.join(", ") : estate.bound ? "No named representative" : "Unverified"}</dd>
+                <dt>Estate counsel named in notice</dt><dd>{estate.counsel.join(", ") || "Unverified"}</dd>
+                {estate.unverified && <><dt>Estate sale authority</dt><dd>Unverified</dd></>}
+              </>}
+              {probate?.stage && <><dt>Notice stage</dt><dd>{probate.stage.replaceAll("_", " ")}</dd></>}
+              {(probate?.contact_hold || estate?.unverified) && <><dt>Seller contact</dt><dd>On hold pending authority verification</dd></>}
+              {probate?.attorney_draft_status && <><dt>Attorney research</dt><dd>{probate.attorney_draft_status.replaceAll("_", " ")}
                 {probate.attorney_draft_hold_reasons?.map(reason => <div key={reason}>{reason.replaceAll("_", " ")}</div>)}</dd></>}
             </dl>
           </div>}
@@ -325,19 +343,19 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 {pp.holds?.length ? <><dt>Holds</dt><dd>{pp.holds.map(h => <div key={h}>{h}</div>)}</dd></> : null}
                 {pp.registry_assets?.length ? <><dt>Registry assets</dt><dd>{pp.registry_assets.map((asset, i) =>
                   <div key={i}>{[asset.n_number, asset.aircraft, asset.registrant].filter(Boolean).join(" · ")}</div>)}</dd></> : null}
-                {pp.authority_review?.controller?.authority && <><dt>Authority review</dt><dd>{[pp.authority_review.controller.name,
+                {!estate?.unverified && pp.authority_review?.controller?.authority && <><dt>Authority review</dt><dd>{[pp.authority_review.controller.name,
                   pp.authority_review.controller.role, pp.authority_review.controller.authority].filter(Boolean).join(" · ")}</dd></>}
                 {pp.next_action && <><dt>Next action</dt><dd>{pp.next_action}</dd></>}
-                {pp.controller ? <><dt>Controls sale</dt><dd>{pp.controller}</dd></> : null}
-                {pp.primary_contact ? <><dt>Start with</dt><dd>{pp.primary_contact}</dd></> : null}
+                {!estate && pp.controller ? <><dt>Controls sale</dt><dd>{pp.controller}</dd></> : null}
+                {!estate && pp.primary_contact ? <><dt>Start with</dt><dd>{pp.primary_contact}</dd></> : null}
                 {pp.deadline ? <><dt>Deadline</dt><dd>{pp.deadline}</dd></> : null}
                 {pp.categories?.length ? <><dt>Likely</dt><dd>{pp.categories.map((c) => c.replace(/_/g, " ")).join(", ")}</dd></> : null}
                 {pp.est_value_min ? <><dt>Est. value</dt><dd>{money(pp.est_value_min)}+ <span className="crm-faint">rough</span></dd></> : null}
                 {pp.value_basis ? <><dt>Value basis</dt><dd className="crm-faint">{pp.value_basis}</dd></> : null}
                 <dt>Why</dt><dd>{pp.signals.map((s, i) => <div key={i} className="crm-muted">{s}</div>)}</dd>
                 {pp.caveats?.length ? <><dt>Check</dt><dd>{pp.caveats.map((c, i) => <div key={i} className="crm-faint">{c}</div>)}</dd></> : null}
-                {pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{addressText(pp.contacts.attorney.address)}</div> : null}</dd></> : null}
-                {pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{addressText(r.address)}</div> : null}</div>)}</dd></> : null}
+                {!estate && pp.contacts?.attorney?.names?.length ? <><dt>Attorney</dt><dd>{pp.contacts.attorney.names.join(", ")}{pp.contacts.attorney.address?.length ? <div className="crm-faint">{addressText(pp.contacts.attorney.address)}</div> : null}</dd></> : null}
+                {!estate && pp.contacts?.representatives?.length ? <><dt>Executor</dt><dd>{pp.contacts.representatives.map((r) => <div key={r.name}>{r.name}{r.address?.length ? <div className="crm-faint">{addressText(r.address)}</div> : null}</div>)}</dd></> : null}
                 {pp.contacts?.owner ? <><dt>Owner</dt><dd>{pp.contacts.owner}</dd></> : null}
                 {pp.contacts?.marina ? <><dt>Marina</dt><dd>{pp.contacts.marina.name}{pp.contacts.marina.address ? <div className="crm-faint">{pp.contacts.marina.address}</div> : null}</dd></> : null}
                 {pp.contacts?.trustee ? <><dt>Trustee</dt><dd>{pp.contacts.trustee.name}{pp.contacts.trustee.phone ? <div><a href={`tel:${pp.contacts.trustee.phone.replace(/[^\d+]/g, "")}`}>{pp.contacts.trustee.phone}</a></div> : null}{pp.contacts.trustee.email ? <div className="crm-faint">{pp.contacts.trustee.email}</div> : null}</dd></> : null}
