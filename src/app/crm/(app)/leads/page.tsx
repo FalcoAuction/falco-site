@@ -119,7 +119,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         : <RankedTable rows={ranked!.rows} />}
       {(researchLand || landOpportunities) && bucketData && !error && <nav className="crm-toolbar" aria-label="Land results pages">
         {page > 1 && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page - 1) })}>Previous</Link>}
-        <span>Page {page} · {bucketData.grades.all} parcels</span>
+        <span>Page {page} Â· {bucketData.grades.all} parcels</span>
         {page * LAND_REVIEW_PAGE_SIZE < bucketData.grades.all && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page + 1) })}>Next</Link>}
       </nav>}
     </>
@@ -186,7 +186,7 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
               <td className="hide-sm">
                 <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
                 {r.landEvidence?.events.map((event, i) => <div key={i} className="secondary">
-                  {event.label} · {event.status.replaceAll("_", " ")} {event.published || event.sale}
+                  {event.label} Â· {event.status.replaceAll("_", " ")} {event.published || event.sale}
                 </div>)}
                 {!r.landEvidence && t?.stacked_distress?.length ? <span className="pill red" style={{ marginLeft: 6 }}>Stacked</span> : null}
               </td>

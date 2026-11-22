@@ -137,7 +137,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               {land.events.map((event, i) => <div key={i} style={{ display: "contents" }}>
                 <dt>Independent record</dt><dd>{event.label}
                   {event.caseId && <div>Case {event.caseId}</div>}
-                  <div style={{ whiteSpace: "pre-wrap" }}>{event.parcel} · {event.status.replaceAll("_", " ")}</div>
+                  <div style={{ whiteSpace: "pre-wrap" }}>{event.parcel} Â· {event.status.replaceAll("_", " ")}</div>
                   {event.party && <div>Recorded party {event.party}</div>}
                   {event.method && <div>Assessor match by {event.method.replaceAll("_", " ")}</div>}
                   {event.published && <div>Published {event.published}</div>}
