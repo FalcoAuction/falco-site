@@ -257,9 +257,21 @@ export default function V2Content() {
 export function Nav() {
   const [stuck, setStuck] = useState(false)
   const [open, setOpen] = useState(false)
+  // Phones: the bar slides away while scrolling down and comes back on any
+  // scroll up, so each section gets the whole screen. Desktop keeps it.
+  const [away, setAway] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setStuck(window.scrollY > 8)
+    const phone = window.matchMedia("(max-width: 640px)")
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      setStuck(y > 8)
+      if (!phone.matches || y < 80) setAway(false)
+      else if (y > lastY + 6) setAway(true)
+      else if (y < lastY - 6) setAway(false)
+      if (Math.abs(y - lastY) > 6 || y < 80) lastY = y
+    }
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -284,7 +296,7 @@ export function Nav() {
   const close = () => setOpen(false)
 
   return (
-    <header className={`nav${stuck ? " stuck" : ""}${open ? " menu-open" : ""}`}>
+    <header className={`nav${stuck ? " stuck" : ""}${open ? " menu-open" : ""}${away && !open ? " away" : ""}`}>
       <Link className="brand" href="/" onClick={close}>
         FALCO
       </Link>
