@@ -145,7 +145,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <dl className="crm-props"><dt>Previous sale date</dt><dd>{calendar.prior}</dd>
           <dt>Rescheduled trustee sale</dt><dd>{calendar.date} {calendar.time}</dd>
           <dt>Trustee calendar checked</dt><dd>{calendar.checked}</dd></dl>
-        <a href={calendar.source}>Foundation Legal Group sale calendar</a> · {calendar.notice}
+        <a href={calendar.source}>Foundation Legal Group sale calendar</a> Â· {calendar.notice}
       </section>}
       {receiver && <EvidenceCard record={receiver}/>}
       <div className="crm-record">
