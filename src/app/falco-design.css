@@ -908,3 +908,145 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
   .gd .gd-in{padding-inline:24px}
   .gd .gd-sec{padding-block:96px}
 }
+
+/* ---------- phones: one section, one screen ----------
+   Sections ran 1.1x to 2x the height of a phone screen (96px of padding
+   top and bottom, cards stacked one under another, long lists). Each
+   section should fit on one screen: tighter padding and rows, and the
+   multi-card sections (steps, what you get, three ways in, the three
+   exits) become one swipe row, the next card peeking in from the edge. */
+@media(max-width:640px){
+  .calm:not(.hero-chat):not(.why),.pg-sec,.mf-sec,.pg #math{padding-block:64px}
+  .why{padding-bottom:64px}
+  .head{margin-bottom:28px;gap:14px}
+  .calm .head{margin-bottom:30px}
+  .lbl{margin-bottom:12px}
+  .pg-head{padding-block:44px 48px}
+  .pg-head h1{margin-bottom:18px}
+  .pg-head-cta{margin-top:28px}
+  .rows li,.mf-list li{padding:15px 0 15px 28px}
+  .rows li::before{top:calc(1.6em - 3px)}
+  .mf-list li::before{top:calc(1.55em - 1px)}
+  .rows li span{margin-top:4px;line-height:1.55}
+  .faq summary{padding-block:17px}
+  .faq details p{margin-bottom:18px}
+  .faq-ask{margin-bottom:32px}
+  .ways{margin:22px 0 26px}
+  .ways li{padding:14px 0}
+  .mf-steps li{padding:18px 0}
+  .founder-grid{gap:22px}
+  .founder-photo{max-width:132px}
+  .founder-mission{margin:22px 0 20px}
+  .founder-creds{margin-top:20px}
+  .founder-creds div{padding:10px 0}
+  .close-line .lede{margin:18px auto 28px}
+
+  /* homepage hero: the chat sits higher, quick picks in one swipe row */
+  .hero-chat{min-height:0;padding-block:28px 44px}
+  .hero-bird{height:34px;margin-bottom:16px}
+  .hero-chat h1{margin-bottom:14px}
+  .hero-chat .lede{margin-bottom:26px}
+  .cb-starters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding:2px 4px}
+  .cb-starters::-webkit-scrollbar{display:none}
+  .cb-starters .chip{white-space:nowrap;flex:none}
+
+  /* step forms: same flow, less height per screen */
+  .st-top{margin-bottom:26px}
+  .st-q{font-size:1.75rem}
+  .st-sub{margin-bottom:20px}
+  .st-opts{gap:8px}
+  .st-opt{padding:13px 18px;font-size:.98rem}
+  .st-in{padding:13px 16px;margin-bottom:10px}
+  .st-go{margin-top:18px}
+
+  /* multi-card sections: one swipe row */
+  .quiet-steps,.quiet-steps.four,.grid3,.mx-exits,.mf-exits{
+    display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:min(84%,330px);
+    gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
+    margin-inline:-24px;padding:2px 24px 6px;scroll-padding-inline:24px;scrollbar-width:none}
+  .quiet-steps::-webkit-scrollbar,.grid3::-webkit-scrollbar,.mx-exits::-webkit-scrollbar,.mf-exits::-webkit-scrollbar{display:none}
+  .quiet-steps>*,.grid3>*,.mx-exits>*,.mf-exits>*{scroll-snap-align:start}
+  .quiet-steps>*{border-radius:var(--r-2);border:1px solid var(--line-2);background:var(--surface-2);padding:22px 20px}
+  .quiet-steps .n{margin-bottom:10px}
+  .grid3 .tile>.media{aspect-ratio:16/10}
+  .grid3 .tile>h3{margin-top:16px}
+  .grid3 .tile>.pill{margin-top:14px;margin-bottom:18px}
+}
+@media(max-width:640px){
+  .d2{font-size:1.85rem}
+  .rows li{padding-block:13px}
+  .rows li span{font-size:.95rem}
+  .faq summary{padding-block:14px;font-size:.98rem}
+  .faq-ask{margin-bottom:24px}
+  /* long single-choice screens (6+ options) go two across */
+  .st-opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .st-opts.two .st-opt{padding:12px 13px;font-size:.9rem;line-height:1.3}
+  /* founder: photo beside the name instead of above it */
+  .founder-grid{position:relative}
+  .founder-photo{position:absolute;top:0;right:0;width:84px;max-width:84px}
+  .founder-grid > div:last-child > .lbl,.founder-grid h2,.founder-role{padding-right:96px}
+  .founder .lede{font-size:.98rem}
+  /* manifesto: five steps as one swipe row */
+  .mf-steps{display:grid;grid-auto-flow:column;grid-auto-columns:min(84%,330px);gap:12px;
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;margin-inline:-24px;
+    padding:2px 24px 6px;scroll-padding-inline:24px;scrollbar-width:none}
+  .mf-steps::-webkit-scrollbar{display:none}
+  .mf-steps li{display:block;scroll-snap-align:start;border:1px solid var(--line-2);border-radius:var(--r-2);
+    background:var(--surface-2);padding:22px 20px}
+  /* the calculator: same parts, less padding */
+  .lg-top,.lg-in,.lg-out,.lg-foot{padding:16px}
+  .fld{margin-bottom:16px}
+  .res{gap:14px}
+}
+@media(max-width:640px){
+  /* calculator: county picks in one swipe row, tighter results and small print */
+  .lg-top{gap:10px}
+  .lg-top .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
+  .lg-top .chips::-webkit-scrollbar{display:none}
+  .lg-top .chip{white-space:nowrap;flex:none}
+  .lg-top .xs{max-width:none !important}
+  .res .row .nm{font-size:.9rem}
+  .res .row .vv{font-size:1.15rem}
+  .res .row .sub{font-size:.8rem;line-height:1.4}
+  .lg-foot{font-size:.92rem}
+  .pg #math > .wrap > p.disc,.sec#math p.disc{display:block;font-size:.76rem;font-weight:400;
+    line-height:1.45;text-decoration:none;color:var(--muted);margin-top:14px}
+  /* founder and the homepage FAQ */
+  .founder-creds div{padding:8px 0}
+  .founder .lede{line-height:1.5}
+  .founder-mission{font-size:1rem}
+  /* the hero already holds the chat, so the FAQ shows just the questions */
+  .faq-ask,.faq-ask + .lbl{display:none}
+  /* dense rows */
+  .rows li{padding-block:11px}
+  .rows li span{font-size:.92rem;line-height:1.45}
+  .answers-cue{margin-top:18px !important}
+}
+@media(max-width:640px){
+  .calm:not(.hero-chat):not(.why),.pg-sec,.mf-sec,.pg #math{padding-block:56px}
+  .why{padding-bottom:56px}
+  .head{margin-bottom:24px}
+  .d2{font-size:1.75rem}
+  .rows li span{line-height:1.42}
+  #math .head .note{display:none}
+  .res .row .sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
+@media(max-width:640px){
+  .rows li{padding-block:10px}
+  .rows li span{font-size:.9rem;line-height:1.4}
+  .st-top{margin-bottom:20px}
+  .st-q{font-size:1.6rem}
+  .st-sub{margin-bottom:16px}
+  .fld .top{margin-bottom:6px}
+  .fld .top output{font-size:1rem}
+  .lg-foot .sm{font-size:.86rem}
+  .pg #math > .wrap > p.disc,.sec#math p.disc{font-size:.72rem}
+}
+@media(max-width:640px){
+  .calm:not(.hero-chat):not(.why),.pg-sec,.mf-sec,.pg #math{padding-block:44px}
+  .why{padding-bottom:44px}
+  .d2{font-size:1.6rem}
+  .head{margin-bottom:20px;gap:10px}
+  .head .note{font-size:.95rem}
+  .quiet-steps>*,.mf-steps li{padding:18px 18px}
+}
