@@ -1050,3 +1050,11 @@ input[type=range]:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
   .head .note{font-size:.95rem}
   .quiet-steps>*,.mf-steps li{padding:18px 18px}
 }
+/* phones: the top bar slides away while scrolling down (Nav sets .away)
+   and returns on any scroll up, so a section gets the whole screen */
+@media(max-width:640px){
+  .nav{transition:box-shadow .4s,transform .32s var(--e)}
+  .nav.away{transform:translateY(-100%)}
+  .nav:focus-within{transform:none}
+}
+@media(max-width:640px) and (prefers-reduced-motion:reduce){.nav{transition:none}}
