@@ -1,3 +1,4 @@
+import { memphisEvidence } from "@/lib/memphis-research"
 import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
@@ -38,6 +39,23 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  if (lead.bot_source === "memphis_codes") {
+    const e = memphisEvidence(lead)
+    return <>
+      <Head title={e.address || "Memphis 311 request"}><Link href="/crm/leads/memphis">Memphis 311 research</Link></Head>
+      <section className="crm-card"><h2>City request {e.incident || "unverified"}</h2>
+        <dl className="crm-props">
+          <dt>Review disposition</dt><dd>{e.disposition}</dd>
+          {e.checked && <><dt>Last checked</dt><dd>{e.checked}</dd></>}
+          {e.status && <><dt>City request status at check</dt><dd>{e.status}</dd></>}
+          {e.type && <><dt>Request type</dt><dd>{e.type}</dd></>}
+          {e.parcel && <><dt>Parcel reported by 311</dt><dd style={{ whiteSpace: "pre-wrap" }}>{e.parcel}</dd></>}
+        </dl>
+        <p>A service request documents a reported condition. Ownership, sale authority and a dated sale opportunity require independent evidence.</p>
+        {e.url && <a href={e.url} target="_blank" rel="noreferrer">Official Memphis 311 incident</a>}
+      </section>
+    </>
+  }
   const cityCase = lead.raw_payload?.chattanooga_codes as { case_number?: string } | undefined
   const chatt = lead.bot_source === "chattanooga_codes" ? chattanoogaParcel({
     ...lead, case_number: cityCase?.case_number, parcelReview: lead.raw_payload?.chattanooga_parcel_review,
