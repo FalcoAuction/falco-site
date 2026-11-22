@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','nashville-codes','warn-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','nashville-codes','warn-evidence','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -58,6 +58,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
     '@/app/crm/row-link':{RowLink:({children})=>React.createElement('tr',null,children)},
     './contents-form':{ContentsForm:()=>null},'./log-form':{},'./sheet-thumb':{},'@/app/crm/math-sheet/[id]/math-sheet-content':{},
     '@/app/crm/math-sheet/[id]/load-snapshot':{}})
+  imports['@/app/crm/hearing-record']=load('src/app/crm/hearing-record.tsx',imports)
   const render = async (path,props) => renderToStaticMarkup(await load('src/app/crm/(app)/'+path+'page.tsx',imports).default(props))
   for (const html of [await render('',{}),await render('leads/',{searchParams:Promise.resolve({})})]) {
     assert.doesNotMatch(html,/Removed Address|Closed Address/)
@@ -110,6 +111,18 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   assert.match(readOnly,/Awaiting a bound city review/)
   assert.doesNotMatch(readOnly,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee|<dt>Owner<\/dt>/)
   for(const path of ['', 'leads/']) assert.doesNotMatch(await render(path,{searchParams:Promise.resolve({})}),/Research-only Memphis address/)
+  assert.equal((await crm.getToday()).counts.working,baseline.counts.working)
+  assert.equal((await crm.listLeads('working')).rows.map(r=>r.slug).sort().join(','),baselineWorking)
+
+  const knox = {...memphis, id:'00000000-0000-4001-8000-000000000101',pipeline_lead_key:'historical-knox',
+    property_address:'Historical Knoxville address',bot_source:'knoxville_poh',raw_payload:{poh_section:'boarding'}}
+  staged.push(knox)
+  tables.dialer_lead_workflow.unshift({listing_slug:knox.pipeline_lead_key,status:'working',next_action_at:today})
+  tables.crm_visible_opportunities.push(opportunity(knox))
+  const legacy = await render('leads/[id]/',{params:Promise.resolve({id:knox.id})})
+  assert.match(legacy,/Historical or unverified hearing record/)
+  assert.doesNotMatch(legacy,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee/)
+  for (const path of ['', 'leads/']) assert.doesNotMatch(await render(path,{searchParams:Promise.resolve({})}),/Historical Knoxville address/)
   assert.equal((await crm.getToday()).counts.working,baseline.counts.working)
   assert.equal((await crm.listLeads('working')).rows.map(r=>r.slug).sort().join(','),baselineWorking)
 
@@ -176,4 +189,49 @@ test('Memphis requires the bound city incident, a current structural review and 
     {reported_at_ms:12},{department:'Solid Waste'},{parcel_as_reported:'1 B'},...['terminal_request','ambiguous','identity_conflict','not_returned','disposition_review'].map(finding=>({finding}))]) assert.equal(read(change).eligible,false)
   for(const stage of [{staging_status:'rejected'},{county:'Other'},{pipeline_lead_key:'bad'},{property_address:'10 Main Street, Unit A, Memphis, TN 38103'}]) assert.equal(read({},stage).eligible,false)
   assert.match(read({finding:'terminal_request',request_status:'Closed'}).disposition,/Closed/)
+})
+
+test('Knoxville separates the petition, dated complaint and exact county bill', () => {
+  const {knoxvilleEvidence: read} = load('src/lib/knoxville-research.ts',{'server-only':{},'@/lib/supabase-admin':{}})
+  const address='2208 Adair Avenue, Knoxville, TN', parcel='070PK007', number='CE-26-006926'
+  const city={case_number:number,parcel_id:parcel,source_url:'https://knoxvilleworksearch.knoxvilletn.gov/recorddetails.html?RecordID='+number,
+    status:'In Violation',status_date:'2026-10-21',checked_on:'2026-11-22'}
+  const review={case_number:number,parcel_id:parcel,property_address:address,violations:'STRUCTURAL',document_kind:'poh_agenda',
+    status:'agenda_outcome_unverified',meeting_cancelled:false,hearing_date:'2026-10-30',checked_on:'2026-11-22',source_sha256:'b'.repeat(64),
+    source_page_url:'https://www.knoxvilletn.gov/173/Better-Building-Board-Public-Officer-Hea',
+    source_url:'https://www.knoxvilletn.gov/DocumentCenter/View/1255', city_record:city}
+  const roll={case_number:number,parcel_id:parcel,property_address:address,owner:'COOTS JIMMY L & DONNA A',appraised_value:111000,
+    tax_year:2026,checked_on:'2026-11-22',source_url:'https://propertytax.knoxcountytn.gov/property-tax/bill/070PK-007/2026'}
+  const raw={poh_section:'case',parcel_id:parcel,case_number:number,knoxville_hearing_review:review,knox_assessor:roll}
+  const row={bot_source:'knoxville_poh',county:'Knox County',pipeline_lead_key:'a70580656630c313a8eafa56d9351a03a246a245',
+    property_address:address,knoxville_review:review,raw_payload:raw}
+  const check=(patch={})=>read({...row,...patch},'2026-11-22')
+  const evidence=check()
+  assert.equal(evidence.complaint.statusDate,'2026-10-21')
+  assert.equal(evidence.hearing,'2026-10-30')
+  assert.equal(evidence.assessor.value,111000)
+  assert.equal(evidence.caseUrl,city.source_url)
+  const {HearingRecord}=load('src/app/crm/hearing-record.tsx',{})
+  const html=renderToStaticMarkup(HearingRecord({evidence}))
+  assert.match(html,/Published petition/)
+  assert.match(html,/In Violation as of 2026-10-21/)
+  assert.match(html,/Hearing outcome unverified/)
+  assert.match(html,/111,000/)
+  for (const change of [{case_number:'other'},{parcel_id:'other'},{source_url:city.source_url+'0'},
+    {status_date:'2026-11-23'},{checked_on:'2026-11-23'}]) {
+    const e=check({knoxville_review:{...review,city_record:{...city,...change}}})
+    assert.ok(e.agenda)
+    assert.equal(e.complaint,null)
+  }
+  for (const change of [{case_number:'other'},{parcel_id:'other'},{property_address:'other'},
+    {appraised_value:0},{source_url:roll.source_url+'0'},{checked_on:'2026-11-23'}]) {
+    assert.equal(check({raw_payload:{...raw,knox_assessor:{...roll,...change}}}).assessor,null)
+  }
+  assert.equal(check({pipeline_lead_key:'legacy'}),null)
+  for (const change of [{case_number:'other'},{parcel_id:'other'},{property_address:'other'},
+    {source_url:'https://example.org/doc'},{status:'published_result_review'},{meeting_cancelled:true}])
+    assert.equal(check({knoxville_review:{...review,...change}}),null)
+  assert.equal(check({knoxville_review:{...review,document_kind:'poh_results',status:'published_result_review'}}).agenda,false)
+  assert.ok(check({knoxville_review:null}).agenda)
+  assert.equal(check({knoxville_review:null}).complaint,null)
 })

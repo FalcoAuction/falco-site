@@ -28,6 +28,10 @@ export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus 
   has_phone: boolean }
 
 // Saved views, Close-style: each is a filter you work top to bottom.
+function researchOnlySource(source?: string | null) {
+  return source === "memphis_codes" || source === "knoxville_poh"
+}
+
 export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "florida" | "working"
 // Florida counties the FL bots stage (lowercased as lead_opportunities
 // stores them). Florida leads get their own view and stay out of the
@@ -228,7 +232,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
     rows.sort((a, b) => (b.last_contact_at ?? "").localeCompare(a.last_contact_at ?? ""))
     return { day, rows }
   }
-  let q = supabaseAdmin.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").eq("captured_on", day)
+  let q = supabaseAdmin.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh").eq("captured_on", day)
   q = applyView(q, view)
   if (opts.county) q = q.eq("county", opts.county)
   if (opts.q) q = q.or(`property_address.ilike.%${opts.q.replace(/[%,()]/g, " ")}%,owner_name.ilike.%${opts.q.replace(/[%,()]/g, " ")}%`)
@@ -247,7 +251,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("crm_visible_opportunities").select("staging_id,fit_label,sale_date,county").neq("bot_source", "memphis_codes").eq("captured_on", day).limit(5000)
+  const r = await supabaseAdmin.from("crm_visible_opportunities").select("staging_id,fit_label,sale_date,county").neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh").eq("captured_on", day).limit(5000)
   const holds = await noticeHolds()
   const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
   const fl = new Set(FL_COUNTIES)
@@ -272,6 +276,7 @@ export type StagedLead = {
   property_address: string | null; county: string | null; full_name: string | null; owner_name_records: string | null
   email: string | null; phone: string | null; property_value: number | null; property_value_source: string | null
   mortgage_balance: number | null; trustee_sale_date: string | null; distress_type: string | null; admin_notes: string | null
+  knoxville_review?: unknown
   city_review: { status?: string; official_statuses?: string[]; checked_on?: string } | null; source_url: string | null; year_built: number | null; alternate_phones: unknown; raw_payload: Record<string, unknown> | null
 }
 
@@ -286,13 +291,13 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
 export async function getLead(id: string): Promise<{ metroDisposition: string | null; noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
-    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold,city_review:phone_metadata->chattanooga_case_review")
+    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold,knoxville_review:phone_metadata->knoxville_hearing_review,city_review:phone_metadata->chattanooga_case_review")
     .eq("id", id).maybeSingle()
   const lead = r.data as StagedLead | null
   if (!lead) return null
   const day = await latestOpportunityDay()
   const [o, workflow, activities] = await Promise.all([
-    day ? supabaseAdmin.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").eq("captured_on", day).eq("staging_id", id).maybeSingle() : Promise.resolve({ data: null }),
+    day ? supabaseAdmin.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh").eq("captured_on", day).eq("staging_id", id).maybeSingle() : Promise.resolve({ data: null }),
     lead.pipeline_lead_key ? getWorkflow(lead.pipeline_lead_key) : Promise.resolve(null),
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
@@ -328,7 +333,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   const day = await latestOpportunityDay()
   const [dueRows, sales, recent, qDay, sent, supp, contacts, oppCount, llCount, working] = await Promise.all([
     dueWorkflows(endOfToday.toISOString()),
-    day ? db.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").eq("captured_on", day)
+    day ? db.from("crm_visible_opportunities").select(OPP_COLS).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh").eq("captured_on", day)
       .gte("sale_date", isoDay(new Date())).lte("sale_date", isoDay(addDays(14))).order("sale_date").limit(12) : Promise.resolve({ data: [] }),
     db.from("dialer_activities").select("id,listing_slug,occurred_at,channel,outcome,notes,next_action,next_action_at,created_by,created_at")
       .order("occurred_at", { ascending: false }).limit(10),
@@ -336,7 +341,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     db.from("outreach_sends").select("id", { count: "exact", head: true }).eq("status", "sent").gte("sent_at", isoDay(new Date())),
     db.from("outreach_suppressions").select("email", { count: "exact", head: true }),
     db.from("outreach_contacts").select("id", { count: "exact", head: true }),
-    day ? db.from("crm_visible_opportunities").select("rank", { count: "exact", head: true }).neq("bot_source", "memphis_codes").eq("captured_on", day) : Promise.resolve({ count: 0 }),
+    day ? db.from("crm_visible_opportunities").select("rank", { count: "exact", head: true }).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh").eq("captured_on", day) : Promise.resolve({ count: 0 }),
     db.from("landlord_portfolios").select("owner_name", { count: "exact", head: true }),
     workingSlugs(),
   ])
@@ -358,7 +363,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     due: dueRows.filter(d => !holds.slugs.has(d.listing_slug) && !where.get(d.listing_slug)?.hold && !metroHeld(metro, where.get(d.listing_slug)?.id ?? "")).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
     sales: reviewSales ? await attachWorkflow((sales.data ?? []) as Opportunity[]) : [],
-    recent: recentRows.filter(r => where.get(r.listingSlug)?.bot_source !== "memphis_codes").map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
+    recent: recentRows.filter(r => !researchOnlySource(where.get(r.listingSlug)?.bot_source)).map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
     quality,
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
     counts: { leads: oppCount.count ?? 0, landlords: llCount.count ?? 0, working: working.length },
@@ -481,7 +486,7 @@ const assetCandidates = cache(async () => {
       .in("id", ids.slice(i, i + 100))
     if (error) throw new Error(error.message)
     for (const row of (data ?? []) as unknown as Candidate[]) {
-      if (row.bot_source === "memphis_codes") continue
+      if (researchOnlySource(row.bot_source)) continue
       const w = warn.get(row.id)
       rows.push(w ? { ...row, routable: String(w.routable), prospect: String(w.prospect), key: w.dedupe_key ?? null } : row)
     }
@@ -512,7 +517,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   } else {
     for (let page = 0; page < 5; page++) {
       const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},lane:raw_payload->property_lane`)
-        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", bucket).neq("bot_source", "memphis_codes")
+        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", bucket).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh")
         .order("id").range(page * 1000, page * 1000 + 999)
       if (r.error) return { rows: [], grades, error: r.error.message }
       const batch = (r.data ?? []) as unknown as StagedBucket[]
@@ -526,7 +531,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   const byAddr = new Map<string, StagedBucket>()
   const warn = await warnRows()
   for (const r of all) {
-    if (r.bot_source === "memphis_codes") continue
+    if (researchOnlySource(r.bot_source)) continue
     const w = warn.get(r.id)
     if (w) {
       if (bucket !== "assets") continue
@@ -584,14 +589,14 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
     const rows: R[] = []
     for (let page = 0; page < 5; page++) {
       const r = await db.from("homeowner_requests_staging").select("id,property_address,bot_source")
-        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", name).neq("bot_source", "memphis_codes")
+        .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", name).neq("bot_source", "memphis_codes").neq("bot_source", "knoxville_poh")
         .not("raw_payload->property_lane->>grade", "is", null).order("id").range(page * 1000, page * 1000 + 999)
       const batch = (r.data ?? []) as R[]
       rows.push(...batch)
       if (batch.length < 1000) break
     }
     const metro = await metroDispositions(rows)
-    return unique(rows.filter(row => row.bot_source !== "warn_notices" && row.bot_source !== "memphis_codes" && !metroHeld(metro, row.id)))
+    return unique(rows.filter(row => row.bot_source !== "warn_notices" && !researchOnlySource(row.bot_source) && !metroHeld(metro, row.id)))
   }
   // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {
