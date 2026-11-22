@@ -100,6 +100,9 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   valued.shelby_value_review.notice_key='other'
   valued.raw_payload.shelby_arcgis.parid='wrong'
   assert.doesNotMatch(await valuedPage(),/Tax Bill Name|Assessor Name|County tax assessment/)
+  valued.raw_payload.extracted.parcel='074075 00026C'
+  valued.raw_payload.shelby_arcgis.parid='074075  00026C'
+  assert.match(await valuedPage(),/<dt>Owner on assessor parcel record<\/dt><dd>Assessor Name/)
   staged.pop()
   const crm = imports['@/lib/crm-data']
   const baseline = await crm.getToday()

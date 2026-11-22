@@ -21,11 +21,12 @@ export function memphisValuation(lead: StagedLead) {
     && !!lead.property_address && review.notice_address === lead.property_address && !!parcel
     && (!fullNoticeParcel || noticeParcel === parcelKey(parcel))
     && url?.origin === "https://apps2.shelbycountytrustee.com" && url.pathname === "/Parcel" && url.searchParams.get("parcel") === parcel
-    && Number.isInteger(review.tax_year) && !!text(review.bill_number?.toString())
+    && Number.isInteger(review.tax_year) && !!review.bill_number
     && !!ratio && review.assessment_ratio === ratio && typeof assessed === "number" && assessed > 0
     && typeof estimate === "number" && estimate === Number(lead.property_value) && Math.abs(estimate - assessed / ratio) <= 0.5
   const assessor = obj(raw.shelby_arcgis)
-  const matchedParcel = bound ? parcelKey(parcel) : fullNoticeParcel ? noticeParcel : ""
+  // Some assessor subparcels have a trailing letter (e.g. 074075 00026C).
+  const matchedParcel = bound ? parcelKey(parcel) : /^[A-Z0-9]{6}[A-Z]?[0-9]{5}[A-Z]?$/.test(noticeParcel) ? noticeParcel : ""
   return { borrower, assessorOwner: matchedParcel && matchedParcel === parcelKey(assessor.parid) ? text(assessor.owner) : "",
     bill: bound ? { parcel, source, assessed, ratio, year: Number(review.tax_year), owner: text(review.owner) } : null }
 }
