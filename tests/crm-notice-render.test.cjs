@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','aircraft-evidence','memphis-valuation','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','aircraft-evidence','memphis-valuation','estate-trustee-notices','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -104,6 +104,36 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   valued.raw_payload.extracted.parcel='074075 00026C'
   valued.raw_payload.shelby_arcgis.parid='074075  00026C'
   assert.match(await valuedPage(),/<dt>Owner on assessor parcel record<\/dt><dd>Assessor Name/)
+  staged.pop()
+  const postponement = {...valued,id:'00000000-0000-4001-8000-000000001111',trustee_sale_date:'2027-01-05',
+    pipeline_lead_key:require('node:crypto').createHash('sha1').update('memphis_daily_news|FD101').digest('hex'),
+    raw_payload:{structured:{tdn_no:'FD101',substitute_trustee:'Foundation Legal Group, LLP'},
+      memphis_trustee_calendar:{notice_id:'FD101',status:'postponed',source_url:'https://sales.thefoundationlegalgroup.com/',
+        property_address:valued.property_address,checked_on:'2026-11-22',listing:{date:'2027-01-05',prior_date:'2026-12-01',time:'12:00 PM'}}}}
+  staged.push(postponement)
+  const screen = row => render('leads/[id]/',{params:Promise.resolve({id:row.id})})
+  assert.match(await screen(postponement),/Previous sale date.*2026-12-01.*Rescheduled trustee sale.*2027-01-05 12:00 PM/)
+  postponement.trustee_sale_date='2026-12-01'
+  assert.doesNotMatch(await screen(postponement),/Trustee sale postponed/)
+  staged.pop()
+  const estate={...staged[2],id:'00000000-0000-4001-8000-000000001112',bot_source:'court_notices',distress_type:'PROBATE',
+    county:'shelby',admin_notes:'Probate P1. Representatives: Unsupported. Attorney: Unsupported.', raw_payload:{
+      kind:'probate_notice_to_creditors',court_notice:{county:'shelby',docket:'P1',decedent:'Kim',attorney:{names:['Estate Counsel']},
+        representatives:[{name:'Jane',role:'administrator'}]}, probate_review:{estate_key:'shelby|P1',contact_hold:true,
+          sale_authority_verified:false,decedent_names_printed:['Kim','Kimm'],attorney_draft_status:'hold',
+          attorney_draft_hold_reasons:['conflicting_decedent_names']}}}
+  staged.push(estate)
+  const held=await screen(estate)
+  assert.match(held,/Conflicting printed decedent names.*Kim \/ Kimm.*Jane \(administrator\).*Estate Counsel.*Estate sale authority.*Unverified/)
+  assert.match(held,/On hold pending authority verification.*conflicting decedent names/)
+  assert.doesNotMatch(held,/Unsupported|<dt>Owner<|href="(?:tel|mailto|sms):/)
+  estate.raw_payload.court_notice.representatives=[]
+  assert.match(await screen(estate),/No named representative/)
+  estate.raw_payload.probate_review.estate_key='shelby|Other'
+  assert.doesNotMatch(await screen(estate),/Estate Counsel/)
+  delete estate.raw_payload.probate_review
+  estate.pipeline_lead_key=require('node:crypto').createHash('sha1').update('court_notice|probate_notice_to_creditors|shelby|P1').digest('hex')
+  assert.match(await screen(estate),/Structured review pending.*Estate Counsel.*On hold pending authority verification/)
   staged.pop()
   const crm = imports['@/lib/crm-data']
   const baseline = await crm.getToday()
