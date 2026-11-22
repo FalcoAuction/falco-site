@@ -130,3 +130,55 @@
 .gd-none h2{margin-bottom:12px}
 .gd-none p{color:var(--muted);max-width:56ch;margin:0 0 20px}
 .gd [hidden]{display:none!important}
+
+/* phones: one section, one screen (see falco-design.css). Long reference
+   lists scroll inside a capped box instead of running several screens. */
+@media(max-width:640px){
+  .gd .gd-sec{padding-block:64px}
+  .gd .gd-top{padding-top:28px;padding-bottom:44px}
+  .gd .gd-top h1{margin-bottom:18px}
+  .gd .gd-sec h2{margin-bottom:22px}
+  .gd .gd-note{padding:15px 0}
+  .gd .gd-row{padding-block:14px}
+  .gd .gd-row.sm{padding-block:10px}
+  .gd .gd-src{max-height:min(58svh,480px);overflow-y:auto;overscroll-behavior:contain;
+    border-block:1px solid var(--line-2);padding-right:6px}
+  .gd .gd-src li:first-child{border-top:0}
+  .gd .gd-src li:last-child{border-bottom:0}
+  .gd .gd-src li{padding:9px 0;font-size:.92rem}
+}
+@media(max-width:640px){
+  .gd .gd-note{padding:12px 0}
+  .gd .gd-note-b{font-size:.95rem;line-height:1.55}
+  .gd .gd-src{max-height:min(50svh,420px)}
+  .gd .gd-answer{margin-top:20px;padding:16px 18px}
+  .gd .gd-answer p:last-child{font-size:.98rem}
+  .gd .gd-by{margin-top:20px}
+  /* guide index: blurbs clip to two lines */
+  .gd .gd-grp .lede{margin:-8px 0 18px}
+  .gd .gd-row p{margin-top:4px;font-size:.88rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .gd .gd-row h3{font-size:1.1rem}
+  /* related-guide lists side by side as one swipe row */
+  .gd .gd-cols{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:min(84%,330px);gap:12px;
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;margin-inline:-24px;
+    padding:2px 24px 6px;scroll-padding-inline:24px;scrollbar-width:none}
+  .gd .gd-cols::-webkit-scrollbar{display:none}
+  .gd .gd-cols > div{scroll-snap-align:start;border:1px solid var(--line-2);border-radius:var(--r-2);
+    background:var(--surface-2);padding:18px 18px 8px}
+}
+@media(max-width:640px){
+  .gd .gd-note{padding:10px 0}
+  .gd .gd-note-b{font-size:.93rem;line-height:1.5}
+  .gd .gd-note-l{margin-bottom:4px}
+  .gd .gd-row{padding-block:11px}
+}
+@media(max-width:640px){
+  .gd .gd-sec{padding-block:56px}
+  .gd .gd-grp .gd-row p{-webkit-line-clamp:1}
+}
+@media(max-width:640px){
+  .gd .gd-sec{padding-block:44px}
+  .gd .gd-sec h2{margin-bottom:16px}
+  .gd .gd-note-b{font-size:.9rem}
+  .gd .gd-top{padding-top:22px;padding-bottom:32px}
+}
