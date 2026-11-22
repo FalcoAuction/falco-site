@@ -34,6 +34,7 @@
 // If TWILIO_FROM_NUMBER not set, returns 503 with a clear setup error —
 // caller UI should show "configure TWILIO_FROM_NUMBER in env to enable".
 
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { NextRequest, NextResponse } from "next/server"
 import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -157,13 +158,17 @@ export async function POST(req: NextRequest) {
   }
 
   // DNC pre-check from the lead's phone_metadata
-  if (supabaseAdmin) {
-    const { data: leadRow } = await supabaseAdmin
+  if (!supabaseAdmin) return NextResponse.json({ error: "Lead verification unavailable." }, { status: 503 })
+  {
+    const { data: leadRow, error } = await supabaseAdmin
       .from("homeowner_requests")
       .select("phone_metadata")
       .eq("source", "bot")
       .eq("pipeline_lead_key", slug)
       .maybeSingle()
+    if (error || !leadRow) return NextResponse.json({ error: "Could not verify lead before sending." }, { status: 409 })
+    const hold = trusteeNoticeHold(leadRow.phone_metadata)
+    if (hold) return NextResponse.json({ error: `Trustee notice on hold (${hold}).` }, { status: 409 })
     const pm = (leadRow?.phone_metadata ?? {}) as Record<string, unknown>
     const dncFlag = (pm["dnc"] ?? pm["dnc_status"] ?? "") as string | boolean
     const isDnc = dncFlag === true || dncFlag === "dnc" || dncFlag === "true"

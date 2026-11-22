@@ -40,11 +40,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const laneTag = (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const aircraft = (Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
   const pp = (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
+  const probate = lead.raw_payload?.probate_review as { stage?: string; contact_hold?: boolean;
+    attorney_draft_status?: string; attorney_draft_hold_reasons?: string[] } | undefined
+  const ownerContactHeld = !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = lead.trustee_sale_date || opp?.sale_date || null
-  const situation = opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
+  const sale = data.noticeHold ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const situation = data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
@@ -69,9 +72,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="crm-actions">
-            {phones[0] ? <a className="crm-btn primary" href={`tel:+1${phones[0]}`}><Icon name="calls" />Call</a> : <span className="crm-btn" aria-disabled="true" style={{ opacity: 0.5 }}><Icon name="calls" />No phone</span>}
-            {phones[0] ? <a className="crm-btn" href={`sms:+1${phones[0]}`}><Icon name="text" />Text</a> : null}
-            {lead.email ? <a className="crm-btn" href={`mailto:${lead.email}`}><Icon name="mail" />Email</a> : null}
+            {ownerContactHeld ? null : phones[0] ? <a className="crm-btn primary" href={`tel:+1${phones[0]}`}><Icon name="calls" />Call</a> : <span className="crm-btn" aria-disabled="true" style={{ opacity: 0.5 }}><Icon name="calls" />No phone</span>}
+            {!ownerContactHeld && phones[0] ? <a className="crm-btn" href={`sms:+1${phones[0]}`}><Icon name="text" />Text</a> : null}
+            {!ownerContactHeld && lead.email ? <a className="crm-btn" href={`mailto:${lead.email}`}><Icon name="mail" />Email</a> : null}
             {lead.source_url ? <a className="crm-btn ghost" href={lead.source_url} target="_blank" rel="noreferrer"><Icon name="external" />Source</a> : null}
           </div>
 
@@ -89,7 +92,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <div className="crm-section-label">Contact</div>
             <dl className="crm-props">
               <dt>Owner</dt><dd>{titleCase(owner) || "Unknown"}</dd>
-              <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}><a href={`tel:+1${p}`}>{fmtPhone(p)}</a></div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
+              <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}>{ownerContactHeld ? fmtPhone(p) : <a href={`tel:+1${p}`}>{fmtPhone(p)}</a>}</div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
               {lead.email ? <><dt>Email</dt><dd>{lead.email}</dd></> : null}
               {opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
             </dl>
@@ -149,12 +152,28 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </div>
           ) : null}
 
+          {probate && <div>
+            <div className="crm-section-label">Estate review</div>
+            <dl className="crm-props">
+              {probate.stage && <><dt>Notice stage</dt><dd>{probate.stage.replaceAll("_", " ")}</dd></>}
+              {probate.contact_hold && <><dt>Seller contact</dt><dd>On hold pending authority verification</dd></>}
+              {probate.attorney_draft_status && <><dt>Attorney research</dt><dd>{probate.attorney_draft_status.replaceAll("_", " ")}
+                {probate.attorney_draft_hold_reasons?.map(reason => <div key={reason}>{reason.replaceAll("_", " ")}</div>)}</dd></>}
+            </dl>
+          </div>}
           {pp ? (
             <div>
               <div className="crm-section-label">{PP_LANE_LABEL[pp.lane] ?? "Personal property"}</div>
               <dl className="crm-props">
                 <dt>Grade</dt><dd><span className={`pill ${pp.grade === "A" ? "green" : "blue"}`}>{pp.grade}</span></dd>
-                {pp.routable !== undefined ? <><dt>Route</dt><dd>{pp.routable ? <span className="pill green">Routes to {pp.route_to}</span> : <><span className="pill amber">Not routable</span><div className="crm-faint">{pp.not_routable_reason}</div></>}</dd></> : null}
+                {pp.routable !== undefined ? <><dt>Route</dt><dd>{pp.routable ? <span className="pill green">Routes to {pp.route_to}</span> : <><span className="pill amber">Not routable</span><div className="crm-faint">{pp.holds?.length ? null : pp.not_routable_reason}</div></>}</dd></> : null}
+                {pp.qualification && <><dt>Qualification</dt><dd>{pp.qualification.replaceAll("_", " ")}</dd></>}
+                {pp.holds?.length ? <><dt>Holds</dt><dd>{pp.holds.map(h => <div key={h}>{h}</div>)}</dd></> : null}
+                {pp.registry_assets?.length ? <><dt>Registry assets</dt><dd>{pp.registry_assets.map((asset, i) =>
+                  <div key={i}>{[asset.n_number, asset.aircraft, asset.registrant].filter(Boolean).join(" · ")}</div>)}</dd></> : null}
+                {pp.authority_review?.controller?.authority && <><dt>Authority review</dt><dd>{[pp.authority_review.controller.name,
+                  pp.authority_review.controller.role, pp.authority_review.controller.authority].filter(Boolean).join(" · ")}</dd></>}
+                {pp.next_action && <><dt>Next action</dt><dd>{pp.next_action}</dd></>}
                 {pp.controller ? <><dt>Controls sale</dt><dd>{pp.controller}</dd></> : null}
                 {pp.primary_contact ? <><dt>Start with</dt><dd>{pp.primary_contact}</dd></> : null}
                 {pp.deadline ? <><dt>Deadline</dt><dd>{pp.deadline}</dd></> : null}

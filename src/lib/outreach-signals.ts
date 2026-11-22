@@ -128,6 +128,32 @@ export function estateDraft(f: EstateFacts): { subject: string; body: string } {
   return { subject, body }
 }
 
+type ProbateReview = { stage?: string; attorney_draft_status?: string; attorney_draft_hold_reasons?: string[]; estate_key?: string }
+
+export function estateCaseHold(raw: Record<string, unknown> | null): boolean {
+  const review = raw?.probate_review as ProbateReview | undefined
+  const court = raw?.court_sale_review as { stage?: string } | undefined
+  return ["sale_advertised", "sale_interrupted", "estate_inactive_reported", "sale_already_arranged"].includes(review?.stage ?? "")
+    || ["sale_already_arranged", "sale_interrupted", "sale_completed"].includes(court?.stage ?? "")
+}
+
+export function attorneyDraftHold(raw: Record<string, unknown> | null): boolean {
+  if (estateCaseHold(raw)) return true
+  const review = raw?.probate_review as ProbateReview | undefined
+  const match = raw?.probate_match_attempt as { result?: string } | undefined
+  const owner = raw?.owner_match as { confidence?: string; parcels?: { parcel?: string; address?: string }[] } | undefined
+  if (match?.result === "ambiguous" || (owner?.confidence === "name_only" && Array.isArray(owner.parcels)
+      && new Set(owner.parcels.map(p => p?.parcel || p?.address)).size > 1)) return true
+  if (!review) return false
+  // contact_hold applies to the owner/seller route. Named estate counsel has a separate review.
+  const notice = raw?.court_notice as { county?: string; docket?: string; representatives?: { name?: string; role?: string }[] } | undefined
+  return (review.attorney_draft_status !== undefined && review.attorney_draft_status !== "requires_verification")
+    || !!review.attorney_draft_hold_reasons?.length || review.estate_key !== `${notice?.county}|${notice?.docket}`
+    || !Array.isArray(notice?.representatives) || !notice.representatives.some(rep => rep?.name && rep.role)
+    || !review.estate_key || !["estate_notice", "creditor_notice", "appointment_reported",
+      "sale_authority_requested", "sale_order_reported"].includes(review.stage ?? "")
+}
+
 /** Facts for an estate lead, or null when it should not produce a draft. */
 export function estateFacts(row: {
   county: string | null
@@ -139,7 +165,8 @@ export function estateFacts(row: {
   const notice = (row.raw_payload?.court_notice ?? null) as Record<string, unknown> | null
   const county = (row.county ?? "").toLowerCase().replace(/\s+county$/, "")
   const value = Number(row.property_value ?? 0)
-  if (!notice || !FOCUS_COUNTIES.includes(county) || !row.property_address || !(value >= MIN_ESTATE_VALUE)) return null
+  if (attorneyDraftHold(row.raw_payload) || !notice || !FOCUS_COUNTIES.includes(county) || !row.property_address || !(value >= MIN_ESTATE_VALUE)) return null
+  if (row.raw_payload?.probate_review && county !== String(notice.county ?? "").toLowerCase()) return null
   const att = (notice.attorney ?? null) as { names?: unknown; address?: unknown } | null
   const people = attorneyPeople(att?.names)
   const decedent = String(notice.decedent ?? "").trim()

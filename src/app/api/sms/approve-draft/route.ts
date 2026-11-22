@@ -17,6 +17,7 @@
 // Same hard rails as every send path: A2P gate, DNC check, quiet
 // hours. Auth: dialer or operator session.
 
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { NextRequest, NextResponse } from "next/server"
 import { getDialerOrOperatorSession } from "@/lib/dialer-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -93,12 +94,15 @@ export async function POST(req: NextRequest) {
 
   // DNC re-check at the moment of send
   if (draft.listing_slug) {
-    const { data: lead } = await supabaseAdmin
+    const { data: lead, error } = await supabaseAdmin
       .from("homeowner_requests")
       .select("phone_metadata")
       .eq("source", "bot")
       .eq("pipeline_lead_key", draft.listing_slug)
       .maybeSingle()
+    if (error || !lead) return NextResponse.json({ error: "Could not verify lead before sending." }, { status: 409 })
+    const hold = trusteeNoticeHold(lead.phone_metadata)
+    if (hold) return NextResponse.json({ error: `Trustee notice on hold (${hold}).` }, { status: 409 })
     const pm = (lead?.phone_metadata ?? {}) as Record<string, unknown>
     if (pm["dnc"] === true || pm["dnc"] === "true") {
       return NextResponse.json({ error: "Lead is DNC-flagged. Not sending." }, { status: 403 })

@@ -1,3 +1,4 @@
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 // ============================================================================
@@ -85,6 +86,7 @@ type HomeownerRow = WorkflowRow & {
   lien_position: string | null
   pipeline_score: number | null
   pipeline_lead_key: string | null
+  phone_metadata: unknown
   sale_date_last_seen_at: string | null
 }
 
@@ -122,7 +124,8 @@ function mapHomeowner(r: HomeownerRow): Lead {
   const summaryBits: string[] = []
   if (r.property_address) summaryBits.push(r.property_address)
   if (r.property_value) summaryBits.push(`AVM ${fmtCurrency(r.property_value)}`)
-  const saleFlag = saleDateFreshness(r.trustee_sale_date, r.sale_date_last_seen_at)
+  const hold = trusteeNoticeHold(r.phone_metadata)
+  const saleFlag = hold ? { short: hold.replaceAll("_", " "), long: hold === "stale_notice" ? "Notice needs trustee verification." : hold } : saleDateFreshness(r.trustee_sale_date, r.sale_date_last_seen_at)
   if (r.trustee_sale_date)
     summaryBits.push(
       `sale ${fmtDateHuman(r.trustee_sale_date)}${saleFlag ? ` (${saleFlag.short})` : ""}`

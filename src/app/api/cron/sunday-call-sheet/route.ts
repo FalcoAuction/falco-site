@@ -17,6 +17,7 @@
 //
 // Cron: Sunday 23:00 UTC (~6pm CT). Auth: CRON_SECRET bearer.
 
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { Resend } from "resend"
@@ -147,10 +148,7 @@ export async function GET(req: NextRequest) {
         : null
       const fresh = seenDaysAgo !== null && seenDaysAgo <= 14
       const pm = (r.phone_metadata || {}) as Record<string, unknown>
-      const manualStatus =
-        ((pm["sale_status"] as Record<string, unknown> | undefined)?.[
-          "status"
-        ] as string) || ""
+      const noticeHold = trusteeNoticeHold(pm)
       const dncFlag = pm["dnc"] === true || pm["dnc"] === "true"
       // Skiptrace match quality: name-verified numbers connect to the
       // actual owner far more often than address-associated ones.
@@ -163,7 +161,7 @@ export async function GET(req: NextRequest) {
         daysToSale,
         seenDaysAgo,
         fresh,
-        manualStatus,
+        noticeHold,
         dncFlag,
         nameVerified,
       }
@@ -172,7 +170,7 @@ export async function GET(req: NextRequest) {
       (l) =>
         l.equity > 25000 &&
         !l.dncFlag &&
-        !["cancelled", "reinstated", "ran"].includes(l.manualStatus) &&
+        !l.noticeHold &&
         (l.phone || "").replace(/\D/g, "").length >= 10
     )
     .sort((a, b) => {

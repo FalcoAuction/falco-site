@@ -6,6 +6,7 @@
 // estate's attorney named on the notice. One draft per estate per attorney;
 // existing drafts are never overwritten (edits survive re-runs).
 
+import { ESTATE_COLUMNS, estateKey, heldEstateCases } from "@/lib/estate-draft-review"
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -42,7 +43,7 @@ async function run() {
   const [leads, contacts, suppressed] = await Promise.all([
     ids.length
       ? db.from("homeowner_requests_staging")
-          .select("id,county,property_address,property_value,property_value_source,raw_payload,staged_at")
+          .select(`id,${ESTATE_COLUMNS},staged_at`).neq("staging_status", "rejected")
           .in("id", ids).gte("staged_at", since)
       : Promise.resolve({ data: [], error: null }),
     db.from("outreach_contacts").select("id,person_name,org_name,email").eq("kind", "attorney").limit(5000),
@@ -54,7 +55,9 @@ async function run() {
   const blocked = new Set(((suppressed.data ?? []) as { email: string }[]).map((r) => r.email))
 
   const rows: Record<string, unknown>[] = []
+  const held = await heldEstateCases((leads.data ?? []).map(estateKey))
   for (const lead of leads.data ?? []) {
+    if (held.has(estateKey(lead) ?? "")) continue
     const e = estateFacts(lead as Parameters<typeof estateFacts>[0])
     if (!e) continue
     for (const person of e.people) {
