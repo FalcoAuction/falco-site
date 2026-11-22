@@ -1,3 +1,4 @@
+import { chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
@@ -37,10 +38,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
-  const mathSheetId = lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
+  const cityCase = lead.raw_payload?.chattanooga_codes as { case_number?: string } | undefined
+  const chatt = lead.bot_source === "chattanooga_codes" ? chattanoogaParcel({
+    ...lead, case_number: cityCase?.case_number, parcelReview: lead.raw_payload?.chattanooga_parcel_review,
+  }) : null
+  const mathSheetId = chatt || lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
   const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
-  const owner = lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
-  const laneTag = lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
+  const owner = chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
+  const laneTag = chatt || lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const warn = warnAsset(lead, lead.raw_payload ?? {})
   const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
   const aircraft = (!warn && Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
@@ -55,12 +60,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const request = String(attrs.Request_Nbr ?? "").trim()
   const caseLink = "https://services2.arcgis.com/HdTo6HJqh92wn4D8/arcgis/rest/services/Property_Standards_Violations_2/FeatureServer/0/query?f=pjson&outFields=Request_Nbr,Status,Property_Address,Property_APN,Violations_Noted,Reported_Problem&returnGeometry=false&where=" +
     encodeURIComponent("Request_Nbr='" + request.replaceAll("'", "''") + "'").replaceAll("'", "%27")
-  const ownerContactHeld = !!warn || metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
+  const ownerContactHeld = !!chatt || !!warn || metroHeld || (lead.bot_source === "nashville_codes" && review.owner_changed === true) || !!data.noticeHold || probate?.contact_hold === true || pp?.routable === false
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = warn ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
-  const situation = warn ? "TN WARN employment notice" : data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
+  const sale = chatt || warn ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const situation = chatt ? "Chattanooga code research" : warn ? "TN WARN employment notice" : data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !/^[\w#]+=/.test(s.trim())).join("\n")
   const valueSource = lead.property_value_source
@@ -92,7 +97,15 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div>
-            {warn ? <><div className="crm-section-label">Employment notice</div>
+            {chatt ? <><div className="crm-section-label">Chattanooga case {cityCase?.case_number}</div>
+              {chatt.assessor ? <dl className="crm-props">
+                <dt>County parcel</dt><dd>{chatt.assessor.parcel}</dd>
+                <dt>County appraisal</dt><dd>{chatt.assessor.value === null ? "Unverified" : money(chatt.assessor.value)}</dd>
+                <dt>County file stamp</dt><dd>{chatt.assessor.stamp}</dd>
+                <dt>Source</dt><dd><a href={assessorSource} target="_blank" rel="noreferrer">Hamilton County assessor export</a></dd>
+              </dl> : <p>{parcelHoldLabel(chatt.parcelStatus)}</p>}
+              <Link href="/crm/leads/chattanooga">Active Chattanooga case research</Link>
+            </> : warn ? <><div className="crm-section-label">Employment notice</div>
               <dl className="crm-props"><dt>Employment notice date(s)</dt><dd>{employmentDate(lead.raw_payload ?? {})}</dd>
                 {warnDocuments(lead.raw_payload ?? {}).map(doc => <div key={doc.label + doc.detail + doc.source}>
                   <dt>{doc.label}</dt><dd><a href={doc.source} target="_blank" rel="noreferrer">{doc.detail}</a> {doc.date}</dd></div>)}
