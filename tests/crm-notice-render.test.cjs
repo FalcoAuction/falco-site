@@ -306,6 +306,10 @@ test('FAA overlap is research until the current aircraft, authority and transact
     assert.equal(result.pp.routable,false); assert.equal(result.confirmed.length,0)
   }
   assert.equal(read([plane],tag,ev).confirmed.length,1)
+  const prospect={...tag,routable:false,prospect:true,qualification:'qualified_prospect',registry_assets:[plane]}
+  assert.equal(read([plane],prospect,null).pp.prospect,true)
+  assert.equal(read([plane],prospect,null).pp.routable,false)
+  assert.equal(read([{...plane,serial:'different'}],prospect,null).pp.prospect,false)
   const independent={lane:'vessel_arrest',categories:['vessel'],routable:true}
   assert.equal(read([plane],independent,null).pp,independent)
   assert.equal(read([plane],independent,null).confirmed.length,0)
