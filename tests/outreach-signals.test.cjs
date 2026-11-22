@@ -63,7 +63,7 @@ test('draft copy: short, the estate by name, FALCO routes, no em dashes, no list
   assert.match(d.body, /I run FALCO here in Nashville\./)
   assert.match(d.body, /one company to call instead of a handful of auction houses/)
   assert.equal(lib.estateDraft({ ...e.facts, decedent: 'JOHN MCKAIN ROLFE JR', attorney: 'A B' }).subject, 'Rolfe estate')
-  assert.ok(!d.body.includes('—'), 'no em dashes')
+  assert.ok(!d.body.includes('â€”'), 'no em dashes')
   assert.ok(!/list (it|the house|with)/i.test(d.body), 'does not ask to list')
   assert.ok(d.body.split(/\s+/).length < 120, 'stays short')
 })
@@ -126,13 +126,14 @@ test('asset views split held prospects and retain separate assets at the same ad
   ].map(row => ({ ...row, property_address: '100 TEST ST', county: 'davidson' }))
   const db = { from(table) {
     let result = table === 'homeowner_requests_staging' ? [...rows] : []
-    return { select() { return this }, not() { return this }, order() { return this }, limit() { return this },
-      or(expr) { if (expr.includes('routable')) result = result.filter(r => r.pp.routable); return this },
-      eq(field, val) {
-        if (field.endsWith('routable')) result = result.filter(r => String(r.pp.routable) === val)
-        if (field.endsWith('prospect')) result = result.filter(r => String(r.pp.prospect) === val)
-        return this
-      },
+    return { select(cols) {
+      if (cols.startsWith('id,routable:')) result = result.map(r => ({
+        id: r.id, routable: String(r.pp.routable), prospect: String(r.pp.prospect), key: r.pp.dedupe_key,
+      }))
+      return this
+    }, not() { return this }, order() { return this }, limit() { return this },
+      or(expr) { assert.ok(!expr.includes('routable'), 'routing filter before ID lookup'); return this },
+      eq(field) { assert.ok(!field.includes('personal_property'), 'qualification before ID lookup'); return this },
       in(field, ids) { result = result.filter(r => ids.includes(r[field])); return this },
       range() { return this }, then(done) { return Promise.resolve({ data: result }).then(done) } }
   } }
