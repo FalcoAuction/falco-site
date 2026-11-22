@@ -1,3 +1,5 @@
+import { knoxvilleEvidence } from "@/lib/knoxville-research"
+import { HearingRecord } from "@/app/crm/hearing-record"
 import { memphisEvidence } from "@/lib/memphis-research"
 import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
@@ -39,6 +41,13 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  if (lead.bot_source === "knoxville_poh") {
+    const evidence = knoxvilleEvidence(lead)
+    return <>
+      <Head title={lead.property_address || "Knoxville hearing record"}><Link href="/crm/leads/knoxville">Knoxville hearing research</Link></Head>
+      {evidence ? <HearingRecord evidence={evidence}/> : <p>Historical or unverified hearing record. A city document identifying this case and CLT parcel is required for research.</p>}
+    </>
+  }
   if (lead.bot_source === "memphis_codes") {
     const e = memphisEvidence(lead)
     return <>

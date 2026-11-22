@@ -78,13 +78,13 @@ export async function cityCodeWorkflowHolds(slugs: string[]) {
   const fields = "pipeline_lead_key,county,property_address,case_number:raw_payload->chattanooga_codes->>case_number,review:phone_metadata->chattanooga_case_review"
   const [stage, live] = await Promise.all([
     supabaseAdmin.from("homeowner_requests_staging").select(`${fields},bot_source,staging_status` as const)
-      .in("bot_source", ["chattanooga_codes","memphis_codes"]).in("pipeline_lead_key", slugs),
-    supabaseAdmin.from("homeowner_requests").select(`${fields},memphis:raw_payload->memphis_311->>INCIDENT_NUMBER` as const).eq("source", "bot").in("pipeline_lead_key", slugs)
-      .or("raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null,raw_payload->memphis_311.not.is.null,raw_payload->memphis_codes_review.not.is.null"),
+      .in("bot_source", ["chattanooga_codes","memphis_codes","knoxville_poh"]).in("pipeline_lead_key", slugs),
+    supabaseAdmin.from("homeowner_requests").select(`${fields},poh:raw_payload->>poh_section,memphis:raw_payload->memphis_311->>INCIDENT_NUMBER` as const).eq("source", "bot").in("pipeline_lead_key", slugs)
+      .or("raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null,raw_payload->memphis_311.not.is.null,raw_payload->memphis_codes_review.not.is.null,raw_payload->poh_section.not.is.null,phone_metadata->knoxville_hearing_review.not.is.null"),
   ])
   if (stage.error || live.error) throw new Error("Unable to verify Chattanooga workflow cases")
   for (const row of [...stage.data, ...live.data]) {
-    if (("bot_source" in row && row.bot_source === "memphis_codes") || ("memphis" in row && row.memphis) || !reviewedCase({ ...row, bot_source: "chattanooga_codes" })) held.add(row.pipeline_lead_key)
+    if (("bot_source" in row && ["memphis_codes","knoxville_poh"].includes(row.bot_source)) || ("poh" in row && row.poh) || ("memphis" in row && row.memphis) || !reviewedCase({ ...row, bot_source: "chattanooga_codes" })) held.add(row.pipeline_lead_key)
   }
   return held
 }

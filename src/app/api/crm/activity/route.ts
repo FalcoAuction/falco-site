@@ -4,6 +4,7 @@
 // views always agree. Admin session only.
 
 import { NextRequest, NextResponse } from "next/server"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 import { getAdminSession } from "@/lib/admin-session"
 import { recordActivity, upsertWorkflow, type DialerChannel, type DialerOutcome, type DialerNextAction } from "@/lib/dialer-data"
 import type { DialerStatus } from "@/lib/dialer-types"
@@ -26,6 +27,11 @@ export async function POST(req: NextRequest) {
   if (nextAction && !NEXT.includes(nextAction)) return NextResponse.json({ error: "Invalid next action." }, { status: 400 })
   const nextActionAt = body.nextActionAt ? new Date(String(body.nextActionAt)) : null
   if (nextActionAt && Number.isNaN(nextActionAt.getTime())) return NextResponse.json({ error: "Invalid date." }, { status: 400 })
+  if (!supabaseAdmin) return NextResponse.json({ error: "Database unavailable." }, { status: 503 })
+  const hearing = await supabaseAdmin.from("homeowner_requests_staging").select("id")
+    .eq("pipeline_lead_key", slug).eq("bot_source", "knoxville_poh").limit(1)
+  if (hearing.error) return NextResponse.json({ error: "Unable to verify lead source." }, { status: 503 })
+  if (hearing.data?.length) return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
   const notes = String(body.notes ?? "").slice(0, 4000)
 
   if (body.channel) {
