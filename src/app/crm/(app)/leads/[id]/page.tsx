@@ -14,6 +14,7 @@ import { landEvidence } from "@/lib/land-evidence"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { aircraftAsset } from "@/lib/aircraft-evidence"
+import { memphisValuation, shelbyEstimateSource } from "@/lib/memphis-valuation"
 import { PP_LANE_LABEL, addressText, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents } from "@/lib/crm-data"
 import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import { Icon } from "@/app/crm/icons"
@@ -99,7 +100,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   }) : null
   const mathSheetId = chatt || lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
   const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
-  const owner = chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
+  const memphis = memphisValuation(lead)
+  const owner = memphis ? memphis.borrower : chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
   const laneTag = chatt || lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const warn = warnAsset(lead, lead.raw_payload ?? {})
   const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
@@ -136,7 +138,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <aside className="crm-record-side">
           <div>
             <div className="crm-record-title">{lead.property_address ?? "No address"}</div>
-            <div className="crm-muted" style={{ marginTop: 2 }}>{titleCase(owner) || "Owner unknown"} · {titleCase(lead.county)}</div>
+            <div className="crm-muted" style={{ marginTop: 2 }}>{memphis ? "Notice borrower: " : ""}{titleCase(owner) || (memphis ? "Unknown" : "Owner unknown")} · {titleCase(lead.county)}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
               <StatusPill status={workflow?.status} />
               <span className="pill">{situation}</span>
@@ -179,7 +181,13 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                   <dt>Source</dt><dd><a href={parcel.url} target="_blank" rel="noreferrer">Davidson County parcel record</a></dd></dl></>}
             </> : <><div className="crm-section-label">Money</div>
             <dl className="crm-props">
-              <dt>Value</dt><dd>{money(lead.property_value ?? opp?.property_value) || "Not valued"}{valueSource ? <span className="crm-faint"> · {valueSource}</span> : null}</dd>
+              <dt>{memphis && lead.property_value_source === shelbyEstimateSource ? "Assessment-derived estimate" : "Value"}</dt><dd>{money(lead.property_value ?? opp?.property_value) || "Not valued"}{valueSource && !(memphis && lead.property_value_source === shelbyEstimateSource) ? <span className="crm-faint"> · {valueSource}</span> : null}</dd>
+              {memphis?.bill ? <>
+                <dt>County tax assessment ({memphis.bill.year})</dt><dd>{money(memphis.bill.assessed)} / {memphis.bill.ratio * 100}% class ratio</dd>
+                <dt>County tax parcel</dt><dd><a href={memphis.bill.source}>{memphis.bill.parcel}</a></dd>
+                {memphis.bill.owner && <><dt>Owner on county tax bill</dt><dd>{memphis.bill.owner}</dd></>}
+              </> : null}
+              {memphis?.assessorOwner && <><dt>Owner on assessor parcel record</dt><dd>{memphis.assessorOwner}</dd></>}
               <dt>FALCO fee</dt><dd>{money(opp?.expected_fee) || "Not ranked"}</dd>
               {lead.mortgage_balance ? <><dt>Mortgage</dt><dd>{money(lead.mortgage_balance)}</dd></> : null}
               {opp ? <><dt>Rank</dt><dd>{opp.rank > 100000 ? `FL #${opp.rank - 100000}` : `#${opp.rank}`}</dd></> : null}
@@ -189,7 +197,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <div>
             <div className="crm-section-label">Contact</div>
             <dl className="crm-props">
-              <dt>{warn ? "Employer" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
+              <dt>{memphis ? "Notice borrower" : warn ? "Employer" : "Owner"}</dt><dd>{titleCase(owner) || "Unknown"}</dd>
               <dt>Phone</dt><dd>{phones.length ? phones.map((p) => <div key={p}>{ownerContactHeld ? fmtPhone(p) : <a href={`tel:+1${p}`}>{fmtPhone(p)}</a>}</div>) : <span className="crm-faint">None. Skip trace is parked until licensed.</span>}</dd>
               {lead.email ? <><dt>Email</dt><dd>{lead.email}</dd></> : null}
               {opp?.contact ? <><dt>Path</dt><dd>{opp.contact}</dd></> : null}
