@@ -156,14 +156,14 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
     // Read the staged rows directly: a lead being worked is not always in
     // the ranked top 1,000 (no value yet, or a dialer-only lead).
     const st = await supabaseAdmin.from("homeowner_requests_staging")
-      .select("id,bot_source,distress_type,county,property_address,owner_name_records,full_name,property_value,trustee_sale_date,pipeline_lead_key")
+      .select("id,bot_source,distress_type,county,property_address,owner_name_records,full_name,property_value,trustee_sale_date,pipeline_lead_key,mackie_notice_hold")
       .in("pipeline_lead_key", slugs).limit(300)
-    type St = { id: string; bot_source: string; distress_type: string | null; county: string | null; property_address: string | null
+    type St = { mackie_notice_hold: string | null; id: string; bot_source: string; distress_type: string | null; county: string | null; property_address: string | null
       owner_name_records: string | null; full_name: string | null; property_value: number | null; trustee_sale_date: string | null; pipeline_lead_key: string }
     const seen = new Set<string>()
     const opps: Opportunity[] = []
     for (const s of (st.data ?? []) as St[]) {
-      if (seen.has(s.pipeline_lead_key)) continue
+      if (s.mackie_notice_hold || seen.has(s.pipeline_lead_key)) continue
       seen.add(s.pipeline_lead_key)
       const value = Number(s.property_value ?? 0)
       opps.push({ rank: 0, staging_id: s.id, bot_source: s.bot_source, distress_type: s.distress_type, county: s.county,
@@ -175,7 +175,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
     rows.sort((a, b) => (b.last_contact_at ?? "").localeCompare(a.last_contact_at ?? ""))
     return { day, rows, error: st.error?.message }
   }
-  let q = supabaseAdmin.from("lead_opportunities").select(OPP_COLS).eq("captured_on", day)
+  let q = supabaseAdmin.from("crm_ranked_opportunities").select(OPP_COLS).eq("captured_on", day)
   q = applyView(q, view)
   if (opts.county) q = q.eq("county", opts.county)
   if (opts.q) q = q.or(`property_address.ilike.%${opts.q.replace(/[%,()]/g, " ")}%,owner_name.ilike.%${opts.q.replace(/[%,()]/g, " ")}%`)
@@ -194,7 +194,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("lead_opportunities").select("staging_id,fit_label,sale_date,county").eq("captured_on", day).limit(5000)
+  const r = await supabaseAdmin.from("crm_ranked_opportunities").select("staging_id,fit_label,sale_date,county").eq("captured_on", day).limit(5000)
   const holds = await noticeHolds()
   const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
   const fl = new Set(FL_COUNTIES)
@@ -233,17 +233,17 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
 export async function getLead(id: string): Promise<{ noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
-    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload")
+    .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload,mackie_notice_hold")
     .eq("id", id).maybeSingle()
   const lead = r.data as StagedLead | null
   if (!lead) return null
   const day = await latestOpportunityDay()
   const [o, workflow, activities] = await Promise.all([
-    day ? supabaseAdmin.from("lead_opportunities").select(OPP_COLS).eq("captured_on", day).eq("staging_id", id).maybeSingle() : Promise.resolve({ data: null }),
+    day ? supabaseAdmin.from("crm_ranked_opportunities").select(OPP_COLS).eq("captured_on", day).eq("staging_id", id).maybeSingle() : Promise.resolve({ data: null }),
     lead.pipeline_lead_key ? getWorkflow(lead.pipeline_lead_key) : Promise.resolve(null),
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
-  return { noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? null, lead, opp: (o.data as Opportunity | null) ?? null, workflow, activities }
+  return { noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? r.data?.mackie_notice_hold ?? null, lead, opp: (o.data as Opportunity | null) ?? null, workflow, activities }
 }
 
 export type TodayData = {
@@ -255,12 +255,13 @@ export type TodayData = {
   counts: { leads: number; landlords: number; working: number }
 }
 
-async function stagingFor(slugs: string[]): Promise<Map<string, { id: string; address: string | null }>> {
-  const out = new Map<string, { id: string; address: string | null }>()
+async function stagingFor(slugs: string[]): Promise<Map<string, { id: string; address: string | null; hold: string | null }>> {
+  const out = new Map<string, { id: string; address: string | null; hold: string | null }>()
   if (!supabaseAdmin || !slugs.length) return out
-  const r = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,property_address").in("pipeline_lead_key", slugs).limit(500)
-  for (const x of (r.data ?? []) as { id: string; pipeline_lead_key: string; property_address: string | null }[]) {
-    if (!out.has(x.pipeline_lead_key)) out.set(x.pipeline_lead_key, { id: x.id, address: x.property_address })
+  const r = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,property_address,mackie_notice_hold").in("pipeline_lead_key", slugs).limit(500)
+  if (r.error) throw new Error(r.error.message)
+  for (const x of (r.data ?? []) as { id: string; pipeline_lead_key: string; property_address: string | null; mackie_notice_hold: string | null }[]) {
+    if (!out.has(x.pipeline_lead_key)) out.set(x.pipeline_lead_key, { id: x.id, address: x.property_address, hold: x.mackie_notice_hold })
   }
   return out
 }
@@ -275,7 +276,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     db.from("dialer_lead_workflow").select("listing_slug,status,next_action,next_action_at,summary_notes")
       .lte("next_action_at", endOfToday.toISOString()).not("status", "in", "(closed_lost,closed_won)")
       .order("next_action_at").limit(25),
-    day ? db.from("lead_opportunities").select(OPP_COLS).eq("captured_on", day)
+    day ? db.from("crm_ranked_opportunities").select(OPP_COLS).eq("captured_on", day)
       .gte("sale_date", isoDay(new Date())).lte("sale_date", isoDay(addDays(14))).order("sale_date").limit(12) : Promise.resolve({ data: [] }),
     db.from("dialer_activities").select("id,listing_slug,occurred_at,channel,outcome,notes,next_action,next_action_at,created_by,created_at")
       .order("occurred_at", { ascending: false }).limit(10),
@@ -283,7 +284,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
     db.from("outreach_sends").select("id", { count: "exact", head: true }).eq("status", "sent").gte("sent_at", isoDay(new Date())),
     db.from("outreach_suppressions").select("email", { count: "exact", head: true }),
     db.from("outreach_contacts").select("id", { count: "exact", head: true }),
-    day ? db.from("lead_opportunities").select("rank", { count: "exact", head: true }).eq("captured_on", day) : Promise.resolve({ count: 0 }),
+    day ? db.from("crm_ranked_opportunities").select("rank", { count: "exact", head: true }).eq("captured_on", day) : Promise.resolve({ count: 0 }),
     db.from("landlord_portfolios").select("owner_name", { count: "exact", head: true }),
     db.from("dialer_lead_workflow").select("listing_slug", { count: "exact", head: true }).not("status", "in", "(new,closed_lost,closed_won)"),
   ])
@@ -302,7 +303,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   const holds = await noticeHolds()
   const where = await stagingFor([...new Set([...dueRows.map((d) => d.listing_slug), ...recentRows.map((r) => r.listingSlug)])])
   return {
-    due: dueRows.filter(d => !holds.slugs.has(d.listing_slug)).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
+    due: dueRows.filter(d => !holds.slugs.has(d.listing_slug) && !where.get(d.listing_slug)?.hold).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
     sales: reviewSales ? await attachWorkflow((sales.data ?? []) as Opportunity[]) : [],
     recent: recentRows.map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
