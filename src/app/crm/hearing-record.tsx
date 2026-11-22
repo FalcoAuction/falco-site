@@ -5,7 +5,11 @@ export function HearingRecord({ evidence: e }: { evidence: NonNullable<ReturnTyp
     <h3>{e.agenda ? "Published petition" : "Published hearing result"}</h3>
     <p>Case {e.number} · CLT {e.parcel}</p>
     <p>Hearing {e.hearing} · {e.violations}</p>
-    <p>{e.agenda ? "Hearing outcome unverified." : "Decision document available for review. Current order unverified."}</p>
+    {e.oral ? <>
+      <p><strong>Oral ruling</strong> · {e.oral.action} within {e.oral.days} days</p>
+      <p><a href={e.oral.url}>Play ruling at {e.oral.timestamp}</a> · <a href={e.oral.archive}>Broadcaster archive</a> · checked {e.oral.checked}</p>
+    </> : <p>{e.agenda ? "Hearing outcome unverified." : "Decision document available for review. Current order unverified."}</p>}
+    <p>Written order not verified.</p>
     {e.complaint && <p>City complaint status: {e.complaint.status} as of {e.complaint.statusDate} (checked {e.complaint.checkedOn})</p>}
     {e.assessor ? <dl className="crm-props">
       <dt>Tax-roll owner</dt><dd>{e.assessor.owner}</dd>

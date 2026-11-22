@@ -227,6 +227,24 @@ test('Knoxville separates the petition, dated complaint and exact county bill', 
     {appraised_value:0},{source_url:roll.source_url+'0'},{checked_on:'2026-11-23'}]) {
     assert.equal(check({raw_payload:{...raw,knox_assessor:{...roll,...change}}}).assessor,null)
   }
+  const ruling = {case_number:number,parcel_id:parcel,hearing_date:review.hearing_date,
+    source_url:'https://archive.org/details/public-officer-r-1744-261030',offset_seconds:94,
+    action:'repair',days:90,checked_on:'2026-11-22'}
+  const ruled = (patch={}) => check({raw_payload:{...raw,knoxville_oral_ruling:{...ruling,...patch}}})
+  const oralHtml=renderToStaticMarkup(HearingRecord({evidence:ruled()}))
+  assert.match(oralHtml,/Oral ruling/)
+  assert.match(oralHtml,/Repair within 90 days/)
+  assert.match(oralHtml,/Play ruling at 1:34/)
+  assert.match(oralHtml,/mp4#t=94/)
+  assert.match(oralHtml,/Written order not verified/)
+  assert.doesNotMatch(oralHtml,/Hearing outcome unverified|Deadline|<form/)
+  assert.equal(ruled({action:'repair_or_demolish'}).oral.action,'Repair or demolish')
+  for (const patch of [{case_number:'other'},{parcel_id:'other'},{hearing_date:'2026-10-29'},
+    {source_url:ruling.source_url+'/other'},{offset_seconds:-1},{offset_seconds:2444},{days:0},
+    {action:'demolish'},{checked_on:'2026-10-29'},{checked_on:'2026-11-23'}]) {
+    assert.equal(ruled(patch).oral,null)
+    assert.ok(ruled(patch).agenda)
+  }
   assert.equal(check({pipeline_lead_key:'legacy'}),null)
   for (const change of [{case_number:'other'},{parcel_id:'other'},{property_address:'other'},
     {source_url:'https://example.org/doc'},{status:'published_result_review'},{meeting_cancelled:true}])
