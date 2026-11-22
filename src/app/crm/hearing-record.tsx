@@ -10,7 +10,7 @@ export function HearingRecord({ evidence: e }: { evidence: NonNullable<ReturnTyp
     {e.assessor ? <dl className="crm-props">
       <dt>Tax-roll owner</dt><dd>{e.assessor.owner}</dd>
       <dt>County appraisal ({e.assessor.year})</dt><dd>${e.assessor.value.toLocaleString("en-US")}</dd>
-      <dt>County evidence</dt><dd><a href={e.assessor.url}>Knox County Trustee tax bill</a> � checked {e.assessor.checked}</dd>
+      <dt>County evidence</dt><dd><a href={e.assessor.url}>Knox County Trustee tax bill</a> · checked {e.assessor.checked}</dd>
     </dl> : <p>County owner and appraisal unverified.</p>}
     <p>Sale authority unverified.</p>
     <p><a href={e.url}>Official city {e.agenda ? "agenda" : "results"}</a> · <a href={e.caseUrl}>Official city case detail</a></p>
