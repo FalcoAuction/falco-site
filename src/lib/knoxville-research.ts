@@ -19,6 +19,22 @@ function day(value: unknown) {
   return Number.isFinite(date.valueOf()) && date.toISOString().startsWith(s) ? s : ""
 }
 
+// The broadcaster's October 30 recording runs 40:43. Only reviewed segments of this hearing are supported.
+const oralArchive = "https://archive.org/details/public-officer-r-1744-261030"
+const oralVideo = "https://archive.org/download/public-officer-r-1744-261030/Public%20Officer%20R%201744_261030.ia.mp4"
+
+function oralRuling(value: unknown, number: string, parcel: string, hearing: string, today: string) {
+  const r = obj(value), seconds = r.offset_seconds, days = r.days, checked = day(r.checked_on)
+  if (hearing !== "2026-10-30" || r.hearing_date !== hearing || r.case_number !== number ||
+      r.parcel_id !== parcel || r.source_url !== oralArchive || !checked || checked < hearing || checked > today ||
+      typeof seconds !== "number" || !Number.isInteger(seconds) || seconds < 0 || seconds > 2443 ||
+      typeof days !== "number" || !Number.isSafeInteger(days) || days <= 0 ||
+      (r.action !== "repair" && r.action !== "repair_or_demolish")) return null
+  return { action: r.action === "repair" ? "Repair" : "Repair or demolish", days, checked,
+    timestamp: `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2,"0")}`,
+    url: oralVideo + "#t=" + seconds, archive: oralArchive }
+}
+
 export function knoxvilleEvidence(row: Row, today = new Date().toISOString().slice(0,10)) {
   const raw = obj(row.raw_payload)
   const review = obj(row.knoxville_review ?? raw.knoxville_hearing_review)
@@ -50,7 +66,8 @@ export function knoxvilleEvidence(row: Row, today = new Date().toISOString().sli
     roll.property_address === address && checkedRoll && checkedRoll <= today && year === Number(checkedRoll.slice(0,4)) &&
     roll.source_url === countyUrl && typeof value === "number" && Number.isFinite(value) && value > 0 && str(roll.owner)
     ? { owner: str(roll.owner), value, year, url: countyUrl, checked: checkedRoll } : null
-  return { number, parcel, address, hearing, checked, url, caseUrl, agenda, violations: str(review.violations), complaint, assessor }
+  const oral = kind.startsWith("poh_") ? oralRuling(raw.knoxville_oral_ruling, number, parcel, hearing, today) : null
+  return { number, parcel, address, hearing, checked, url, caseUrl, agenda, oral, violations: str(review.violations), complaint, assessor }
 }
 
 export async function listKnoxvilleResearch(after?: string) {
@@ -59,14 +76,14 @@ export async function listKnoxvilleResearch(after?: string) {
   const rows: {id: string; evidence: NonNullable<ReturnType<typeof knoxvilleEvidence>>}[] = []
   for (;;) {
     let query = supabaseAdmin.from("homeowner_requests_staging")
-      .select("id,bot_source,pipeline_lead_key,county,property_address,section:raw_payload->>poh_section,number:raw_payload->>case_number,parcel:raw_payload->>parcel_id,original:raw_payload->knoxville_hearing_review,assessor:raw_payload->knox_assessor,knoxville_review:phone_metadata->knoxville_hearing_review")
+      .select("id,bot_source,pipeline_lead_key,county,property_address,section:raw_payload->>poh_section,number:raw_payload->>case_number,parcel:raw_payload->>parcel_id,original:raw_payload->knoxville_hearing_review,assessor:raw_payload->knox_assessor,oral:raw_payload->knoxville_oral_ruling,knoxville_review:phone_metadata->knoxville_hearing_review")
       .eq("bot_source","knoxville_poh").order("id").limit(80)
     if (cursor) query = query.gt("id",cursor)
     const { data, error } = await query
     if (error) throw new Error("Unable to load Knoxville hearings")
     for (const row of data ?? []) {
       const evidence = knoxvilleEvidence({ ...row, raw_payload: { poh_section: row.section, case_number: row.number,
-        parcel_id: row.parcel, knoxville_hearing_review: row.original, knox_assessor: row.assessor } })
+        parcel_id: row.parcel, knoxville_hearing_review: row.original, knox_assessor: row.assessor, knoxville_oral_ruling: row.oral } })
       if (evidence) {
         if (rows.length === 25) return { rows, next: rows[24].id }
         rows.push({id:row.id,evidence})
