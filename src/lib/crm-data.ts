@@ -6,6 +6,8 @@
 // Staging is ~400 MB: only ever read it by primary key or a short id list.
 
 import "server-only"
+import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
+import { landEvidence, type LandEvidence } from "@/lib/land-evidence"
 import { cache } from "react"
 import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -108,13 +110,24 @@ const noticeHolds = cache(async () => {
 })
 
 /** Slug (pipeline_lead_key) and workflow for a page of opportunities. */
-async function attachWorkflow(opps: Opportunity[]): Promise<LeadRow[]> {
+async function attachWorkflow(opps: Opportunity[], existingWorkflow = false): Promise<LeadRow[]> {
   if (!supabaseAdmin || opps.length === 0) return opps.map((o) => ({ ...o, slug: null, status: null, next_action_at: null, last_contact_at: null, has_phone: false }))
   const holds = await noticeHolds()
   opps = opps.filter(o => !holds.stagingIds.has(o.staging_id))
   if (!opps.length) return []
-  const keys = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,phone").in("id", opps.map((o) => o.staging_id))
-  const keyRows = (keys.data ?? []) as { id: string; pipeline_lead_key: string | null; phone: string | null }[]
+  const keyRows: { id: string; pipeline_lead_key: string | null; phone: string | null }[] = []
+  const research = new Set<string>()
+  for (let start = 0; start < opps.length; start += 80) {
+    const { data, error } = await supabaseAdmin.from("homeowner_requests_staging")
+      .select(existingWorkflow ? "id,pipeline_lead_key,phone" : `id,pipeline_lead_key,phone,${LAND_FIELDS}`).in("id", opps.slice(start, start + 80).map(row => row.staging_id))
+    if (error) throw new Error(error.message)
+    for (const record of data ?? []) {
+      const row = record as unknown as StagedBucket & { phone: string | null }
+      keyRows.push(row)
+      if (!existingWorkflow && landEvidence(row, row)?.corroborated === false) research.add(row.id)
+    }
+  }
+  opps = opps.filter(o => !research.has(o.staging_id))
   const slugOf = new Map(keyRows.map((r) => [r.id, r.pipeline_lead_key]))
   const phoned = new Set(keyRows.filter((r) => (r.phone ?? "").trim()).map((r) => r.id))
   const slugs = [...new Set([...slugOf.values()].filter(Boolean))] as string[]
@@ -158,7 +171,7 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
         expected_fee: value * AUCTION_REALIZATION * 0.1 * 0.2, fit_label: (s.distress_type ?? "Lead").replace(/_/g, " ").toLowerCase().replace(/^\w/, (m) => m.toUpperCase()),
         score: 0, sale_date: s.trustee_sale_date, contact: null })
     }
-    const rows = await attachWorkflow(opps)
+    const rows = await attachWorkflow(opps, true)
     rows.sort((a, b) => (b.last_contact_at ?? "").localeCompare(a.last_contact_at ?? ""))
     return { day, rows, error: st.error?.message }
   }
@@ -167,8 +180,16 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
   if (opts.county) q = q.eq("county", opts.county)
   if (opts.q) q = q.or(`property_address.ilike.%${opts.q.replace(/[%,()]/g, " ")}%,owner_name.ilike.%${opts.q.replace(/[%,()]/g, " ")}%`)
   q = view === "soon" ? q.order("sale_date").order("rank") : q.order("rank")
-  const r = await q.limit(opts.limit ?? 200)
-  return { day, rows: await attachWorkflow((r.data ?? []) as Opportunity[]), error: r.error?.message }
+  const limit = opts.limit ?? 200
+  q = q.order("staging_id")
+  const rows: LeadRow[] = []
+  for (let offset = 0; rows.length < limit; offset += limit) {
+    const { data, error } = await q.range(offset, offset + limit - 1)
+    if (error) return { day, rows: [], error: error.message }
+    rows.push(...await attachWorkflow((data ?? []) as Opportunity[]))
+    if ((data?.length ?? 0) < limit) break
+  }
+  return { day, rows: rows.slice(0, limit) }
 }
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
@@ -244,7 +265,7 @@ async function stagingFor(slugs: string[]): Promise<Map<string, { id: string; ad
   return out
 }
 
-export async function getToday(): Promise<TodayData> {
+export async function getToday(reviewSales = true): Promise<TodayData> {
   const empty: TodayData = { due: [], sales: [], recent: [], quality: { total: 0, ready: 0, day: null }, outreach: { sentToday: 0, suppressed: 0, contacts: 0 }, counts: { leads: 0, landlords: 0, working: 0 } }
   if (!supabaseAdmin) return empty
   const db = supabaseAdmin
@@ -283,7 +304,7 @@ export async function getToday(): Promise<TodayData> {
   return {
     due: dueRows.filter(d => !holds.slugs.has(d.listing_slug)).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
-    sales: ((sales.data ?? []) as Opportunity[]).filter(o => !holds.stagingIds.has(o.staging_id)),
+    sales: reviewSales ? await attachWorkflow((sales.data ?? []) as Opportunity[]) : [],
     recent: recentRows.map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
     quality,
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
@@ -349,17 +370,18 @@ export const PP_LANE_LABEL: Record<PersonalPropertyTag["lane"], string> = {
 export type BucketRow = {
   staging_id: string; property_address: string | null; county: string | null; owner_name: string | null
   distress_type: string | null; bot_source: string; sale_date: string | null; property_value: number | null
-  lane: LaneTag | null; aircraft: AircraftTag[] | null; pp: PersonalPropertyTag | null
+  landEvidence: LandEvidence | null; lane: LaneTag | null; aircraft: AircraftTag[] | null; pp: PersonalPropertyTag | null
   slug: string | null; status: DialerStatus | null; last_contact_at: string | null
 }
+export const LAND_REVIEW_PAGE_SIZE = 50
 export type GradeFilter = "qualified" | "A" | "B" | "C" | "all"
 
-type StagedBucket = {
+export type StagedBucket = {
   id: string; property_address: string | null; county: string | null; owner_name_records: string | null; full_name: string | null
   distress_type: string | null; bot_source: string; trustee_sale_date: string | null; property_value: number | null
-  pipeline_lead_key: string | null; lane?: LaneTag | null; aircraft?: AircraftTag[] | null; pp?: PersonalPropertyTag | null
+  landEvidence?: LandEvidence | null; parcelKey?: string; pipeline_lead_key: string | null; lane?: LaneTag | null; aircraft?: AircraftTag[] | null; pp?: PersonalPropertyTag | null
 }
-const BUCKET_COLS = "id,property_address,county,owner_name_records,full_name,distress_type,bot_source,trustee_sale_date,property_value,pipeline_lead_key"
+export const BUCKET_COLS = "id,property_address,county,owner_name_records,full_name,distress_type,bot_source,trustee_sale_date,property_value,pipeline_lead_key"
 
 async function bucketWorkflow(rows: StagedBucket[]): Promise<BucketRow[]> {
   const slugs = [...new Set(rows.map((r) => r.pipeline_lead_key).filter(Boolean))] as string[]
@@ -371,7 +393,7 @@ async function bucketWorkflow(rows: StagedBucket[]): Promise<BucketRow[]> {
   return rows.map((r) => {
     const w = r.pipeline_lead_key ? wfOf.get(r.pipeline_lead_key) : undefined
     return {
-      staging_id: r.id, property_address: r.property_address, county: r.county, owner_name: r.owner_name_records ?? r.full_name,
+      landEvidence: r.landEvidence ?? null, staging_id: r.id, property_address: r.property_address, county: r.county, owner_name: r.owner_name_records ?? r.full_name,
       distress_type: r.distress_type, bot_source: r.bot_source, sale_date: r.trustee_sale_date,
       property_value: r.property_value ?? r.lane?.value ?? null, lane: r.lane ?? null, aircraft: r.aircraft ?? null, pp: r.pp ?? null,
       slug: r.pipeline_lead_key, status: w?.status ?? null, last_contact_at: w?.last_contact_at ?? null,
@@ -409,7 +431,7 @@ const assetCandidates = cache(async () => {
   return rows
 })
 
-export async function listBucket(bucket: BucketKey, opts: { research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string } = {}):
+export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: boolean; page?: number; research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string } = {}):
   Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
   const grades: Record<GradeFilter, number> = { qualified: 0, A: 0, B: 0, C: 0, all: 0 }
   if (!supabaseAdmin) return { rows: [], grades, error: "Database not configured." }
@@ -427,6 +449,8 @@ export async function listBucket(bucket: BucketKey, opts: { research?: boolean; 
       if (r.error) return { rows: [], grades, error: r.error.message }
       all.push(...((r.data ?? []) as unknown as StagedBucket[]))
     }
+  } else if (bucket === "land") {
+    all.push(...await loadLandRows(BUCKET_COLS))
   } else {
     for (let page = 0; page < 5; page++) {
       const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},lane:raw_payload->property_lane`)
@@ -442,8 +466,12 @@ export async function listBucket(bucket: BucketKey, opts: { research?: boolean; 
   const holds = await noticeHolds()
   const byAddr = new Map<string, StagedBucket>()
   for (const r of all) {
+    if (bucket === "land") {
+      if (opts.research ? !r.landEvidence || r.landEvidence.corroborated : r.landEvidence && !r.landEvidence.corroborated) continue
+      if (opts.landOpportunities && !r.landEvidence?.corroborated) continue
+    }
     if (holds.stagingIds.has(r.id) || (bucket === "assets" && (r.pp?.routable === false) !== !!opts.research)) continue
-    const k = bucket === "assets" ? r.pp?.dedupe_key || r.id : propertyKey(r)
+    const k = bucket === "assets" ? r.pp?.dedupe_key || r.id : r.parcelKey || propertyKey(r)
     const prev = byAddr.get(k)
     if (!prev || (GRADE_ORDER[r.lane?.grade ?? r.pp?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? prev.pp?.grade ?? ""] ?? 9)) byAddr.set(k, r)
   }
@@ -451,20 +479,22 @@ export async function listBucket(bucket: BucketKey, opts: { research?: boolean; 
   if (opts.county) rows = rows.filter((r) => (r.county ?? "").toLowerCase().replace(/\s+county$/, "") === opts.county)
   if (opts.q) {
     const q = opts.q.toLowerCase()
-    rows = rows.filter((r) => `${r.property_address} ${r.owner_name_records} ${r.full_name}`.toLowerCase().includes(q))
+    rows = rows.filter((r) => `${r.property_address} ${r.owner_name_records} ${r.full_name} ${r.landEvidence?.parcel ?? ""}`.toLowerCase().includes(q))
   }
   for (const r of rows) {
     grades.all++
     const g = r.lane?.grade
     if (g) { grades.qualified++; grades[g]++ }
   }
-  const grade = opts.grade ?? (bucket === "assets" ? "all" : "qualified")
+  const ownershipView = bucket === "land" && (opts.research || opts.landOpportunities)
+  const grade = ownershipView ? "all" : opts.grade ?? (bucket === "assets" ? "all" : "qualified")
   if (bucket !== "assets" && grade !== "all") rows = rows.filter((r) => (grade === "qualified" ? !!r.lane?.grade : r.lane?.grade === grade))
   rows.sort((a, b) => (GRADE_ORDER[a.lane?.grade ?? a.pp?.grade ?? ""] ?? 9) - (GRADE_ORDER[b.lane?.grade ?? b.pp?.grade ?? ""] ?? 9)
     || (b.lane?.land_flip?.score ?? 0) - (a.lane?.land_flip?.score ?? 0)
     || Number(b.property_value ?? b.lane?.value ?? 0) - Number(a.property_value ?? a.lane?.value ?? 0))
   // Every row in the view (a few hundred); the tab count must match.
-  return { rows: await bucketWorkflow(rows.slice(0, 2000)), grades }
+  const start = ((opts.page ?? 1) - 1) * LAND_REVIEW_PAGE_SIZE
+  return { rows: await bucketWorkflow(ownershipView ? rows.slice(start, start + LAND_REVIEW_PAGE_SIZE) : rows.slice(0, 2000)), grades }
 }
 
 /** Same per-property key listBucket dedupes on, so a tab's count always
@@ -472,8 +502,8 @@ export async function listBucket(bucket: BucketKey, opts: { research?: boolean; 
 const propertyKey = (r: { id: string; property_address: string | null }) =>
   (r.property_address ?? r.id).toUpperCase().replace(/[^A-Z0-9]/g, "")
 
-export async function bucketCounts(): Promise<Record<BucketKey, number>> {
-  const out: Record<BucketKey, number> = { commercial: 0, land: 0, assets: 0 }
+export async function bucketCounts(): Promise<Record<"commercial" | "assets", number>> {
+  const out = { commercial: 0, assets: 0 }
   if (!supabaseAdmin) return out
   const db = supabaseAdmin
   type R = { id: string; property_address: string | null }
@@ -500,6 +530,6 @@ export async function bucketCounts(): Promise<Record<BucketKey, number>> {
     }
     return keys.size
   }
-  const [c, l, a] = await Promise.all([lane("commercial"), lane("land"), assets()])
-  return { commercial: c, land: l, assets: a }
+  const [c, a] = await Promise.all([lane("commercial"), assets()])
+  return { commercial: c, assets: a }
 }
