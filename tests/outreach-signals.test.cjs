@@ -123,12 +123,14 @@ test('asset views split held prospects and retain separate assets at the same ad
     { id: '3', pp: { routable: false, prospect: true, dedupe_key: 'plane-A' } },
     { id: '4', pp: { routable: false, prospect: true, dedupe_key: 'plane-A' } },
     { id: '5', pp: { routable: false, prospect: false } },
+    { id: '6', aircraft: [{ n_number: 'N1' }], pp: null },
+    { id: '7', aircraft: [{ n_number: 'N2' }], pp: { lane:'vessel_arrest', categories:['vessel'], routable:true } },
   ].map(row => ({ ...row, property_address: '100 TEST ST', county: 'davidson' }))
   const db = { from(table) {
     let result = table === 'homeowner_requests_staging' ? [...rows] : []
     return { select(cols) {
       if (cols.startsWith('id,routable:')) result = result.map(r => ({
-        id: r.id, routable: String(r.pp.routable), prospect: String(r.pp.prospect), key: r.pp.dedupe_key,
+        id: r.id, routable: String(r.pp?.routable), prospect: String(r.pp?.prospect), key: r.pp?.dedupe_key,
       }))
       return this
     }, not() { return this }, order() { return this }, limit() { return this },
@@ -138,13 +140,14 @@ test('asset views split held prospects and retain separate assets at the same ad
       range() { return this }, then(done) { return Promise.resolve({ data: result }).then(done) } }
   } }
   const metro = load('src/lib/nashville-codes.ts', key => key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
-  const crm = load('src/lib/crm-data.ts', key => key.endsWith('warn-evidence') ? load('src/lib/warn-evidence.ts') : key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
+  const crm = load('src/lib/crm-data.ts', key => key.endsWith('aircraft-evidence') ? load('src/lib/aircraft-evidence.ts') : key.endsWith('warn-evidence') ? load('src/lib/warn-evidence.ts') : key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
     key.endsWith('chattanooga-research') ? load('src/lib/chattanooga-research.ts', () => ({})) :
     key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
-  for (const [args, ids] of [[{}, ['1', '2']], [{ research: true }, ['3', '5']],
+  for (const [args, ids] of [[{}, ['1', '2', '7']], [{ research: true }, ['3', '5', '6']],
     [{ research: true, prospects: true }, ['3']]]) {
     const res = await crm.listBucket('assets', args)
     assert.deepEqual(Array.from(res.rows, r => r.staging_id), ids)
+    if (!args.research) assert.equal(res.rows.find(r => r.staging_id === "7").aircraft.length, 0)
   }
 })
 

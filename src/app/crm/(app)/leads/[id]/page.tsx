@@ -13,7 +13,8 @@ import { landEvidence } from "@/lib/land-evidence"
 
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { PP_LANE_LABEL, addressText, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents, type PersonalPropertyTag } from "@/lib/crm-data"
+import { aircraftAsset } from "@/lib/aircraft-evidence"
+import { PP_LANE_LABEL, addressText, getLead, mathSheetIdFor, type AircraftTag, type LaneTag, type OperatorContents } from "@/lib/crm-data"
 import { CHANNEL_LABELS, OUTCOME_LABELS, NEXT_ACTION_LABELS, distressTypeLabel } from "@/lib/dialer-types"
 import { Icon } from "@/app/crm/icons"
 import { Head, SalePill, StatusPill, money, relTime, shortDate, titleCase } from "@/app/crm/ui"
@@ -103,7 +104,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const warn = warnAsset(lead, lead.raw_payload ?? {})
   const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
   const aircraft = (!warn && Array.isArray(lead.raw_payload?.aircraft) ? lead.raw_payload?.aircraft : []) as AircraftTag[]
-  const pp = warn ?? (lead.raw_payload?.personal_property ?? null) as PersonalPropertyTag | null
+  const pp = warn ?? aircraftAsset(lead, aircraft, lead.raw_payload?.personal_property, lead.raw_payload?.personal_property_evidence).pp
   const probate = lead.raw_payload?.probate_review as { stage?: string; contact_hold?: boolean;
     attorney_draft_status?: string; attorney_draft_hold_reasons?: string[] } | undefined
   const land = landEvidence(lead, { origin: lead.raw_payload?.source, lane: lead.raw_payload?.property_lane, land: lead.raw_payload?.land, roll: lead.raw_payload?.comptroller_parcel })
@@ -279,11 +280,11 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
 
           {aircraft.length ? (
             <div>
-              <div className="crm-section-label">High-value assets</div>
+              <div className="crm-section-label">FAA registry research</div>
               {aircraft.map((a) => (
                 <dl key={a.n_number} className="crm-props" style={{ marginBottom: 10 }}>
                   <dt>Aircraft</dt><dd>{a.aircraft} <span className="crm-faint">{a.n_number}</span></dd>
-                  <dt>Value</dt><dd>{a.value_band_label}</dd>
+                  <dt>Sale authority</dt><dd>Registry data alone does not establish authority to sell.</dd>
                   <dt>Registrant</dt><dd>{titleCase(a.registrant)}<div className="crm-faint">{a.registrant_address}</div></dd>
                   {a.match_type ? <><dt>Matched by</dt><dd>{a.match_type.replace(/_/g, " ")}{a.confidence ? ` (${a.confidence})` : ""}</dd></> : null}
                   {a.registration_status ? <><dt>Registration</dt><dd>{a.registration_status}</dd></> : null}

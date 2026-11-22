@@ -219,16 +219,16 @@ function AssetTable({ rows }: { rows: BucketRow[] }) {
           return (
             <RowLink key={r.staging_id} href={`/crm/leads/${r.staging_id}`}>
               <td>
-                <div className="primary-cell">{titleCase(a?.registrant ?? r.owner_name) || "Owner unknown"}</div>
+                <div className="primary-cell">{titleCase(r.owner_name) || "Owner unknown"}</div>
                 <div className="secondary">{r.property_address ?? a?.registrant_address} · {titleCase(r.county)}</div>
               </td>
               <td>
-                {a ? <><span>{a.aircraft}</span><div className="secondary">{a.n_number}{(r.aircraft?.length ?? 0) > 1 ? ` + ${(r.aircraft?.length ?? 1) - 1} more` : ""}</div></>
+                {a ? <><span>{a.aircraft}</span><div className="secondary">{a.n_number}{p?.routable === false ? " · FAA registry research" : ""}{(r.aircraft?.length ?? 0) > 1 ? ` + ${(r.aircraft?.length ?? 1) - 1} more` : ""}</div></>
                   : p ? <><span>{PP_LANE_LABEL[p.lane] ?? p.lane}</span><div className="secondary">{kinds}</div></> : null}
               </td>
               <td className="hide-sm">
                 {p?.grade ? <span className={`pill ${GRADE_TONE[p.grade]}`}>{p.grade}</span> : null}
-                {a?.value_band_label ? <div className="secondary">{a.value_band_label}</div> : p?.est_value_min ? <div className="secondary">~{compactMoney(p.est_value_min)}+</div> : null}
+                {p?.est_value_min ? <div className="secondary">~{compactMoney(p.est_value_min)}+</div> : null}
               </td>
               <td className="hide-sm">
                 <span className="crm-muted">{r.bot_source === "warn_notices" ? "TN WARN employment notice" : titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
