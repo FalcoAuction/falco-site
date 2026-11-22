@@ -33,10 +33,10 @@ export function aircraftAsset(row: { full_name?: string | null; owner_name_recor
     && fact("availability", ["available"]) && fact("liens", ["reviewed", "not_applicable"])
     && (!["BANKRUPTCY", "PROBATE", "VESSEL_ARREST"].includes(row.distress_type ?? "") || fact("court", ["permitted", "not_applicable"]))
     && sourced(deadline) && (str(deadline.date) ? /^\d{4}-\d{2}-\d{2}$/.test(str(deadline.date)) && str(deadline.date) > today : deadline.status === "none_documented")
-  const confirmed = reviewed ? registry.filter(p => p.identity_verified === true && p.registration_status === "V"
+  const current = registry.filter(p => str(p.n_number) && p.identity_verified === true && p.registration_status === "V"
     && /^\d{8}$/.test(str(p.registration_expires)) && str(p.registration_expires) > today.replaceAll("-", "")
-    && fresh(p.registry_date) && fresh(p.verified_on) && str(p.serial) && str(p.registrant)
-    && assets.some(a => a.kind === "aircraft" && a.asset_id === p.n_number && a.serial === p.serial && a.registrant === p.registrant)) : []
+    && fresh(p.registry_date) && fresh(p.verified_on) && str(p.serial) && str(p.registrant))
+  const confirmed = reviewed ? current.filter(p => assets.some(a => a.kind === "aircraft" && a.asset_id === p.n_number && a.serial === p.serial && a.registrant === p.registrant)) : []
   const kinds = [...new Set(assets.filter(a => a.kind !== "aircraft").map(a => str(a.kind)))]
   if (confirmed.length || (reviewed && kinds.length)) {
     const valuation = obj(ev.valuation)
@@ -44,8 +44,11 @@ export function aircraftAsset(row: { full_name?: string | null; owner_name_recor
     return { registryResearch: false, confirmed: confirmed as AircraftTag[], pp: { ...pp!, categories: [...kinds, ...(confirmed.length ? ["aircraft"] : [])],
       est_value_min: value, value_basis: value ? str(valuation.source_url) : undefined, signals: [], registry_assets: [] } }
   }
+  const prospect = tag.policy === "pp-v3" && tag.routable === false && tag.prospect === true
+    && tag.qualification === "qualified_prospect" && !tag.duplicate_of
+    && current.some(p => list(tag.registry_assets).some(a => isDeepStrictEqual(a, p)))
   const held: PersonalPropertyTag = { lane: pp?.lane ?? "owner_asset", grade: null, categories: cats.filter(c => c !== "aircraft"),
     signals: (pp?.signals ?? []).filter(s => !/aircraft|FAA|plane/i.test(s)), caveats: [], est_value_min: null,
-    dedupe_key: pp?.dedupe_key, qualification: "research", routable: false, prospect: false, not_routable_reason: "Aircraft sale authority unverified." }
+    dedupe_key: pp?.dedupe_key, qualification: prospect ? "qualified_prospect" : "research", routable: false, prospect, not_routable_reason: "Aircraft sale authority unverified." }
   return { pp: held, registryResearch: true, confirmed: [] as AircraftTag[] }
 }
