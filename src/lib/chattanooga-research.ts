@@ -70,7 +70,7 @@ export function cityStatusLabel(review: unknown) {
   return labels[str(obj(review).status)] ?? "Unverified"
 }
 
-export const researchOnlySources = ["memphis_codes", "knoxville_poh", "johnson_city_bdsr"]
+export const researchOnlySources = ["memphis_codes", "knoxville_poh", "johnson_city_bdsr", "mtn_cities_codes", "hud_reo"]
 
 // A workflow slug can have duplicate staging copies. A held copy keeps the slug on hold.
 export async function cityCodeWorkflowHolds(slugs: string[]) {
@@ -82,7 +82,7 @@ export async function cityCodeWorkflowHolds(slugs: string[]) {
     supabaseAdmin.from("homeowner_requests_staging").select(`${fields},bot_source,staging_status` as const)
       .in("bot_source", ["chattanooga_codes", ...researchOnlySources]).in("pipeline_lead_key", slugs),
     supabaseAdmin.from("homeowner_requests").select(`${fields},johnson:raw_payload->johnson_city_bdsr->>case_number,poh:raw_payload->>poh_section,memphis:raw_payload->memphis_311->>INCIDENT_NUMBER` as const).eq("source", "bot").in("pipeline_lead_key", slugs)
-      .or("raw_payload->johnson_city_bdsr.not.is.null,raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null,raw_payload->memphis_311.not.is.null,raw_payload->memphis_codes_review.not.is.null,raw_payload->poh_section.not.is.null,phone_metadata->knoxville_hearing_review.not.is.null"),
+      .or("raw_payload->hud_arcgis.not.is.null,and(raw_payload->>platform.eq.seeclickfix,raw_payload->>city.eq.Mt. Juliet),raw_payload->johnson_city_bdsr.not.is.null,raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null,raw_payload->memphis_311.not.is.null,raw_payload->memphis_codes_review.not.is.null,raw_payload->poh_section.not.is.null,phone_metadata->knoxville_hearing_review.not.is.null"),
   ])
   if (stage.error || live.error) throw new Error("Unable to verify Chattanooga workflow cases")
   for (const row of [...stage.data, ...live.data]) {

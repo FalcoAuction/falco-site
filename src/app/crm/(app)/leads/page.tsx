@@ -65,6 +65,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       {!bucket ? (
         <nav className="crm-views" aria-label="Saved views">
           <Link href="/crm/leads/knoxville">Knoxville hearing research</Link>
+          <Link href="/crm/leads/mt-juliet">Mt. Juliet complaint research</Link>
           <Link href="/crm/leads/memphis">Memphis 311 research</Link>
           <Link href="/crm/leads/chattanooga">Chattanooga code research</Link>
           {VIEWS.map((v) => (
