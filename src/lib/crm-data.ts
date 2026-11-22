@@ -403,27 +403,33 @@ async function bucketWorkflow(rows: StagedBucket[]): Promise<BucketRow[]> {
 
 const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
 
-// Ids of every high-value asset lead: aircraft owners plus personal-property
-// lanes. Each query is answered from its own partial index
-// (20261113_staging_aircraft_index.sql, 20261114_staging_personal_property_index.sql).
-async function assetIds(research = false, prospects = false): Promise<string[] | { error: string }> {
-  if (!supabaseAdmin) return { error: "Database not configured." }
-  if (research) {
-    let query = supabaseAdmin.from("homeowner_requests_staging").select("id")
-      .not("raw_payload->personal_property", "is", null).eq("raw_payload->personal_property->>routable", "false")
-    if (prospects) query = query.eq("raw_payload->personal_property->>prospect", "true")
-    const { data, error } = await query.order("id").limit(500)
-    return error ? { error: error.message } : (data ?? []).map(row => row.id as string)
+// Keep candidate discovery index-only. Filtering nested JSON here makes Postgres
+// scan all of staging. Read routing controls only after locating the tagged IDs.
+const assetCandidates = cache(async () => {
+  type Candidate = { id: string; routable: string | null; prospect: string | null; key: string | null }
+  const db = supabaseAdmin!
+  async function taggedIds(tag: "aircraft" | "personal_property") {
+    const ids: string[] = []
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await db.from("homeowner_requests_staging").select("id")
+        .not(`raw_payload->${tag}`, "is", null).order("id").range(offset, offset + 499)
+      if (error) throw new Error(error.message)
+      for (const row of data ?? []) ids.push(row.id)
+      if ((data?.length ?? 0) < 500) return ids
+    }
   }
-  const [a, p] = await Promise.all([
-    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null)
-      .or("raw_payload->personal_property->>routable.is.null,raw_payload->personal_property->>routable.neq.false").limit(500),
-    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->personal_property", "is", null)
-      .or("raw_payload->personal_property->>routable.is.null,raw_payload->personal_property->>routable.neq.false").limit(500),
-  ])
-  if (a.error || p.error) return { error: (a.error ?? p.error)!.message }
-  return [...new Set([...(a.data ?? []), ...(p.data ?? [])].map((r) => (r as { id: string }).id))]
-}
+  const [aircraft, personal] = await Promise.all([taggedIds("aircraft"), taggedIds("personal_property")])
+  const ids = [...new Set([...aircraft, ...personal])]
+  const rows: Candidate[] = []
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await db.from("homeowner_requests_staging")
+      .select("id,routable:raw_payload->personal_property->>routable,prospect:raw_payload->personal_property->>prospect,key:raw_payload->personal_property->>dedupe_key")
+      .in("id", ids.slice(i, i + 100))
+    if (error) throw new Error(error.message)
+    rows.push(...((data ?? []) as unknown as Candidate[]))
+  }
+  return rows
+})
 
 export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: boolean; page?: number; research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string } = {}):
   Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
@@ -434,8 +440,9 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
     // Two steps on purpose: the partial index answers "which ids" as an
     // index-only scan, but asking for the tag in the same query makes the
     // planner (no stats on the expression) seq-scan all of staging (~6 s).
-    const idList = await assetIds(opts.research, opts.prospects)
-    if ("error" in idList) return { rows: [], grades, error: idList.error }
+    const candidates = await assetCandidates()
+    const idList = candidates.filter(row => (row.routable === "false") === !!opts.research
+      && (!opts.prospects || row.prospect === "true")).map(row => row.id)
     for (let i = 0; i < idList.length; i += 100) {
       const r = await supabaseAdmin.from("homeowner_requests_staging")
         .select(`${BUCKET_COLS},aircraft:raw_payload->aircraft,pp:raw_payload->personal_property`).in("id", idList.slice(i, i + 100))
@@ -517,14 +524,9 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
   }
   // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {
-    const idList = await assetIds()
-    if (!Array.isArray(idList) || !idList.length) return 0
     const keys = new Set<string>()
-    for (let i = 0; i < idList.length; i += 100) {
-      const { data, error } = await db.from("homeowner_requests_staging")
-        .select("id,key:raw_payload->personal_property->>dedupe_key").in("id", idList.slice(i, i + 100))
-      if (error) throw new Error(error.message)
-      for (const row of data ?? []) if (!holds.stagingIds.has(row.id)) keys.add(row.key || row.id)
+    for (const row of await assetCandidates()) {
+      if (row.routable !== "false" && !holds.stagingIds.has(row.id)) keys.add(row.key || row.id)
     }
     return keys.size
   }
