@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','aircraft-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','aircraft-evidence','memphis-valuation','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -81,6 +81,29 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       assert.doesNotMatch(html,/href="(?:tel|sms):|Routes to |<dt>Deadline<\/dt>|<dt>FALCO fee<\/dt>/)
     } else assert.match(html,/href="tel:/)
   }
+  const parcel = '089038 B00021', key = 'notice-key'
+  const valued = {...staged[2], id:'00000000-0000-4001-8000-000000001110', county:'shelby', bot_source:'memphis_daily_news',
+    property_address:'123 Example St', pipeline_lead_key:key, property_value:41500, property_value_source:'shelby_trustee_assessment_estimate',
+    owner_name_records:'Legacy owner field',raw_payload:{structured:{borrower:'Notice Borrower'},extracted:{parcel},shelby_arcgis:{parid:parcel,owner:'Assessor Name'}},
+    shelby_value_review:{status:'verified_assessment',valuation_method:'county_tax_assessment_divided_by_class_ratio',county:'shelby',
+      notice_key:key,notice_address:'123 Example St',parcel_id:parcel,source_url:'https://apps2.shelbycountytrustee.com/Parcel?parcel=089038+B00021',
+      tax_class:'R',assessment_ratio:0.25,assessed_value:10375,estimated_appraisal:41500,tax_year:2026,bill_number:1,owner:'Tax Bill Name'}}
+  staged.push(valued)
+  const valuedPage=()=>render('leads/[id]/',{params:Promise.resolve({id:valued.id})})
+  const assessment=await valuedPage()
+  assert.match(assessment,/<dt>Assessment-derived estimate<\/dt><dd>\$41,500/)
+  assert.match(assessment,/County tax assessment \(2026\).*?\$10,375 \/ 25% class ratio/)
+  assert.match(assessment,/<dt>Notice borrower<\/dt><dd>Notice Borrower/)
+  assert.match(assessment,/<dt>Owner on county tax bill<\/dt><dd>Tax Bill Name/)
+  assert.match(assessment,/<dt>Owner on assessor parcel record<\/dt><dd>Assessor Name/)
+  assert.doesNotMatch(assessment,/Legacy owner field|verified appraisal/i)
+  valued.shelby_value_review.notice_key='other'
+  valued.raw_payload.shelby_arcgis.parid='wrong'
+  assert.doesNotMatch(await valuedPage(),/Tax Bill Name|Assessor Name|County tax assessment/)
+  valued.raw_payload.extracted.parcel='074075 00026C'
+  valued.raw_payload.shelby_arcgis.parid='074075  00026C'
+  assert.match(await valuedPage(),/<dt>Owner on assessor parcel record<\/dt><dd>Assessor Name/)
+  staged.pop()
   const crm = imports['@/lib/crm-data']
   const baseline = await crm.getToday()
   const baselineWorking = (await crm.listLeads('working')).rows.map(r => r.slug).sort().join(',')
