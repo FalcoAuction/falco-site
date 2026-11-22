@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','nashville-codes','warn-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','nashville-codes','warn-evidence','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -78,5 +78,44 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       assert.match(html,/Previous parcel observation.*2026-11-01/)
       assert.doesNotMatch(html,/href="(?:tel|sms):|Routes to |<dt>Deadline<\/dt>|<dt>FALCO fee<\/dt>/)
     } else assert.match(html,/href="tel:/)
+  }
+})
+
+test('Chattanooga research binds the city case and uses only the matching county review', () => {
+  const { createHash } = require('node:crypto')
+  const { chattanoogaGroups, chattanoogaParcel, assessorSource, cityCsv } = load('src/lib/chattanooga-research.ts', {
+    'server-only':{}, '@/lib/supabase-admin':{},
+  })
+  function example(case_number) {
+    const street = '404 TUNNEL BLVD'
+    return { id:case_number, bot_source:'chattanooga_codes', property_address:street+', Chattanooga, TN',
+      pipeline_lead_key:createHash('sha1').update('chattanooga_codes|'+case_number+'|'+street).digest('hex'),
+      county:'Hamilton County', case_number, staging_status:'pending', property_value:9900000,
+      parcelReview:{ case_number, property_address:street, county_file_stamp:'roll v1', source_url:assessorSource,
+        status:'exact_county_address',parcel:'147I-K-028.01',recorded_owner:'County owner',county_appraisal:6685000 },
+      review:{case_number,property_address:street,checked_on:'2026-11-22',source_modified_on:'2026-11-20',
+        source_sha256:'a'.repeat(64),source_url:cityCsv,record_ids:['3'],official_statuses:['INPR'],status:'active',
+        serious_active_count:1,current_code_signal:true,active_descriptions:['Unsafe roof'],
+        serious_active_records:[{record_id:'3',status:'INPR',description:'Unsafe roof',flag_dangerous:'true'}]}}
+  }
+  const a=example('CE1'), b=example('CE2')
+  const [group]=chattanoogaGroups([a,b])
+  assert.equal(group.cases.length,2)
+  assert.equal(chattanoogaGroups([a,{...a,id:'duplicate'}])[0].cases.length,1)
+  const clipped={...a,review:{...a.review,evidence_truncated:true,record_ids:[],active_descriptions:[],serious_active_count:3}}
+  assert.equal(chattanoogaGroups([clipped])[0].cases[0].seriousCount,3)
+  assert.equal(chattanoogaGroups([{...clipped,review:{...clipped.review,serious_active_records:[]}}]).length,0)
+  assert.equal(group.assessor.value,6685000)
+  assert.equal(group.cases[0].records[0].dangerous,true)
+  for(const status of ['closed','litigation_review','corrected','ambiguous','not_found']) {
+    assert.equal(chattanoogaGroups([{...a,review:{...a.review,status}}]).length,0)
+  }
+  for(const patch of [{pipeline_lead_key:'wrong'},{county:'Other'},{case_number:'CE3'}]) {
+    assert.equal(chattanoogaGroups([{...a,...patch}]).length,0)
+    assert.equal(chattanoogaParcel({...a,...patch}).assessor,null)
+  }
+  for(const parcelReview of [null,{...a.parcelReview,status:'ambiguous_address'},
+      {...a.parcelReview,status:'no_exact_address'},{...a.parcelReview,case_number:'CE2'}]) {
+    assert.equal(chattanoogaGroups([{...a,parcelReview}])[0].assessor,null)
   }
 })
