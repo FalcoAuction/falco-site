@@ -551,7 +551,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
       for (const row of (r.data ?? []) as unknown as (StagedBucket & { evidence?: unknown })[]) {
         const display = aircraftAsset(row, row.aircraft, row.pp, row.evidence)
         row.pp = display.pp
-        if (!opts.research || display.pp?.not_routable_reason !== "Aircraft sale authority unverified.") row.aircraft = display.confirmed
+        if (!opts.research || !display.registryResearch) row.aircraft = display.confirmed
         all.push(row)
       }
     }

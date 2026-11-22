@@ -11,11 +11,11 @@ export function aircraftAsset(row: { full_name?: string | null; owner_name_recor
   const tag = obj(personal)
   const cats = Array.isArray(tag.categories) ? tag.categories : []
   const registry = list(planes)
-  const aircraftLane = cats.includes("aircraft") || tag.lane === "owner_asset"
+  const aircraftLane = cats.includes("aircraft") || (tag.lane === "owner_asset" && !cats.length)
   const pp = personal as PersonalPropertyTag | null
-  if (!registry.length && !aircraftLane) return { pp, confirmed: [] as AircraftTag[] }
+  if (!registry.length && !aircraftLane) return { pp, registryResearch: false, confirmed: [] as AircraftTag[] }
   // A vessel, estate or other independently classified asset keeps its own controls.
-  if (personal && !aircraftLane) return { pp, confirmed: [] as AircraftTag[] }
+  if (personal && !aircraftLane) return { pp, registryResearch: false, confirmed: [] as AircraftTag[] }
 
   const ev = obj(evidence), assets = list(ev.assets), controller = obj(ev.controller)
   const fresh = (d: unknown) => {
@@ -41,11 +41,11 @@ export function aircraftAsset(row: { full_name?: string | null; owner_name_recor
   if (confirmed.length || (reviewed && kinds.length)) {
     const valuation = obj(ev.valuation)
     const value = sourced(valuation) && typeof valuation.amount === "number" && valuation.amount > 0 ? valuation.amount : null
-    return { confirmed: confirmed as AircraftTag[], pp: { ...pp!, categories: [...kinds, ...(confirmed.length ? ["aircraft"] : [])],
+    return { registryResearch: false, confirmed: confirmed as AircraftTag[], pp: { ...pp!, categories: [...kinds, ...(confirmed.length ? ["aircraft"] : [])],
       est_value_min: value, value_basis: value ? str(valuation.source_url) : undefined, signals: [], registry_assets: [] } }
   }
   const held: PersonalPropertyTag = { lane: pp?.lane ?? "owner_asset", grade: null, categories: cats.filter(c => c !== "aircraft"),
     signals: (pp?.signals ?? []).filter(s => !/aircraft|FAA|plane/i.test(s)), caveats: [], est_value_min: null,
     dedupe_key: pp?.dedupe_key, qualification: "research", routable: false, prospect: false, not_routable_reason: "Aircraft sale authority unverified." }
-  return { pp: held, confirmed: [] as AircraftTag[] }
+  return { pp: held, registryResearch: true, confirmed: [] as AircraftTag[] }
 }

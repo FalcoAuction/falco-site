@@ -309,6 +309,9 @@ test('FAA overlap is research until the current aircraft, authority and transact
   const independent={lane:'vessel_arrest',categories:['vessel'],routable:true}
   assert.equal(read([plane],independent,null).pp,independent)
   assert.equal(read([plane],independent,null).confirmed.length,0)
+  const equipment={lane:'owner_asset',categories:['equipment'],routable:true}
+  assert.equal(read([plane],equipment,null).pp,equipment)
+  assert.equal(read([plane],equipment,null).registryResearch,false)
   const mixed={...ev,assets:[{...asset,kind:'equipment',asset_id:'excavator-1'}]}
   const result=read([plane],{...tag,authority_review:mixed,asset_evidence:mixed.assets},mixed)
   assert.equal(result.pp.routable,true); assert.equal(result.confirmed.length,0)
