@@ -139,6 +139,7 @@ test('asset views split held prospects and retain separate assets at the same ad
   } }
   const metro = load('src/lib/nashville-codes.ts', key => key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
   const crm = load('src/lib/crm-data.ts', key => key.endsWith('warn-evidence') ? load('src/lib/warn-evidence.ts') : key.endsWith('nashville-codes') ? metro : key === 'react' ? { cache: f => f } :
+    key.endsWith('chattanooga-research') ? load('src/lib/chattanooga-research.ts', () => ({})) :
     key.endsWith('supabase-admin') ? { supabaseAdmin: db } : {})
   for (const [args, ids] of [[{}, ['1', '2']], [{ research: true }, ['3', '5']],
     [{ research: true, prospects: true }, ['3']]]) {

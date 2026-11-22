@@ -1,5 +1,6 @@
 import { knoxvilleEvidence } from "@/lib/knoxville-research"
 import { HearingRecord } from "@/app/crm/hearing-record"
+import { JohnsonHearingRecord } from "@/app/crm/johnson-hearing-record"
 import { memphisEvidence } from "@/lib/memphis-research"
 import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
@@ -41,6 +42,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  if (lead.bot_source === "johnson_city_bdsr") {
+    return <>
+      <Head title={lead.property_address || "Johnson City hearing record"}><Link href="/crm/leads">Back to leads</Link></Head>
+      <JohnsonHearingRecord lead={lead}/>
+    </>
+  }
   if (lead.bot_source === "knoxville_poh") {
     const evidence = knoxvilleEvidence(lead)
     return <>
