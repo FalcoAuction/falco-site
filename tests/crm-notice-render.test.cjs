@@ -11,7 +11,7 @@ function load(path, imports) {
   const output = ts.transpileModule(fs.readFileSync(path, 'utf8'), { fileName: path, compilerOptions: {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX,
   } }).outputText
-  vm.runInNewContext(output, { exports, require: key => imports[key] ?? require(key), URLSearchParams, console })
+  vm.runInNewContext(output, { exports, require: key => imports[key] ?? require(key), URL, URLSearchParams, console })
   return exports
 }
 
@@ -42,13 +42,13 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       if(name==='lead_opportunities') assert.equal(cols,'captured_on','raw ranking used outside snapshot-day lookup')
       return this
     }, eq(k,v){rows=rows.filter(r=>r[k]===v);return this}, in(k,v){rows=rows.filter(r=>v.includes(r[k]));return this},
-    not(){return this}, or(){return this},order(){return this}, limit(n){rows=rows.slice(0,n);return this},range(lo,hi){rows=rows.slice(lo,hi+1);return this},
+    neq(k,v){rows=rows.filter(r=>r[k]!==v);return this},not(){return this}, or(){return this},order(){return this}, limit(n){rows=rows.slice(0,n);return this},range(lo,hi){rows=rows.slice(lo,hi+1);return this},
     gte(){return this},lte(){return this},maybeSingle(){return {data:rows[0]??null}},then(done){return Promise.resolve({data:rows,count:rows.length}).then(done)}}
     return query
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','nashville-codes','warn-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','nashville-codes','warn-evidence','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -101,6 +101,18 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   assert.match(detail,/<dt>City case status<\/dt><dd>Closed<\/dd>/)
   assert.match(detail,/<dt>City status codes<\/dt><dd>C<\/dd>/)
 
+  const memphis={...staged[0],id:'00000000-0000-4001-8000-000000000100',pipeline_lead_key:'memphis-workflow',
+    bot_source:'memphis_codes',property_address:'Research-only Memphis address',raw_payload:{memphis_311:{INCIDENT_NUMBER:'123'}}}
+  staged.push(memphis)
+  tables.dialer_lead_workflow.unshift({listing_slug:memphis.pipeline_lead_key,status:'working',next_action_at:today})
+  tables.crm_visible_opportunities.push(opportunity(memphis))
+  const readOnly=await render('leads/[id]/',{params:Promise.resolve({id:memphis.id})})
+  assert.match(readOnly,/Awaiting a bound city review/)
+  assert.doesNotMatch(readOnly,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee|<dt>Owner<\/dt>/)
+  for(const path of ['', 'leads/']) assert.doesNotMatch(await render(path,{searchParams:Promise.resolve({})}),/Research-only Memphis address/)
+  assert.equal((await crm.getToday()).counts.working,baseline.counts.working)
+  assert.equal((await crm.listLeads('working')).rows.map(r=>r.slug).sort().join(','),baselineWorking)
+
 })
 
 test('Chattanooga research binds the city case and uses only the matching county review', () => {
@@ -140,4 +152,28 @@ test('Chattanooga research binds the city case and uses only the matching county
       {...a.parcelReview,status:'no_exact_address'},{...a.parcelReview,case_number:'CE2'}]) {
     assert.equal(chattanoogaGroups([{...a,parcelReview}])[0].assessor,null)
   }
+})
+
+test('Memphis requires the bound city incident, a current structural review and the reported address', () => {
+  const { memphisEvidence } = load('src/lib/memphis-research.ts',{'server-only':{},'@/lib/supabase-admin':{}})
+  const attrs={INCIDENT_NUMBER:'123',Location_Address:'10 Main Street',Unit_Address:'Unit B',CITY:'Memphis',STATE:'TN',ZipCode:'38103',PARCEL_ID:' 045059  00009C ',REPORTED_DATE:123000}
+  const review={finding:'structural_request',checked_on:'2026-11-19',incident_number:'123',request_type:'CE-Dilapidated',
+    request_status:'Open',department:'Code Enforcement',reported_at_ms:123000,closed_at_ms:null,resolved_at_ms:null,resolution_code:null,parcel_as_reported:' 045059  00009C ',
+    source_url:"https://311.memphistn.gov/server/rest/services/311/311_Request_Map_PROD/FeatureServer/0/query?where=INCIDENT_NUMBER%3D%27123%27&f=json"}
+  const row={bot_source:'memphis_codes',county:'Shelby County',pipeline_lead_key:require('node:crypto').createHash('sha1').update('memphis_codes|123').digest('hex'),
+    property_address:'10 Main Street, Unit B, Memphis, TN 38103',staging_status:'pending'}
+  const read=(change={},stage={})=>memphisEvidence({...row,...stage,raw_payload:{memphis_311:attrs,memphis_codes_review:{...review,...change}}},'2026-11-22')
+  assert.equal(read().eligible,true)
+  assert.equal(read().parcel,'045059  00009C')
+  assert.equal(read({parcel_as_reported:'045059 00009C'}).eligible,false)
+  const link=new URL(read().url)
+  assert.equal(link.searchParams.get('outFields'),'OBJECTID,INCIDENT_NUMBER,INCIDENT_ID,DEPARTMENT,REQUEST_TYPE,REQUEST_STATUS,Request_Sub_Status,Location_Address,Unit_Address,CITY,STATE,ZipCode,PARCEL_ID,REPORTED_DATE,last_edited_date,Closed_Date,RESOLVED_DATE,RESOLUTION_CODE,RESOLUTION_SUMMARY')
+  assert.equal(link.searchParams.get('where'),"INCIDENT_NUMBER='123'")
+  assert.equal(read({request_status:'Pending Litigation'}).eligible,true)
+  for(const change of [{checked_on:'2026-11-18'},{checked_on:'2026-11-23'},{checked_on:'2026-02-31'},{checked_on:''},
+    {incident_number:'456'},{source_url:review.source_url.replace('123','456')},{source_url:review.source_url.replace('311.memphistn.gov','example.test')},
+    {request_type:'CE-Code Miscellaneous'},{request_status:'Closed'},{resolution_code:'Closed'},{closed_at_ms:125000},
+    {reported_at_ms:12},{department:'Solid Waste'},{parcel_as_reported:'1 B'},...['terminal_request','ambiguous','identity_conflict','not_returned','disposition_review'].map(finding=>({finding}))]) assert.equal(read(change).eligible,false)
+  for(const stage of [{staging_status:'rejected'},{county:'Other'},{pipeline_lead_key:'bad'},{property_address:'10 Main Street, Unit A, Memphis, TN 38103'}]) assert.equal(read({},stage).eligible,false)
+  assert.match(read({finding:'terminal_request',request_status:'Closed'}).disposition,/Closed/)
 })

@@ -64,6 +64,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       </Head>
       {!bucket ? (
         <nav className="crm-views" aria-label="Saved views">
+          <Link href="/crm/leads/memphis">Memphis 311 research</Link>
           <Link href="/crm/leads/chattanooga">Chattanooga code research</Link>
           {VIEWS.map((v) => (
             <Link key={v.key} href={keep({ view: v.key })} aria-current={v.key === current ? "page" : undefined}>
