@@ -42,7 +42,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
       if(name==='lead_opportunities') assert.equal(cols,'captured_on','raw ranking used outside snapshot-day lookup')
       return this
     }, eq(k,v){rows=rows.filter(r=>r[k]===v);return this}, in(k,v){rows=rows.filter(r=>v.includes(r[k]));return this},
-    neq(k,v){rows=rows.filter(r=>r[k]!==v);return this},not(){return this}, or(){return this},order(){return this}, limit(n){rows=rows.slice(0,n);return this},range(lo,hi){rows=rows.slice(lo,hi+1);return this},
+    neq(k,v){rows=rows.filter(r=>r[k]!==v);return this},not(k,op,v){if(k==='bot_source' && op==='in') rows=rows.filter(r=>!v.slice(1,-1).split(',').includes(r[k]));return this}, or(){return this},order(){return this}, limit(n){rows=rows.slice(0,n);return this},range(lo,hi){rows=rows.slice(lo,hi+1);return this},
     gte(){return this},lte(){return this},maybeSingle(){return {data:rows[0]??null}},then(done){return Promise.resolve({data:rows,count:rows.length}).then(done)}}
     return query
   }}
@@ -59,6 +59,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
     './contents-form':{ContentsForm:()=>null},'./log-form':{},'./sheet-thumb':{},'@/app/crm/math-sheet/[id]/math-sheet-content':{},
     '@/app/crm/math-sheet/[id]/load-snapshot':{}})
   imports['@/app/crm/hearing-record']=load('src/app/crm/hearing-record.tsx',imports)
+  imports['@/app/crm/johnson-hearing-record']=load('src/app/crm/johnson-hearing-record.tsx',imports)
   const render = async (path,props) => renderToStaticMarkup(await load('src/app/crm/(app)/'+path+'page.tsx',imports).default(props))
   for (const html of [await render('',{}),await render('leads/',{searchParams:Promise.resolve({})})]) {
     assert.doesNotMatch(html,/Removed Address|Closed Address/)
@@ -123,6 +124,19 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   assert.match(legacy,/Historical or unverified hearing record/)
   assert.doesNotMatch(legacy,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee/)
   for (const path of ['', 'leads/']) assert.doesNotMatch(await render(path,{searchParams:Promise.resolve({})}),/Historical Knoxville address/)
+  const cityPacket = 'https://johnsoncitytn.civicweb.net/document/1234/agenda.pdf'
+  const johnson = {...knox, id:'00000000-0000-4001-8000-000000000102', bot_source:'johnson_city_bdsr',
+    pipeline_lead_key:require('node:crypto').createHash('sha1').update('johnson_city_bdsr|CEPM202400123').digest('hex'),
+    property_address:'132 Spring St, Johnson City, TN', raw_payload:{johnson_city_bdsr:{address:'132 Spring St',
+      case_number:'CEPM202400123',meeting_on:'2026-02-26',stage:'docket_removal_reported',source_url:cityPacket,
+      minutes_evidence:{meeting_on:'2026-03-26',source_url:cityPacket}}}}
+  staged.push(johnson)
+  tables.dialer_lead_workflow.unshift({listing_slug:johnson.pipeline_lead_key,status:'working',next_action_at:today})
+  tables.crm_visible_opportunities.push(opportunity(johnson))
+  const removed = await render('leads/[id]/',{params:Promise.resolve({id:johnson.id})})
+  assert.match(removed,/Docket removal recorded 2026-03-26/)
+  assert.doesNotMatch(removed,/href="(?:tel:|sms:|mailto:)|<form|FALCO fee/)
+  for (const path of ['', 'leads/']) assert.doesNotMatch(await render(path,{searchParams:Promise.resolve({})}),/132 Spring St/)
   assert.equal((await crm.getToday()).counts.working,baseline.counts.working)
   assert.equal((await crm.listLeads('working')).rows.map(r=>r.slug).sort().join(','),baselineWorking)
 
