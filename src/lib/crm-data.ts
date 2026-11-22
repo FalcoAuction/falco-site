@@ -6,6 +6,8 @@
 // Staging is ~400 MB: only ever read it by primary key or a short id list.
 
 import "server-only"
+import { cache } from "react"
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { DialerActivity, DialerStatus, DialerWorkflow } from "@/lib/dialer-types"
 import { getWorkflow, listActivities } from "@/lib/dialer-data"
@@ -78,9 +80,39 @@ function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte
   }
 }
 
+// Rankings and staging dates can predate the promoted lead's review flag.
+const noticeHolds = cache(async () => {
+  const slugs = new Map<string, string>()
+  const stagingIds = new Set<string>()
+  if (!supabaseAdmin) return { slugs, stagingIds }
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabaseAdmin.from("homeowner_requests")
+      .select("pipeline_lead_key,review:phone_metadata->trustee_notice_review,flag:phone_metadata->sale_status")
+      .eq("source", "bot").or("phone_metadata->trustee_notice_review.not.is.null,phone_metadata->sale_status.not.is.null")
+      .order("id").range(offset, offset + 499)
+    if (error) throw new Error(error.message)
+    for (const row of data ?? []) {
+      const hold = trusteeNoticeHold({ trustee_notice_review: row.review, sale_status: row.flag })
+      if (hold && row.pipeline_lead_key) slugs.set(row.pipeline_lead_key, hold)
+    }
+    if ((data?.length ?? 0) < 500) break
+  }
+  const keys = [...slugs.keys()]
+  for (let i = 0; i < keys.length; i += 80) {
+    const { data, error } = await supabaseAdmin.from("homeowner_requests_staging")
+      .select("id").in("pipeline_lead_key", keys.slice(i, i + 80))
+    if (error) throw new Error(error.message)
+    for (const row of data ?? []) stagingIds.add(row.id)
+  }
+  return { slugs, stagingIds }
+})
+
 /** Slug (pipeline_lead_key) and workflow for a page of opportunities. */
 async function attachWorkflow(opps: Opportunity[]): Promise<LeadRow[]> {
   if (!supabaseAdmin || opps.length === 0) return opps.map((o) => ({ ...o, slug: null, status: null, next_action_at: null, last_contact_at: null, has_phone: false }))
+  const holds = await noticeHolds()
+  opps = opps.filter(o => !holds.stagingIds.has(o.staging_id))
+  if (!opps.length) return []
   const keys = await supabaseAdmin.from("homeowner_requests_staging").select("id,pipeline_lead_key,phone").in("id", opps.map((o) => o.staging_id))
   const keyRows = (keys.data ?? []) as { id: string; pipeline_lead_key: string | null; phone: string | null }[]
   const slugOf = new Map(keyRows.map((r) => [r.id, r.pipeline_lead_key]))
@@ -141,8 +173,9 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("lead_opportunities").select("fit_label,sale_date,county").eq("captured_on", day).limit(5000)
-  const all = (r.data ?? []) as { fit_label: string; sale_date: string | null; county: string | null }[]
+  const r = await supabaseAdmin.from("lead_opportunities").select("staging_id,fit_label,sale_date,county").eq("captured_on", day).limit(5000)
+  const holds = await noticeHolds()
+  const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
   const fl = new Set(FL_COUNTIES)
   const rows = all.filter((x) => !fl.has(x.county ?? ""))
   const today = isoDay(new Date()), soon = isoDay(addDays(14))
@@ -176,7 +209,7 @@ export async function mathSheetIdFor(slug: string | null): Promise<string | null
   return (r.data?.[0] as { id: string } | undefined)?.id ?? null
 }
 
-export async function getLead(id: string): Promise<{ lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
+export async function getLead(id: string): Promise<{ noticeHold: string | null; lead: StagedLead; opp: Opportunity | null; workflow: DialerWorkflow | null; activities: DialerActivity[] } | null> {
   if (!supabaseAdmin || !/^[0-9a-f-]{36}$/i.test(id)) return null
   const r = await supabaseAdmin.from("homeowner_requests_staging")
     .select("id,bot_source,staged_at,staging_status,pipeline_lead_key,property_address,county,full_name,owner_name_records,email,phone,property_value,property_value_source,mortgage_balance,trustee_sale_date,distress_type,admin_notes,source_url,year_built,alternate_phones,raw_payload")
@@ -189,7 +222,7 @@ export async function getLead(id: string): Promise<{ lead: StagedLead; opp: Oppo
     lead.pipeline_lead_key ? getWorkflow(lead.pipeline_lead_key) : Promise.resolve(null),
     lead.pipeline_lead_key ? listActivities(lead.pipeline_lead_key, 100) : Promise.resolve([] as DialerActivity[]),
   ])
-  return { lead, opp: (o.data as Opportunity | null) ?? null, workflow, activities }
+  return { noticeHold: (await noticeHolds()).slugs.get(lead.pipeline_lead_key ?? "") ?? null, lead, opp: (o.data as Opportunity | null) ?? null, workflow, activities }
 }
 
 export type TodayData = {
@@ -245,11 +278,12 @@ export async function getToday(): Promise<TodayData> {
     outcome: r.outcome as DialerActivity["outcome"], notes: (r.notes as string) ?? "", nextAction: r.next_action as DialerActivity["nextAction"],
     nextActionAt: r.next_action_at as string | null, createdBy: (r.created_by as string) ?? "", createdAt: r.created_at as string,
   }))
+  const holds = await noticeHolds()
   const where = await stagingFor([...new Set([...dueRows.map((d) => d.listing_slug), ...recentRows.map((r) => r.listingSlug)])])
   return {
-    due: dueRows.map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
+    due: dueRows.filter(d => !holds.slugs.has(d.listing_slug)).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
-    sales: (sales.data ?? []) as Opportunity[],
+    sales: ((sales.data ?? []) as Opportunity[]).filter(o => !holds.stagingIds.has(o.staging_id)),
     recent: recentRows.map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
     quality,
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
@@ -294,6 +328,9 @@ export type PersonalPropertyTag = {
   // pp-v2 routing: who controls the sale and whether FALCO can route it.
   region?: "TN" | "FL"; controller?: string; routable?: boolean; not_routable_reason?: string | null
   route_to?: string | null; value_basis?: string | null; deadline?: string | null; primary_contact?: string
+  prospect?: boolean; registry_assets?: { n_number?: string; aircraft?: string; registrant?: string }[]
+  authority_review?: { controller?: { name?: string; role?: string; authority?: string }; court?: { status?: string }; liens?: { status?: string } }
+  qualification?: string; holds?: string[]; next_action?: string; dedupe_key?: string
   duplicate_of?: string
 }
 export const addressText = (a: string[] | string | null | undefined): string =>
@@ -347,17 +384,26 @@ const GRADE_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 }
 // Ids of every high-value asset lead: aircraft owners plus personal-property
 // lanes. Each query is answered from its own partial index
 // (20261113_staging_aircraft_index.sql, 20261114_staging_personal_property_index.sql).
-async function assetIds(): Promise<string[] | { error: string }> {
+async function assetIds(research = false, prospects = false): Promise<string[] | { error: string }> {
   if (!supabaseAdmin) return { error: "Database not configured." }
+  if (research) {
+    let query = supabaseAdmin.from("homeowner_requests_staging").select("id")
+      .not("raw_payload->personal_property", "is", null).eq("raw_payload->personal_property->>routable", "false")
+    if (prospects) query = query.eq("raw_payload->personal_property->>prospect", "true")
+    const { data, error } = await query.order("id").limit(500)
+    return error ? { error: error.message } : (data ?? []).map(row => row.id as string)
+  }
   const [a, p] = await Promise.all([
-    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null).limit(500),
-    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->personal_property", "is", null).limit(500),
+    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->aircraft", "is", null)
+      .or("raw_payload->personal_property->>routable.is.null,raw_payload->personal_property->>routable.neq.false").limit(500),
+    supabaseAdmin.from("homeowner_requests_staging").select("id").not("raw_payload->personal_property", "is", null)
+      .or("raw_payload->personal_property->>routable.is.null,raw_payload->personal_property->>routable.neq.false").limit(500),
   ])
   if (a.error || p.error) return { error: (a.error ?? p.error)!.message }
   return [...new Set([...(a.data ?? []), ...(p.data ?? [])].map((r) => (r as { id: string }).id))]
 }
 
-export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter; county?: string; q?: string } = {}):
+export async function listBucket(bucket: BucketKey, opts: { research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string } = {}):
   Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
   const grades: Record<GradeFilter, number> = { qualified: 0, A: 0, B: 0, C: 0, all: 0 }
   if (!supabaseAdmin) return { rows: [], grades, error: "Database not configured." }
@@ -366,11 +412,11 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
     // Two steps on purpose: the partial index answers "which ids" as an
     // index-only scan, but asking for the tag in the same query makes the
     // planner (no stats on the expression) seq-scan all of staging (~6 s).
-    const idList = await assetIds()
+    const idList = await assetIds(opts.research, opts.prospects)
     if ("error" in idList) return { rows: [], grades, error: idList.error }
-    if (idList.length) {
+    for (let i = 0; i < idList.length; i += 100) {
       const r = await supabaseAdmin.from("homeowner_requests_staging")
-        .select(`${BUCKET_COLS},aircraft:raw_payload->aircraft,pp:raw_payload->personal_property`).in("id", idList)
+        .select(`${BUCKET_COLS},aircraft:raw_payload->aircraft,pp:raw_payload->personal_property`).in("id", idList.slice(i, i + 100))
       if (r.error) return { rows: [], grades, error: r.error.message }
       all.push(...((r.data ?? []) as unknown as StagedBucket[]))
     }
@@ -386,9 +432,11 @@ export async function listBucket(bucket: BucketKey, opts: { grade?: GradeFilter;
     }
   }
   // The same property can be staged by several bots; keep one row per address.
+  const holds = await noticeHolds()
   const byAddr = new Map<string, StagedBucket>()
   for (const r of all) {
-    const k = propertyKey(r)
+    if (holds.stagingIds.has(r.id) || (bucket === "assets" && (r.pp?.routable === false) !== !!opts.research)) continue
+    const k = bucket === "assets" ? r.pp?.dedupe_key || r.id : propertyKey(r)
     const prev = byAddr.get(k)
     if (!prev || (GRADE_ORDER[r.lane?.grade ?? r.pp?.grade ?? ""] ?? 9) < (GRADE_ORDER[prev.lane?.grade ?? prev.pp?.grade ?? ""] ?? 9)) byAddr.set(k, r)
   }
@@ -422,7 +470,8 @@ export async function bucketCounts(): Promise<Record<BucketKey, number>> {
   if (!supabaseAdmin) return out
   const db = supabaseAdmin
   type R = { id: string; property_address: string | null }
-  const unique = (rows: R[]) => new Set(rows.map(propertyKey)).size
+  const holds = await noticeHolds()
+  const unique = (rows: R[]) => new Set(rows.filter(r => !holds.stagingIds.has(r.id)).map(propertyKey)).size
   // Graded lane rows only, matching the list's default "Qualified" filter.
   const lane = async (name: string) => {
     const rows: R[] = []
@@ -440,8 +489,14 @@ export async function bucketCounts(): Promise<Record<BucketKey, number>> {
   const assets = async () => {
     const idList = await assetIds()
     if (!Array.isArray(idList) || !idList.length) return 0
-    const r = await db.from("homeowner_requests_staging").select("id,property_address").in("id", idList)
-    return unique((r.data ?? []) as R[])
+    const keys = new Set<string>()
+    for (let i = 0; i < idList.length; i += 100) {
+      const { data, error } = await db.from("homeowner_requests_staging")
+        .select("id,key:raw_payload->personal_property->>dedupe_key").in("id", idList.slice(i, i + 100))
+      if (error) throw new Error(error.message)
+      for (const row of data ?? []) if (!holds.stagingIds.has(row.id)) keys.add(row.key || row.id)
+    }
+    return keys.size
   }
   const [c, l, a] = await Promise.all([lane("commercial"), lane("land"), assets()])
   return { commercial: c, land: l, assets: a }

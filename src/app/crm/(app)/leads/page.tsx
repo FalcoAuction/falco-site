@@ -19,7 +19,7 @@ const GRADES: { key: GradeFilter; label: string }[] = [
   { key: "qualified", label: "Qualified" }, { key: "A", label: "A" }, { key: "B", label: "B" }, { key: "C", label: "C" }, { key: "all", label: "All tagged" },
 ]
 
-export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string }> }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string; assets?: string }> }) {
   const sp = await searchParams
   const bucket = BUCKETS.find((b) => b.key === sp.view)?.key as BucketKey | undefined
   const view = (VIEWS.some((v) => v.key === sp.view) ? sp.view : "all") as ViewKey
@@ -28,9 +28,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const q = sp.q?.trim().slice(0, 80) || undefined
   const grade = GRADES.some((g) => g.key === sp.grade) ? (sp.grade as GradeFilter) : undefined
 
+  const research = bucket === "assets" && (sp.assets === "research" || sp.assets === "prospects")
   const [ranked, bucketData, bCounts] = await Promise.all([
     bucket ? Promise.resolve(null) : listLeads(view, { county, q }),
-    bucket ? listBucket(bucket, { grade, county, q }) : Promise.resolve(null),
+    bucket ? listBucket(bucket, { grade, county, q, research, prospects: sp.assets === "prospects" }) : Promise.resolve(null),
     bucketCounts(),
   ])
   const day = ranked?.day ?? null
@@ -66,8 +67,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           ))}
         </nav>
       ) : null}
+      {bucket === "assets" && <nav className="crm-views" aria-label="Asset qualification">
+        <Link href={keep({ view: "assets" })} aria-current={!research ? "page" : undefined}>High-value inventory</Link>
+        <Link href={keep({ view: "assets", assets: "research" })} aria-current={sp.assets === "research" ? "page" : undefined}>Research and holds</Link>
+        <Link href={keep({ view: "assets", assets: "prospects" })} aria-current={sp.assets === "prospects" ? "page" : undefined}>Qualified research prospects</Link>
+      </nav>}
       <form className="crm-toolbar" action="/crm/leads">
         <input type="hidden" name="view" value={current} />
+        {research && <input type="hidden" name="assets" value={sp.assets} />}
         {grade ? <input type="hidden" name="grade" value={grade} /> : null}
         <div style={{ position: "relative" }}>
           <span className="crm-faint" style={{ position: "absolute", left: 9, top: 8 }}><Icon name="search" size={14} /></span>
@@ -97,7 +104,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       </form>
       {error ? <div className="crm-body"><div className="crm-error">{error}</div></div> : null}
       {rowsShown === 0 && !error ? <div className="crm-empty">Nothing in this view.</div>
-        : bucket === "assets" ? <AssetLists rows={bucketData!.rows} />
+        : bucket === "assets" ? <AssetTable rows={bucketData!.rows} />
         : bucket ? <LaneTable rows={bucketData!.rows} lane={bucket} />
         : <RankedTable rows={ranked!.rows} />}
     </>
@@ -178,24 +185,6 @@ function LaneTable({ rows, lane }: { rows: BucketRow[]; lane: "commercial" | "la
 
 // Routable leads first; court, marina, Florida and duplicate leads are
 // relationships to work, not sellers to route.
-function AssetLists({ rows }: { rows: BucketRow[] }) {
-  const routable = rows.filter((r) => r.pp?.routable !== false)
-  const other = rows.filter((r) => r.pp?.routable === false)
-  return (
-    <>
-      <AssetTable rows={routable} />
-      {other.length ? (
-        <>
-          <div className="crm-body" style={{ paddingBottom: 0 }}>
-            <div className="crm-section-label">Relationships and not routable ({other.length})</div>
-          </div>
-          <AssetTable rows={other} />
-        </>
-      ) : null}
-    </>
-  )
-}
-
 function AssetTable({ rows }: { rows: BucketRow[] }) {
   return (
     <table className="crm-table">
@@ -221,6 +210,8 @@ function AssetTable({ rows }: { rows: BucketRow[] }) {
               </td>
               <td className="hide-sm">
                 <span className="crm-muted">{titleCase((r.distress_type ?? "").replace(/_/g, " "))}</span>
+                {p?.qualification && <div>{p.qualification.replaceAll("_", " ")}</div>}
+                {p?.next_action && <div className="secondary">{p.next_action}</div>}
                 {p?.routable === false && p.not_routable_reason ? <div className="secondary">{p.not_routable_reason}</div>
                   : p?.primary_contact ? <div className="secondary">Start with: {p.primary_contact}</div> : null}
                 {p?.signals?.[0] ? <div className="secondary">{p.signals[0].length > 90 ? `${p.signals[0].slice(0, 90)}...` : p.signals[0]}</div>

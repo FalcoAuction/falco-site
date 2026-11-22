@@ -380,7 +380,8 @@ export async function recordActivity(input: ActivityInput): Promise<DialerActivi
 
 /** Convert an inventory lead to the VaultListing-shaped object the UI expects. */
 function inventoryToListing(inv: DialerInventoryLead): VaultListing {
-  const auctionWindow =
+  const stale = inv.saleStatus === "stale_notice"
+  const auctionWindow = stale ? "Notice requires verification" :
     inv.dtsDays !== null && inv.dtsDays !== undefined
       ? `${Math.max(0, Math.round(inv.dtsDays))} Days`
       : inv.distressType === "PREFORECLOSURE" || inv.distressType === "LIS_PENDENS"
@@ -442,7 +443,7 @@ function inventoryToListing(inv: DialerInventoryLead): VaultListing {
     dtsDays: inv.dtsDays ?? null,
     currentSaleDate: inv.currentSaleDate || undefined,
     originalSaleDate: inv.originalSaleDate || undefined,
-    contactReady: Boolean(inv.ownerPhonePrimary || inv.ownerPhoneSecondary),
+    contactReady: !stale && Boolean(inv.ownerPhonePrimary || inv.ownerPhoneSecondary),
     ownerName: inv.ownerName || undefined,
     ownerMail: inv.ownerMail || undefined,
     ownerPhonePrimary: inv.ownerPhonePrimary || undefined,

@@ -24,6 +24,7 @@
 //   FALCO_SMS_AUTO_SEND            ("0" to disable auto-send entirely)
 //   TWILIO_VALIDATE_SIGNATURES     (on by default; "0" disables for local testing)
 
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { NextRequest, NextResponse } from "next/server"
 import { createHmac, timingSafeEqual } from "node:crypto"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -338,18 +339,17 @@ export async function POST(req: NextRequest) {
   // The inbound is still logged (so it's not lost), but the brain skips
   // the draft.
   const pmCheck = (lead.phone_metadata ?? {}) as Record<string, unknown>
-  const ssCheck = pmCheck["sale_status"] as { status?: string } | undefined
-  const resolvedStatuses = new Set(["cancelled", "reinstated", "ran"])
-  if (ssCheck?.status && resolvedStatuses.has(ssCheck.status)) {
+  const hold = trusteeNoticeHold(pmCheck)
+  if (hold) {
     console.info(
-      `Sale status '${ssCheck.status}' set on ${leadSlug} — skipping auto-respond`
+      `Sale status '${hold}' set on ${leadSlug} — skipping auto-respond`
     )
     await notifyPatrick({
       ownerName: ownerLabel,
       addressSnippet: addrSnip,
       inboundBody: messageBody,
-      botAction: "opted_out_lead",
-      escalationReason: `sale_status=${ssCheck.status}`,
+      botAction: "no_draft",
+      escalationReason: `sale_status=${hold}`,
     })
     return twimlResponse(EMPTY_TWIML)
   }
@@ -559,6 +559,12 @@ export async function POST(req: NextRequest) {
     })
     return twimlResponse(EMPTY_TWIML)
   }
+
+  const fresh = await supabaseAdmin.from("homeowner_requests").select("phone_metadata,trustee_sale_date")
+    .eq("source", "bot").eq("pipeline_lead_key", leadSlug).maybeSingle()
+  if (fresh.error || !fresh.data || trusteeNoticeHold(fresh.data.phone_metadata)
+      || fresh.data.trustee_sale_date !== lead.trustee_sale_date || fresh.data.phone_metadata?.dnc === true
+      || fresh.data.phone_metadata?.dnc === "true") return twimlResponse(EMPTY_TWIML)
 
   // ───── Auto-send via Twilio ─────────────────────────────────────────
   const statusCallback = `https://${req.headers.get("host") || "falco.llc"}/api/sms/twilio-status`

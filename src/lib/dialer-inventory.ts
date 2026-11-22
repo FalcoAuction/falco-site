@@ -1,3 +1,4 @@
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
 const SYSTEM_STATE_COMPANY = "__falco_system_state__"
@@ -498,7 +499,7 @@ function deriveFromPhoneMetadata(
   if (ss && typeof ss === "object") {
     const status = ss.status
     if (
-      status === "cancelled" ||
+      (status === "cancelled" && trusteeNoticeHold(obj) !== "stale_notice") ||
       status === "postponed" ||
       status === "ran" ||
       status === "reinstated"
@@ -539,6 +540,7 @@ function buildLeadFromHR(
   hr: HomeownerRequestRow,
   snap: DialerInventoryLead | null
 ): DialerInventoryLead {
+  const stale = trusteeNoticeHold(hr.phone_metadata) === "stale_notice"
   const key = (hr.pipeline_lead_key || snap?.key || "").trim()
   const ownerName =
     nonEmpty(hr.owner_name_records) ?? nonEmpty(hr.full_name) ?? snap?.ownerName ?? ""
@@ -554,12 +556,12 @@ function buildLeadFromHR(
     state: snap?.state || "TN",
     // Distress
     distressType: hr.distress_type || snap?.distressType || "",
-    saleStatus: snap?.saleStatus || "",
-    currentSaleDate: hr.trustee_sale_date || snap?.currentSaleDate || "",
+    saleStatus: stale ? "stale_notice" : snap?.saleStatus || "",
+    currentSaleDate: stale ? "" : hr.trustee_sale_date || snap?.currentSaleDate || "",
     originalSaleDate: snap?.originalSaleDate || "",
-    auctionReadiness: snap?.auctionReadiness || "",
+    auctionReadiness: stale ? "" : snap?.auctionReadiness || "",
     equityBand: snap?.equityBand || "",
-    dtsDays: snap?.dtsDays ?? null,
+    dtsDays: stale ? null : snap?.dtsDays ?? null,
     falcoScore: hr.pipeline_score ?? snap?.falcoScore ?? null,
     firstSeenAt: snap?.firstSeenAt || hr.submitted_at || "",
     // Contact — HR is authoritative (BatchData skip-trace)
@@ -604,6 +606,7 @@ function buildLeadFromHR(
       )
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { amortizedCurrentBalance: _, ...rest } = d
+      if (stale) delete rest.decisionAction
       return rest
     })(),
     // Sales motion bucket — drives lead-detail Pitch panel
@@ -675,6 +678,7 @@ export async function loadDialerInventory(): Promise<DialerInventorySnapshot | n
  *  lead-detail navigation bypasses this so closed leads stay
  *  resolvable for workflow cleanup. */
 export function isLeadActive(lead: DialerInventoryLead): boolean {
+  if (lead.saleStatus === "stale_notice") return false
   // Dead lead types (Patrick, July 2026): code violations and
   // demolition orders aren't dialable auction-routing pitches — no
   // deadline, no forcing event. They were promoted before the

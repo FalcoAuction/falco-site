@@ -5,6 +5,7 @@
 // FALCO_POSTAL_ADDRESS), plus: the address is not suppressed, the campaign's
 // daily cap, and no more than one email to the same address in 7 days.
 
+import { estateDraftBlock } from "@/lib/estate-draft-review"
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { getAdminSession } from "@/lib/admin-session"
@@ -17,7 +18,7 @@ const CAMPAIGN: Record<string, string> = { probate_notice: "estate-attorney-sign
 const PER_ADDRESS_DAYS = 7
 const fromAddress = () => process.env.FALCO_OUTREACH_FROM?.trim() || "FALCO <falco@falco.llc>"
 
-type Draft = { id: string; signal: string; status: string; subject: string; body_text: string; to_email: string | null; contact_id: string | null; recipient_name: string; recipient_firm: string | null }
+type Draft = Parameters<typeof estateDraftBlock>[0] & { id: string; signal: string; status: string; subject: string; body_text: string; to_email: string | null; contact_id: string | null; recipient_name: string; recipient_firm: string | null }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!getAdminSession(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
@@ -42,6 +43,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const reasons: string[] = []
   if (draft.status !== "approved") reasons.push("Approve the draft first.")
+  const estateBlock = await estateDraftBlock(draft)
+  if (estateBlock) reasons.push(estateBlock)
   const gate = sendGate(campaign, process.env)
   reasons.push(...gate.reasons)
   const since = new Date(Date.now() - PER_ADDRESS_DAYS * 86400_000).toISOString()

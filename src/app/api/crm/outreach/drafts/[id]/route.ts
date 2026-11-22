@@ -5,6 +5,7 @@
 //              needs_email draft to draft
 //   status     'approved' | 'skipped' | 'draft' (sending is a separate route)
 
+import { estateDraftBlock } from "@/lib/estate-draft-review"
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
@@ -12,7 +13,7 @@ import { normalizeEmail } from "@/lib/outreach"
 
 export const dynamic = "force-dynamic"
 
-type Draft = { id: string; signal: string; status: string; recipient_name: string; recipient_firm: string | null; recipient_key: string; contact_id: string | null; to_email: string | null }
+type Draft = Parameters<typeof estateDraftBlock>[0] & { id: string; signal: string; status: string; recipient_name: string; recipient_firm: string | null; recipient_key: string; contact_id: string | null; to_email: string | null }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!getAdminSession(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
@@ -29,6 +30,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!draft) return NextResponse.json({ error: "draft not found" }, { status: 404 })
   if (draft.status === "sent") return NextResponse.json({ error: "already sent" }, { status: 409 })
 
+  if (body.status === "approved") {
+    const reason = await estateDraftBlock(draft)
+    if (reason) return NextResponse.json({ error: reason }, { status: 409 })
+  }
   const upd: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (typeof body.subject === "string" && body.subject.trim()) upd.subject = body.subject.trim()
   if (typeof body.body_text === "string" && body.body_text.trim()) upd.body_text = body.body_text.replace(/\r\n/g, "\n").trim()

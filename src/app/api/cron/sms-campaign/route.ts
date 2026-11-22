@@ -28,6 +28,7 @@
 //
 // Auth: CRON_SECRET bearer.
 
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import {
@@ -262,8 +263,7 @@ export async function GET(req: NextRequest) {
         if (BUSINESS_RE.test(owner) || owner.toUpperCase().includes("ESTATE OF")) return false
         const pm = r.phone_metadata || {}
         if (pm["dnc"] === true || pm["dnc"] === "true") return false
-        const ss = (pm["sale_status"] as Record<string, unknown>) || {}
-        if (["cancelled", "reinstated", "ran"].includes(String(ss["status"] || ""))) return false
+        if (trusteeNoticeHold(pm)) return false
         return !!e164(r.phone || "")
       })
 
@@ -337,12 +337,19 @@ export async function GET(req: NextRequest) {
       }
       const l = lead as LeadRow
       const pm = l.phone_metadata || {}
-      const ss = (pm["sale_status"] as Record<string, unknown>) || {}
+      const hold = trusteeNoticeHold(pm)
+      if (hold === "stale_notice") {
+        await supabaseAdmin.from("sms_outreach_state")
+          .update({ next_send_at: humanNextSendAt(1).toISOString() })
+          .eq("id", seq.id).eq("status", "active").eq("next_send_at", seq.next_send_at)
+        summary.skipped++
+        continue
+      }
       const saleGone =
         l.trustee_sale_date && new Date(l.trustee_sale_date).getTime() < Date.now()
       if (
         pm["dnc"] === true ||
-        ["cancelled", "reinstated", "ran"].includes(String(ss["status"] || "")) ||
+        hold ||
         saleGone
       ) {
         await supabaseAdmin
@@ -457,6 +464,16 @@ export async function GET(req: NextRequest) {
         })
         summary.drafted_dry++
         continue // state untouched — dry runs never consume steps
+      }
+
+      // Composing can span a reaper run or a manual sale update.
+      const fresh = await supabaseAdmin.from("homeowner_requests").select("phone_metadata,trustee_sale_date")
+        .eq("source", "bot").eq("pipeline_lead_key", seq.listing_slug).maybeSingle()
+      if (!fresh.data || fresh.error || trusteeNoticeHold(fresh.data.phone_metadata)
+          || fresh.data.trustee_sale_date !== l.trustee_sale_date
+          || fresh.data.phone_metadata?.dnc === true || fresh.data.phone_metadata?.dnc === "true") {
+        summary.skipped++
+        continue
       }
 
       // ── LIVE send, split into human bubbles ─────────────────────────

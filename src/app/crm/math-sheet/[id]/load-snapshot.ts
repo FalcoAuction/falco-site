@@ -1,3 +1,4 @@
+import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { HomeownerSnapshot } from "./math-sheet-content"
 import { extractCodeViolationData } from "./code-violation-data"
@@ -36,7 +37,7 @@ export async function loadHomeownerSnapshot(id: string): Promise<HomeownerSnapsh
     phone: (data.phone as string) || "",
     propertyAddress: (data.property_address as string) || "",
     county: (data.county as string) || "",
-    trusteeSaleDate: (data.trustee_sale_date as string | null) ?? null,
+    trusteeSaleDate: trusteeNoticeHold(data.phone_metadata) === "stale_notice" ? null : (data.trustee_sale_date as string | null) ?? null,
     mortgageBalance: (data.mortgage_balance as number | null) ?? null,
     submittedAt: (data.submitted_at as string) || "",
     // Pipeline-enriched fields used to pre-populate the math sheet inputs.
@@ -52,6 +53,7 @@ export async function loadHomeownerSnapshot(id: string): Promise<HomeownerSnapsh
       const ss = pm && typeof pm === "object"
         ? (pm.sale_status as Record<string, unknown> | undefined)
         : undefined
+      if (trusteeNoticeHold(pm) === "stale_notice") return null
       const s = ss?.status
       if (s === "cancelled" || s === "postponed" || s === "ran" || s === "reinstated") {
         return s

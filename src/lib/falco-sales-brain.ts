@@ -252,7 +252,9 @@ export function buildLeadContext(lead: DialerLeadView): string {
 
   // Distress posture
   if (lead.distressType) parts.push(`Distress type: ${lead.distressType}`)
-  if (lead.currentSaleDate) {
+  if (lead.saleStatus === "stale_notice") {
+    parts.push("Trustee notice is stale. Current sale and deadline require verification.")
+  } else if (lead.currentSaleDate) {
     parts.push(`Trustee sale date: ${lead.currentSaleDate}`)
     const dts = daysFromIso(lead.currentSaleDate)
     if (dts !== null) parts.push(`Days to sale: ${dts}`)
