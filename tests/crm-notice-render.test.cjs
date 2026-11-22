@@ -48,7 +48,7 @@ test('Today, ranked list and lead detail render both current notice decisions', 
   }}
   const imports = {'server-only':{},react:{...React,cache:f=>f},'@/lib/supabase-admin':{supabaseAdmin:db},
     '@/lib/crm-land':{},'@/lib/land-evidence':{ landEvidence:()=>null },'@/lib/dialer-data':{getWorkflow:()=>null,listActivities:()=>[]}}
-  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','nashville-codes','warn-evidence','crm-data']) {
+  for (const name of ['dialer-types','trustee-notice','chattanooga-research','memphis-research','knoxville-research','mt-juliet-research','nashville-codes','warn-evidence','crm-data']) {
     imports['@/lib/'+name]=load('src/lib/'+name+'.ts',imports)
   }
   imports['@/lib/crm-data']={...imports['@/lib/crm-data'],bucketCounts:()=>({assets:0,commercial:0}),mathSheetIdFor:()=>null}
@@ -266,4 +266,17 @@ test('Knoxville separates the petition, dated complaint and exact county bill', 
   assert.equal(check({knoxville_review:{...review,document_kind:'poh_results',status:'published_result_review'}}).agenda,false)
   assert.ok(check({knoxville_review:null}).agenda)
   assert.equal(check({knoxville_review:null}).complaint,null)
+})
+
+test('only a recently reviewed matching Mt. Juliet building complaint is displayed', () => {
+  const { mtJulietEvidence } = load('src/lib/mt-juliet-research.ts', {'server-only':{}, '@/lib/supabase-admin':{}})
+  const review = {issue_id:123,status:'Open',finding:'reported_building_condition',source_url:'https://seeclickfix.com/issues/123',
+    checked_on:new Date().toISOString().slice(0,10),reported_on:'2025-06-01',condition_excerpt:'walls are detaching',
+    organization:'Mt. Juliet, TN - Codes Enforcement',reported_address:'123 Main St'}
+  const row = {bot_source:'mtn_cities_codes',county:'Wilson County',raw_payload:{issue:{id:123},mt_juliet_issue_review:review},
+    pipeline_lead_key:require('node:crypto').createHash('sha1').update('mtn_cities_codes|MJ-SCF-123').digest('hex')}
+  assert.equal(mtJulietEvidence(row).issue,123)
+  for (const change of [{status:'Archived'},{issue_id:456},{checked_on:'2000-01-01'},{finding:'other_request'}]) {
+    assert.equal(mtJulietEvidence({...row, mt_review:{...review,...change}}),null)
+  }
 })

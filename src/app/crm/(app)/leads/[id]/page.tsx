@@ -1,3 +1,4 @@
+import { mtJulietEvidence } from "@/lib/mt-juliet-research"
 import { knoxvilleEvidence } from "@/lib/knoxville-research"
 import { HearingRecord } from "@/app/crm/hearing-record"
 import { JohnsonHearingRecord } from "@/app/crm/johnson-hearing-record"
@@ -42,6 +43,18 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const data = await getLead(id)
   if (!data) notFound()
   const { lead, opp, workflow, activities } = data
+  if (lead.bot_source === "hud_reo") {
+    return <><Head title={lead.property_address || "Historical HUD record"}><Link href="/crm/leads">Back to leads</Link></Head>
+      <p>Historical HUD inventory. Verify current availability with <a href="https://www.hudhomestore.gov/searchresult?citystate=TN">HUD HomeStore</a>. Auction assignment unverified.</p></>
+  }
+  if (lead.bot_source === "mtn_cities_codes") {
+    const evidence = mtJulietEvidence(lead)
+    return <><Head title={lead.property_address || "Mt. Juliet complaint"}><Link href="/crm/leads/mt-juliet">Mt. Juliet complaint research</Link></Head>
+      {evidence ? <section className="crm-card"><h2>Reported building condition</h2>
+        <p>{evidence.condition}</p><p>Reported {evidence.reported}. Complaint status {evidence.status} as of {evidence.checked}.</p>
+        <p>Enforcement and sale authority are unverified.</p><a href={evidence.url}>View municipal complaint {evidence.issue}</a>
+      </section> : <p>Historical complaint. No current qualifying building-condition report verified.</p>}</>
+  }
   if (lead.bot_source === "johnson_city_bdsr") {
     return <>
       <Head title={lead.property_address || "Johnson City hearing record"}><Link href="/crm/leads">Back to leads</Link></Head>
