@@ -57,7 +57,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           {BUCKETS.map((b) => (
             <Link key={b.key} href={keep({ view: b.key })} aria-current={b.key === bucket ? "page" : undefined}>
               {b.label} {b.key === "land" ? bucket === "land" && !researchLand && !landOpportunities && <span className="crm-faint">{bucketData?.grades.qualified}</span>
-                : <span className="crm-faint" style={{ marginLeft: 5 }}>{bCounts[b.key]}</span>}
+                : <span className="crm-faint" style={{ marginLeft: 5 }}>{Number.isNaN(bCounts[b.key]) ? "?" : bCounts[b.key]}</span>}
             </Link>
           ))}
         </div>
