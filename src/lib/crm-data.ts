@@ -559,14 +559,17 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   } else if (bucket === "land") {
     all.push(...await loadLandRows(BUCKET_COLS))
   } else {
-    for (let page = 0; page < 5; page++) {
+    // 500 rows a request: a full 1,000-row page with the lane tag ran up to
+    // 3.9 s against the 8 s API limit, and a timeout emptied the list while
+    // the tab counter still showed its number.
+    for (let page = 0; page < 10; page++) {
       const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},lane:raw_payload->property_lane`)
         .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", bucket).not("bot_source", "in", researchSourceFilter)
-        .order("id").range(page * 1000, page * 1000 + 999)
+        .order("id").range(page * 500, page * 500 + 499)
       if (r.error) return { rows: [], grades, error: r.error.message }
       const batch = (r.data ?? []) as unknown as StagedBucket[]
       all.push(...batch)
-      if (batch.length < 1000) break
+      if (batch.length < 500) break
     }
   }
   // The same property can be staged by several bots; keep one row per address.
@@ -635,6 +638,8 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
       const r = await db.from("homeowner_requests_staging").select("id,property_address,bot_source")
         .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", name).not("bot_source", "in", researchSourceFilter)
         .not("raw_payload->property_lane->>grade", "is", null).order("id").range(page * 1000, page * 1000 + 999)
+      // A failed read is not a count of zero: show "?" on the tab instead.
+      if (r.error) return Number.NaN
       const batch = (r.data ?? []) as R[]
       rows.push(...batch)
       if (batch.length < 1000) break
