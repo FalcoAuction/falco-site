@@ -78,7 +78,7 @@ export default async function PilotWorklist({ searchParams }: { searchParams: Pr
                   <dl className="crm-props" key={a.propertyKey ?? `asset-${ai}`} style={{ marginBottom: 12 }}>
                     <dt>Asset</dt><dd><Link href={`/crm/leads/${lead.id}`}>{r.asset.address || r.asset.parcel || r.asset.description || "Open record"}</Link> · {titleCase(lead.county)}</dd>
                     <dt>Why now</dt><dd>{r.event.what}{r.event.checkedOn ? ` (checked ${fullDate(r.event.checkedOn)})` : ""}</dd>
-                    <dt>Signer</dt><dd>{r.decider.role}{r.decider.verified ? "" : " · not verified"}<div className="crm-faint">{r.decider.basis}</div></dd>
+                    <dt>Signer</dt><dd>{titleCase(r.decider.name) || "Not identified"} · {r.decider.role}{r.decider.verified ? "" : " · not verified"}<div className="crm-faint">{r.decider.basis}</div></dd>
                     <dt>Deadline</dt><dd>{r.economics.deadline ? `${fullDate(r.economics.deadline)}${days !== null ? ` · ${days < 0 ? "passed" : `${days} days`}` : ""}` : "Unknown"}</dd>
                     <dt>{r.economics.valueIsEstimate ? "Estimated value" : "Value"}</dt><dd>{r.economics.value !== null ? money(r.economics.value) : "Not valued"}{r.economics.valueBasis ? <span className="crm-faint"> · {r.economics.valueBasis}</span> : null}</dd>
                     {missing.length ? <><dt>Missing</dt><dd>{missing.join("; ")}</dd></> : null}
