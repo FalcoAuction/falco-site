@@ -257,3 +257,19 @@
 .crm-sheet-thumb-open { position: absolute; right: 8px; bottom: 8px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(17, 17, 17, 0.85); color: #fff; opacity: 0; transition: opacity 0.15s; }
 .crm-sheet-thumb-link:hover .crm-sheet-thumb-open, .crm-sheet-thumb-link:focus-visible .crm-sheet-thumb-open { opacity: 1; }
 .crm-sheet-thumb:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14); }
+
+/* Lead page: what you act on up top, everything else in "All details". */
+.crm-lead-why { font-size: 13px; line-height: 1.5; color: var(--ink-2); display: flex; flex-direction: column; gap: 6px; }
+.crm-lead-why p { margin: 0; }
+.crm-keynums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.crm-keynums div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--raised); }
+.crm-keynums dt { font-size: 11px; color: var(--faint); margin-bottom: 2px; }
+.crm-keynums dd { margin: 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.crm-more { border-top: 1px solid var(--line); padding-top: 12px; }
+.crm-more > summary { cursor: pointer; font-weight: 500; color: var(--muted); list-style: none; }
+.crm-more > summary::-webkit-details-marker { display: none; }
+.crm-more > summary::before { content: "+ "; }
+.crm-more[open] > summary::before { content: "- "; }
+.crm-more > summary:hover { color: var(--ink); }
+.crm-more-body { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+.crm-more-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 24px; align-items: start; }
