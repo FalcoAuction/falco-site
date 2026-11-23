@@ -71,3 +71,14 @@ test("soonest deadline first, undated last", () => {
   ], now)
   assert.deepEqual(Array.from(g, (x) => x.assets[0].cards[0].id), ["soon", "late", "u"])
 })
+
+test("groups that share a person merge; another county stays apart", () => {
+  const g = api.dedupeWorklist([
+    wl("a", { owner_group_key: "tn|hamilton|P:BYRD T", property_key: "p1" }),
+    wl("x", { owner_group_key: "tn|hamilton|P:FRYAR S", property_key: "p9" }),
+    wl("b", { owner_group_key: "tn|hamilton|P:BYRD B+P:BYRD T", property_key: "p2" }),
+    wl("c", { owner_group_key: "tn|hamilton|P:BYRD B+P:GHOLSTON W", property_key: "p3" }),
+    wl("d", { owner_group_key: "tn|knox|P:BYRD T", property_key: "p4" }),
+  ], now)
+  assert.deepEqual(Array.from(g, (x) => x.assets.length).sort(), [1, 1, 3])
+})

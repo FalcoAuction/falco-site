@@ -92,13 +92,32 @@ export type WorklistCard = { id: string; county: string | null; review: PilotRev
 export type WorklistAsset = { propertyKey: string | null; cards: WorklistCard[] }
 export type WorklistGroup = { ownerGroupKey: string | null; assets: WorklistAsset[]; lanes: PilotLane[]; soonest: number | null }
 
+/** The people and entities inside an owner key, each scoped to its county. */
+function ownerParts(key: string | null): string[] {
+  if (!key) return []
+  const cut = key.lastIndexOf("|")
+  if (cut < 0 || key.indexOf("|") === cut) return []
+  return key.slice(cut + 1).split("+").filter(Boolean).map((n) => `${key.slice(0, cut)}|${n}`)
+}
+
 /** One row per owner group, every separately identified property kept under
- *  it, the same property across lanes merged. A card with no owner key
- *  stands alone: unknown owners are never merged. */
+ *  it, the same property across lanes merged. Two cards are one group when
+ *  their owner keys share any person or entity in the same county (a parcel
+ *  held alone and another held with a spouse is one person to trace). A card
+ *  with no owner key stands alone: unknown owners are never merged. */
 export function dedupeWorklist(cards: WorklistCard[], now: Date = new Date()): WorklistGroup[] {
+  const parent = new Map<string, string>()
+  const find = (x: string): string => {
+    let p = parent.get(x)
+    if (p === undefined) { parent.set(x, x); return x }
+    while (p !== x) { x = p; p = parent.get(x) ?? x }
+    return x
+  }
+  const partsOf = (card: WorklistCard, n: number) => { const p = ownerParts(card.review.ownerGroupKey); return p.length ? p : [`__solo_${n}`] }
+  cards.forEach((card, n) => { const p = partsOf(card, n); for (const part of p.slice(1)) parent.set(find(part), find(p[0])) })
   const groups = new Map<string, { g: WorklistGroup; assets: Map<string, WorklistAsset> }>()
   cards.forEach((card, n) => {
-    const key = card.review.ownerGroupKey ?? `__solo_${n}`
+    const key = find(partsOf(card, n)[0])
     let slot = groups.get(key)
     if (!slot) { slot = { g: { ownerGroupKey: card.review.ownerGroupKey, assets: [], lanes: [], soonest: null }, assets: new Map() }; groups.set(key, slot) }
     const pkey = card.review.propertyKey ?? `__asset_${n}`
