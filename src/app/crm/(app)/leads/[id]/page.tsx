@@ -9,7 +9,7 @@ import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } f
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
-import { pilotReview } from "@/lib/pilot-review"
+import { PILOT_ROUTE_LABEL, pilotReview } from "@/lib/pilot-review"
 import { PilotReviewCard } from "@/app/crm/pilot-review-card"
 // Lead record (Attio-style): key details on the left, actions and the
 // activity timeline on the right. Reads one staging row by id plus its
@@ -139,38 +139,108 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     ? ({ metro_parcel: "Metro assessor", xref_avm_enricher: "Estimated", batchdata: "BatchData", attom: "ATTOM" } as Record<string, string>)[lead.property_value_source] ?? "Estimated"
     : null
 
+  // The page leads with what you act on; every evidence block stays one
+  // click away in "All details", unchanged.
+  const keyValue = lead.property_value ?? opp?.property_value ?? pilot?.economics.value ?? null
+  const deadline = sale ?? pilot?.economics.deadline ?? null
+  const who = pilot?.decider.name ? `${titleCase(pilot.decider.name)}${pilot.decider.role ? `, ${pilot.decider.role}` : ""}` : titleCase(owner) || "Owner unknown"
+  const PILOT_TONE: Record<string, string> = { first_trace_review: "green", professional_relationship: "blue", research_hold: "amber", removed: "" }
+
   return (
     <>
       <Head title={lead.property_address ?? (estate?.docket ? "Estate case " + estate.docket : "Lead")}>
         <Link className="crm-btn ghost" href="/crm/leads"><Icon name="back" />Leads</Link>
       </Head>
-      {calendar && <section className="crm-card"><h2>Trustee sale postponed</h2>
-        <dl className="crm-props"><dt>Previous sale date</dt><dd>{calendar.prior}</dd>
-          <dt>Rescheduled trustee sale</dt><dd>{calendar.date} {calendar.time}</dd>
-          <dt>Trustee calendar checked</dt><dd>{calendar.checked}</dd></dl>
-        <a href={calendar.source}>Foundation Legal Group sale calendar</a> · {calendar.notice}
-      </section>}
-      {receiver && <EvidenceCard record={receiver}/>}
-      {pilot && <PilotReviewCard review={pilot}/>}
       <div className="crm-record">
         <aside className="crm-record-side">
           <div>
             <div className="crm-record-title">{lead.property_address ?? (estate ? "Probate notice" : "No address")}</div>
-            <div className="crm-muted" style={{ marginTop: 2 }}>{estate ? "Decedent in notice: " : memphis ? "Notice borrower: " : ""}{titleCase(owner) || (memphis || estate ? "Unknown" : "Owner unknown")} · {titleCase(lead.county)}</div>
+            <div className="crm-muted" style={{ marginTop: 2 }}>{who} · {titleCase(lead.county)}</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
               <StatusPill status={workflow?.status} />
               <span className="pill">{situation}</span>
               <SalePill date={sale} />
+              {pilot ? <span className={`pill ${PILOT_TONE[pilot.route] ?? ""}`}>{PILOT_ROUTE_LABEL[pilot.route]}</span> : null}
             </div>
+            {calendar ? <div className="crm-muted" style={{ marginTop: 8 }}>Sale postponed to {calendar.date}</div> : null}
           </div>
+
+          {pilot?.routeReason || (pilot?.availability.firstCallQuestion && pilot.route !== "removed") ? (
+            <div className="crm-lead-why">
+              {pilot?.routeReason ? <p>{pilot.routeReason}</p> : null}
+              {pilot?.availability.firstCallQuestion && pilot.route !== "removed" ? <p><strong>Ask first:</strong> {pilot.availability.firstCallQuestion}</p> : null}
+            </div>
+          ) : null}
+
+          <dl className="crm-keynums">
+            <div><dt>Value</dt><dd>{money(keyValue) || "Not valued"}</dd></div>
+            <div><dt>Owed</dt><dd>{lead.mortgage_balance ? money(lead.mortgage_balance) : "Unknown"}</dd></div>
+            <div><dt>Deadline</dt><dd>{deadline ? shortDate(deadline) : "None set"}</dd></div>
+            <div><dt>FALCO fee</dt><dd>{money(opp?.expected_fee) || "Not ranked"}</dd></div>
+          </dl>
 
           <div className="crm-actions">
             {ownerContactHeld ? null : phones[0] ? <a className="crm-btn primary" href={`tel:+1${phones[0]}`}><Icon name="calls" />Call</a> : <span className="crm-btn" aria-disabled="true" style={{ opacity: 0.5 }}><Icon name="calls" />No phone</span>}
             {!ownerContactHeld && phones[0] ? <a className="crm-btn" href={`sms:+1${phones[0]}`}><Icon name="text" />Text</a> : null}
             {!ownerContactHeld && lead.email ? <a className="crm-btn" href={`mailto:${lead.email}`}><Icon name="mail" />Email</a> : null}
+            {mathSheetId ? <Link className="crm-btn" href={`/crm/math-sheet/${mathSheetId}`}>Math sheet</Link> : null}
             {lead.source_url ? <a className="crm-btn ghost" href={lead.source_url} target="_blank" rel="noreferrer"><Icon name="external" />Source</a> : null}
           </div>
+          {ownerContactHeld ? <div className="crm-faint">Owner contact is on hold for this lead. See All details.</div> : null}
+        </aside>
 
+        <div className="crm-record-main">
+          {lead.pipeline_lead_key && workflow ? (
+            <LogForm slug={lead.pipeline_lead_key} status={workflow.status} />
+          ) : (
+            <div className="crm-note">This lead has no pipeline key, so calls cannot be logged against it.</div>
+          )}
+
+          {workflow?.nextActionAt ? (
+            <div className="crm-note">
+              Next: {NEXT_ACTION_LABELS[workflow.nextAction] ?? workflow.nextAction} on {new Date(workflow.nextActionAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+            </div>
+          ) : null}
+
+          <section>
+            <div className="crm-section-label">Activity</div>
+            <ul className="crm-timeline">
+              {activities.map((a) => (
+                <li key={a.id}>
+                  <span className="ico"><Icon name={a.channel === "call" || a.channel === "voicemail" ? "calls" : a.channel === "text" ? "text" : a.channel === "email" ? "mail" : a.channel === "door_knock" ? "door" : "note"} /></span>
+                  <div>
+                    <span className="what">{CHANNEL_LABELS[a.channel] ?? a.channel}{a.outcome !== "note_only" ? `: ${OUTCOME_LABELS[a.outcome] ?? a.outcome}` : ""}</span>
+                    <span className="when">{relTime(a.occurredAt)}{a.createdBy ? ` · ${a.createdBy}` : ""}</span>
+                  </div>
+                  {a.notes ? <div className="note">{a.notes}</div> : null}
+                </li>
+              ))}
+              <li>
+                <span className="ico"><Icon name="leads" /></span>
+                <div><span className="what">Found by {lead.bot_source}</span><span className="when">{shortDate(lead.staged_at)}</span></div>
+              </li>
+            </ul>
+          </section>
+
+          <details className="crm-more">
+            <summary>All details</summary>
+            <div className="crm-more-body">
+              {pilot && <PilotReviewCard review={pilot}/>}
+              {calendar && <section className="crm-card"><h2>Trustee sale postponed</h2>
+                <dl className="crm-props"><dt>Previous sale date</dt><dd>{calendar.prior}</dd>
+                  <dt>Rescheduled trustee sale</dt><dd>{calendar.date} {calendar.time}</dd>
+                  <dt>Trustee calendar checked</dt><dd>{calendar.checked}</dd></dl>
+                <a href={calendar.source}>Foundation Legal Group sale calendar</a> · {calendar.notice}
+              </section>}
+              {receiver && <EvidenceCard record={receiver}/>}
+              {notes ? (
+                <section className="crm-card">
+                  <div className="crm-card-head"><h2>What we found</h2></div>
+                  <div className="crm-card-body" style={{ whiteSpace: "pre-wrap", color: "var(--ink-2)" }}>{notes}</div>
+                </section>
+              ) : null}
+              <ContentsForm id={lead.id} initial={contents} />
+              <div className="crm-more-grid">
           <div>
             {chatt ? <><div className="crm-section-label">Chattanooga case {cityCase?.case_number}</div>
               <dl className="crm-props">
@@ -370,49 +440,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               </dl>
             </div>
           ) : null}
-        </aside>
-
-        <div className="crm-record-main">
-          {lead.pipeline_lead_key && workflow ? (
-            <LogForm slug={lead.pipeline_lead_key} status={workflow.status} />
-          ) : (
-            <div className="crm-note">This lead has no pipeline key, so calls cannot be logged against it.</div>
-          )}
-
-          <ContentsForm id={lead.id} initial={contents} />
-
-          {workflow?.nextActionAt ? (
-            <div className="crm-note">
-              Next: {NEXT_ACTION_LABELS[workflow.nextAction] ?? workflow.nextAction} on {new Date(workflow.nextActionAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+              </div>
             </div>
-          ) : null}
-
-          {notes ? (
-            <section className="crm-card">
-              <div className="crm-card-head"><h2>What we found</h2></div>
-              <div className="crm-card-body" style={{ whiteSpace: "pre-wrap", color: "var(--ink-2)" }}>{notes}</div>
-            </section>
-          ) : null}
-
-          <section>
-            <div className="crm-section-label">Activity</div>
-            <ul className="crm-timeline">
-              {activities.map((a) => (
-                <li key={a.id}>
-                  <span className="ico"><Icon name={a.channel === "call" || a.channel === "voicemail" ? "calls" : a.channel === "text" ? "text" : a.channel === "email" ? "mail" : a.channel === "door_knock" ? "door" : "note"} /></span>
-                  <div>
-                    <span className="what">{CHANNEL_LABELS[a.channel] ?? a.channel}{a.outcome !== "note_only" ? `: ${OUTCOME_LABELS[a.outcome] ?? a.outcome}` : ""}</span>
-                    <span className="when">{relTime(a.occurredAt)}{a.createdBy ? ` · ${a.createdBy}` : ""}</span>
-                  </div>
-                  {a.notes ? <div className="note">{a.notes}</div> : null}
-                </li>
-              ))}
-              <li>
-                <span className="ico"><Icon name="leads" /></span>
-                <div><span className="what">Found by {lead.bot_source}</span><span className="when">{shortDate(lead.staged_at)}</span></div>
-              </li>
-            </ul>
-          </section>
+          </details>
         </div>
       </div>
     </>
