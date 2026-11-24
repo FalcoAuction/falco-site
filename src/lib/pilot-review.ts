@@ -88,7 +88,31 @@ export function fullDate(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
 }
 
-export type WorklistCard = { id: string; county: string | null; review: PilotReview }
+/** The final check before paid trace (bots: src/bots/_pretrace_check.py),
+ *  stored beside the card as raw_payload.pretrace_check. */
+export type PretraceQueue = "trace_now" | "verify_first" | "remove"
+export type PretraceCheck = {
+  queue: PretraceQueue; label: string; reason: string; fact: string | null
+  resolveBy: string | null; resolveHow: string | null; listing: string | null; checkedOn: string | null
+}
+export const PRETRACE_LABEL: Record<PretraceQueue, string> = {
+  trace_now: "Worth tracing now", verify_first: "Verify one fact first", remove: "Remove from pursuit",
+}
+
+/** Parse raw_payload.pretrace_check. Null when missing or malformed, so an
+ *  unchecked lead never reads as cleared. */
+export function pretraceCheck(value: unknown): PretraceCheck | null {
+  const r = obj(value)
+  const queue = r.queue
+  if (queue !== "trace_now" && queue !== "verify_first" && queue !== "remove") return null
+  const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null)
+  return {
+    queue, label: PRETRACE_LABEL[queue], reason: text(r.reason) ?? "", fact: text(r.fact_to_verify),
+    resolveBy: text(r.resolve_by), resolveHow: text(r.resolve_how), listing: text(r.listing_status), checkedOn: text(r.checked_on),
+  }
+}
+
+export type WorklistCard = { id: string; county: string | null; review: PilotReview; check?: PretraceCheck | null }
 export type WorklistAsset = { propertyKey: string | null; cards: WorklistCard[] }
 export type WorklistGroup = { ownerGroupKey: string | null; assets: WorklistAsset[]; lanes: PilotLane[]; soonest: number | null }
 

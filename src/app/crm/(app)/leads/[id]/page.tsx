@@ -9,7 +9,7 @@ import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } f
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
-import { PILOT_ROUTE_LABEL, pilotReview } from "@/lib/pilot-review"
+import { PILOT_ROUTE_LABEL, pilotReview, pretraceCheck } from "@/lib/pilot-review"
 import { PilotReviewCard } from "@/app/crm/pilot-review-card"
 // Lead record (Attio-style): key details on the left, actions and the
 // activity timeline on the right. Reads one staging row by id plus its
@@ -53,6 +53,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   if (church) return <><Head title={church.title}><Link href="/crm/leads/research/church">Church closure research</Link></Head><EvidenceCard record={church}/></>
   const receiver = receiverRecord(lead)
   const pilot = pilotReview(lead.raw_payload)
+  const check = pilot?.route === "first_trace_review" ? pretraceCheck((lead.raw_payload as Record<string, unknown> | null)?.pretrace_check) : null
   if (lead.bot_source === "hamilton_county_herald" && lead.herald_elapsed_sale_date) {
     return <><Head title={lead.property_address || "Historical Herald notice"}><Link href="/crm/leads">Back to leads</Link></Head>
       <section className="crm-card"><h2>Herald advertised sale date elapsed</h2>
@@ -169,6 +170,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <div className="crm-lead-why">
               {pilot?.routeReason ? <p>{pilot.routeReason}</p> : null}
               {pilot?.availability.firstCallQuestion && pilot.route !== "removed" ? <p><strong>Ask first:</strong> {pilot.availability.firstCallQuestion}</p> : null}
+              {check ? <p><strong>Before paid trace: {check.label}.</strong> {check.reason}{check.queue === "verify_first" && check.fact ? ` Verify: ${check.fact}` : ""}</p> : null}
             </div>
           ) : null}
 
