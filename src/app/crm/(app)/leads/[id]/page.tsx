@@ -142,7 +142,9 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
 
   // The page leads with what you act on; every evidence block stays one
   // click away in "All details", unchanged.
-  const keyValue = lead.property_value ?? opp?.property_value ?? pilot?.economics.value ?? null
+  // A reviewed card's value is tied to the exact parcel with a stated basis; the
+  // staging column can still hold an older estimate from another source.
+  const keyValue = pilot?.economics.value ?? lead.property_value ?? opp?.property_value ?? null
   const deadline = sale ?? pilot?.economics.deadline ?? null
   const who = pilot?.decider.name ? `${titleCase(pilot.decider.name)}${pilot.decider.role ? `, ${pilot.decider.role}` : ""}` : titleCase(owner) || "Owner unknown"
   const PILOT_TONE: Record<string, string> = { first_trace_review: "green", professional_relationship: "blue", research_hold: "amber", removed: "" }
