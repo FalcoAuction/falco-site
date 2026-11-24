@@ -15,6 +15,9 @@ import { Head, SalePill, StatusPill, compactMoney, money, relTime, shortDate, ti
 export const dynamic = "force-dynamic"
 
 const COUNTIES = ["davidson", "rutherford", "williamson", "sumner", "wilson", "montgomery", "maury", "robertson", "dickson", "cheatham", "hamilton", "shelby", "knox"]
+// Daily views get a tab; the situation views (foreclosure, estates, tax...)
+// live in the toolbar's Type dropdown.
+const TAB_VIEWS: ViewKey[] = ["all", "soon", "working"]
 const GRADES: { key: GradeFilter; label: string }[] = [
   { key: "qualified", label: "Qualified" }, { key: "A", label: "A" }, { key: "B", label: "B" }, { key: "C", label: "C" }, { key: "all", label: "All tagged" },
 ]
@@ -65,17 +68,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       {!bucket ? (
         <nav className="crm-views" aria-label="Saved views">
           <Link href="/crm/leads/pilot">Pilot worklist</Link>
-          <Link href="/crm/leads/research/church">Church closure research</Link>
-          <Link href="/crm/leads/research/receiver">Shelby receiver eligibility</Link>
-          <Link href="/crm/leads/knoxville">Knoxville hearing research</Link>
-          <Link href="/crm/leads/mt-juliet">Mt. Juliet complaint research</Link>
-          <Link href="/crm/leads/memphis">Memphis 311 research</Link>
-          <Link href="/crm/leads/chattanooga">Chattanooga code research</Link>
-          {VIEWS.map((v) => (
+          {VIEWS.filter((v) => TAB_VIEWS.includes(v.key)).map((v) => (
             <Link key={v.key} href={keep({ view: v.key })} aria-current={v.key === current ? "page" : undefined}>
               {v.label}{counts[v.key] != null ? <span className="n" title="Nightly ranked snapshot before ownership review">{counts[v.key]}</span> : null}
             </Link>
           ))}
+          <Link href="/crm/leads/research">Research</Link>
         </nav>
       ) : null}
       {bucket === "land" && <nav className="crm-views" aria-label="Land qualification">
@@ -89,7 +87,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <Link href={keep({ view: "assets", assets: "prospects" })} aria-current={sp.assets === "prospects" ? "page" : undefined}>Qualified research prospects</Link>
       </nav>}
       <form className="crm-toolbar" action="/crm/leads">
-        <input type="hidden" name="view" value={current} />
+        {bucket ? <input type="hidden" name="view" value={current} /> : (
+          <select className="crm-select" name="view" defaultValue={view} aria-label="Lead type">
+            <option value={TAB_VIEWS.includes(view) ? view : "all"}>All types</option>
+            {VIEWS.filter((v) => !TAB_VIEWS.includes(v.key)).map((v) => (
+              <option key={v.key} value={v.key}>{v.label}{counts[v.key] != null ? ` (${counts[v.key]})` : ""}</option>
+            ))}
+          </select>
+        )}
         {(researchLand || landOpportunities) && <input type="hidden" name="land" value={sp.land} />}
         {bucket === "assets" && research && <input type="hidden" name="assets" value={sp.assets} />}
         {grade ? <input type="hidden" name="grade" value={grade} /> : null}
