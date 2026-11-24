@@ -703,7 +703,7 @@ export default function MathSheetContent({
             <PathCard
               label="MLS / agent listing"
               value={fmt(out.mls.netToSeller)}
-              sub={`6% agent commission on ${fmt(out.mls.closedPrice)}, ~${out.mls.carryingMonths} months exposure with carrying costs of ${fmt(out.mls.carryingCost)}.`}
+              sub={`${(out.inputs.mlsCommissionPct * 100).toFixed(1)}% agent commission on ${fmt(out.mls.closedPrice)}, ~${out.mls.carryingMonths} months exposure with carrying costs of ${fmt(out.mls.carryingCost)}.`}
               tone="meh"
             />
           )}
@@ -949,7 +949,7 @@ export default function MathSheetContent({
             </table>
             <p className="mt-2 text-[12px] text-neutral-600 italic leading-[1.6]">
               MLS often delivers the highest gross price, but pays for it in
-              60–120 days of exposure, 6% agent commission, and the showings/
+              60–120 days of exposure, about 5% to 6% in agent commission, and the showings/
               negotiation cycle. Auction trades a small clearance haircut for
               <strong> no seller commission, 30–45 day close, and no showings</strong> —
               the spread between MLS net and auction midpoint here is{" "}
