@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Head, money, titleCase } from "@/app/crm/ui"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import {
-  PILOT_LANE_LABEL, PILOT_ROUTE_LABEL, dedupeWorklist, fullDate, pilotReview, runwayDays,
+  PILOT_LANE_LABEL, PILOT_ROUTE_LABEL, dedupeWorklist, fullDate, pilotReview, pretraceCheck, runwayDays, PRETRACE_LABEL,
   type PilotRoute, type WorklistCard,
 } from "@/lib/pilot-review"
 
@@ -18,13 +18,13 @@ async function cardsFor(route: PilotRoute): Promise<WorklistCard[]> {
   const out: WorklistCard[] = []
   for (let start = 0; ; start += 200) {
     const { data, error } = await supabaseAdmin.from("homeowner_requests_staging")
-      .select("id,county,pilot_review:raw_payload->pilot_review")
+      .select("id,county,pilot_review:raw_payload->pilot_review,pretrace_check:raw_payload->pretrace_check")
       .eq("raw_payload->pilot_review->>route", route)
       .order("id").range(start, start + 199)
     if (error) throw new Error("Unable to load the pilot worklist")
-    for (const row of data as { id: string; county: string | null; pilot_review: unknown }[]) {
+    for (const row of data as { id: string; county: string | null; pilot_review: unknown; pretrace_check: unknown }[]) {
       const review = pilotReview({ pilot_review: row.pilot_review })
-      if (review && review.route === route) out.push({ id: row.id, county: row.county, review })
+      if (review && review.route === route) out.push({ id: row.id, county: row.county, review, check: pretraceCheck(row.pretrace_check) })
     }
     if (data.length < 200) break
   }
@@ -45,6 +45,10 @@ export default async function PilotWorklist({ searchParams }: { searchParams: Pr
   const groups = dedupeWorklist(cards)
   const properties = groups.reduce((n, g) => n + g.assets.length, 0)
   const showQuestion = route === "first_trace_review" || route === "professional_relationship"
+  const showCheck = route === "first_trace_review"
+  // One queue per property (its lead record), counted for the summary line.
+  const queueCount = { trace_now: 0, verify_first: 0, remove: 0, unchecked: 0 }
+  for (const g of groups) for (const a of g.assets) queueCount[a.cards[0].check?.queue ?? "unchecked"]++
   return (
     <>
       <Head title="Pilot worklist" sub="Five priority lanes, one row per owner group">
@@ -61,6 +65,12 @@ export default async function PilotWorklist({ searchParams }: { searchParams: Pr
         {groups.length} owner {groups.length === 1 ? "group" : "groups"}, {properties} {properties === 1 ? "property" : "properties"}, from {cards.length} lead {cards.length === 1 ? "record" : "records"}.
         {route === "first_trace_review" ? " Payoff, seller intent and contact details are not verified by this list." : ""}
       </p>
+      {showCheck ? (
+        <p className="crm-muted">
+          Final check before paid trace: {PRETRACE_LABEL.trace_now} {queueCount.trace_now}, {PRETRACE_LABEL.verify_first} {queueCount.verify_first}, {PRETRACE_LABEL.remove} {queueCount.remove}
+          {queueCount.unchecked ? `, not checked yet ${queueCount.unchecked}` : ""}. Listing status is not checked on any row.
+        </p>
+      ) : null}
       {groups.length === 0 ? <div className="crm-note">Nothing on this route yet.</div> : null}
       {groups.map((g, gi) => {
         const first = g.assets[0].cards[0].review
@@ -81,6 +91,7 @@ export default async function PilotWorklist({ searchParams }: { searchParams: Pr
                     <dt>Signer</dt><dd>{titleCase(r.decider.name) || "Not identified"} · {r.decider.role}{r.decider.verified ? "" : " · not verified"}<div className="crm-faint">{r.decider.basis}</div></dd>
                     <dt>Deadline</dt><dd>{r.economics.deadline ? `${fullDate(r.economics.deadline)}${days !== null ? ` · ${days < 0 ? "passed" : `${days} days`}` : ""}` : "Unknown"}</dd>
                     <dt>{r.economics.valueIsEstimate ? "Estimated value" : "Value"}</dt><dd>{r.economics.value !== null ? money(r.economics.value) : "Not valued"}{r.economics.valueBasis ? <span className="crm-faint"> · {r.economics.valueBasis}</span> : null}</dd>
+                    {showCheck ? <><dt>Final check</dt><dd>{lead.check ? <><strong>{lead.check.label}.</strong> {lead.check.reason}{lead.check.queue === "verify_first" && lead.check.fact ? <div className="crm-faint">Verify: {lead.check.fact}{lead.check.resolveHow ? ` ${lead.check.resolveHow}` : ""}</div> : null}</> : "Not checked yet. Do not buy contact data on this row."}</dd></> : null}
                     {missing.length ? <><dt>Missing</dt><dd>{missing.join("; ")}</dd></> : null}
                     {showQuestion ? <><dt>Ask first</dt><dd>{r.availability.firstCallQuestion}</dd></> : <><dt>Reason</dt><dd>{r.routeReason}</dd></>}
                     {a.cards.length > 1 ? <><dt>Also in</dt><dd>{a.cards.slice(1).map((c) => <span key={c.id}><Link href={`/crm/leads/${c.id}`}>{PILOT_LANE_LABEL[c.review.lane]}</Link> </span>)}</dd></> : null}
