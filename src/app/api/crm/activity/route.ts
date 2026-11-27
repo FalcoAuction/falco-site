@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import { getAdminSession } from "@/lib/admin-session"
+import { rankedCodeCaseIds } from "@/lib/chattanooga-research"
 import { recordActivity, upsertWorkflow, type DialerChannel, type DialerOutcome, type DialerNextAction } from "@/lib/dialer-data"
 import type { DialerStatus } from "@/lib/dialer-types"
 
@@ -29,9 +30,14 @@ export async function POST(req: NextRequest) {
   if (nextActionAt && Number.isNaN(nextActionAt.getTime())) return NextResponse.json({ error: "Invalid date." }, { status: 400 })
   if (!supabaseAdmin) return NextResponse.json({ error: "Database unavailable." }, { status: 503 })
   const hearing = await supabaseAdmin.from("homeowner_requests_staging").select("id")
-    .eq("pipeline_lead_key", slug).eq("bot_source", "knoxville_poh").limit(1)
+    .eq("pipeline_lead_key", slug).eq("bot_source", "knoxville_poh").limit(20)
   if (hearing.error) return NextResponse.json({ error: "Unable to verify lead source." }, { status: 503 })
-  if (hearing.data?.length) return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
+  if (hearing.data?.length) {
+    // A hearing record on the current ranked snapshot is a serious case and can be worked.
+    let ranked: Set<string>
+    try { ranked = await rankedCodeCaseIds() } catch { return NextResponse.json({ error: "Unable to verify lead source." }, { status: 503 }) }
+    if (!hearing.data.some(row => ranked.has(row.id))) return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
+  }
   const researchNote = body.channel === "note" && (!body.outcome || body.outcome === "note_only") && !status && !nextAction && !nextActionAt
   if (!researchNote) {
     const herald = await supabaseAdmin.from("homeowner_requests_staging").select("id")

@@ -6,7 +6,7 @@
 // Staging is ~400 MB: only ever read it by primary key or a short id list.
 
 import "server-only"
-import { cityCodeWorkflowHolds, researchOnlySources } from "@/lib/chattanooga-research"
+import { alwaysResearchSources, cityCodeWorkflowHolds, rankedCodeCaseIds, rankedCodeCaseSources, researchHeld } from "@/lib/chattanooga-research"
 import { metroDispositions, metroHeld } from "@/lib/nashville-codes"
 import { LAND_FIELDS, loadLandRows } from "@/lib/crm-land"
 import { aircraftAsset } from "@/lib/aircraft-evidence"
@@ -29,11 +29,19 @@ export type LeadRow = Opportunity & { slug: string | null; status: DialerStatus 
   has_phone: boolean }
 
 // Saved views, Close-style: each is a filter you work top to bottom.
-const researchSourceFilter = "(" + researchOnlySources.join(",") + ")"
-
-function researchOnlySource(source?: string | null) {
-  return researchOnlySources.includes(source ?? "")
-}
+// crm_visible_opportunities holds ranked rows only, so a city code case found
+// there is a serious one and is active. hud_reo and church_closure never are.
+const researchSourceFilter = "(" + alwaysResearchSources.join(",") + ")"
+// A code case or hearing is condition evidence, not a sale: these sources
+// never carry a sale date and never enter the sale-date views.
+const codeCaseSourceFilter = "(" + rankedCodeCaseSources.join(",") + ")"
+const codeCaseSource = (source?: string | null) => rankedCodeCaseSources.includes(source ?? "")
+// One read per request, shared by every list, counter and workflow hold so
+// they agree on which code cases are ranked.
+const rankedCodeCases = cache(rankedCodeCaseIds)
+// Skip the read when no row in hand is from a city code source.
+const rankedCasesFor = async (rows: { bot_source?: string | null }[]): Promise<ReadonlySet<string>> =>
+  rows.some(row => codeCaseSource(row.bot_source)) ? rankedCodeCases() : new Set<string>()
 
 export type ViewKey = "all" | "soon" | "foreclosure" | "estate" | "tax" | "court" | "bankruptcy" | "code" | "florida" | "working"
 // Florida counties the FL bots stage (lowercased as lead_opportunities
@@ -79,7 +87,7 @@ function applyView<Q extends { ilike: Function; eq: Function; gte: Function; lte
   if (view === "florida") return q.in("county", FL_COUNTIES)
   q = q.not("county", "in", FL_IN)
   switch (view) {
-    case "soon": return q.gte("sale_date", today).lte("sale_date", isoDay(addDays(14)))
+    case "soon": return q.not("bot_source", "in", codeCaseSourceFilter).gte("sale_date", today).lte("sale_date", isoDay(addDays(14)))
     case "foreclosure": return q.ilike("fit_label", "Foreclosure%")
     case "estate": return q.ilike("fit_label", "Estate%")
     case "tax": return q.eq("fit_label", "Tax sale")
@@ -175,7 +183,7 @@ async function attachWorkflow(opps: Opportunity[], existingWorkflow = false): Pr
   return opps.map((o) => {
     const slug = slugOf.get(o.staging_id) ?? null
     const w = slug ? wfOf.get(slug) : undefined
-    return { ...o, slug, status: w?.status ?? null, next_action_at: w?.next_action_at ?? null, last_contact_at: w?.last_contact_at ?? null,
+    return { ...o, sale_date: codeCaseSource(o.bot_source) ? null : o.sale_date, slug, status: w?.status ?? null, next_action_at: w?.next_action_at ?? null, last_contact_at: w?.last_contact_at ?? null,
       has_phone: phoned.has(o.staging_id) }
   })
 }
@@ -190,7 +198,7 @@ const workingSlugs = cache(async () => {
       .order("listing_slug").range(offset, offset + 79)
     if (error) throw new Error(error.message)
     const keys = data.map(row => String(row.listing_slug))
-    const holds = await cityCodeWorkflowHolds(keys)
+    const holds = await cityCodeWorkflowHolds(keys, rankedCodeCases)
     const { heraldSlugs } = await noticeHolds()
     slugs.push(...keys.filter(key => !holds.has(key) && !heraldSlugs.has(key)))
     if (keys.length < 80) return slugs
@@ -207,7 +215,7 @@ async function dueWorkflows(endOfToday: string) {
       .lte("next_action_at", endOfToday).not("status", "in", "(closed_lost,closed_won)")
       .order("next_action_at").order("listing_slug").range(offset, offset + 24)
     if (error) throw new Error(error.message)
-    const holds = await cityCodeWorkflowHolds(data.map(row => row.listing_slug))
+    const holds = await cityCodeWorkflowHolds(data.map(row => row.listing_slug), rankedCodeCases)
     const { heraldSlugs } = await noticeHolds()
     due.push(...data.filter(row => !holds.has(row.listing_slug) && !heraldSlugs.has(row.listing_slug)) as DueWorkflow[])
     if (data.length < 25) break
@@ -269,16 +277,16 @@ export async function listLeads(view: ViewKey, opts: { county?: string; q?: stri
 
 export async function viewCounts(day: string | null): Promise<Partial<Record<ViewKey, number>>> {
   if (!supabaseAdmin || !day) return {}
-  const r = await supabaseAdmin.from("crm_visible_opportunities").select("staging_id,fit_label,sale_date,county").not("bot_source", "in", researchSourceFilter).eq("captured_on", day).limit(5000)
+  const r = await supabaseAdmin.from("crm_visible_opportunities").select("staging_id,bot_source,fit_label,sale_date,county").not("bot_source", "in", researchSourceFilter).eq("captured_on", day).limit(5000)
   const holds = await noticeHolds()
-  const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { fit_label: string; sale_date: string | null; county: string | null }[]
+  const all = (r.data ?? []).filter(x => !holds.stagingIds.has(x.staging_id)) as { bot_source: string; fit_label: string; sale_date: string | null; county: string | null }[]
   const fl = new Set(FL_COUNTIES)
   const rows = all.filter((x) => !fl.has(x.county ?? ""))
   const today = isoDay(new Date()), soon = isoDay(addDays(14))
   const c: Partial<Record<ViewKey, number>> = { all: rows.length, soon: 0, foreclosure: 0, estate: 0, tax: 0, court: 0, bankruptcy: 0, code: 0,
     florida: all.length - rows.length }
   for (const x of rows) {
-    if (x.sale_date && x.sale_date >= today && x.sale_date <= soon) c.soon!++
+    if (!codeCaseSource(x.bot_source) && x.sale_date && x.sale_date >= today && x.sale_date <= soon) c.soon!++
     if (x.fit_label.startsWith("Foreclosure")) c.foreclosure!++
     else if (x.fit_label.startsWith("Estate")) c.estate!++
     else if (x.fit_label === "Tax sale") c.tax!++
@@ -354,7 +362,7 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   const day = await latestOpportunityDay()
   const [dueRows, sales, recent, qDay, sent, supp, contacts, oppCount, llCount, working] = await Promise.all([
     dueWorkflows(endOfToday.toISOString()),
-    day ? db.from("crm_visible_opportunities").select(OPP_COLS).not("bot_source", "in", researchSourceFilter).eq("captured_on", day)
+    day ? db.from("crm_visible_opportunities").select(OPP_COLS).not("bot_source", "in", researchSourceFilter).not("bot_source", "in", codeCaseSourceFilter).eq("captured_on", day)
       .gte("sale_date", isoDay(new Date())).lte("sale_date", isoDay(addDays(14))).order("sale_date").limit(12) : Promise.resolve({ data: [] }),
     db.from("dialer_activities").select("id,listing_slug,occurred_at,channel,outcome,notes,next_action,next_action_at,created_by,created_at")
       .order("occurred_at", { ascending: false }).limit(10),
@@ -380,11 +388,12 @@ export async function getToday(reviewSales = true): Promise<TodayData> {
   const holds = await noticeHolds()
   const where = await stagingFor([...new Set([...dueRows.map((d) => d.listing_slug), ...recentRows.map((r) => r.listingSlug)])])
   const metro = await metroDispositions([...where.values()])
+  const rankedCases = await rankedCasesFor([...where.values()])
   return {
     due: dueRows.filter(d => !holds.slugs.has(d.listing_slug) && !where.get(d.listing_slug)?.hold && !metroHeld(metro, where.get(d.listing_slug)?.id ?? "")).map((d) => ({ slug: d.listing_slug, status: d.status, next_action: d.next_action, next_action_at: d.next_action_at, summary_notes: d.summary_notes ?? "",
       staging_id: where.get(d.listing_slug)?.id ?? null, address: where.get(d.listing_slug)?.address ?? null })),
     sales: reviewSales ? await attachWorkflow((sales.data ?? []) as Opportunity[]) : [],
-    recent: recentRows.filter(r => !researchOnlySource(where.get(r.listingSlug)?.bot_source)).map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
+    recent: recentRows.filter(r => !researchHeld(where.get(r.listingSlug)?.bot_source, where.get(r.listingSlug)?.id, rankedCases)).map((r) => ({ ...r, staging_id: where.get(r.listingSlug)?.id ?? null, address: where.get(r.listingSlug)?.address ?? null })),
     quality,
     outreach: { sentToday: sent.count ?? 0, suppressed: supp.count ?? 0, contacts: contacts.count ?? 0 },
     counts: { leads: oppCount.count ?? 0, landlords: llCount.count ?? 0, working: working.length },
@@ -524,8 +533,9 @@ const assetCandidates = cache(async () => {
         }
       }
     }
+    const rankedCases = await rankedCasesFor(batch)
     for (const row of batch) {
-      if (researchOnlySource(row.bot_source)) continue
+      if (researchHeld(row.bot_source, row.id, rankedCases)) continue
       const w = warn.get(row.id)
       rows.push(w ? { ...row, routable: String(w.routable), prospect: String(w.prospect), key: w.dedupe_key ?? null } : row)
     }
@@ -577,8 +587,9 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
   const metro = await metroDispositions(all)
   const byAddr = new Map<string, StagedBucket>()
   const warn = await warnRows()
+  const rankedCases = await rankedCasesFor(all)
   for (const r of all) {
-    if (researchOnlySource(r.bot_source)) continue
+    if (researchHeld(r.bot_source, r.id, rankedCases)) continue
     const w = warn.get(r.id)
     if (w) {
       if (bucket !== "assets") continue
@@ -645,7 +656,8 @@ export async function bucketCounts(): Promise<Record<"commercial" | "assets", nu
       if (batch.length < 1000) break
     }
     const metro = await metroDispositions(rows)
-    return unique(rows.filter(row => row.bot_source !== "warn_notices" && !researchOnlySource(row.bot_source) && !metroHeld(metro, row.id)))
+    const rankedCases = await rankedCasesFor(rows)
+    return unique(rows.filter(row => row.bot_source !== "warn_notices" && !researchHeld(row.bot_source, row.id, rankedCases) && !metroHeld(metro, row.id)))
   }
   // Ids first through the partial indexes (see listBucket), then addresses.
   const assets = async () => {

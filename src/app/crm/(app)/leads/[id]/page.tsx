@@ -5,7 +5,7 @@ import { knoxvilleEvidence } from "@/lib/knoxville-research"
 import { HearingRecord } from "@/app/crm/hearing-record"
 import { JohnsonHearingRecord } from "@/app/crm/johnson-hearing-record"
 import { memphisEvidence } from "@/lib/memphis-research"
-import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel } from "@/lib/chattanooga-research"
+import { cityStatusLabel, chattanoogaParcel, assessorSource, parcelHoldLabel, rankedCodeCaseSources } from "@/lib/chattanooga-research"
 import { metroLabel } from "@/lib/nashville-codes"
 import { employmentDate, warnAsset, warnWorksite, warnDocuments } from "@/lib/warn-evidence"
 import { landEvidence } from "@/lib/land-evidence"
@@ -15,6 +15,7 @@ import { PilotReviewCard } from "@/app/crm/pilot-review-card"
 // activity timeline on the right. Reads one staging row by id plus its
 // dialer workflow and activity history.
 
+import type { ReactNode } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { aircraftAsset } from "@/lib/aircraft-evidence"
@@ -65,31 +66,38 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     return <><Head title={lead.property_address || "Historical HUD record"}><Link href="/crm/leads">Back to leads</Link></Head>
       <p>Historical HUD inventory. Verify current availability with <a href="https://www.hudhomestore.gov/searchresult?citystate=TN">HUD HomeStore</a>. Auction assignment unverified.</p></>
   }
+  // City code cases: an unranked row keeps its research-only page. A row on the
+  // current ranked snapshot (opp) is a serious case and gets the working page
+  // with the same evidence card on top. The card is condition evidence only.
+  const codeCase = rankedCodeCaseSources.includes(lead.bot_source)
+  let codeEvidence: ReactNode = null
   if (lead.bot_source === "mtn_cities_codes") {
     const evidence = mtJulietEvidence(lead)
-    return <><Head title={lead.property_address || "Mt. Juliet complaint"}><Link href="/crm/leads/mt-juliet">Mt. Juliet complaint research</Link></Head>
-      {evidence ? <section className="crm-card"><h2>Reported building condition</h2>
+    codeEvidence = evidence ? <section className="crm-card"><h2>Reported building condition</h2>
         <p>{evidence.condition}</p><p>Reported {evidence.reported}. Complaint status {evidence.status} as of {evidence.checked}.</p>
         <p>Enforcement and sale authority are unverified.</p><a href={evidence.url}>View municipal complaint {evidence.issue}</a>
-      </section> : <p>Historical complaint. No current qualifying building-condition report verified.</p>}</>
+      </section> : <p>Historical complaint. No current qualifying building-condition report verified.</p>
+    if (!opp) return <><Head title={lead.property_address || "Mt. Juliet complaint"}><Link href="/crm/leads/mt-juliet">Mt. Juliet complaint research</Link></Head>
+      {codeEvidence}</>
   }
   if (lead.bot_source === "johnson_city_bdsr") {
-    return <>
+    codeEvidence = <JohnsonHearingRecord lead={lead}/>
+    if (!opp) return <>
       <Head title={lead.property_address || "Johnson City hearing record"}><Link href="/crm/leads">Back to leads</Link></Head>
-      <JohnsonHearingRecord lead={lead}/>
+      {codeEvidence}
     </>
   }
   if (lead.bot_source === "knoxville_poh") {
     const evidence = knoxvilleEvidence(lead)
-    return <>
+    codeEvidence = evidence ? <HearingRecord evidence={evidence}/> : <p>Historical or unverified hearing record. A city document identifying this case and CLT parcel is required for research.</p>
+    if (!opp) return <>
       <Head title={lead.property_address || "Knoxville hearing record"}><Link href="/crm/leads/knoxville">Knoxville hearing research</Link></Head>
-      {evidence ? <HearingRecord evidence={evidence}/> : <p>Historical or unverified hearing record. A city document identifying this case and CLT parcel is required for research.</p>}
+      {codeEvidence}
     </>
   }
   if (lead.bot_source === "memphis_codes") {
     const e = memphisEvidence(lead)
-    return <>
-      <Head title={e.address || "Memphis 311 request"}><Link href="/crm/leads/memphis">Memphis 311 research</Link></Head>
+    codeEvidence =
       <section className="crm-card"><h2>City request {e.incident || "unverified"}</h2>
         <dl className="crm-props">
           <dt>Review disposition</dt><dd>{e.disposition}</dd>
@@ -101,18 +109,21 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <p>A service request documents a reported condition. Ownership, sale authority and a dated sale opportunity require independent evidence.</p>
         {e.url && <a href={e.url} target="_blank" rel="noreferrer">Official Memphis 311 incident</a>}
       </section>
+    if (!opp) return <>
+      <Head title={e.address || "Memphis 311 request"}><Link href="/crm/leads/memphis">Memphis 311 research</Link></Head>
+      {codeEvidence}
     </>
   }
   const cityCase = lead.raw_payload?.chattanooga_codes as { case_number?: string } | undefined
   const chatt = lead.bot_source === "chattanooga_codes" ? chattanoogaParcel({
     ...lead, case_number: cityCase?.case_number, parcelReview: lead.raw_payload?.chattanooga_parcel_review,
   }) : null
-  const mathSheetId = chatt || lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
+  const mathSheetId = chatt || codeCase || lead.bot_source === "warn_notices" ? null : await mathSheetIdFor(lead.pipeline_lead_key)
   const sheet = mathSheetId ? await loadHomeownerSnapshot(mathSheetId) : null
   const memphis = memphisValuation(lead)
   const estate = probateNotice(lead)
   const calendar = data.noticeHold ? null : postponedCalendar(lead)
-  const owner = estate ? estate.decedent : memphis ? memphis.borrower : chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name
+  const owner = estate ? estate.decedent : memphis ? memphis.borrower : chatt ? chatt.assessor?.owner : lead.bot_source === "warn_notices" ? lead.full_name : lead.owner_name_records || lead.full_name || (codeCase ? opp?.owner_name : null)
   const laneTag = chatt || lead.bot_source === "warn_notices" ? null : (lead.raw_payload?.property_lane ?? null) as LaneTag | null
   const warn = warnAsset(lead, lead.raw_payload ?? {})
   const parcel = warn && lead.county?.toLowerCase() === "davidson" && warnWorksite(lead.raw_payload ?? {})
@@ -132,7 +143,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const contents = (lead.raw_payload?.operator_contents ?? null) as OperatorContents | null
   const phones = phonesOf(lead.phone, [...(Array.isArray(lead.alternate_phones) ? lead.alternate_phones : []), ...(laneTag?.phones ?? [])])
   const metro = (lead.raw_payload?.metro_parcel ?? null) as Record<string, unknown> | null
-  const sale = chatt || warn ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
+  const sale = chatt || warn || codeCase ? null : metroHeld || data.noticeHold || researchLand ? null : lead.trustee_sale_date || opp?.sale_date || null
   const situation = chatt ? "Chattanooga code research" : warn ? "TN WARN employment notice" : data.noticeHold === "stale_notice" ? "Stale trustee notice · verify sale" : data.noticeHold ?? (data.metroDisposition ? metroLabel(data.metroDisposition) : null) ?? (researchLand ? "Land ownership research" : null) ?? opp?.fit_label ?? distressTypeLabel(lead.distress_type).label
   // Some bots write machine notes ("bot_source=x · file#=y"); show only prose.
   const notes = (lead.admin_notes ?? "").split(/\n| · /).filter((s) => s.trim() && !(estate && /^Probate .*Representatives:/i.test(s.trim())) && !/^[\w#]+=/.test(s.trim())).join("\n")
@@ -145,7 +156,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   // A reviewed card's value is tied to the exact parcel with a stated basis; the
   // staging column can still hold an older estimate from another source.
   const keyValue = pilot?.economics.value ?? lead.property_value ?? opp?.property_value ?? null
-  const deadline = sale ?? pilot?.economics.deadline ?? null
+  const deadline = codeCase ? null : sale ?? pilot?.economics.deadline ?? null
   const who = pilot?.decider.name ? `${titleCase(pilot.decider.name)}${pilot.decider.role ? `, ${pilot.decider.role}` : ""}` : titleCase(owner) || "Owner unknown"
   const PILOT_TONE: Record<string, string> = { first_trace_review: "green", professional_relationship: "blue", research_hold: "amber", removed: "" }
 
@@ -194,6 +205,10 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         </aside>
 
         <div className="crm-record-main">
+          {codeCase ? <div>
+            <div className="crm-note">A code case or hearing is evidence about the building&apos;s condition. It is not authority to sell and it is not a sale date or a deadline. Confirm ownership and authority with the owner.</div>
+            {codeEvidence}
+          </div> : null}
           {lead.pipeline_lead_key && workflow ? (
             <LogForm slug={lead.pipeline_lead_key} status={workflow.status} />
           ) : (

@@ -71,21 +71,57 @@ export function cityStatusLabel(review: unknown) {
 }
 
 export const researchOnlySources = ["memphis_codes", "knoxville_poh", "johnson_city_bdsr", "mtn_cities_codes", "hud_reo", "church_closure"]
+// City code sources whose rows are active only while they sit on the current
+// ranked snapshot. The ranking drops nuisance cases (nuisance_violation), so
+// a ranked row is a serious structure case with an owner and a value. An
+// unranked row stays research only. A code case or hearing is evidence of the
+// building's condition: never sale authority, never a sale date or deadline.
+export const rankedCodeCaseSources = ["memphis_codes", "knoxville_poh", "johnson_city_bdsr", "mtn_cities_codes"]
+// Research only whether ranked or not.
+export const alwaysResearchSources = researchOnlySources.filter(source => !rankedCodeCaseSources.includes(source))
+
+/** True when the row stays out of active lists, counters and workflow actions. */
+export function researchHeld(source: string | null | undefined, stagingId: string | null | undefined, ranked: ReadonlySet<string>) {
+  if (!researchOnlySources.includes(source ?? "")) return false
+  return !(rankedCodeCaseSources.includes(source ?? "") && !!stagingId && ranked.has(stagingId))
+}
+
+/** Staging ids of city code cases on the latest ranked snapshot. */
+export async function rankedCodeCaseIds() {
+  const ids = new Set<string>()
+  if (!supabaseAdmin) throw new Error("Database unavailable")
+  const latest = await supabaseAdmin.from("lead_opportunities").select("captured_on").order("captured_on", { ascending: false }).limit(1)
+  if (latest.error) throw new Error("Unable to read the ranked snapshot day")
+  const day = (latest.data?.[0] as { captured_on: string } | undefined)?.captured_on
+  if (!day) return ids
+  const { data, error } = await supabaseAdmin.from("crm_visible_opportunities").select("staging_id")
+    .eq("captured_on", day).in("bot_source", rankedCodeCaseSources).limit(5000)
+  if (error) throw new Error("Unable to read ranked city code cases")
+  for (const row of data ?? []) ids.add(String(row.staging_id))
+  return ids
+}
 
 // A workflow slug can have duplicate staging copies. A held copy keeps the slug on hold.
-export async function cityCodeWorkflowHolds(slugs: string[]) {
+// A ranked serious code case releases its slug: its key is the source and case
+// number, so every copy of the slug is that same case.
+// The ranked snapshot is read only when one of those sources is among the slugs.
+export async function cityCodeWorkflowHolds(slugs: string[], rankedIds: () => Promise<ReadonlySet<string>> = rankedCodeCaseIds) {
   const held = new Set<string>()
   if (!slugs.length) return held
   if (!supabaseAdmin) throw new Error("Database unavailable")
   const fields = "pipeline_lead_key,county,property_address,case_number:raw_payload->chattanooga_codes->>case_number,review:phone_metadata->chattanooga_case_review"
   const [stage, live] = await Promise.all([
-    supabaseAdmin.from("homeowner_requests_staging").select(`${fields},bot_source,staging_status` as const)
+    supabaseAdmin.from("homeowner_requests_staging").select(`${fields},id,bot_source,staging_status` as const)
       .in("bot_source", ["chattanooga_codes", ...researchOnlySources]).in("pipeline_lead_key", slugs),
     supabaseAdmin.from("homeowner_requests").select(`${fields},johnson:raw_payload->johnson_city_bdsr->>case_number,poh:raw_payload->>poh_section,memphis:raw_payload->memphis_311->>INCIDENT_NUMBER` as const).eq("source", "bot").in("pipeline_lead_key", slugs)
       .or("raw_payload->church_closure.not.is.null,raw_payload->hud_arcgis.not.is.null,and(raw_payload->>platform.eq.seeclickfix,raw_payload->>city.eq.Mt. Juliet),raw_payload->johnson_city_bdsr.not.is.null,raw_payload->chattanooga_codes.not.is.null,phone_metadata->chattanooga_case_review.not.is.null,raw_payload->memphis_311.not.is.null,raw_payload->memphis_codes_review.not.is.null,raw_payload->poh_section.not.is.null,phone_metadata->knoxville_hearing_review.not.is.null"),
   ])
   if (stage.error || live.error) throw new Error("Unable to verify Chattanooga workflow cases")
+  const released = new Set<string>()
+  const ranked = stage.data.some(row => rankedCodeCaseSources.includes(row.bot_source)) ? await rankedIds() : new Set<string>()
+  for (const row of stage.data) if (rankedCodeCaseSources.includes(row.bot_source) && ranked.has(row.id)) released.add(row.pipeline_lead_key)
   for (const row of [...stage.data, ...live.data]) {
+    if (released.has(row.pipeline_lead_key) && (!("bot_source" in row) || rankedCodeCaseSources.includes(row.bot_source))) continue
     if (("bot_source" in row && researchOnlySources.includes(row.bot_source)) || ("johnson" in row && row.johnson) || ("poh" in row && row.poh) || ("memphis" in row && row.memphis) || !reviewedCase({ ...row, bot_source: "chattanooga_codes" })) held.add(row.pipeline_lead_key)
   }
   return held

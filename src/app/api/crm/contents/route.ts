@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin-session"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { rankedCodeCaseIds } from "@/lib/chattanooga-research"
 import { recordActivity } from "@/lib/dialer-data"
 import type { OperatorContents } from "@/lib/crm-data"
 
@@ -48,7 +49,12 @@ export async function PATCH(req: NextRequest) {
   if (cur.error) return NextResponse.json({ error: cur.error.message }, { status: 500 })
   if (!cur.data) return NextResponse.json({ error: "Lead not found." }, { status: 404 })
   if (cur.data.bot_source === "church_closure") return NextResponse.json({ error: "Church closure records are research only." }, { status: 409 })
-  if (cur.data.bot_source === "knoxville_poh") return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
+  if (cur.data.bot_source === "knoxville_poh") {
+    // A hearing record on the current ranked snapshot is a serious case and can be worked.
+    let ranked: Set<string>
+    try { ranked = await rankedCodeCaseIds() } catch { return NextResponse.json({ error: "Unable to verify lead source." }, { status: 503 }) }
+    if (!ranked.has(id)) return NextResponse.json({ error: "Knoxville hearing records are research only." }, { status: 409 })
+  }
   const raw = cur.data.raw_payload
   if (raw !== null && (typeof raw !== "object" || Array.isArray(raw))) {
     return NextResponse.json({ error: "This lead's payload is not an object; not overwriting it." }, { status: 409 })
