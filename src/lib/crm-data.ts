@@ -16,6 +16,7 @@ import { cache } from "react"
 import { trusteeNoticeHold } from "@/lib/trustee-notice"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 import type { DialerActivity, DialerStatus, DialerWorkflow } from "@/lib/dialer-types"
+import { distressTypeLabel } from "@/lib/dialer-types"
 import { getWorkflow, listActivities } from "@/lib/dialer-data"
 
 export type Opportunity = {
@@ -543,10 +544,30 @@ const assetCandidates = cache(async () => {
   return rows
 })
 
-export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: boolean; page?: number; research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string } = {}):
-  Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; error?: string }> {
+/** Distress types grouped the way the residential Type views are, so CRE and
+ *  Land filter on the same words. Anything outside the groups keeps its own
+ *  name (stalled build, church closure...). */
+const DISTRESS_GROUPS: { key: string; label: string; match: RegExp }[] = [
+  { key: "foreclosure", label: "Foreclosure", match: /^(PRE_?FORECLOSURE|FORECLOSURE|TRUSTEE_NOTICE|SOT|SUBSTITUTION_OF_TRUSTEE|NOD|NOTICE_OF_DEFAULT|LIS_PENDENS|REO)$/ },
+  { key: "estate", label: "Estates", match: /^(PROBATE|ESTATE)$/ },
+  { key: "tax", label: "Tax sale", match: /^TAX_/ },
+  { key: "court", label: "Court sale", match: /^(COURT_SALE|PARTITION|RECEIVERSHIP)$/ },
+  { key: "bankruptcy", label: "Bankruptcy", match: /^(BANKRUPTCY|BK_.+)$/ },
+  { key: "code", label: "Code violation", match: /^(CODE_VIOLATION|DEMOLITION)$/ },
+]
+export function distressGroup(raw: string | null | undefined): { key: string; label: string } {
+  const v = String(raw ?? "").trim().toUpperCase()
+  if (!v) return { key: "none", label: "No type" }
+  const g = DISTRESS_GROUPS.find((x) => x.match.test(v))
+  return g ? { key: g.key, label: g.label } : { key: v.toLowerCase(), label: distressTypeLabel(v).label }
+}
+export type BucketTypeCount = { key: string; label: string; n: number }
+
+export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: boolean; page?: number; research?: boolean; prospects?: boolean; grade?: GradeFilter; county?: string; q?: string; type?: string } = {}):
+  Promise<{ rows: BucketRow[]; grades: Record<GradeFilter, number>; types: BucketTypeCount[]; error?: string }> {
   const grades: Record<GradeFilter, number> = { qualified: 0, A: 0, B: 0, C: 0, all: 0 }
-  if (!supabaseAdmin) return { rows: [], grades, error: "Database not configured." }
+  const types: BucketTypeCount[] = []
+  if (!supabaseAdmin) return { rows: [], grades, types, error: "Database not configured." }
   const all: StagedBucket[] = []
   if (bucket === "assets") {
     // Two steps on purpose: the partial index answers "which ids" as an
@@ -558,7 +579,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
     for (let i = 0; i < idList.length; i += 100) {
       const r = await supabaseAdmin.from("homeowner_requests_staging")
         .select(`${BUCKET_COLS},${aircraftProjection}`).in("id", idList.slice(i, i + 100))
-      if (r.error) return { rows: [], grades, error: r.error.message }
+      if (r.error) return { rows: [], grades, types, error: r.error.message }
       for (const row of (r.data ?? []) as unknown as (StagedBucket & { evidence?: unknown })[]) {
         const display = aircraftAsset(row, row.aircraft, row.pp, row.evidence)
         row.pp = display.pp
@@ -576,7 +597,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
       const r = await supabaseAdmin.from("homeowner_requests_staging").select(`${BUCKET_COLS},lane:raw_payload->property_lane`)
         .not("raw_payload->property_lane", "is", null).eq("raw_payload->property_lane->>lane", bucket).not("bot_source", "in", researchSourceFilter)
         .order("id").range(page * 500, page * 500 + 499)
-      if (r.error) return { rows: [], grades, error: r.error.message }
+      if (r.error) return { rows: [], grades, types, error: r.error.message }
       const batch = (r.data ?? []) as unknown as StagedBucket[]
       all.push(...batch)
       if (batch.length < 500) break
@@ -614,6 +635,17 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
     const q = opts.q.toLowerCase()
     rows = rows.filter((r) => `${r.property_address} ${r.owner_name_records} ${r.full_name} ${r.landEvidence?.parcel ?? ""}`.toLowerCase().includes(q))
   }
+  // Type counts come from the rows the other filters leave, before the type
+  // filter itself, so every option shows what picking it would give.
+  const typeCount = new Map<string, BucketTypeCount>()
+  for (const r of rows) {
+    const g = distressGroup(r.distress_type)
+    const cur = typeCount.get(g.key) ?? { ...g, n: 0 }
+    cur.n++
+    typeCount.set(g.key, cur)
+  }
+  types.push(...[...typeCount.values()].sort((a, b) => b.n - a.n))
+  if (opts.type) rows = rows.filter((r) => distressGroup(r.distress_type).key === opts.type)
   for (const r of rows) {
     grades.all++
     const g = r.lane?.grade
@@ -627,7 +659,7 @@ export async function listBucket(bucket: BucketKey, opts: { landOpportunities?: 
     || Number(b.property_value ?? b.lane?.value ?? 0) - Number(a.property_value ?? a.lane?.value ?? 0))
   // Every row in the view (a few hundred); the tab count must match.
   const start = ((opts.page ?? 1) - 1) * LAND_REVIEW_PAGE_SIZE
-  return { rows: await bucketWorkflow(ownershipView ? rows.slice(start, start + LAND_REVIEW_PAGE_SIZE) : rows.slice(0, 2000)), grades }
+  return { rows: await bucketWorkflow(ownershipView ? rows.slice(start, start + LAND_REVIEW_PAGE_SIZE) : rows.slice(0, 2000)), grades, types }
 }
 
 /** Same per-property key listBucket dedupes on, so a tab's count always

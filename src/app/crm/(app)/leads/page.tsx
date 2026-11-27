@@ -22,7 +22,7 @@ const GRADES: { key: GradeFilter; label: string }[] = [
   { key: "qualified", label: "Qualified" }, { key: "A", label: "A" }, { key: "B", label: "B" }, { key: "C", label: "C" }, { key: "all", label: "All tagged" },
 ]
 
-export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string; assets?: string; land?: string; page?: string }> }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; county?: string; q?: string; grade?: string; assets?: string; land?: string; page?: string; type?: string }> }) {
   const sp = await searchParams
   const bucket = BUCKETS.find((b) => b.key === sp.view)?.key as BucketKey | undefined
   const view = (VIEWS.some((v) => v.key === sp.view) ? sp.view : "all") as ViewKey
@@ -31,13 +31,15 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const q = sp.q?.trim().slice(0, 80) || undefined
   const grade = GRADES.some((g) => g.key === sp.grade) ? (sp.grade as GradeFilter) : undefined
 
+  // CRE and Land filter by distress type, like the residential Type views.
+  const typeKey = (bucket === "commercial" || bucket === "land") && sp.type && /^[a-z0-9_]{2,40}$/.test(sp.type) ? sp.type : undefined
   const researchLand = bucket === "land" && sp.land === "research"
   const landOpportunities = bucket === "land" && sp.land === "opportunities"
   const page = sp.page && /^[1-9]\d{0,5}$/.test(sp.page) ? Number(sp.page) : 1
   const research = researchLand || bucket === "assets" && (sp.assets === "research" || sp.assets === "prospects")
   const [ranked, bucketData, bCounts] = await Promise.all([
     bucket ? Promise.resolve(null) : listLeads(view, { county, q }),
-    bucket ? listBucket(bucket, { grade, county, q, research, landOpportunities, page, prospects: sp.assets === "prospects" }) : Promise.resolve(null),
+    bucket ? listBucket(bucket, { grade, county, q, research, landOpportunities, page, prospects: sp.assets === "prospects", type: typeKey }) : Promise.resolve(null),
     bucketCounts(),
   ])
   const day = ranked?.day ?? null
@@ -77,9 +79,9 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         </nav>
       ) : null}
       {bucket === "land" && <nav className="crm-views" aria-label="Land qualification">
-        <Link href={keep({ view: "land" })} aria-current={!researchLand && !landOpportunities ? "page" : undefined}>Land inventory</Link>
-        <Link href={keep({ view: "land", land: "opportunities" })} aria-current={landOpportunities ? "page" : undefined}>Corroborated opportunities</Link>
-        <Link href={keep({ view: "land", land: "research" })} aria-current={researchLand ? "page" : undefined}>Ownership research</Link>
+        <Link href={keep({ view: "land", type: typeKey })} aria-current={!researchLand && !landOpportunities ? "page" : undefined}>Land inventory</Link>
+        <Link href={keep({ view: "land", land: "opportunities", type: typeKey })} aria-current={landOpportunities ? "page" : undefined}>Corroborated opportunities</Link>
+        <Link href={keep({ view: "land", land: "research", type: typeKey })} aria-current={researchLand ? "page" : undefined}>Ownership research</Link>
       </nav>}
       {bucket === "assets" && <nav className="crm-views" aria-label="Asset qualification">
         <Link href={keep({ view: "assets" })} aria-current={!research ? "page" : undefined}>High-value inventory</Link>
@@ -106,12 +108,18 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           <option value="">All counties</option>
           {COUNTIES.map((c) => <option key={c} value={c}>{titleCase(c)}</option>)}
         </select>
+        {(bucket === "commercial" || bucket === "land") && bucketData ? (
+          <select className="crm-select" name="type" defaultValue={typeKey ?? ""} aria-label="Distress type">
+            <option value="">All types</option>
+            {bucketData.types.map((t) => <option key={t.key} value={t.key}>{t.label} ({t.n})</option>)}
+          </select>
+        ) : null}
         <button className="crm-btn" type="submit">Filter</button>
-        {(county || q) ? <Link className="crm-btn ghost" href={keep({ view: current, land: bucket === "land" ? sp.land : undefined, assets: sp.assets, county: undefined, q: undefined })}>Clear</Link> : null}
+        {(county || q || typeKey) ? <Link className="crm-btn ghost" href={keep({ view: current, land: bucket === "land" ? sp.land : undefined, assets: sp.assets, county: undefined, q: undefined })}>Clear</Link> : null}
         {bucket && bucket !== "assets" && !researchLand && !landOpportunities && bucketData ? (
           <div className="crm-seg" role="group" aria-label="Grade">
             {GRADES.map((g) => (
-              <Link key={g.key} href={keep({ view: bucket, grade: g.key === "qualified" ? undefined : g.key })}
+              <Link key={g.key} href={keep({ view: bucket, grade: g.key === "qualified" ? undefined : g.key, type: typeKey })}
                 aria-current={(grade ?? "qualified") === g.key ? "page" : undefined}>
                 {g.label} <span className="crm-faint" style={{ marginLeft: 4 }}>{bucketData.grades[g.key]}</span>
               </Link>
@@ -130,9 +138,9 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         : bucket ? <LaneTable rows={bucketData!.rows} lane={bucket} />
         : <RankedTable rows={ranked!.rows} />}
       {(researchLand || landOpportunities) && bucketData && !error && <nav className="crm-toolbar" aria-label="Land results pages">
-        {page > 1 && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page - 1) })}>Previous</Link>}
+        {page > 1 && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page - 1), type: typeKey })}>Previous</Link>}
         <span>Page {page} · {bucketData.grades.all} parcels</span>
-        {page * LAND_REVIEW_PAGE_SIZE < bucketData.grades.all && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page + 1) })}>Next</Link>}
+        {page * LAND_REVIEW_PAGE_SIZE < bucketData.grades.all && <Link className="crm-btn" href={keep({ view: "land", land: sp.land, page: String(page + 1), type: typeKey })}>Next</Link>}
       </nav>}
     </>
   )
